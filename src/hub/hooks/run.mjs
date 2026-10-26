@@ -6,9 +6,10 @@ import { HubStore } from "../store.mjs";
 import { isProjectExcluded } from "../capture.mjs";
 import claudeCode from "./claude-code.mjs";
 import commandCode from "./command-code.mjs";
+import cursor from "./cursor.mjs";
 import { enqueueCompression, flushSpool, projectOf, readPayload, spoolAppend } from "./shared.mjs";
 
-export const ADAPTERS = { "claude-code": claudeCode, "command-code": commandCode };
+export const ADAPTERS = { "claude-code": claudeCode, "command-code": commandCode, cursor };
 
 export function adapterFor(tool) {
   const adapter = ADAPTERS[tool];
@@ -33,7 +34,7 @@ export async function runHook({ tool, event, stdin, config, dataDir } = {}) {
   }
 
   // An excluded project is skipped before any row (memory or episode) is written. The hook still exits 0.
-  const project = projectOf(payload);
+  const project = adapter.project ? adapter.project(payload) : projectOf(payload);
   if (isProjectExcluded(project, cfg.excludedProjects ?? [])) {
     return { ...fallback, stored: false, queued: false, reason: "excluded_project", project };
   }

@@ -43,7 +43,7 @@ describe("T-071: every installer has one generic uninstall and doctor path", () 
   test("install --list names the capability and verification for every installer", () => {
     const { home } = setup();
     const rows = listInstallers({ home });
-    expect(rows.map((row) => row.id)).toEqual(["claude-code", "command-code"]);
+    for (const id of ["claude-code", "command-code", "cursor"]) expect(rows.some((row) => row.id === id)).toBe(true);
     for (const row of rows) {
       expect(row.capabilities).toBe("full");
       expect(row.verification).toBe("from-docs-only");

@@ -282,6 +282,36 @@ export const INSTALLERS = [
       return { file: join(env.home, ".commandcode", "settings.json"), commands: Object.fromEntries(["SessionStart", "PostToolUse", "Stop"].map((event) => [event, hookCommand({ bun: env.bun, hookScript: runnerFor(env), tool: "command-code", event })])) };
     },
   }),
+  defineInstaller({
+    id: "cursor",
+    name: "Cursor",
+    capabilities: "full",
+    verification: "from-docs-only",
+    evidence: "https://cursor.com/docs/agent/hooks, /docs/context/mcp and /docs/context/rules fetched 2026-10-26; Cursor is not installed on this machine",
+    detection: [".cursor"],
+    notes: [
+      "Cursor is not installed here: the config and payloads were tested against fixtures, not a real Cursor install.",
+      "The stop hook carries no assistant text; afterAgentResponse stores the summary and stop queues compression.",
+      "Cursor has no global rules file. Use `aletheia rules sync --tools cursor --dir <project> --write` for .cursor/rules/aletheia.mdc.",
+    ],
+    events: ["sessionStart", "beforeSubmitPrompt", "postToolUse", "afterAgentResponse", "stop", "sessionEnd"],
+    plan(env) {
+      const hooks = { sessionStart: null, beforeSubmitPrompt: null, postToolUse: null, afterAgentResponse: null, stop: null, sessionEnd: null };
+      const steps = [
+        planMcp({ file: join(env.home, ".cursor", "mcp.json"), entry: { command: env.bun, args: [env.mcpScript] } }),
+        planFlatHooks({ file: join(env.home, ".cursor", "hooks.json"), version: 1, events: hooks, env, tool: "cursor", timeout: 10 }),
+      ];
+      return { tool: "cursor", name: "Cursor", env, steps, notes: [
+        "Cursor is not installed here: the config and payloads were tested against fixtures, not a real Cursor install.",
+        "The stop hook carries no assistant text; afterAgentResponse stores the summary and stop queues compression.",
+        "Cursor has no global rules file. Use `aletheia rules sync --tools cursor --dir <project> --write` for .cursor/rules/aletheia.mdc.",
+      ] };
+    },
+    expectedHooks(env) {
+      const events = ["sessionStart", "beforeSubmitPrompt", "postToolUse", "afterAgentResponse", "stop", "sessionEnd"];
+      return { file: join(env.home, ".cursor", "hooks.json"), commands: Object.fromEntries(events.map((event) => [event, hookCommand({ bun: env.bun, hookScript: runnerFor(env), tool: "cursor", event })])) };
+    },
+  }),
 ];
 
 export const installerIds = () => INSTALLERS.map((installer) => installer.id);
@@ -561,8 +591,11 @@ function hookCommandsIn(doc) {
   for (const definitions of Object.values(doc.hooks ?? {})) {
     if (!Array.isArray(definitions)) continue;
     for (const definition of definitions) {
-      if (Array.isArray(definition?.hooks)) for (const handler of definition.hooks) if (handler?.command) out.push(handler.command);
-      else if (definition?.command) out.push(definition.command);
+      if (Array.isArray(definition?.hooks)) {
+        for (const handler of definition.hooks) if (handler?.command) out.push(handler.command);
+      } else if (definition?.command) {
+        out.push(definition.command);
+      }
     }
   }
   return out;
