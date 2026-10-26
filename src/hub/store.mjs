@@ -568,7 +568,41 @@ export class HubStore {
     if (project) { where.push("project = ?"); params.push(project); }
     if (status) { where.push("status = ?"); params.push(status); }
     const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
-    return this.db.prepare(`SELECT * FROM observations ${clause} ORDER BY created_at_epoch DESC, id DESC LIMIT ? OFFSET ?`).all(...params, Math.min(Number(limit) || 500, 5000), Math.max(Number(offset) || 0, 0));
+    return this.db.prepare(`SELECT * FROM observations ${clause} ORDER BY created_at_epoch DESC, id DESC LIMIT ? OFFSET ?`).all(...params, Math.min(Number(limit) || 500, 50_000), Math.max(Number(offset) || 0, 0));
+  }
+
+  /**
+   * Merge one observation into the older id. The loser row stays with status 'merged'; its facts move to the
+   * survivor, the narrative is appended under a "Merged from" line, and an audit row names both ids.
+   */
+  mergeObservations(firstId, secondId, { actor = "ui" } = {}) {
+    const a = this.getObservation(firstId);
+    const b = this.getObservation(secondId);
+    if (!a || !b) throw new RangeError("Both observations must exist.");
+    if (a.id === b.id) throw new RangeError("Pick two different observations.");
+    if (a.project !== b.project) throw new RangeError("Refusing to merge observations across projects.");
+    const [keep, drop] = a.created_at_epoch < b.created_at_epoch || (a.created_at_epoch === b.created_at_epoch && a.id < b.id) ? [a, b] : [b, a];
+    this.db.exec("BEGIN IMMEDIATE");
+    let moved = 0;
+    try {
+      const marker = `Merged from #${drop.id}`;
+      const narrative = String(keep.narrative ?? "").includes(marker)
+        ? keep.narrative
+        : `${keep.narrative ?? ""}${keep.narrative ? "\n\n" : ""}${marker}: ${drop.narrative ?? ""}`.slice(0, 20_000);
+      this.db.prepare("UPDATE observations SET narrative = ?, importance = max(importance, ?), pinned = max(pinned, ?), importance_components = coalesce(importance_components, ?), updated_at_epoch = ? WHERE id = ?")
+        .run(narrative, drop.importance, drop.pinned, drop.importance_components, Date.now(), keep.id);
+      moved = this.db.prepare("SELECT COUNT(*) AS n FROM facts WHERE observation_id = ?").get(drop.id).n;
+      this.db.prepare("UPDATE facts SET observation_id = ? WHERE observation_id = ?").run(keep.id, drop.id);
+      this.db.prepare("UPDATE memory_keys SET owner_id = ? WHERE owner_type = 'observation' AND owner_id = ?").run(keep.id, drop.id);
+      this.db.prepare("UPDATE observations SET status = 'merged', updated_at_epoch = ? WHERE id = ?").run(Date.now(), drop.id);
+      this.link({ fromType: "observation", fromId: keep.id, toType: "observation", toId: drop.id, relation: "duplicate_of" });
+      this.db.exec("COMMIT");
+    } catch (error) {
+      try { this.db.exec("ROLLBACK"); } catch { /* ignore */ }
+      throw error;
+    }
+    this.audit(actor, "observation.merge", { keep: keep.id, drop: drop.id, facts: moved });
+    return { keepId: keep.id, dropId: drop.id, facts: moved, keep: this.getObservation(keep.id), drop: this.getObservation(drop.id) };
   }
 
   updateObservation(id, patch = {}, { actor = "ui" } = {}) {
