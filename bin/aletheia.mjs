@@ -15,6 +15,7 @@
 //   aletheia hook <tool> <event>                          hook entry point: read one JSON payload on stdin
 //   aletheia doctor                                       check the server, hooks, spool and last capture
 //   aletheia compress [--project p] [--daemon]         drain the extraction queue (provider or rule-based)
+//   aletheia importance recompute [--project p]         recompute the transparent importance score
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
@@ -207,6 +208,11 @@ async function main() {
         if (plan.kind === "command") return out(`Run this:\n  ${plan.command}`);
         if (!flags.write) return out(`${plan.connected ? "Already connected.\n" : ""}Would write to ${plan.path}:\n${plan.snippet}\nAdd --write to apply (a backup is kept).`);
         return out(applyMcp(tool, config.home, argv));
+      }
+      case "importance": {
+        if (pos[0] !== "recompute") return die("Usage: aletheia importance recompute [--project p]");
+        const { recomputeImportance } = await import("../src/hub/importance.mjs");
+        return out(recomputeImportance(hub, { project: flags.project }));
       }
       case "compress": {
         const { runWorker, startBackgroundWorker } = await import("../src/hub/queue.mjs");
