@@ -13,6 +13,7 @@ const clamp = (value, min, max, fallback) => {
   const n = Number(value);
   return Number.isFinite(n) ? Math.min(Math.max(Math.trunc(n), min), max) : fallback;
 };
+const promptKey = (text) => sha256(oneLine(text).slice(0, 2000));
 
 const VERBS = new Set([
   "add", "build", "create", "fix", "make", "update", "change", "remove", "delete", "refactor", "rename",
@@ -49,32 +50,60 @@ function settingSet(store, key) {
 /** Goals repeated in at least two different sessions. Sorted pinned first, then by session count. */
 export function proposeGoals(store, { project = null, now = Date.now(), minSessions, limit } = {}) {
   const scope = typeof project === "string" && project.trim() ? project.trim() : null;
-  const rows = store.db
+  const memoryRows = store.db
     .prepare(`SELECT id, project, session_id, title, narrative, created_at_epoch FROM memories
       WHERE kind = 'prompt' ${scope ? "AND project = ?" : ""}
+      ORDER BY created_at_epoch ASC, id ASC`)
+    .all(...(scope ? [scope] : []));
+  const episodeRows = store.db
+    .prepare(`SELECT id, project, session_id, text, created_at_epoch FROM episodes
+      WHERE role = 'user' AND session_id IS NOT NULL AND session_id <> '' ${scope ? "AND project = ?" : ""}
       ORDER BY created_at_epoch ASC, id ASC`)
     .all(...(scope ? [scope] : []));
 
   const pinned = settingSet(store, "work.goals.pinned");
   const dismissed = settingSet(store, "work.goals.dismissed");
   const groups = new Map();
-  for (const row of rows) {
+
+  // A hook-captured prompt and its back-filled transcript episode are the same turn; dedupe by text hash
+  // within the same session so an episode does not double-count a prompt already captured by the hook.
+  const sessionKey = (project, sessionId) => `${project}\u0000${sessionId}`;
+  const promptKeys = new Map();
+  for (const row of memoryRows) {
+    if (!row.session_id) continue;
     const text = oneLine(row.narrative || row.title);
     if (!text) continue;
-    const topic = imperativeTopic(text);
-    if (!topic) continue;
+    const key = sessionKey(row.project, row.session_id);
+    let set = promptKeys.get(key);
+    if (!set) promptKeys.set(key, (set = new Set()));
+    set.add(promptKey(text));
+  }
+
+  const addRow = (id, project, sessionId, text, at, source) => {
+    const cleanText = oneLine(text);
+    if (!cleanText) return;
+    const topic = imperativeTopic(cleanText);
+    if (!topic) return;
     const key = `${scope ?? "all"}|${topic.key}`;
     let group = groups.get(key);
     if (!group) {
-      group = { key, verb: topic.verb, object: topic.object, id: sha256(key).slice(0, 16), quotes: [], sessions: new Set(), projects: new Set(), firstAt: row.created_at_epoch, lastAt: row.created_at_epoch };
+      group = { key, verb: topic.verb, object: topic.object, id: sha256(key).slice(0, 16), quotes: [], sessions: new Set(), projects: new Set(), firstAt: at, lastAt: at };
       groups.set(key, group);
     }
-    if (group.quotes.some((quote) => quote.id === row.id)) continue;
-    group.quotes.push({ id: row.id, sessionId: row.session_id ?? null, project: row.project, at: iso(row.created_at_epoch), text: oneLine(text).slice(0, 240) });
-    group.sessions.add(row.session_id ? `${row.project}\u0000${row.session_id}` : `memory:${row.id}`);
-    group.projects.add(row.project);
-    group.firstAt = Math.min(group.firstAt, row.created_at_epoch);
-    group.lastAt = Math.max(group.lastAt, row.created_at_epoch);
+    const qid = source === "episode" ? `episode:${id}` : id;
+    if (group.quotes.some((quote) => quote.id === qid)) return;
+    group.quotes.push({ id: qid, sessionId: sessionId ?? null, project, at: iso(at), text: cleanText.slice(0, 240), source });
+    group.sessions.add(sessionId ? sessionKey(project, sessionId) : `${source}:${id}`);
+    group.projects.add(project);
+    group.firstAt = Math.min(group.firstAt, at);
+    group.lastAt = Math.max(group.lastAt, at);
+  };
+
+  for (const row of memoryRows) addRow(row.id, row.project, row.session_id, row.narrative || row.title, row.created_at_epoch, "memory");
+  for (const row of episodeRows) {
+    const text = oneLine(row.text);
+    if (promptKeys.get(sessionKey(row.project, row.session_id))?.has(promptKey(text))) continue;
+    addRow(row.id, row.project, row.session_id, row.text, row.created_at_epoch, "episode");
   }
 
   const all = [...groups.values()]

@@ -389,6 +389,7 @@ export class HubStore {
     this.ensureScopeColumns();
     this.ensureRuleSuggestions();
     this.ensureDismissals();
+    this.ensureSessionEnd();
   }
 
   /** Add the T-123 dismissal table to databases created before it existed. Idempotent, recorded once. */
@@ -442,6 +443,34 @@ export class HubStore {
     }
     this.setSetting("schema.scope", true);
     return { added };
+  }
+
+  /** Add the T-105/T-150 session-end table to databases created before it existed. Idempotent. */
+  ensureSessionEnd() {
+    if (this.setting("schema.session_end", false)) return false;
+    this.db.exec(`CREATE TABLE IF NOT EXISTS session_end (
+      project TEXT NOT NULL,
+      session_id TEXT NOT NULL,
+      ended_at_epoch INTEGER NOT NULL,
+      source TEXT NOT NULL,
+      PRIMARY KEY (project, session_id)
+    );`);
+    this.setSetting("schema.session_end", true);
+    return true;
+  }
+
+  /** Record that a host sent a real session-end event. Never deletes; the latest source wins. */
+  markSessionEnded(project, sessionId, { source = "hook", now = Date.now() } = {}) {
+    const id = String(sessionId ?? "").trim();
+    if (!id) return false;
+    this.db.prepare("INSERT INTO session_end (project, session_id, ended_at_epoch, source) VALUES (?,?,?,?) ON CONFLICT(project, session_id) DO UPDATE SET ended_at_epoch = max(ended_at_epoch, excluded.ended_at_epoch), source = excluded.source")
+      .run(String(project ?? "default"), id, Number(now) || Date.now(), String(source));
+    return true;
+  }
+
+  /** The recorded session-end row for one session, or null when the host sent no end event. */
+  sessionEnd(project, sessionId) {
+    return this.db.prepare("SELECT * FROM session_end WHERE project = ? AND session_id = ?").get(String(project), String(sessionId ?? "")) ?? null;
   }
 
   /** Promote one row to global scope. Project reads include global rows; nothing moves between projects. */

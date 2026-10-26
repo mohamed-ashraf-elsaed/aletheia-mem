@@ -9,6 +9,7 @@ import { ValidationError, validateMarkFinished, validateReview, validateRuleActi
 import { EVIDENCE_KINDS } from "./readmodel/evidence.mjs";
 import { MIME_TYPES } from "./readmodel/work-product.mjs";
 import { BadRequest, createHubRoutes } from "./hub/routes.mjs";
+import { createLiveHub } from "./hub/live.mjs";
 import { createMcpHttpHandler } from "./hub/mcp-http.mjs";
 import { createLoginGuard } from "./hub/login.mjs";
 import { SyncStore } from "./hub/sync/store.mjs";
@@ -64,8 +65,12 @@ export function startServer(config, {
   } catch {
     ask = null;
   }
-  const worker = config.extractionWorker ? startBackgroundWorker({ store: hub, ask, config }) : null;
-  const hubRoutes = createHubRoutes({ hub, config });
+  const worker = config.extractionWorker ? startBackgroundWorker({ store: hub, ask, config, onTick: (result) => {
+    const project = result.last?.project ?? null;
+    for (const id of result.last?.factIds ?? []) liveHub.broadcast({ kind: "fact", id, project });
+  } }) : null;
+  const liveHub = createLiveHub(hub);
+  const hubRoutes = createHubRoutes({ hub, config, liveHub });
   // MCP over Streamable HTTP on the main (loopback) server. Optional bearer key, same one as /v1.
   const mcpHttp = createMcpHttpHandler({
     store: hub,
@@ -123,6 +128,20 @@ export function startServer(config, {
     // ---- login sessions (remote mode): /api/login, /api/logout, and the 401/403 gates
     const loginResponse = await login.handle(request, { server });
     if (loginResponse) return loginResponse;
+
+    // ---- /v1/live WebSocket: same guards as /v1 (local only + optional bearer key), Origin check, upgrade
+    if (pathname === "/v1/live" && method === "GET") {
+      const denied = guarded(request, server);
+      if (denied) return denied;
+      if (config.apiKey) {
+        const auth = request.headers.get("authorization") ?? "";
+        if (auth !== `Bearer ${config.apiKey}`) return json({ error: "A valid bearer key is required." }, 401);
+      }
+      if (isCrossOrigin(request)) return json({ error: "This origin is not allowed." }, 403);
+      const project = new URL(request.url).searchParams.get("project") || null;
+      if (server.upgrade(request, { data: { project } })) return undefined;
+      return json({ error: "WebSocket upgrade failed." }, 400);
+    }
 
     // ---- static
     if (method === "GET" && (pathname === "/" || pathname === "/index.html")) {
@@ -223,11 +242,17 @@ export function startServer(config, {
         return json({ error: "Internal error." }, 500);
       }
     },
+    websocket: {
+      open(ws) { liveHub.add(ws, ws.data ?? {}); },
+      message() { /* client frames are ignored; the server only pushes advisory changes */ },
+      close(ws) { liveHub.remove(ws); },
+    },
   });
   return {
     server,
     service,
     hub,
+    liveHub,
     stop() {
       worker?.stop();
       server.stop(true);

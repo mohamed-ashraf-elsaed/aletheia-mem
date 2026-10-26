@@ -78,6 +78,13 @@ describe("T-139: the one page", () => {
     expect(() => new Bun.Transpiler({ loader: "js" }).transformSync(source)).not.toThrow();
   });
 
+  test("the 375 px stylesheet opts out of horizontal scroll and gives 40 px tap targets", () => {
+    const css = readFileSync(join(root, "public", "one-ui.css"), "utf8");
+    expect(css).toContain("@media (max-width: 400px)");
+    expect(css).toContain("overflow-x: hidden");
+    expect(css).toContain("min-height: 40px");
+  });
+
   test("/hub redirects to the Memory tab and keeps serving its assets", async () => {
     const response = await get("/hub");
     expect(response.status).toBe(200);

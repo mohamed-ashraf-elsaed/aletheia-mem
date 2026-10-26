@@ -151,9 +151,11 @@ Playwright MCP browser. Observed:
 - `prefers-color-scheme: dark` was emulated; the page stayed readable and the shell colours switched.
 
 **NOT RUN BY AUTHOR:** a person should still check the Work tab at 375 px width, with a keyboard only (Tab through
-the header, open each tab, open a details block, pin and restore a goal), and with a real live capture over more
-than 10 seconds to see the refresh. The automated run proves the scripts load and the DOM is reachable; it does not
-assert pixel layout or the timer under a real host.
+the header, open each tab, open a details block, pin and restore a goal, expand a truncated prompt with "Show more"),
+and with a real live capture over more than 10 seconds to see the refresh. At 375 px confirm the page does not scroll
+horizontally and every button, tab link, select, search box and details summary is at least 40 px tall to tap. The
+automated run proves the scripts load and the DOM is reachable; it does not assert pixel layout or the timer under a
+real host.
 
 ### Work view steps (RUN BY AUTHOR, 2026-10-26)
 
@@ -333,6 +335,26 @@ bun bin/aletheia-server.mjs --host 0.0.0.0 --behind-tls
 Open the tunnel URL in a browser. Expected: the login page appears; the admin token logs in; the Hub tabs load;
 a dismiss or pair action works (the UI sends the CSRF header); a server restart ends the session; five wrong
 tokens lock the login page with a wait message.
+
+## 11. Auto-start service (NOT RUN BY AUTHOR)
+
+The generated text is checked by `test/service.test.mjs` against a temporary HOME. The unit is never enabled and
+the server is never started by the author.
+
+Linux default unit (`~/.config/systemd/user/aletheia.service`): `Restart=on-failure`, `Nice=10`, loopback only,
+with `CPUQuota`/`MemoryMax` defaults 50% and 1G documented in comments and overridable via
+`aletheia service install --cpu-quota X --memory-max Y --write`.
+
+**NOT RUN BY AUTHOR.** To run it by hand on Linux:
+
+```bash
+aletheia service install --write
+systemctl --user daemon-reload
+systemctl --user enable --now aletheia.service
+```
+
+The macOS plist is `from-docs-only` (Apple launchd docs, fetched 2026-10-26) and is not tested on a real Mac.
+Windows is not supported.
 
 ## What the automated tests already cover
 

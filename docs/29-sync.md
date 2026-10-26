@@ -102,8 +102,13 @@ before. Tested by `test/sync-e2ee.test.mjs`.
 - **Data key (DK)**: one random 256-bit key per account, generated with `crypto.getRandomValues`. It encrypts
   every `put` payload on the device. Rotation replaces it; the account keeps a numbered list of keys and every
   ciphertext names its key id (`kid`).
-- **Key-encryption key (KEK)**: `scrypt(passphrase, salt, 32)` with N=16384, r=8, p=1 (node:crypto defaults
-  except N, documented here). The salt is 16 random bytes, stored with the wrapped key.
+- **Key-encryption key (KEK)**: `scrypt(passphrase, salt, 32)`. New accounts use N=2^17 (131072), r=8, p=1,
+  the current OWASP Password Storage Cheat Sheet minimum for scrypt (fetched 2026-10-26; N=2^17, r=8, p=1).
+  The salt is 16 random bytes, stored with the wrapped key.
+- **Per-key KDF parameters**: each `sync_e2ee_key` row stores its own `kdf` and `params`, so an account
+  created with the old N=16384 default still unlocks. `aletheia sync upgrade-kdf --passphrase <p>` re-wraps
+  every data key under the current default without touching op ciphertext (the data keys do not change).
+  Unlock reads the parameters from the record, never from a compile-time constant.
 - **Wrapped DK**: AES-256-GCM(KEK, DK) with a random 96-bit nonce. Only the wrapped form is stored on the
   server, one row per `kid`.
 - **Recovery key**: the DK itself. `aletheia sync export-recovery-key` writes the device's keyring to a file
@@ -136,6 +141,8 @@ the GCM tag.
   plaintext replica, so this adds no new local exposure.
 - `aletheia sync rotate-key --passphrase <p>`: new DK, new `kid`; new ops use it, old ciphertext stays
   decryptable with the old key. `aletheia sync change-passphrase --old a --new b` re-wraps the current DK.
+  `aletheia sync upgrade-kdf --passphrase <p>` re-wraps every data key under the current scrypt default
+  (N=2^17) without touching op ciphertext; run it once after an upgrade to move old keys to the new cost.
 - Losing the passphrase and the recovery file means the ciphertext is unrecoverable. That is the point, and
   it is not recoverable by us.
 

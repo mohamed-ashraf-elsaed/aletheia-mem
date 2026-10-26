@@ -31,8 +31,8 @@ export const codex = {
     const base = { project: projectOf(payload), tool: "codex", sessionId: payload.session_id ?? null };
     if (name === "UserPromptSubmit") return { memory: promptMemory(payload.prompt, base), compress: null };
     if (name === "PostToolUse") return { memory: toolMemory({ name: payload.tool_name, input: payload.tool_input, response: payload.tool_response }, base), compress: null };
-    if (name === "Stop") return { memory: summaryMemory(payload.last_assistant_message, base), compress: { project: base.project, sessionId: base.sessionId } };
-    if (name === "SessionEnd") return { memory: null, compress: { project: base.project, sessionId: base.sessionId } };
+    if (name === "Stop") return { memory: summaryMemory(payload.last_assistant_message, base), compress: { project: base.project, sessionId: base.sessionId }, sessionEnd: { project: base.project, sessionId: base.sessionId } };
+    if (name === "SessionEnd") return { memory: null, compress: { project: base.project, sessionId: base.sessionId }, sessionEnd: { project: base.project, sessionId: base.sessionId } };
     return { memory: null, compress: null };
   },
 

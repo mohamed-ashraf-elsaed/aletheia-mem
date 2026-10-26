@@ -109,6 +109,20 @@ describe("T-144: owner goals", () => {
     store.close();
   });
 
+  test("back-filled transcript user turns count as goals and dedupe against the hook prompt in the same session", () => {
+    const store = new HubStore(join(fx.dir, "goals-episodes.db"));
+    store.add({ project: "shop", kind: "prompt", type: "note", title: "Add a retry button", narrative: "Add a retry button", sessionId: "h1", tool: "claude-code", createdAtEpoch: at(40) });
+    store.addEpisode({ project: "shop", tool: "claude-code", sessionId: "h1", role: "user", kind: "message", text: "Add a retry button", sourceRef: "t:h1:0", createdAtEpoch: at(39) });
+    store.addEpisode({ project: "shop", tool: "claude-code", sessionId: "h2", role: "user", kind: "message", text: "please add retry button to payments", sourceRef: "t:h2:0", createdAtEpoch: at(30) });
+    const data = proposeGoals(store, { project: "shop", now: NOW });
+    const retry = data.goals.find((goal) => goal.label.toLowerCase().includes("retry"));
+    expect(retry).toBeTruthy();
+    expect(retry).toMatchObject({ sessionCount: 2, count: 2 });
+    expect(retry.quotes.filter((quote) => quote.source === "episode")).toHaveLength(1);
+    expect(retry.quotes.filter((quote) => quote.source === "memory")).toHaveLength(1);
+    store.close();
+  });
+
   test("the goals route lists, pins, dismisses and restores through the API", async () => {
     const get = (path) => fetch(`${seeded.base}${path}`);
     const post = (path, body) => fetch(`${seeded.base}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });

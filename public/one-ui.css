@@ -119,7 +119,21 @@ body { margin: 0; background: var(--bg, #faf8f5); color: var(--ink, #1d1b19); }
 .ui-timeline li.ui-timeline-tool { border-left-color: var(--muted, #6b645c); }
 .ui-timeline li.ui-timeline-summary { border-left-color: var(--ok, #2f7d4f); }
 .ui-goal .ui-meta { margin: 3px 0; }
+.ui-card button.ui-more {
+  border: 0; background: none; color: var(--accent, #c4552d); padding: 4px 0; font: inherit; font-size: 13px; cursor: pointer;
+}
+.ui-prompt { display: flex; flex-direction: column; align-items: flex-start; }
 @media (max-width: 900px) {
   .ui-work-grid { grid-template-columns: minmax(0, 1fr); }
   .ui-work { padding: 14px 10px 70px; }
+}
+@media (max-width: 400px) {
+  body { overflow-x: hidden; }
+  .ui-tab-link, .ui-top button, .ui-top select, .ui-search input, .ui-search button,
+  .ui-card button, .ui-acts button, .ui-button, .ui-card button.ui-more, .ui-details summary {
+    min-height: 40px;
+  }
+  .ui-search input { width: 100%; min-width: 0; max-width: none; }
+  .ui-top { gap: 6px; }
+  .ui-top select, .ui-search { max-width: 100%; }
 }
