@@ -1,7 +1,9 @@
 #!/usr/bin/env bun
 // Aletheia Sync hub: a self-hosted, dependency-free sync server. Binds to loopback by default.
 //   bun bin/aletheia-sync.mjs [--host 0.0.0.0] [--port 37791] [--db path] [--name default] [--behind-tls]
+//                             [--hub-db path] [--mcp-origins https://claude.ai,...]
 // A non-loopback bind without --behind-tls prints a warning; TLS is handled by a reverse proxy or tunnel.
+// --hub-db serves the private remote MCP endpoint at /mcp (docs/30-remote-mcp.md).
 import { loadConfig } from "../src/config.mjs";
 import { startSyncServer } from "../src/hub/sync/server.mjs";
 
@@ -19,12 +21,15 @@ const port = Number(flag("port", config.syncPort));
 const syncDb = String(flag("db", config.syncDb));
 const name = String(flag("name", "default"));
 const behindTls = !!flag("behind-tls", false);
+const hubDb = String(flag("hub-db", config.hubDb));
+const mcpOrigins = String(flag("mcp-origins", "")).split(",").map((origin) => origin.trim()).filter(Boolean);
 
-const { server, stop } = startSyncServer({ syncDb, host, port, name, behindTls });
+const { server, stop } = startSyncServer({ syncDb, host, port, name, behindTls, hubDb, mcpOrigins });
 const bound = `http://${host === "0.0.0.0" || host === "::" ? "127.0.0.1" : host}:${server.port}`;
 
 console.log(`aletheia-sync listening on ${bound}`);
 console.log(`  sync db  : ${syncDb}`);
+console.log(`  hub db   : ${hubDb}${hubDb ? ` (remote MCP: ${bound}/mcp)` : ""}`);
 console.log(`  account  : ${name}`);
 console.log(`  pairing  : aletheia sync pair --db ${syncDb}`);
 console.log(`  join     : aletheia sync join ${bound} <code>`);

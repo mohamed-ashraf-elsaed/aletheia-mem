@@ -147,7 +147,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-104 | Add device pairing, device tokens and revoke | P6 | T-102 | validated | 2026-10-26 | [T-104.md](T-104.md) |
 | T-105 | Add live update frames over WebSocket | P6 | T-102 | todo | — | [T-105.md](T-105.md) |
 | T-106 | Run hosted-style extraction as a server-side worker | P6 | T-020 | todo | — | [T-106.md](T-106.md) |
-| T-107 | Serve a private remote MCP endpoint | P6 | T-067, T-104 | todo | — | [T-107.md](T-107.md) |
+| T-107 | Serve a private remote MCP endpoint | P6 | T-067, T-104 | validated | 2026-10-26 | [T-107.md](T-107.md) |
 | T-108 | Add scoped API tokens, quotas and an audit log | P6 | T-102 | validated | 2026-10-26 | [T-108.md](T-108.md) |
 | T-109 | Add a local usage ledger and caps | P6 | T-106 | todo | — | [T-109.md](T-109.md) |
 | T-110 | Add remote login for the Hub | P6 | T-104 | todo | — | [T-110.md](T-110.md) |

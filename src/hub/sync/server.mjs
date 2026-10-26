@@ -1,9 +1,19 @@
 // The Aletheia Sync HTTP server: /v1/sync/* with bearer-token auth, per-operation push results,
 // cursor-based pull, pairing, device management, scoped tokens and an append-only audit log.
 // Binds to loopback by default; a non-loopback bind requires `behindTls` and prints a warning.
+// Also serves the private remote MCP endpoint at /mcp when `hubDb` is given (T-107).
+import { createMcpHttpHandler, loopbackOriginsOnly, WRITE_TOOLS } from "../mcp-http.mjs";
+import { HubStore } from "../store.mjs";
 import { SyncStore } from "./store.mjs";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
+
+export const isLoopbackHost = (host) => ["127.0.0.1", "localhost", "::1"].includes(String(host ?? "").trim());
+
+/** True when the hub needs an explicit TLS-terminating proxy in front: non-loopback and no --behind-tls. */
+export function requiresTlsProxy(host, behindTls) {
+  return !isLoopbackHost(host) && !behindTls;
+}
 
 /** 401 for an unknown, revoked or expired token; 403 for a valid token with the wrong scope; null when allowed. */
 function authDenied(token, allowed) {
@@ -176,15 +186,55 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
   return { handle, json };
 }
 
-/** Start the sync server. Returns {server, store, stop, port, url}. */
-export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "default", behindTls = false } = {}) {
+/**
+ * Start the sync server. Returns {server, store, stop, port, url}.
+ * With `hubDb`, the private remote MCP endpoint is served at /mcp (T-107): bearer tokens with an
+ * `mcp`/`read`/`sync`/`admin` scope, project scope, per-token rate limit and an audit row per call.
+ */
+export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "default", behindTls = false, hubDb = null, mcpOrigins = null, mcpRateLimitPerMinute = 60 } = {}) {
   const store = new SyncStore(syncDb);
-  store.ensureAccount(name);
-  const loopback = host === "127.0.0.1" || host === "localhost" || host === "::1";
-  if (!loopback && !behindTls) {
+  const account = store.ensureAccount(name);
+  if (requiresTlsProxy(host, behindTls)) {
     console.warn(`Warning: binding sync to ${host} without TLS. Put it behind a reverse proxy or tunnel that terminates TLS.`);
   }
   const routes = createSyncRoutes({ store, behindTls, getPeer: () => "peer" });
+
+  // ---- the private remote MCP endpoint (T-107) -----------------------------------------------
+  const hub = hubDb ? new HubStore(hubDb) : null;
+  const mcpWindows = new Map(); // token id -> { start, count }
+  const mcpRoutes = hub
+    ? createMcpHttpHandler({
+        store: hub,
+        authorize: async (request) => {
+          const header = request.headers.get("authorization") ?? "";
+          const match = /^Bearer\s+(.+)$/i.exec(header);
+          if (!match) return { status: 401, error: "A valid bearer token is required." };
+          const token = store.findToken(match[1]);
+          if (!token || token.revoked_at || (token.expires_at && token.expires_at < Date.now())) return { status: 401, error: "A valid bearer token is required." };
+          if (!["mcp", "read", "sync", "admin"].includes(token.scope)) return { status: 403, error: "This token cannot use the MCP endpoint." };
+          return { token, projects: token.projects?.length ? token.projects : null };
+        },
+        toolAllowed: (token, toolName) => (WRITE_TOOLS.has(toolName) ? !!token && ["sync", "admin"].includes(token.scope) : true),
+        allowedOrigins: (origin) => loopbackOriginsOnly(origin) || (mcpOrigins ?? []).includes(origin),
+        rateLimit: ({ token }) => {
+          if (!token?.id) return null;
+          const now = Date.now();
+          const window = mcpWindows.get(token.id) ?? { start: now, count: 0 };
+          if (now - window.start >= 60_000) {
+            window.start = now;
+            window.count = 0;
+          }
+          window.count += 1;
+          mcpWindows.set(token.id, window);
+          if (window.count > mcpRateLimitPerMinute) return { status: 429, error: "Too many MCP calls; wait a minute.", retryAfter: Math.max(1, Math.ceil((window.start + 60_000 - now) / 1000)) };
+          return null;
+        },
+        onCall: ({ token, tool, project, ok }) => {
+          store.audit(account.id, { tokenId: token?.id ?? null, action: "mcp.call", detail: { tool, project, result: ok ? "ok" : "error" }, result: ok ? "ok" : "error" });
+        },
+      })
+    : null;
+
   const server = Bun.serve({
     hostname: host,
     port,
@@ -192,6 +242,7 @@ export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "
     maxRequestBodySize: 8 * 1024 * 1024,
     async fetch(request, srv) {
       try {
+        if (mcpRoutes && new URL(request.url).pathname === "/mcp") return await mcpRoutes(request);
         return await routes.handle(request);
       } catch (error) {
         console.error("[sync] request failed:", request.method, request.url, error);
@@ -199,5 +250,17 @@ export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "
       }
     },
   });
-  return { server, store, routes, stop: () => { server.stop(true); store.close(); }, port: server.port, url: `http://127.0.0.1:${server.port}` };
+  return {
+    server,
+    store,
+    routes,
+    hub,
+    stop: () => {
+      server.stop(true);
+      store.close();
+      hub?.close();
+    },
+    port: server.port,
+    url: `http://127.0.0.1:${server.port}`,
+  };
 }

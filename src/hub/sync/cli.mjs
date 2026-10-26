@@ -174,6 +174,50 @@ export async function runSyncCommand({ config, flags, pos, out }) {
   return die("Usage: aletheia sync pair | join <url> <code> | status | devices | revoke <device> | push | pull | run | compact | purge <entity_id> | export <dir> | import <dir>");
 }
 
+/**
+ * `aletheia mcp-link` manages the private remote MCP endpoint (T-107). Hub-side: it reads sync.db
+ * directly and mints a scoped token. The token is printed once and travels in the Authorization
+ * header, never in the URL.
+ */
+export function runMcpLinkCommand({ config, flags, pos }) {
+  const sub = pos[0];
+  const store = new SyncStore(config.syncDb);
+  try {
+    const account = store.ensureAccount();
+    if (sub === "create") {
+      const projects = typeof flags.projects === "string" ? flags.projects.split(",").map((p) => p.trim()).filter(Boolean) : [];
+      const scope = flags.scope === "sync" || flags.scope === "admin" ? flags.scope : "mcp";
+      const minted = store.mintToken(account.id, { scope, name: typeof flags.name === "string" ? flags.name : null, projects });
+      const base = (typeof flags.url === "string" && flags.url ? flags.url : `http://127.0.0.1:${config.syncPort}`).replace(/\/+$/, "");
+      const url = `${base}/mcp`;
+      const header = `Authorization: Bearer ${minted.token}`;
+      return {
+        id: minted.id,
+        scope,
+        projects,
+        url,
+        token: minted.token,
+        note: "The token is shown once and travels in the Authorization header, never in the URL. Revoke with: aletheia mcp-link revoke <id>.",
+        claudeCode: `claude mcp add --transport http aletheia ${url} --header "${header}"`,
+        claudeDesktop: JSON.stringify({ mcpServers: { aletheia: { type: "http", url, headers: { Authorization: `Bearer ${minted.token}` } } } }, null, 2),
+      };
+    }
+    if (sub === "list") {
+      return { links: store.listTokens(account.id).filter((token) => ["mcp", "read", "sync", "admin"].includes(token.scope)).map((token) => ({ id: token.id, scope: token.scope, name: token.name, projects: token.projects, revokedAt: token.revoked_at, lastUsedAt: token.last_used_at })) };
+    }
+    if (sub === "revoke") {
+      const id = Number(pos[1] ?? "");
+      if (!Number.isSafeInteger(id)) return die("Usage: aletheia mcp-link revoke <id>");
+      const revoked = store.revokeToken(account.id, id);
+      store.audit(account.id, { action: "token.revoke", result: revoked ? "ok" : "missing", detail: { id } });
+      return { revoked };
+    }
+    return die("Usage: aletheia mcp-link create [--projects a,b] [--scope mcp|sync|admin] [--name x] [--url https://hub.example] | list | revoke <id>");
+  } finally {
+    store.close();
+  }
+}
+
 /** `aletheia audit` reads the sync audit log (the hub's append-only audit table). */
 export function readAudit(config, limit) {
   const store = hubStore(config);

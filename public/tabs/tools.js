@@ -5,10 +5,11 @@ import { activityDetails, api, chip, copy, errorCard, errorText, h, run, settled
 
 export async function renderTools() {
   const root = document.getElementById("ui-tools");
-  const [doctorResult, overviewResult, syncResult] = await Promise.allSettled([api("/api/hub/doctor"), api("/api/hub/overview"), api("/api/hub/sync/status")]);
+  const [doctorResult, overviewResult, syncResult, linksResult] = await Promise.allSettled([api("/api/hub/doctor"), api("/api/hub/overview"), api("/api/hub/sync/status"), api("/api/hub/mcp-links")]);
   const data = settledValue(doctorResult, null);
   const overview = settledValue(overviewResult, null);
   const sync = settledValue(syncResult, null);
+  const links = settledValue(linksResult, null);
   if (!data) {
     swap(root, h("h1", {}, "Tools"), errorCard(errorText(doctorResult, "Doctor")));
     return;
@@ -27,6 +28,7 @@ export async function renderTools() {
     h("div", {}, ...data.tools.map(toolCard)),
     classicViewerCard(overview),
     syncPanel(sync, syncResult, renderTools),
+    remoteAccessCard(links, linksResult, renderTools),
     h("h2", {}, "Doctor checks"),
     checksTable,
     activityDetails());
@@ -102,4 +104,42 @@ function pairControls(refresh) {
     }),
   }, "Show pairing code");
   return h("div", { class: "ui-acts" }, button, out);
+}
+
+/** The Remote access section (T-107): MCP links for Claude Code, Claude Desktop and other MCP clients. */
+function remoteAccessCard(links, result, refresh) {
+  if (!links) return errorCard(errorText(result, "Remote access"));
+  const out = h("div", {});
+  const create = h("button", {
+    class: "primary",
+    onclick: () => run(async () => {
+      const link = await api("/api/hub/mcp-links", { method: "POST", body: {} });
+      const snippet = `${link.claudeCode}\n\nClaude Desktop (claude_desktop_config.json):\n${link.claudeDesktop}`;
+      swap(out,
+        h("div", { class: "ui-meta" }, `Token shown once (scope ${link.scope}): ${link.token}`),
+        h("div", { class: "ui-meta" }, link.url),
+        h("pre", { class: "ui-pre" }, snippet),
+        h("div", { class: "ui-acts" }, h("button", { onclick: () => copy(snippet) }, "Copy client config")));
+      await refresh();
+    }),
+  }, "Create MCP link");
+  const rows = (links.links ?? []).map((link) => h("div", { class: "ui-row" },
+    h("span", {}, `#${link.id}`),
+    chip(link.scope, ""),
+    h("span", { class: "ui-meta" }, link.name ? ` (${link.name})` : ""),
+    h("span", { class: "ui-meta" }, `projects: ${link.projects.length ? link.projects.join(", ") : "all"}`),
+    link.revoked ? chip("revoked", "bad") : chip("active", "ok"),
+    h("button", {
+      disabled: link.revoked,
+      onclick: () => run(async () => {
+        await api("/api/hub/mcp-links/revoke", { method: "POST", body: { id: link.id } });
+        toast("Revoked");
+        await refresh();
+      }),
+    }, "Revoke")));
+  return h("section", { class: "ui-card" },
+    h("h2", {}, "Remote access"),
+    h("p", { class: "ui-meta" }, "Read-only MCP links for remote clients. The token travels in the Authorization header, never in the URL."),
+    rows.length ? h("div", {}, ...rows) : h("div", { class: "ui-empty" }, "No MCP links. Create one for Claude Code, Claude Desktop or another MCP client."),
+    h("div", { class: "ui-acts" }, create, out));
 }

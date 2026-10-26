@@ -11,6 +11,11 @@ and purge), T-104 (device pairing, tokens and revoke) and T-108 (scoped tokens, 
 `validated`. The design and behaviour are recorded in [29-sync.md](29-sync.md). End-to-end encryption (T-117) is
 not built, so this page does not claim "end-to-end encrypted".
 
+Status update, 2026-10-26 (remote MCP): T-067 (MCP Streamable HTTP transport) and T-107 (the private remote MCP
+endpoint) are `validated`. F8 is built: bearer tokens with an `mcp`/`read` scope get the read tools only, project
+scope and a per-token rate limit apply, every call is audited, and `aletheia mcp-link create` prints the client
+config. See [30-remote-mcp.md](30-remote-mcp.md).
+
 ## Decision
 
 The owner decided on 2026-10-26 that every feature claude-mem, and any rival, sells in a paid tier is built into Aletheia

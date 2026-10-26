@@ -35,6 +35,7 @@ const json = (body, status = 200, headers = {}) =>
  * - toolAllowed(token, name): false denies one tool (used for scope-limited tokens).
  * - allowedOrigins(origin): origin allow-list; defaults to loopback only.
  * - onCall({ token, tool, project, ok }): per tools/call audit hook. No payloads pass through it.
+ * - rateLimit({ request, token, projects }): return { status, error, retryAfter } to refuse, or null.
  * - sessionTtlMs, maxBody, timeoutMs.
  */
 export function createMcpHttpHandler({
@@ -44,6 +45,7 @@ export function createMcpHttpHandler({
   toolAllowed = null,
   allowedOrigins = loopbackOriginsOnly,
   onCall = null,
+  rateLimit = null,
   sessionTtlMs = 24 * 60 * 60 * 1000,
   maxBody = 1024 * 1024,
   timeoutMs = 30_000,
@@ -116,6 +118,11 @@ export function createMcpHttpHandler({
     if (auth && auth.status) return json({ error: auth.error ?? "Unauthorized." }, auth.status);
     const token = auth?.token ?? null;
     const projects = auth?.projects ?? null;
+
+    if (rateLimit) {
+      const limit = await rateLimit({ request, token, projects });
+      if (limit) return json({ error: limit.error ?? "Too many requests." }, limit.status ?? 429, limit.retryAfter ? { "Retry-After": String(limit.retryAfter) } : {});
+    }
 
     const messages = Array.isArray(parsed) ? parsed : [parsed];
     if (!messages.length || messages.some((msg) => !msg || typeof msg !== "object")) {

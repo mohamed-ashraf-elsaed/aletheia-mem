@@ -29,6 +29,8 @@
 //   aletheia optimize                                   rebuild FTS segments after a large import
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
 //   aletheia sync pair | join <url> <code> | status | devices | revoke <device> | push | pull | run | compact | purge <entity_id> | export <dir> | import <dir>
+//   aletheia mcp-link create [--projects a,b] [--url https://hub.example] | list | revoke <id>
+//                                                          manage the private remote MCP endpoint
 //   aletheia audit [--limit n]                          read the sync audit log
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -181,6 +183,14 @@ async function main() {
         const { runSyncCommand } = await import("../src/hub/sync/cli.mjs");
         try {
           return out(await runSyncCommand({ config, flags, pos, out }));
+        } catch (error) {
+          return die(error.message);
+        }
+      }
+      case "mcp-link": {
+        const { runMcpLinkCommand } = await import("../src/hub/sync/cli.mjs");
+        try {
+          return out(await runMcpLinkCommand({ config, flags, pos }));
         } catch (error) {
           return die(error.message);
         }

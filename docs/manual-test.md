@@ -264,6 +264,28 @@ Expected: the device lists on the hub (`aletheia sync devices`), pushes and pull
 the hub makes the device's next call fail. A non-loopback bind must print the TLS warning unless
 `--behind-tls` is set.
 
+## 9. A real client against the remote MCP endpoint (NOT RUN BY AUTHOR)
+
+The endpoint is tested with raw `fetch` in `test/remote-mcp.test.mjs`; no real MCP client has connected to it.
+
+**NOT RUN BY AUTHOR.** To run it by hand, on the hub machine:
+
+```bash
+bun bin/aletheia-sync.mjs --db ~/.aletheia/sync.db --hub-db ~/.aletheia/hub.db
+aletheia mcp-link create --projects shop
+```
+
+Then, on the same machine or a device that can reach the hub over a TLS tunnel:
+
+```bash
+claude mcp add --transport http aletheia http://127.0.0.1:37791/mcp --header "Authorization: Bearer <token>"
+```
+
+Expected: `claude mcp list` shows the server connected; a prompt like "search memory for backoff" finds the
+memory; `aletheia audit` shows one `mcp.call` row per tool call; `aletheia mcp-link revoke <id>` makes the next
+call fail with 401. For a remote hub the URL must be the tunnel's HTTPS URL and the hub must run with
+`--behind-tls`; add `--mcp-origins https://claude.ai` if a browser-based client is used.
+
 ## What the automated tests already cover
 
 `test/install-claude.test.mjs`, `test/claude-hooks.test.mjs` and `test/e2e-capture.test.mjs` cover: the dry run,

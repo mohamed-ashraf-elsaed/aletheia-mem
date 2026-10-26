@@ -556,6 +556,51 @@ export function createHubRoutes({ hub, config }) {
       hub.audit("ui", "sync.revoke", { deviceId: b.device_id, revoked });
       return h.json({ revoked });
     }
+
+    // ---- T-107: the private remote MCP endpoint, managed from the Tools tab ----
+    const mcpLinkView = (token) => ({
+      id: token.id,
+      scope: token.scope,
+      name: token.name,
+      projects: token.projects,
+      revoked: !!token.revoked_at,
+      lastUsedAt: token.last_used_at,
+      createdAt: token.created_at,
+    });
+    const mcpLinkConfig = (token, { base }) => {
+      const url = `${base.replace(/\/+$/, "")}/mcp`;
+      return {
+        url,
+        claudeCode: `claude mcp add --transport http aletheia ${url} --header "Authorization: Bearer ${token}"`,
+        claudeDesktop: JSON.stringify({ mcpServers: { aletheia: { type: "http", url, headers: { Authorization: `Bearer ${token}` } } } }, null, 2),
+      };
+    };
+    if (pathname === "/api/hub/mcp-links" && method === "GET") {
+      const store = getSyncStore();
+      const account = store.ensureAccount();
+      return h.json({ links: store.listTokens(account.id).filter((token) => ["mcp", "read", "sync", "admin"].includes(token.scope)).map(mcpLinkView) });
+    }
+    if (pathname === "/api/hub/mcp-links" && method === "POST") {
+      const b = await readJson(request) ?? {};
+      const store = getSyncStore();
+      const account = store.ensureAccount();
+      const projects = (Array.isArray(b.projects) ? b.projects : []).map(String).filter(Boolean);
+      const scope = b.scope === "sync" || b.scope === "admin" ? b.scope : "mcp";
+      const minted = store.mintToken(account.id, { scope, name: typeof b.name === "string" ? b.name : null, projects });
+      const base = typeof b.url === "string" && b.url ? b.url : `http://127.0.0.1:${config.syncPort}`;
+      hub.audit("ui", "mcp-link.create", { id: minted.id, scope, projects });
+      return h.json({ id: minted.id, scope, projects, token: minted.token, ...mcpLinkConfig(minted.token, { base }) }, 201);
+    }
+    if (pathname === "/api/hub/mcp-links/revoke" && method === "POST") {
+      const b = await readJson(request);
+      need(b && Number.isSafeInteger(Number(b.id)), "id is required.");
+      const store = getSyncStore();
+      const account = store.ensureAccount();
+      const revoked = store.revokeToken(account.id, Number(b.id));
+      store.audit(account.id, { action: "token.revoke", result: revoked ? "ok" : "missing", detail: { id: Number(b.id) } });
+      hub.audit("ui", "mcp-link.revoke", { id: Number(b.id), revoked });
+      return h.json({ revoked });
+    }
     return h.json({ error: "Not found." }, 404);
   }
 
