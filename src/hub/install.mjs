@@ -120,7 +120,7 @@ function planMcp({ file, entry, key = "mcpServers" }) {
   if (!plainObject(next[key])) next[key] = {};
   next[key][SERVER_NAME] = entry;
   const after = jsonText(next);
-  return { kind: "mcp", title: `MCP server in ${file}`, file, before: text, after, changed: text !== after, entry };
+  return { kind: "mcp", title: `MCP server in ${file}`, file, before: text, after, changed: text !== after, entry, key };
 }
 
 /** One JSON step that changes several keys at once (Gemini keeps hooks and MCP in settings.json). */
@@ -425,6 +425,34 @@ export const INSTALLERS = [
       return { file: join(env.home, ".codeium", "windsurf", "hooks.json"), commands: Object.fromEntries(events.map((event) => [event, hookCommand({ bun: env.bun, hookScript: runnerFor(env), tool: "windsurf", event })])) };
     },
   }),
+  defineInstaller({
+    id: "opencode",
+    name: "OpenCode",
+    capabilities: "mcp+rules",
+    verification: "from-docs-only",
+    evidence: "https://opencode.ai/docs/mcp-servers/ and /docs/rules/ fetched 2026-10-26; the plugin page does not document the event payloads, so no capture plugin ships",
+    detection: [".config/opencode"],
+    notes: [
+      "OpenCode ships as mcp+rules only. Its plugin system exists, but the official plugin page does not document the event payload fields, so this installer does not write a plugin.",
+      "Global config is ~/.config/opencode/opencode.json; the MCP entry uses the documented `mcp` key with type local.",
+      "Global rules are ~/.config/opencode/AGENTS.md; project rules are AGENTS.md.",
+    ],
+    events: [],
+    plan(env) {
+      const jsonFile = join(env.home, ".config", "opencode", "opencode.json");
+      const jsoncFile = join(env.home, ".config", "opencode", "opencode.jsonc");
+      if (!existsSync(jsonFile) && existsSync(jsoncFile)) throw new RangeError(`${jsoncFile} is JSONC; this installer only writes opencode.json. Move the settings or remove the comments.`);
+      const steps = [
+        planMcp({ file: jsonFile, key: "mcp", entry: { type: "local", command: [env.bun, env.mcpScript], enabled: true } }),
+        planRules({ tool: "opencode", home: env.home, rules: env.rules ?? [] }),
+      ].filter(Boolean);
+      return { tool: "opencode", name: "OpenCode", env, steps, notes: [
+        "OpenCode ships as mcp+rules only. Its plugin system exists, but the official plugin page does not document the event payload fields, so this installer does not write a plugin.",
+        "Global config is ~/.config/opencode/opencode.json; the MCP entry uses the documented `mcp` key with type local.",
+        "Global rules are ~/.config/opencode/AGENTS.md; project rules are AGENTS.md.",
+      ] };
+    },
+  }),
 ];
 
 export const installerIds = () => INSTALLERS.map((installer) => installer.id);
@@ -684,7 +712,7 @@ export function applyUninstall(plan, { dataDir } = {}) {
 export function formatPlan(plan) {
   const lines = [`${plan.name} (${plan.tool}) — ${plan.capabilities ?? "full"}, ${plan.verification ?? "from-docs-only"}`];
   for (const step of plan.steps) {
-    const state = step.kind === "rules" ? `${step.rules} rule${step.rules === 1 ? "" : "s"}` : step.kind === "hooks" ? Object.keys(step.commands ?? {}).join(", ") : step.kind === "settings" ? "MCP + hooks" : "mcpServers.aletheia";
+    const state = step.kind === "rules" ? `${step.rules} rule${step.rules === 1 ? "" : "s"}` : step.kind === "hooks" ? Object.keys(step.commands ?? {}).join(", ") : step.kind === "settings" ? "MCP + hooks" : step.file.endsWith(".toml") ? "[mcp_servers.aletheia]" : `${step.key ?? "mcpServers"}.aletheia`;
     lines.push(`  ${step.changed ? "write " : "done  "} ${step.kind.padEnd(8)} ${step.file}${state ? `  (${state})` : ""}`);
   }
   for (const note of plan.notes ?? []) lines.push(`  note  ${note}`);

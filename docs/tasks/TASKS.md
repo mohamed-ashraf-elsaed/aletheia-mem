@@ -109,7 +109,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-065 | Add the Windsurf installer and hooks | P3 | T-058 | validated | 2026-10-26 | [T-065.md](T-065.md) |
 | T-066 | Ship plugin manifests for each host | P3 | T-058 | todo | — | [T-066.md](T-066.md) |
 | T-067 | Add MCP Streamable HTTP transport | P3 | T-011 | todo | — | [T-067.md](T-067.md) |
-| T-068 | Add the OpenCode installer and plugin | P3 | T-058 | todo | — | [T-068.md](T-068.md) |
+| T-068 | Add the OpenCode installer and plugin | P3 | T-058 | validated | 2026-10-26 | [T-068.md](T-068.md) |
 | T-069 | Add work-state and corpus MCP tools | P3 | T-017 | todo | — | [T-069.md](T-069.md) |
 | T-070 | Verify rules formats on real installs | P3 | T-058 | todo | — | [T-070.md](T-070.md) |
 | T-071 | Add uninstall for every installer | P3 | T-058 | validated | 2026-10-26 | [T-071.md](T-071.md) |

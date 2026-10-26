@@ -43,9 +43,9 @@ describe("T-071: every installer has one generic uninstall and doctor path", () 
   test("install --list names the capability and verification for every installer", () => {
     const { home } = setup();
     const rows = listInstallers({ home });
-    for (const id of ["claude-code", "command-code", "cursor", "codex", "gemini-cli", "windsurf"]) expect(rows.some((row) => row.id === id)).toBe(true);
+    for (const id of ["claude-code", "command-code", "cursor", "codex", "gemini-cli", "windsurf", "opencode"]) expect(rows.some((row) => row.id === id)).toBe(true);
     for (const row of rows) {
-      expect(row.capabilities).toBe("full");
+      expect(["full", "mcp+rules", "rules-only"]).toContain(row.capabilities);
       expect(row.verification).toBe("from-docs-only");
       expect(row.evidence.length).toBeGreaterThan(10);
       expect(row.installed).toBe(false);
