@@ -250,3 +250,15 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 - Gemini memory: the Google support URL tried returned a limits page, not the memory page. Recorded as `UNVERIFIED`.
 - `pypi.org` returned 404 for `memmachine`; the project is installed from GitHub or Docker, so no PyPI figure is claimed.
 - `api.npmjs.org` returned 404 for `basic-memory` and `@mem0/openmemory`; both are Python or differently named packages. No npm figure is claimed for them.
+
+## E. Additional fetches made while writing documents 21 to 24
+
+| Date | URL | What it gave |
+|---|---|---|
+| 2026-10-26 | https://docs.mem0.ai/openmemory/overview | mem0 documentation index; it does not list an OpenMemory page, so mem0's OpenMemory is recorded from the `mem0ai/openmemory` repository instead |
+| 2026-10-26 | https://docs.mem0.ai/integrations/mcp | Mem0 MCP exists; supported clients listed as Claude, Claude Code, Codex, Cursor, Windsurf, VS Code, OpenCode |
+| 2026-10-26 | https://docs.mem0.ai/llms.txt | mem0 documentation index; grep for "openmemory" returned nothing |
+| 2026-10-26 | https://r.jina.ai/https://help.openai.com/en/articles/8590148-memory-faq | plain-text proxy of the OpenAI Memory FAQ (HTTP 200); ChatGPT memory sources and controls |
+| 2026-10-26 | https://r.jina.ai/https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/use-agent-memories | proxy returned a 404 page; Copilot memory remains UNVERIFIED |
+| 2026-10-26 | https://r.jina.ai/https://support.google.com/gemini/answer/16275805 | proxy returned the Gemini limits page, not a memory page; Gemini memory remains UNVERIFIED |
+| 2026-10-26 | https://docs.cursor.com/llms-full.txt | returned HTML, not a text index; Cursor memory specifics remain UNVERIFIED |
