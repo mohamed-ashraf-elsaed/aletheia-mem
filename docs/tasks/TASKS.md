@@ -184,7 +184,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-146 | Retire the iframe and offer the classic viewer from Tools | P6 | T-143 | validated | 2026-10-26 | [T-146.md](T-146.md) |
 | T-147 | Test the Work view and guard the old branding | P6 | T-142, T-143, T-144, T-145, T-146 | validated | 2026-10-26 | [T-147.md](T-147.md) |
 | T-148 | Study claude-mem's viewer and derive Aletheia's design tokens | P6 | none | validated | 2026-10-26 | [T-148.md](T-148.md) |
-| T-149 | Add DOM-free UI logic: pager, time, highlight, hash params, Region machine | P6 | T-148 | todo | — | [T-149.md](T-149.md) |
+| T-149 | Add DOM-free UI logic: pager, time, highlight, hash params, Region machine | P6 | T-148 | validated | 2026-10-26 | [T-149.md](T-149.md) |
 | T-150 | Add a safe Markdown renderer | P6 | T-148 | todo | — | [T-150.md](T-150.md) |
 | T-151 | Add limit, offset and total to every list route | P6 | none | todo | — | [T-151.md](T-151.md) |
 | T-152 | Build the component system | P6 | T-148, T-149 | todo | — | [T-152.md](T-152.md) |
