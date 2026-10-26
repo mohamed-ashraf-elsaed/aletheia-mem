@@ -1,0 +1,49 @@
+{
+  "name": "aletheia-mem",
+  "version": "0.1.0",
+  "description": "Aletheia: a free, local memory and rules hub for AI coding tools. One store any tool reads over MCP, REST or CLI; rules synced to CLAUDE.md, AGENTS.md, Cursor and more; export and import to move between tools.",
+  "keywords": [
+    "ai-memory",
+    "mcp",
+    "model-context-protocol",
+    "agent-memory",
+    "rules-sync",
+    "agents-md",
+    "claude-code",
+    "cursor",
+    "codex",
+    "gemini-cli",
+    "local-first",
+    "sqlite",
+    "fts5"
+  ],
+  "homepage": "https://mohamed-ashraf-elsaed.github.io/aletheia-mem/",
+  "bugs": {
+    "url": "https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mohamed-ashraf-elsaed/aletheia-mem.git"
+  },
+  "author": "Mohamed Ashraf Elsaed",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "bin": {
+    "aletheia": "bin/aletheia.mjs",
+    "aletheia-server": "bin/aletheia-server.mjs",
+    "aletheia-mcp": "bin/mcp.mjs"
+  },
+  "scripts": {
+    "start": "bun bin/aletheia-server.mjs",
+    "dev": "bun --watch bin/aletheia-server.mjs",
+    "test": "bun test",
+    "check:live": "bun scripts/diff-against-live.mjs",
+    "bench:locomo": "bun bench/locomo-retrieval.mjs",
+    "bench:claude-mem": "bun bench/claude-mem-baseline.mjs",
+    "bench:scale": "bun bench/scale.mjs",
+    "ledger": "bun bin/ledger.mjs"
+  }
+}

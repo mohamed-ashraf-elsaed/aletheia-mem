@@ -1,0 +1,66 @@
+// Runtime configuration. Every path and port is an environment variable with a default.
+import { existsSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+
+const env = process.env;
+const home = homedir();
+
+// The original worker listens on 37700 + (uid % 100). The clone defaults to a fixed port next to it.
+export const DEFAULT_PORT = 37790;
+
+// Existing data written under the project's earlier name (work-view-local) keeps being used until it is moved.
+export function defaultDataDir(homeDir = home) {
+  const current = join(homeDir, ".aletheia");
+  const earlier = join(homeDir, ".work-view-local");
+  return !existsSync(current) && existsSync(earlier) ? earlier : current;
+}
+
+export function loadConfig(overrides = {}) {
+  const dataDir = overrides.dataDir ?? env.ALETHEIA_DATA_DIR ?? defaultDataDir();
+  const cfg = {
+    host: "127.0.0.1",
+    port: Number(overrides.port ?? env.ALETHEIA_PORT ?? DEFAULT_PORT),
+    // Read-only source: the claude-mem database.
+    sourceDb: overrides.sourceDb ?? env.CLAUDE_MEM_DB ?? join(home, ".claude-mem", "claude-mem.db"),
+    // Everything the clone writes lives under dataDir.
+    dataDir,
+    overlayDb: overrides.overlayDb ?? join(dataDir, "overlay.db"),
+    reviewDb: overrides.reviewDb ?? join(dataDir, "work-view-reviews.db"),
+    ledgerDir: overrides.ledgerDir ?? env.ALETHEIA_LEDGER_DIR ?? join(dataDir, "ledger"),
+    humanCopyCache: overrides.humanCopyCache ?? join(dataDir, "human-copy.json"),
+    rulesFile: overrides.rulesFile ?? env.ALETHEIA_RULES_FILE ?? join(dataDir, "MY-RULES.md"),
+    claudeInstructionsFile: overrides.claudeInstructionsFile ?? env.ALETHEIA_CLAUDE_MD ?? join(home, ".claude", "CLAUDE.md"),
+    setupStateFile: overrides.setupStateFile ?? join(dataDir, "setup-state.json"),
+    publicDir: overrides.publicDir ?? join(import.meta.dir, "..", "public"),
+    hubDb: overrides.hubDb ?? env.ALETHEIA_HUB_DB ?? join(dataDir, "hub.db"),
+    hubUiDir: overrides.hubUiDir ?? join(import.meta.dir, "..", "public-hub"),
+    // Optional bearer key for /v1 (tools). Leave empty on a single-user machine; the API is loopback-only anyway.
+    apiKey: overrides.apiKey ?? env.ALETHEIA_API_KEY ?? "",
+    promptsDir: overrides.promptsDir ?? join(import.meta.dir, "..", "prompts"),
+    vendorDir: overrides.vendorDir ?? join(import.meta.dir, "..", "vendor"),
+    pollIntervalMs: Number(overrides.pollIntervalMs ?? env.ALETHEIA_POLL_MS ?? 1000),
+    // The LLM refresh (grouping, reviews, goals, story) is off unless a provider is chosen.
+    // ALETHEIA_PROVIDER = claude-cli | openai | none
+    provider: overrides.provider ?? env.ALETHEIA_PROVIDER ?? "none",
+    autoRefresh: (overrides.autoRefresh ?? env.ALETHEIA_AUTO_REFRESH ?? "true") !== "false" && (overrides.autoRefresh ?? true) !== false,
+    refreshCheckMs: Number(overrides.refreshCheckMs ?? env.ALETHEIA_REFRESH_CHECK_MS ?? 10 * 60_000),
+    // Human copy (plain-language card text) needs an OpenAI-compatible endpoint.
+    openai: {
+      baseUrl: env.ALETHEIA_OPENAI_BASE_URL ?? "https://openrouter.ai/api/v1/chat/completions",
+      apiKey: env.ALETHEIA_OPENAI_API_KEY ?? "",
+      model: env.ALETHEIA_OPENAI_MODEL ?? "",
+    },
+    claudeBin: env.ALETHEIA_CLAUDE_BIN ?? "claude",
+    teamMode: env.WORK_STATE_TEAM_MODE === "1",
+    // 1 = reproduce the original's silent failure to read observations (see docs/08-findings.md, F1).
+    bugCompatible: (overrides.bugCompatible ?? env.ALETHEIA_BUG_COMPAT) === true || (overrides.bugCompatible ?? env.ALETHEIA_BUG_COMPAT) === "1",
+    home,
+    ...overrides.extra,
+  };
+  return cfg;
+}
+
+export function abbreviateHome(path, homeDir = home) {
+  return path === homeDir || path.startsWith(`${homeDir}/`) ? `~${path.slice(homeDir.length)}` : path;
+}

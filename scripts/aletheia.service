@@ -1,0 +1,13 @@
+[Unit]
+Description=aletheia-mem
+After=default.target
+
+[Service]
+WorkingDirectory=%h/Projects/aletheia-mem
+ExecStart=%h/.bun/bin/bun bin/aletheia-server.mjs
+Environment=ALETHEIA_PORT=37790
+# Environment=ALETHEIA_PROVIDER=claude-cli
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

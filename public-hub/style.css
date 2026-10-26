@@ -1,0 +1,52 @@
+:root {
+  --bg: #faf8f5; --panel: #fff; --ink: #1d1b19; --muted: #6b645c; --line: #e6e0d8; --accent: #c4552d; --accent-ink: #fff;
+  --ok: #2f7d4f; --warn: #b7791f; --bad: #b3261e; --chip: #f1ece5; --code: #f6f2ec;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #161412; --panel: #1f1c19; --ink: #efeae3; --muted: #a39b91; --line: #34302b; --accent: #e07a52; --accent-ink: #161412; --ok: #5cb37d; --warn: #e0b04f; --bad: #f2837a; --chip: #2a2622; --code: #24201d; }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+.top { display: flex; align-items: center; gap: 20px; padding: 12px 24px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 5; }
+.brand { font-weight: 700; color: var(--accent); text-decoration: none; letter-spacing: .2px; }
+nav { display: flex; gap: 4px; flex-wrap: wrap; }
+nav a { padding: 6px 12px; border-radius: 8px; color: var(--muted); text-decoration: none; font-weight: 500; }
+nav a.on { background: var(--chip); color: var(--ink); }
+.spacer { flex: 1; }
+.link { color: var(--muted); text-decoration: none; font-size: 14px; }
+main { max-width: 1080px; margin: 0 auto; padding: 24px 16px 80px; }
+h1 { font-size: 22px; margin: 0 0 4px; }
+h2 { font-size: 16px; margin: 24px 0 8px; }
+.sub { color: var(--muted); margin: 0 0 16px; }
+.grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+.stat b { display: block; font-size: 28px; line-height: 1.1; }
+.stat span { color: var(--muted); font-size: 13px; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.bar { height: 8px; border-radius: 4px; background: var(--chip); overflow: hidden; margin: 4px 0 10px; }
+.bar i { display: block; height: 100%; background: var(--accent); }
+input, select, textarea, button { font: inherit; color: inherit; }
+input[type=text], input[type=search], select, textarea { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; }
+textarea { width: 100%; min-height: 84px; resize: vertical; }
+input[type=search] { min-width: 240px; }
+button { cursor: pointer; border: 1px solid var(--line); background: var(--panel); border-radius: 8px; padding: 6px 12px; }
+button:hover { border-color: var(--accent); }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 600; }
+button.danger { color: var(--bad); }
+button:disabled { opacity: .5; cursor: default; }
+.chip { display: inline-block; padding: 1px 8px; border-radius: 999px; background: var(--chip); font-size: 12px; color: var(--muted); }
+.chip.ok { color: var(--ok); } .chip.warn { color: var(--warn); }
+.mem h3 { margin: 0 0 2px; font-size: 15px; }
+.meta { color: var(--muted); font-size: 12.5px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.mem p { margin: 8px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.mem .acts { margin-top: 10px; display: flex; gap: 6px; }
+.list { display: grid; gap: 10px; margin-top: 12px; }
+pre { background: var(--code); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; overflow: auto; font-size: 12.5px; max-height: 320px; margin: 8px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+label { display: block; font-size: 13px; color: var(--muted); margin: 8px 0 3px; }
+.checks label { display: inline-flex; gap: 6px; align-items: center; margin: 4px 12px 4px 0; color: var(--ink); }
+.empty { color: var(--muted); padding: 28px; text-align: center; border: 1px dashed var(--line); border-radius: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+#toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 8px 16px; border-radius: 10px; opacity: 0; transition: opacity .2s; pointer-events: none; max-width: 90vw; }
+#toast.show { opacity: 1; }
+@media (max-width: 640px) { .top { padding: 10px 12px; gap: 10px; } main { padding: 16px 12px 60px; } }

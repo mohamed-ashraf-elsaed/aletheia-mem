@@ -1,0 +1,125 @@
+#!/usr/bin/env bun
+// aletheia: the command line for the shared memory hub. Works without the server running.
+//   aletheia capture --tool <name> [--project p]          read one hook payload (JSON) on stdin, store it (secrets redacted)
+//   aletheia context [--project p] [--tool t]             print session-start context for any tool
+//   aletheia search <query> [--project p]                 index of matches
+//   aletheia save <text> [--project p] [--type t] [--pin] save a memory
+//   aletheia import claude-mem [--path db] [--no-prompts] bring memory in from claude-mem
+//   aletheia import bundle <file.jsonl>                   restore an export
+//   aletheia export [--format jsonl|markdown] [--project p] [--events] [--out file]
+//   aletheia rules list | add <text> [--when w] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
+//   aletheia tools                                        detected tools and how to connect each
+//   aletheia connect <tool> [--write]                     preview (default) or write the MCP config for a tool
+//   aletheia compress [--project p]                       turn raw events into observations (needs ALETHEIA_PROVIDER)
+import { readFileSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
+import { loadConfig } from "../src/config.mjs";
+import { normalizeHook, redact } from "../src/hub/capture.mjs";
+import { compressRecent } from "../src/hub/compress.mjs";
+import { importClaudeMem } from "../src/hub/importers.mjs";
+import { parseRulesFromText, syncTool, targetPath } from "../src/hub/rules-sync.mjs";
+import { HubStore } from "../src/hub/store.mjs";
+import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "../src/hub/tools.mjs";
+import { projectKeyForPath } from "../src/readmodel/project.mjs";
+import { makeProvider } from "../src/refresh/providers.mjs";
+
+const config = loadConfig();
+const [cmd, ...rest] = process.argv.slice(2);
+
+function parseArgs(args) {
+  const flags = {};
+  const pos = [];
+  for (let i = 0; i < args.length; i++) {
+    const a = args[i];
+    if (a.startsWith("--")) {
+      const key = a.slice(2);
+      const next = args[i + 1];
+      if (next === undefined || next.startsWith("--")) flags[key] = true;
+      else { flags[key] = next; i++; }
+    } else pos.push(a);
+  }
+  return { flags, pos };
+}
+const out = (v) => console.log(typeof v === "string" ? v : JSON.stringify(v, null, 2));
+const die = (m) => { console.error(m); process.exit(1); };
+
+async function main() {
+  const { flags, pos } = parseArgs(rest);
+  const hub = new HubStore(config.hubDb);
+  const argv = mcpCommand({ bun: process.execPath, script: join(import.meta.dir, "mcp.mjs") });
+  try {
+    switch (cmd) {
+      case "capture": {
+        let payload;
+        try { payload = JSON.parse(readFileSync(0, "utf8")); } catch { return void process.exit(0); } // a hook must never break the tool
+        const memory = normalizeHook(payload, { tool: flags.tool ?? "unknown", project: flags.project });
+        if (memory) hub.add(memory, { actor: memory.tool });
+        return;
+      }
+      case "context": return out(hub.context({ project: flags.project ?? projectKeyForPath(process.cwd()), tool: flags.tool, limit: Number(flags.limit) || 20 }));
+      case "search": {
+        const rows = hub.search({ query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20 });
+        return out(rows.length ? rows.map((r) => `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title} (${r.project}, ${r.tool})`).join("\n") : "No matches.");
+      }
+      case "save": {
+        const text = pos.join(" ");
+        if (!text) die("Usage: aletheia save <text>");
+        const r = hub.add({ project: flags.project ?? projectKeyForPath(process.cwd()), kind: "note", type: flags.type ?? "note", title: redact(text).slice(0, 100), narrative: redact(text), tool: flags.tool ?? "cli", pinned: !!flags.pin }, { actor: "cli" });
+        return out(r.created ? `Saved as #${r.id}.` : `Already saved as #${r.id}.`);
+      }
+      case "import": {
+        if (pos[0] === "claude-mem") return out(importClaudeMem(hub, flags.path ?? config.sourceDb, { includePrompts: !flags["no-prompts"], project: flags.project || null }));
+        if (pos[0] === "bundle") return out(hub.importBundle(readFileSync(pos[1] ?? die("Usage: aletheia import bundle <file>"), "utf8")));
+        return die("Usage: aletheia import claude-mem | bundle <file>");
+      }
+      case "export": {
+        const body = flags.format === "markdown" ? hub.exportMarkdown({ project: flags.project }) : hub.exportBundle({ project: flags.project, includeEvents: !!flags.events });
+        if (flags.out) { writeFileSync(flags.out, body); return out(`Wrote ${flags.out}`); }
+        return process.stdout.write(body);
+      }
+      case "rules": {
+        const sub = pos[0];
+        if (sub === "list") return out(hub.rules.list().map((r) => `${r.enabled ? "on " : "off"} ${r.id}  ${r.when ? `When ${r.when}: ` : ""}${r.then}  [${r.scopeTier === "everywhere" ? "everywhere" : r.scopeName}${r.tools ? `; ${r.tools.join(",")}` : ""}]`).join("\n") || "No rules yet.");
+        if (sub === "add") { const r = hub.rules.add({ then: pos.slice(1).join(" "), when: typeof flags.when === "string" ? flags.when : "" }); return out(r.created ? `Added ${r.id}.` : `Already there (${r.id}).`); }
+        if (sub === "sync" || sub === "import") {
+          const scope = flags.global ? "global" : "project";
+          const dir = scope === "project" ? resolve(flags.dir ?? process.cwd()) : undefined;
+          if (sub === "import") {
+            const tool = flags.tool ?? die("Usage: aletheia rules import --tool <id> [--dir path | --global]");
+            const found = parseRulesFromText(readFileSync(targetPath(tool, { scope, projectDir: dir, home: config.home }), "utf8"));
+            const res = { found: found.length, added: 0, skipped: 0 };
+            for (const r of found) res[hub.rules.add({ ...r, source: `import:${tool}` }).created ? "added" : "skipped"]++;
+            return out(res);
+          }
+          const ids = typeof flags.tools === "string" ? flags.tools.split(",") : TOOLS.map((t) => t.id);
+          for (const id of ids) if (!toolById(id)) die(`Unknown tool: ${id}`);
+          for (const id of ids) {
+            const r = syncTool(hub.rules.list(), id, { scope, projectDir: dir, home: config.home, dryRun: !flags.write });
+            if (r.skipped) { out(`- ${id}: ${r.skipped}`); continue; }
+            out(`- ${id}: ${r.path} — ${r.rules} rules, ${r.written ? `written${r.backup ? ` (backup ${r.backup})` : ""}` : r.changed ? "would change (add --write)" : "already up to date"}`);
+          }
+          return;
+        }
+        return die("Usage: aletheia rules list | add <text> | sync | import");
+      }
+      case "tools": return out(detectTools(config.home).map((t) => `${t.installed ? "✔" : "·"} ${t.id.padEnd(12)} ${t.name}  rules: ${t.rulesProject}${t.rulesGlobal ? ` | ~/${t.rulesGlobal}` : ""}${t.canConnect ? "  mcp: yes" : ""}`).join("\n"));
+      case "connect": {
+        const tool = toolById(pos[0] ?? "") ?? die(`Unknown tool. Try: ${TOOLS.filter((t) => t.mcp).map((t) => t.id).join(", ")}`);
+        const plan = mcpPlan(tool, config.home, argv);
+        if (!plan.supported) return die(`${tool.name} has no MCP configuration in the registry.`);
+        if (plan.kind === "command") return out(`Run this:\n  ${plan.command}`);
+        if (!flags.write) return out(`${plan.connected ? "Already connected.\n" : ""}Would write to ${plan.path}:\n${plan.snippet}\nAdd --write to apply (a backup is kept).`);
+        return out(applyMcp(tool, config.home, argv));
+      }
+      case "compress": {
+        const ask = makeProvider(config) ?? die("Set ALETHEIA_PROVIDER=claude-cli or openai first.");
+        return out(await compressRecent(hub, ask, { project: flags.project }));
+      }
+      default:
+        return die(readFileSync(new URL(import.meta.url), "utf8").split("\n").filter((l) => l.startsWith("//")).map((l) => l.slice(3)).join("\n"));
+    }
+  } finally {
+    hub.close();
+  }
+}
+await main();

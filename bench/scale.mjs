@@ -1,0 +1,62 @@
+#!/usr/bin/env bun
+// Scale check: how the store behaves with tens of thousands of memories.
+//   bun bench/scale.mjs [rows=50000] [vectors=20000]
+// Synthetic text (Zipf-like word frequencies) and random unit vectors. Measures insert rate, BM25 search latency
+// (p50/p95), brute-force vector search latency, and database size. Numbers depend on the machine; run it on yours.
+import { statSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { HubStore } from "../src/hub/store.mjs";
+import { topKByVector } from "../src/hub/retrieval.mjs";
+
+const N = Number(process.argv[2]) || 50_000;
+const V = Number(process.argv[3]) || 20_000;
+const path = join(tmpdir(), `wv-scale-${process.pid}.db`);
+const store = new HubStore(path);
+const vocab = Array.from({ length: 5000 }, (_, i) => `w${i.toString(36)}${i % 7 === 0 ? "ing" : ""}`);
+const zipf = () => vocab[Math.min(vocab.length - 1, Math.floor(Math.exp(Math.random() * Math.log(vocab.length))) - 1)];
+const sentence = (n) => Array.from({ length: n }, zipf).join(" ");
+const pct = (arr, p) => arr.slice().sort((a, b) => a - b)[Math.floor((arr.length - 1) * p)];
+
+let t0 = performance.now();
+store.db.exec("BEGIN");
+for (let i = 0; i < N; i++) {
+  store.add({ project: `p${i % 40}`, kind: "observation", type: "note", title: sentence(8), narrative: sentence(60), tool: `t${i % 6}`, createdAtEpoch: 1_000_000 + i }, { actor: "import" });
+  if (i % 5000 === 4999) { store.db.exec("COMMIT"); store.db.exec("BEGIN"); }
+}
+store.db.exec("COMMIT");
+const insertMs = performance.now() - t0;
+console.log(`insert   ${N} memories in ${(insertMs / 1000).toFixed(1)} s  (${Math.round(N / (insertMs / 1000))}/s), db ${(statSync(path).size / 1e6).toFixed(0)} MB`);
+
+const lat = (fn, n = 200) => { const xs = []; for (let i = 0; i < n; i++) { const t = performance.now(); fn(); xs.push(performance.now() - t); } return xs; };
+const queries = Array.from({ length: 200 }, () => sentence(9));
+let qi = 0;
+for (const [label, opts] of [["bm25 all projects", {}], ["bm25 one project", { project: "p7" }], ["bm25 one tool+project", { project: "p7", tool: "t3" }]]) {
+  qi = 0;
+  const xs = lat(() => store.search({ query: queries[qi++ % queries.length], limit: 10, ...opts }));
+  console.log(`search   ${label.padEnd(22)} p50 ${pct(xs, 0.5).toFixed(1)} ms   p95 ${pct(xs, 0.95).toFixed(1)} ms`);
+}
+const xs = lat(() => store.list({ limit: 30 }), 100);
+console.log(`list     newest 30             p50 ${pct(xs, 0.5).toFixed(1)} ms   p95 ${pct(xs, 0.95).toFixed(1)} ms`);
+const ys = lat(() => store.stats(), 20);
+console.log(`stats    whole store            p50 ${pct(ys, 0.5).toFixed(1)} ms   p95 ${pct(ys, 0.95).toFixed(1)} ms`);
+
+// vectors
+const dim = 384;
+const rnd = () => { const v = new Float32Array(dim); for (let i = 0; i < dim; i++) v[i] = Math.random() - 0.5; return v; };
+const ids = store.db.prepare("SELECT id FROM memories ORDER BY id LIMIT ?").all(V).map((r) => r.id);
+t0 = performance.now();
+store.db.exec("BEGIN");
+for (const id of ids) store.setVector(id, "synthetic", rnd());
+store.db.exec("COMMIT");
+console.log(`vectors  stored ${ids.length} x ${dim} dims in ${((performance.now() - t0) / 1000).toFixed(1)} s`);
+t0 = performance.now();
+const rows = store.vectorRows();
+console.log(`vectors  first load (cache fill) ${(performance.now() - t0).toFixed(0)} ms, ~${Math.round((rows.length * dim * 4) / 1e6)} MB resident`);
+const qv = rnd();
+const vs = lat(() => topKByVector(qv, rows, 100), 50);
+console.log(`vectors  brute-force top-100    p50 ${pct(vs, 0.5).toFixed(1)} ms   p95 ${pct(vs, 0.95).toFixed(1)} ms   (${rows.length} vectors)`);
+qi = 0;
+const hs = lat(() => store.search({ query: queries[qi++ % queries.length], limit: 10, queryVec: qv }), 50);
+console.log(`hybrid   bm25 + vectors         p50 ${pct(hs, 0.5).toFixed(1)} ms   p95 ${pct(hs, 0.95).toFixed(1)} ms`);
+store.close();
