@@ -305,7 +305,13 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       }
       if (method === "DELETE") return getAlerts().removeRule(Number(m[1])) ? h.json({ deleted: true }) : h.json({ error: "That alert rule does not exist." }, 404);
     }
-    if (pathname === "/api/hub/alerts/feed" && method === "GET") return h.json({ deliveries: getAlerts().feed({ limit: Number(qs(url).limit) || 100 }) });
+    if (pathname === "/api/hub/alerts/feed" && method === "GET") {
+      // The feed keeps the newest 500 deliveries; the UI pages through them.
+      const paging = pagingOf(qs(url));
+      const all = getAlerts().feed({ limit: 500 });
+      const deliveries = slicePage(all, paging);
+      return h.json({ deliveries, ...pageInfo({ total: all.length, ...paging, count: deliveries.length }) });
+    }
     if (pathname === "/api/hub/alerts/test" && method === "POST") {
       const b = await readJson(request);
       need(b && Number.isSafeInteger(Number(b.id)), "id is required.");

@@ -33,7 +33,8 @@ function uiFiles() {
 export function apiPaths() {
   const found = new Map();
   for (const file of uiFiles()) {
-    const source = readFileSync(file, "utf8");
+    // Comments name routes in prose ("/api/hub/team/*"); only code counts.
+    const source = readFileSync(file, "utf8").split("\n").filter((line) => !line.trim().startsWith("//")).join("\n");
     for (const match of source.matchAll(/["'`](\/(?:api\/hub|v1)\/[A-Za-z0-9_\-/.:${}()]*)/g)) {
       let path = match[1].replace(/\$\{[^}]*\}/g, "1").split("?")[0].replace(/\/+$/, "");
       // A trailing slash left by "/api/hub/memories/${id}" becomes /1; a prefix such as "/api/hub/review/" is cut.

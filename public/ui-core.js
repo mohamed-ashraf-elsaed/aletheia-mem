@@ -30,6 +30,8 @@ export const SUBVIEWS = {
     { id: "tools", label: "Tools" },
     { id: "devices", label: "Devices" },
     { id: "access", label: "Remote access" },
+    { id: "alerts", label: "Alerts" },
+    { id: "team", label: "Team" },
     { id: "checks", label: "Checks" },
     { id: "activity", label: "Activity" },
   ],

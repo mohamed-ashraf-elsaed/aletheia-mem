@@ -35,6 +35,12 @@ const ROUTES = [
   [/^\/api\/hub\/tools/, () => json({ tools: [{ id: "claude-code", name: "Claude Code", installed: true }, { id: "agents-md", name: "AGENTS.md", installed: false }] })],
   [/^\/api\/hub\/doctor/, () => json({ tools: [tool], checks: [{ name: "server", ok: true, detail: "ok" }], dataDir: "/d", generatedAt: NOW })],
   [/^\/api\/hub\/sync\/status/, () => json({ epoch: 1, headSeq: 3, deviceCount: 1, e2ee: { enabled: false }, devices: [{ deviceId: "d1", name: ARABIC, revoked: false, pendingOps: 1, lastSync: NOW }], total: 1 })],
+  [/^\/api\/hub\/alerts\/rules/, () => json({ rules: [{ id: 1, name: ARABIC, event: "token.revoked", target: "file", path: "/a.log", hasSecret: true, allowPrivate: false }] })],
+  [/^\/api\/hub\/alerts\/feed/, () => json({ deliveries: [{ id: 3, event: "sync.error", status: "failed", attempts: 2, lastError: ARABIC }], total: 1 })],
+  [/^\/api\/hub\/team\/members/, () => json({ members: [{ name: ARABIC, role: "editor", projects: ["shop"], revoked: false }] })],
+  [/^\/api\/hub\/team\/board/, () => json({ entries: [{ kind: "decision", text: ARABIC, author: { name: "Sam" }, at: NOW }] })],
+  [/^\/api\/hub\/team\/brief/, () => json({ text: `# Brief\n${ARABIC}` })],
+  [/^\/api\/hub\/team$/, () => json({ teams: [{ id: "t1", name: ARABIC, role: "editor", projects: ["shop"] }] })],
   [/^\/api\/hub\/mcp-links/, () => json({ links: [{ id: 1, scope: "mcp", name: "laptop", projects: [], revoked: false }] })],
   [/^\/api\/hub\/audit/, () => json({ audit: [{ id: 1, at_epoch: Date.now(), actor: "ui", action: "memory.add", detail: { id: 1 } }], total: 1 })],
   [/^\/v1\/work\/sessions/, () => json({ items: [{ id: "s1", project: "shop", tool: "cursor", firstAt: NOW, lastAt: NOW, promptCount: 1, toolCount: 1, state: "finished", lastPrompt: ARABIC, summary: { text: "sum", at: NOW }, factCount: 1, href: "#/work/session/s1?project=shop" }], total: 1 })],
@@ -192,7 +198,7 @@ describe("T-214: names, roles and tab order on every page", () => {
   const cases = [
     ["memory", "ui-memory", (r) => mods.memory.renderMemory(r), ["memories", "facts", "review", "dismissed", "search"]],
     ["rules", "ui-rules", (r) => mods.rules.renderRules(r), ["rules", "suggestions", "sync", "import"]],
-    ["tools", "ui-tools", (r) => mods.tools.renderTools(r), ["tools", "devices", "access", "checks", "activity"]],
+    ["tools", "ui-tools", (r) => mods.tools.renderTools(r), ["tools", "devices", "access", "alerts", "team", "checks", "activity"]],
   ];
   for (const [tab, id, render, subs] of cases) {
     for (const sub of subs) {

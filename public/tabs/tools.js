@@ -1,11 +1,12 @@
-// T-138, T-211: the Tools tab. Five pages: the tools and the commands to set each up, paired devices, remote access
-// links, the doctor's checks and the activity log. Install, uninstall and connect stay on the command line. The old
+// T-138, T-211, T-217: the Tools tab. Seven pages: the tools and the commands to set each up, paired devices, remote access
+// links, alert rules and their deliveries, teams, the doctor's checks and the activity log. Install, uninstall and connect stay on the command line. The old
 // viewer is offered only when its database exists.
 import { classicViewerAvailable } from "../ui-core.js";
 import { button } from "../ui-components.js";
 import { byId, h, state, swap } from "../ui-dom.js";
 import { tabFrame } from "../ui-frame.js";
 import { accessView, activityView, checksView, devicesView, toolsView } from "./tools-views.js";
+import { alertsView, teamView } from "./tools-team.js";
 
 let frame = null;
 
@@ -24,7 +25,7 @@ function build() {
     tab: "tools",
     title: "Tools",
     lede: "The AI tools Aletheia captures from, the devices it syncs with, and a record of what changed.",
-    build: (sub) => ({ tools: toolsView, devices: devicesView, access: accessView, checks: checksView, activity: activityView }[sub] ?? toolsView)(ctx),
+    build: (sub) => ({ tools: toolsView, devices: devicesView, access: accessView, alerts: alertsView, team: teamView, checks: checksView, activity: activityView }[sub] ?? toolsView)(ctx),
   });
   made.project = state.project;
   frame = made;
