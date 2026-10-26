@@ -241,13 +241,15 @@ function shell({ title, description, canonical, siteFile, body, jsonLd }) {
 <title>${esc(title)} · Aletheia docs</title>
 <meta name="description" content="${esc(description)}">
 <link rel="canonical" href="${canonical}">
-<link rel="icon" type="image/svg+xml" href="${asset("favicon.svg")}">
+<link rel="icon" type="image/png" sizes="64x64" href="${asset("favicon.png")}">
+<link rel="icon" type="image/png" sizes="32x32" href="${asset("favicon-32.png")}">
+<link rel="apple-touch-icon" href="${asset("apple-touch-icon.png")}">
 <link rel="stylesheet" href="${asset("style.css")}">
 <script type="application/ld+json">${JSON.stringify(jsonLd)}</script>
 </head>
 <body>
 <header class="top"><div class="wrap">
-  <a class="brand" href="${asset("index.html")}"><img src="${asset("assets/logo.svg")}" alt="" width="26" height="26">Aletheia</a>
+  <a class="brand" href="${asset("index.html")}"><img src="${asset("assets/mark.png")}" alt="" width="26" height="26">Aletheia</a>
   <nav aria-label="Main"><a href="${asset("index.html")}">Home</a><a href="${asset("docs/index.html")}">Docs</a><a href="${REPO}">GitHub</a></nav>
 </div></header>
 <main class="wrap doc">
