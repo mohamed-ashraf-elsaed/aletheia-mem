@@ -9,6 +9,8 @@
 //   aletheia import bundle <file.jsonl>                   restore an export
 //   aletheia import transcripts <tool> [--since DATE] [--dry-run] [--limit n]
 //                                                          back-fill from local session files (read-only)
+//   aletheia watch [--once] [--interval ms] [--batch n] [--tool a,b]
+//                                                          poll the verified transcript folders incrementally (read-only, nice 10)
 //   aletheia export [--format jsonl|markdown] [--project p] [--events] [--out file]
 //   aletheia rules list | add <text> [--when w] | lint [--dir path] [--tools a,b] [--json] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
 //   aletheia tools                                        detected tools and how to connect each
@@ -511,7 +513,7 @@ async function main() {
         }
         if (pos[0] === "claude-mem") return out(importClaudeMem(hub, flags.path ?? config.sourceDb, { includePrompts: !flags["no-prompts"], project: flags.project || null }));
         if (pos[0] === "bundle") return out(hub.importBundle(readFileSync(pos[1] ?? die("Usage: aletheia import bundle <file>"), "utf8")));
-        return die("Usage: aletheia import claude-mem | bundle <file> | transcripts <claude-code|command-code> [--since DATE] [--dry-run]");
+        return die("Usage: aletheia import claude-mem | bundle <file> | transcripts <claude-code|command-code|codex> [--since DATE] [--dry-run]");
       }
       case "export": {
         const body = flags.format === "markdown" ? hub.exportMarkdown({ project: flags.project }) : hub.exportBundle({ project: flags.project, includeEvents: !!flags.events });
@@ -613,6 +615,27 @@ async function main() {
       case "prune": {
         const { formatPruneReport, prune } = await import("../src/hub/retention.mjs");
         return out(formatPruneReport(prune(hub, { apply: !!flags.apply })));
+      }
+      case "watch": {
+        const { TranscriptWatcher } = await import("../src/hub/watcher.mjs");
+        const { setPriority } = await import("node:os");
+        try { setPriority(0, 10); } catch { /* nice is best effort */ }
+        const tools = typeof flags.tool === "string" ? flags.tool.split(",").map((tool) => tool.trim()).filter(Boolean) : undefined;
+        const watcher = new TranscriptWatcher({
+          store: hub, home: config.home, dbPath: config.watchDb, tools,
+          batchSize: Number(flags.batch) || 200, intervalMs: Number(flags.interval) || 1000,
+        });
+        try {
+          if (flags.once) return out(watcher.watchOnce());
+          out(`Watching ${config.home} for ${tools ? tools.join(", ") : "all verified transcript tools"} (nice 10, ${watcher.intervalMs} ms, batch ${watcher.batchSize}).`);
+          watcher.start({ onTick: (result) => { if (result.added || result.errors) out(`${new Date().toISOString()}  added ${result.added}, skipped ${result.skipped}, errors ${result.errors}`); } });
+          await new Promise((resolve) => {
+            for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, resolve);
+          });
+          return;
+        } finally {
+          watcher.close();
+        }
       }
       case "compress": {
         const { runWorker, startBackgroundWorker } = await import("../src/hub/queue.mjs");

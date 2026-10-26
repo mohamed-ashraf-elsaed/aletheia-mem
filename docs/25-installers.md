@@ -244,6 +244,28 @@ What was not written, and why:
 
 No manifest claims a hook whose script is missing, and no path escapes the package.
 
+## Transcript watcher
+
+Tools without hooks can still be imported from their session files. `aletheia watch` polls the three verified
+layouts, keeps a byte offset and turn counter per file in `~/.aletheia/watcher.db`, and imports only new lines:
+
+```bash
+aletheia watch --once
+aletheia watch --interval 1000 --batch 50 --tool claude-code,command-code,codex
+```
+
+| Tool | Folder | Verified from |
+|---|---|---|
+| Claude Code | `~/.claude/projects/<slug>/<session>.jsonl` | T-121, 2026-10-26 |
+| Command Code | `~/.commandcode/projects/<slug>/<session>.jsonl` | T-121, 2026-10-26 |
+| Codex CLI | `~/.codex/sessions/<year>/<month>/<day>/rollout-*.jsonl` | two real rollouts on this machine, 2026-10-26 |
+
+The source files are opened read-only. A file that shrinks is re-read from zero. A line without a newline is
+left for the next pass. A JSON line the parser does not recognise, and a line that is not JSON, are stored as a
+`kind = "raw"` episode instead of being dropped. The polling loop is clamped to at least 1000 ms, takes a batch
+size per file, and the CLI sets `nice 10`. Restarting resumes at the stored offset; a re-read is deduped by
+`source_ref` and content hash.
+
 ## End-to-end test
 
 `test/e2e-more-hosts.test.mjs` installs all six full-capability hosts into a temp HOME, reads the command back

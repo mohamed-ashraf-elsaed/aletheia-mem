@@ -51,6 +51,8 @@ export function loadConfig(overrides = {}) {
     erasureExportDir: overrides.erasureExportDir ?? join(dataDir, "erasure-exports"),
     // Alert rules and their delivery queue (T-114).
     alertsDb: overrides.alertsDb ?? env.ALETHEIA_ALERTS_DB ?? join(dataDir, "alerts.db"),
+    // Transcript watcher offsets, restart-safe (T-063).
+    watchDb: overrides.watchDb ?? env.ALETHEIA_WATCH_DB ?? join(dataDir, "watcher.db"),
     // Optional bearer key for /v1 (tools). Leave empty on a single-user machine; the API is loopback-only anyway.
     apiKey: overrides.apiKey ?? env.ALETHEIA_API_KEY ?? "",
     promptsDir: overrides.promptsDir ?? join(import.meta.dir, "..", "prompts"),

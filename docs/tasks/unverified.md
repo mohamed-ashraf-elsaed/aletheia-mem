@@ -66,6 +66,7 @@ These are not `UNVERIFIED` facts about other projects; they are claims this proj
 | 44 | Qoder plugin-root path variable for a local MCP command | The official page (fetched 2026-10-26) documents `mcpServers` and `hooks` fields but no `${...}` variable for the plugin root, so the Qoder manifest claims metadata only (T-066) | Read Qoder's local-command docs or run `qoder plugins validate` on the manifest and a test plugin |
 | 45 | Every plugin manifest loaded by its host | All four manifests are labelled `from-docs-only`; `test/manifests.test.mjs` parses them and resolves their paths, but no host was opened (T-066) | Install or link each manifest in its host and read the plugin list; run one session |
 | 46 | The Claude Code plugin hook trust flow | The manifest declares `SessionStart` and `Stop` commands, but Claude Code has not been asked to load or trust this plugin (T-066) | Open Claude Code, install the plugin, approve the hooks, run one session |
+| 47 | The watcher against a live, growing host session | `test/watcher.test.mjs` uses fixture files and the real Codex format, but no host was watched while it was writing (T-063) | Start `aletheia watch`, run one Claude Code/Command Code/Codex session, and check the offsets and rows |
 
 ## Memory-building measurements (2026-10-26)
 
@@ -79,7 +80,7 @@ These are claims this run deliberately does not make. Each was measured only on 
 | 40 | Near-duplicate precision and recall on human labels | measured only on a synthetic 200-pair set (precision 1.00, recall 0.90) | Build the human-labelled 200-pair set in D4 §23.9 and evaluate `src/hub/dedupe.mjs` |
 | 41 | Contradiction handling on the D4 knowledge-update set | measured only on a synthetic 30-pair set (30/30 newest-wins) | Build the 50-pair knowledge-update set and rerun `test/contradictions.test.mjs` |
 | 42 | The `anthropic-compatible` provider endpoint | the preset has no default URL; no OpenAI-shaped Anthropic endpoint was verified and no gateway was tested (T-119) | Read a gateway's docs and complete one extraction call through `ALETHEIA_ANTHROPIC_BASE_URL` |
-| 43 | Session transcript layouts for tools other than Claude Code and Command Code | only the two layouts on this machine were read; other tools are not supported by `import transcripts` (T-121) | Read one real session file per tool and add its parser |
+| 43 | Session transcript layouts for tools other than Claude Code, Command Code and Codex | Codex's rollout layout was read from two real files on this machine on 2026-10-26 and is supported by `import transcripts` and the watcher (T-063); other tools are not supported | Read one real session file per tool and add its parser |
 | 44 | One-UI pixel layout at 375 px and its keyboard-only path | the page was loaded in Chromium on 2026-10-26 with the four tabs and no console errors; pixel layout and a keyboard-only pass are not asserted (T-134 to T-139) | Load the page at 375 px and Tab through the header, tabs, details blocks and a dismiss/restore |
 | 45 | Two real machines syncing over a tunnel, and E2EE on two machines | Aletheia Sync (plain and E2EE, T-102 to T-108 and T-117) is tested only against temp data dirs and a loopback hub; no real tunnel or second host was used | Run manual-test §8 (plain and E2EE) on two machines through a real TLS tunnel |
 

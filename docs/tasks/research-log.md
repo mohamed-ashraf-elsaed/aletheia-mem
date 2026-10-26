@@ -586,3 +586,11 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | https://docs.qoder.com/cli/plugins-reference | `.qoder-plugin/plugin.json`, required `name`, optional metadata fields, `mcpServers`/`hooks` component fields; no plugin-root path variable documented |
 | 2026-10-26 | https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/extensions/reference.md | `gemini-extension.json`, `name`, `version`, `description`, `mcpServers`, `cwd`, `${extensionPath}`; hooks live in `hooks/hooks.json`, not the manifest |
 | 2026-10-26 | https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/extensions/index.md | extension install/manage commands and the extension gallery link |
+
+## D. Local transcript formats (T-063)
+
+| Date | Path | What it gave |
+|---|---|---|
+| 2026-10-26 | `~/.codex/sessions/2026/05/11/rollout-2026-05-11T13-28-24-019e1694-b216-7b83-92d3-e6090e35ed46.jsonl` | real Codex rollout: top-level `timestamp`/`type`; `session_meta.payload.id` and `.cwd`; `response_item.payload.type = "message"` with `role` and `input_text`/`output_text` content; `event_msg` and `turn_context` are noise |
+| 2026-10-26 | `~/.codex/sessions/2026/05/11/rollout-2026-05-11T13-50-25-019e16a8-dc40-7ce1-9854-d8ebe041ba45.jsonl` | second real rollout; same shape, used to confirm the parser |
+| 2026-10-26 | `~/.codex/history.jsonl` | a separate prompt history file (`session_id`, `ts`, `text`), not the session transcript; not imported by the watcher |
