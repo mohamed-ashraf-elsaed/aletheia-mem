@@ -68,6 +68,9 @@ These are claims this run deliberately does not make. Each was measured only on 
 | 39 | Importance matches a human ranking (Spearman ≥0.5) | measured only on a synthetic 200-item rank (0.645) | Collect 200 human-ranked observations and rerun `test/importance.test.mjs` against them |
 | 40 | Near-duplicate precision and recall on human labels | measured only on a synthetic 200-pair set (precision 1.00, recall 0.90) | Build the human-labelled 200-pair set in D4 §23.9 and evaluate `src/hub/dedupe.mjs` |
 | 41 | Contradiction handling on the D4 knowledge-update set | measured only on a synthetic 30-pair set (30/30 newest-wins) | Build the 50-pair knowledge-update set and rerun `test/contradictions.test.mjs` |
+| 42 | The `anthropic-compatible` provider endpoint | the preset has no default URL; no OpenAI-shaped Anthropic endpoint was verified and no gateway was tested (T-119) | Read a gateway's docs and complete one extraction call through `ALETHEIA_ANTHROPIC_BASE_URL` |
+| 43 | Session transcript layouts for tools other than Claude Code and Command Code | only the two layouts on this machine were read; other tools are not supported by `import transcripts` (T-121) | Read one real session file per tool and add its parser |
+| 44 | One-UI pixel layout at 375 px and its keyboard-only path | the page was loaded in Chromium on 2026-10-26 with the four tabs and no console errors; pixel layout and a keyboard-only pass are not asserted (T-134 to T-139) | Load the page at 375 px and Tab through the header, tabs, details blocks and a dismiss/restore |
 
 ## URLs referenced in the documents but not fetched as sources
 

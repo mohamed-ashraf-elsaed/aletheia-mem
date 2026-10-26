@@ -119,6 +119,38 @@ other MCP servers, `permissions`, `model` and other settings remain. The managed
 
 A second uninstall prints `<tool> ... is not installed`.
 
+## 6. The one UI (Work, Memory, Rules, Tools)
+
+The shell is checked by `test/one-ui.test.mjs` (routes, tab containers, API shapes, DOM-free helpers). A real
+Chromium check was also run.
+
+**RUN BY AUTHOR, 2026-10-26** with a temporary server and a temporary HOME:
+
+```bash
+HOME=/tmp/aletheia-ui-home ALETHEIA_DATA_DIR=/tmp/aletheia-ui-data ALETHEIA_PORT=38881 \
+  bun bin/aletheia-server.mjs
+```
+
+Opened `http://127.0.0.1:38881/#/memory`, then `#/rules`, `#/tools` and `#/work` in Chromium through the connected
+Playwright MCP browser. Observed:
+
+- The header stayed visible on all four tabs: tab bar, project selector, search box and a green health dot labelled
+  "Server healthy".
+- The Memory tab rendered the stats, memories, facts Current/History toggle, review queue, dismissed rows and both
+  details blocks. No console errors.
+- Typing `retry` in the header search and pressing Enter kept the `#/memory` route and printed the channels
+  (`facts: lexical + keys`, `episodes: lexical`, `fused: none`) and the empty-store reason.
+- The Rules tab rendered the editor, suggestions, sync and import panels; no console errors.
+- The Tools tab rendered both installer cards, the hook counts, spool sizes and the full doctor table; no console
+  errors.
+- The Work tab mounted the existing Work page under the shell header. It showed "Local source unavailable" because
+  the temporary HOME has no claude-mem database; that is expected for this run.
+- `prefers-color-scheme: dark` was emulated; the page stayed readable and the shell colours switched.
+
+**NOT RUN BY AUTHOR:** a person should still check at 375 px width, with a real claude-mem database in the Work tab,
+and with a keyboard only (Tab through the header, open each tab, open a details block, and dismiss + restore one
+memory). The automated run proves the scripts load and the DOM is reachable; it does not assert pixel layout.
+
 ## What the automated tests already cover
 
 `test/install-claude.test.mjs`, `test/claude-hooks.test.mjs` and `test/e2e-capture.test.mjs` cover: the dry run,
