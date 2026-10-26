@@ -62,7 +62,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-019 | Batch extraction and record its cost | P1 | T-018 | validated | 2026-10-26 | [T-019.md](T-019.md) |
 | T-020 | Run compression in a resumable background queue | P1 | T-017 | validated | 2026-10-26 | [T-020.md](T-020.md) |
 | T-021 | Extract entities from facts | P1 | T-017 | validated | 2026-10-26 | [T-021.md](T-021.md) |
-| T-022 | Resolve entity aliases | P1 | T-021 | doing | — | [T-022.md](T-022.md) |
+| T-022 | Resolve entity aliases | P1 | T-021 | validated | 2026-10-26 | [T-022.md](T-022.md) |
 | T-023 | Link facts and episodes to their sources | P1 | T-017 | validated | 2026-10-26 | [T-023.md](T-023.md) |
 | T-024 | Add bi-temporal fact columns | P1 | T-017 | validated | 2026-10-26 | [T-024.md](T-024.md) |
 | T-025 | Invalidate contradicted facts instead of deleting them | P1 | T-018, T-024 | validated | 2026-10-26 | [T-025.md](T-025.md) |
