@@ -668,6 +668,27 @@ export class HubStore {
     return this.getFact(id);
   }
 
+  /** Record which older fact this row replaced. Only supersedes_id changes; the timing columns stay put. */
+  setFactSupersedes(id, supersedesId) {
+    this.db.prepare("UPDATE facts SET supersedes_id = ? WHERE id = ?").run(Number(supersedesId), Number(id));
+    return this.getFact(id);
+  }
+
+  setFactConfidence(id, confidence) {
+    this.db.prepare("UPDATE facts SET confidence = ? WHERE id = ?").run(Math.max(0, Math.min(1, Number(confidence) || 0)), Number(id));
+    return this.getFact(id);
+  }
+
+  addReview({ itemType, itemId, reason, proposedBy = "extractor", now = Date.now() }) {
+    const info = this.db.prepare("INSERT INTO review_queue (item_type, item_id, reason, proposed_by, status, created_at_epoch) VALUES (?,?,?,?, 'pending', ?)")
+      .run(itemType, Number(itemId), reason, proposedBy, now);
+    return Number(info.lastInsertRowid);
+  }
+
+  reviewQueue({ status = "pending", limit = 100 } = {}) {
+    return this.db.prepare("SELECT * FROM review_queue WHERE status = ? ORDER BY created_at_epoch, id LIMIT ?").all(status, Math.min(Number(limit) || 100, 500));
+  }
+
   /** Current facts: no valid_to (or one in the future), not expired, status active. */
   factsCurrent({ project, subject, predicate, limit = 100, now = Date.now() } = {}) {
     const where = ["status = 'active'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)", "(expired_at_epoch IS NULL OR expired_at_epoch > ?)"];

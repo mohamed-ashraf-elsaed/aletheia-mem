@@ -258,6 +258,8 @@ export async function extractWithUsage(store, { window, project = "default", ask
  */
 export function storeFacts(store, { facts, project, mode = "rules", model = null, promptVersion = FACTS_PROMPT_VERSION, observationId = null, now = Date.now() }) {
   const added = [];
+  const superseded = [];
+  const reviews = [];
   for (const fact of facts) {
     const subject = redact(fact.subject).slice(0, LIMITS.subject);
     const predicate = redact(fact.predicate).slice(0, LIMITS.predicate);
@@ -280,7 +282,76 @@ export function storeFacts(store, { facts, project, mode = "rules", model = null
     });
     store.addKey({ ownerType: "fact", ownerId: result.id, keyType: "fact", text });
     for (const entity of fact.entities ?? []) store.addKey({ ownerType: "fact", ownerId: result.id, keyType: "entity", text: entity.name });
-    if (result.created) added.push(result.id);
+    if (result.created) {
+      added.push(result.id);
+      const resolved = resolveContradictions(store, { factId: result.id, explicitSupersedes: fact.supersedesId, now });
+      superseded.push(...resolved.superseded);
+      reviews.push(...resolved.reviews);
+    }
   }
-  return { added: added.length, ids: added };
+  return { added: added.length, ids: added, superseded, reviews };
 }
+
+// ---- contradiction handling ------------------------------------------------------------------------------
+
+/**
+ * A newer fact on the same (project, subject, predicate) with a different object replaces the older one. The
+ * older row is closed, never deleted, and both are linked. A same-time disagreement keeps both rows, lowers both
+ * confidences and goes to the review queue. An incoming older fact is stored as history, so the newest stays current.
+ */
+export function resolveContradictions(store, { factId, explicitSupersedes = null, now = Date.now() } = {}) {
+  const fact = store.getFact(factId);
+  if (!fact || fact.status !== "active") return { superseded: [], reviews: [], fact };
+  const newFrom = fact.valid_from_epoch ?? fact.recorded_at_epoch;
+  const superseded = [];
+  const reviews = [];
+
+  const closeOlder = (older, newer) => {
+    const olderFrom = older.valid_from_epoch ?? older.recorded_at_epoch;
+    const boundary = Math.max(newFrom, olderFrom + 1);
+    store.closeFact(older.id, { validToEpoch: boundary });
+    store.setFactSupersedes(newer.id, older.id);
+    store.link({ fromType: "fact", fromId: newer.id, toType: "fact", toId: older.id, relation: "supersedes" });
+    store.audit("extract", "fact.supersede", { older: older.id, newer: newer.id, boundary });
+    superseded.push(older.id);
+  };
+
+  // An incoming fact that started before the current one is history, not the new current fact.
+  const closeIncoming = (older, newer) => {
+    const olderFrom = older.valid_from_epoch ?? older.recorded_at_epoch;
+    store.closeFact(newer.id, { validToEpoch: olderFrom });
+    store.setFactSupersedes(newer.id, older.id);
+    store.link({ fromType: "fact", fromId: newer.id, toType: "fact", toId: older.id, relation: "supersedes" });
+    store.audit("extract", "fact.supersede", { older: older.id, newer: newer.id, boundary: olderFrom });
+    superseded.push(newer.id);
+  };
+
+  if (Number.isSafeInteger(explicitSupersedes) && explicitSupersedes !== fact.id) {
+    const named = store.getFact(explicitSupersedes);
+    if (named && named.project === fact.project && named.status === "active") closeOlder(named, fact);
+  }
+
+  const active = store.db
+    .prepare("SELECT * FROM facts WHERE project = ? AND subject = ? AND predicate = ? AND status = 'active' AND id != ? ORDER BY coalesce(valid_from_epoch, recorded_at_epoch), id")
+    .all(fact.project, fact.subject, fact.predicate, fact.id);
+  for (const older of active) {
+    if (older.object === fact.object) continue;
+    const olderFrom = older.valid_from_epoch ?? older.recorded_at_epoch;
+    if (newFrom > olderFrom) {
+      closeOlder(older, fact);
+    } else if (newFrom === olderFrom) {
+      store.setFactConfidence(older.id, Math.max(0, older.confidence - 0.1));
+      store.setFactConfidence(fact.id, Math.max(0, fact.confidence - 0.1));
+      const already = store.db.prepare("SELECT 1 FROM review_queue WHERE item_type = 'fact' AND item_id = ? AND reason = 'contradiction' AND status = 'pending'").get(fact.id);
+      if (!already) store.addReview({ itemType: "fact", itemId: fact.id, reason: "contradiction", proposedBy: "extractor", now });
+      reviews.push(fact.id);
+    } else {
+      closeIncoming(older, fact);
+      break;
+    }
+  }
+  return { superseded, reviews, fact: store.getFact(fact.id) };
+}
+
+
+
