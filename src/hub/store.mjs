@@ -839,7 +839,10 @@ export class HubStore {
     const at = Number.isFinite(asOfEpoch) ? asOfEpoch : null;
     const where = [];
     const params = [];
-    if (project && scope !== "all") { where.push("(f.project = ? OR f.scope = 'global')"); params.push(project); }
+    if (project && scope !== "all") {
+      if (this.hasGlobal("facts")) { where.push("(f.project = ? OR f.scope = 'global')"); } else { where.push("f.project = ?"); }
+      params.push(project);
+    }
     if (at != null) {
       where.push("f.status != 'retracted'", "coalesce(f.valid_from_epoch, f.recorded_at_epoch) <= ?", "(f.valid_to_epoch IS NULL OR f.valid_to_epoch > ?)", "f.recorded_at_epoch <= ?");
       params.push(at, at, at);
@@ -984,7 +987,7 @@ export class HubStore {
     if (q && !match) return { total: 0, items: [] };
     const from = match ? "memories_fts f CROSS JOIN memories m ON f.rowid = m.id" : "memories m"; // CROSS JOIN: see ranked()
     if (match) { where.push("memories_fts MATCH ?"); params.push(match); }
-    if (project && scope !== "all") { where.push("(m.project = ? OR m.scope = 'global')"); params.push(project); }
+    if (project && scope !== "all") { where.push(this.hasGlobal("memories") ? "(m.project = ? OR m.scope = 'global')" : "m.project = ?"); params.push(project); }
     for (const [col, val] of [["kind", kind], ["type", type], ["tool", tool]]) if (val) { where.push(`m.${col} = ?`); params.push(val); }
     if (pinned) where.push("m.pinned = 1");
     const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
@@ -1040,11 +1043,30 @@ export class HubStore {
     return keep.sort((a, b) => a.order - b.order).map((s) => s.w);
   }
 
+  /** Rebuild the FTS index segments after a bulk write. Search stays correct without it; this keeps p95 low. */
+  optimizeFts() {
+    for (const table of ["memories_fts", "facts_fts", "memory_keys_fts"]) {
+      this.db.exec(`INSERT INTO ${table}(${table}) VALUES('optimize')`);
+    }
+    this.db.exec("PRAGMA optimize");
+    return { optimized: ["memories_fts", "facts_fts", "memory_keys_fts"] };
+  }
+
+  /** True when at least one row was promoted to global scope. Avoids an OR in the hot FTS plan when none has. */
+  hasGlobal(table) {
+    return !!this.db.prepare(`SELECT 1 FROM ${table} WHERE scope = 'global' LIMIT 1`).get();
+  }
+
   /** Full rows, best first. Same ranking as search(). */
   ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false, scope = "current" } = {}) {
     const filters = [];
     const params = [];
-    if (project && scope !== "all") { filters.push("(m.project = ? OR m.scope = 'global')"); params.push(project); }
+    if (project && scope !== "all") {
+      // A plain equality keeps the CROSS JOIN plan that pins FTS as the outer loop; an OR only appears when a global
+      // row can actually match.
+      if (this.hasGlobal("memories")) { filters.push("(m.project = ? OR m.scope = 'global')"); } else { filters.push("m.project = ?"); }
+      params.push(project);
+    }
     for (const [col, val] of [["kind", kind], ["type", type], ["tool", tool]]) if (val) { filters.push(`m.${col} = ?`); params.push(val); }
     const where = filters.length ? `AND ${filters.join(" AND ")}` : "";
     const expr = orExpr(this.selectTerms(query));
@@ -1075,7 +1097,7 @@ export class HubStore {
     const where = [];
     const params = [];
     const filtered = Boolean(project || kind || type || tool);
-    if (project && scope !== "all") { where.push("(project = ? OR scope = 'global')"); params.push(project); }
+    if (project && scope !== "all") { where.push(this.hasGlobal("memories") ? "(project = ? OR scope = 'global')" : "project = ?"); params.push(project); }
     for (const [column, value] of [["kind", kind], ["type", type], ["tool", tool]]) if (value) { where.push(`${column} = ?`); params.push(value); }
     const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
     const rows = this.db.prepare(`SELECT COUNT(*) AS n FROM memories ${clause}`).get(...params).n;
@@ -1175,7 +1197,7 @@ export class HubStore {
   /** Markdown a session-start hook can inject into ANY tool: pinned and recent memories, then the rules. */
   context({ project, limit = 20, maxChars = 6000, tool, scope = "current" } = {}) {
     const pinned = this.list({ project, pinned: true, limit: 50, scope }).items;
-    const scopeClause = scope === "all" ? "" : project ? "AND (project = ? OR scope = 'global')" : "";
+    const scopeClause = scope === "all" ? "" : project ? this.hasGlobal("memories") ? "AND (project = ? OR scope = 'global')" : "AND project = ?" : "";
     const recent = this.db
       .prepare(`SELECT * FROM memories WHERE kind IN ('observation','summary','note') AND pinned = 0 ${scopeClause} ORDER BY created_at_epoch DESC LIMIT ?`)
       .all(...(scopeClause ? [project] : []), Math.min(limit, 100))

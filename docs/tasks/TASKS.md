@@ -143,3 +143,5 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-101 | Prove automatic capture end to end | P3 | T-058, T-059, T-100 | validated | 2026-10-26 | [T-101.md](T-101.md) |
 | T-130 | Wire dedupe and source accumulation into the worker insert path | P1 | T-018, T-028, T-029 | validated | 2026-10-26 | [T-130.md](T-130.md) |
 | T-131 | Embed facts automatically and fuse facts with episodes | P1 | T-018, T-020, T-033, T-130 | validated | 2026-10-26 | [T-131.md](T-131.md) |
+| T-132 | Re-run LoCoMo and publish the measured table | P2 | T-018, T-131 | validated | 2026-10-26 | [T-132.md](T-132.md) |
+| T-133 | Re-measure 50k-row latency and apply the first FTS index fix | P2 | T-018 | validated | 2026-10-26 | [T-133.md](T-133.md) |

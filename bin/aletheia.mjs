@@ -19,6 +19,7 @@
 //   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
 //   aletheia prune [--apply]                            report cold facts and old episodes; --apply changes them
 //   aletheia promote <type> <id>                        make a memory, episode, observation or fact global
+//   aletheia optimize                                   rebuild FTS segments after a large import
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -196,6 +197,7 @@ async function main() {
         if (!pos[0] || !pos[1]) return die("Usage: aletheia promote <memory|episode|observation|fact> <id>");
         return out(hub.promote(pos[0], Number(pos[1]), { actor: "cli" }));
       }
+      case "optimize": return out(hub.optimizeFts());
       case "save": {
         const text = pos.join(" ");
         if (!text) die("Usage: aletheia save <text>");
