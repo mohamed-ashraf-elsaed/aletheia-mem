@@ -1,0 +1,54 @@
+name: New host request
+description: Ask for an installer or hook adapter for another AI coding tool.
+title: "[host] "
+labels: ["new-host"]
+body:
+  - type: input
+    id: tool
+    attributes:
+      label: Tool and version
+      placeholder: "Example CLI 1.2.3"
+    validations:
+      required: true
+  - type: input
+    id: hook_docs
+    attributes:
+      label: Official hook payload documentation URL
+      description: The page that documents the hook events and the fields inside each payload. A URL to the vendor's own docs, not a blog post or a mirror.
+      placeholder: "https://..."
+    validations:
+      required: true
+  - type: input
+    id: mcp_docs
+    attributes:
+      label: Official MCP configuration documentation URL
+      placeholder: "https://..."
+  - type: input
+    id: rules_file
+    attributes:
+      label: Instruction or rules file
+      description: The file the tool reads (for example AGENTS.md, CLAUDE.md, a rules directory), and whether it is global or per project.
+  - type: textarea
+    id: evidence
+    attributes:
+      label: What you can share
+      description: A recorded payload with secrets removed is the most useful evidence. Say if you can run a test on a real install.
+  - type: dropdown
+    id: capture
+    attributes:
+      label: What should the installer write?
+      options:
+        - Hooks, MCP and rules
+        - MCP and rules only
+        - Rules only
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: The documentation URLs are the vendor's own pages and I fetched them.
+          required: true
+        - label: I removed secrets and private text from any payload.
+          required: true

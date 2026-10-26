@@ -125,7 +125,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-081 | Add a Docker image and compose file | P4 | T-073 | todo | — | [T-081.md](T-081.md) |
 | T-082 | Submit to the MCP registry and two awesome lists | P4 | T-080 | todo | — | [T-082.md](T-082.md) |
 | T-083 | Add logo, social preview and demo GIF | P4 | none | todo | — | [T-083.md](T-083.md) |
-| T-084 | Add issue templates, PR template and Code of Conduct | P4 | none | todo | — | [T-084.md](T-084.md) |
+| T-084 | Add issue templates, PR template and Code of Conduct | P4 | none | validated | 2026-10-26 | [T-084.md](T-084.md) |
 | T-085 | Add CHANGELOG, releases, Dependabot and funding | P4 | T-080 | todo | — | [T-085.md](T-085.md) |
 | T-086 | Build the docs site with one page per document | P4 | T-013 | todo | — | [T-086.md](T-086.md) |
 | T-087 | Add the i18n workflow and drift checker | P4 | none | todo | — | [T-087.md](T-087.md) |
