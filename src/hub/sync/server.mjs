@@ -2,8 +2,11 @@
 // cursor-based pull, pairing, device management, scoped tokens and an append-only audit log.
 // Binds to loopback by default; a non-loopback bind requires `behindTls` and prints a warning.
 // Also serves the private remote MCP endpoint at /mcp when `hubDb` is given (T-107).
+import { dirname, join } from "node:path";
 import { createMcpHttpHandler, loopbackOriginsOnly, WRITE_TOOLS } from "../mcp-http.mjs";
 import { HubStore } from "../store.mjs";
+import { teamRequest } from "../team-api.mjs";
+import { TeamStore } from "../team.mjs";
 import { SyncStore } from "./store.mjs";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
@@ -23,7 +26,7 @@ function authDenied(token, allowed) {
   return null;
 }
 
-export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls = false, warn = (message) => console.warn(message) }) {
+export function createSyncRoutes({ store, team = null, getPeer = () => "loopback", behindTls = false, warn = (message) => console.warn(message) }) {
   const joinFailures = new Map();
 
   async function readJson(request) {
@@ -77,6 +80,28 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
 
     const token = bearer(request);
     const accountForToken = token ? token.account_id : null;
+
+    // ---- T-112: team mode (shared memory, board, brief, search) ---------------------------------
+    if (team && (pathname === "/v1/team" || pathname.startsWith("/v1/team/"))) {
+      const read = method === "GET" || method === "HEAD";
+      const teamDenied = authDenied(token, read ? ["sync", "read", "mcp", "admin"] : ["sync", "admin"]);
+      if (teamDenied) return json({ error: read ? "A valid token is required." : "A sync or admin token is required." }, teamDenied);
+      const body = read ? null : await readJson(request);
+      const result = teamRequest({
+        path: pathname.slice("/v1/team".length) || "/",
+        method,
+        url,
+        body,
+        team,
+        sync: store,
+        accountId: accountForToken,
+        tokenId: token?.id ?? null,
+        operator: false,
+      });
+      if (!result) return json({ error: "Not found." }, 404);
+      store.touchToken(token.id);
+      return json(result.body, result.status);
+    }
 
     if (pathname === "/v1/sync/push" && method === "POST") {
       const pushDenied = authDenied(token, ["sync", "admin"]);
@@ -199,13 +224,19 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
  * With `hubDb`, the private remote MCP endpoint is served at /mcp (T-107): bearer tokens with an
  * `mcp`/`read`/`sync`/`admin` scope, project scope, per-token rate limit and an audit row per call.
  */
-export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "default", behindTls = false, hubDb = null, mcpOrigins = null, mcpRateLimitPerMinute = 60 } = {}) {
+export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "default", behindTls = false, hubDb = null, teamDb = null, mcpOrigins = null, mcpRateLimitPerMinute = 60 } = {}) {
   const store = new SyncStore(syncDb);
   const account = store.ensureAccount(name);
   if (requiresTlsProxy(host, behindTls)) {
     console.warn(`Warning: binding sync to ${host} without TLS. Put it behind a reverse proxy or tunnel that terminates TLS.`);
   }
-  const routes = createSyncRoutes({ store, behindTls, getPeer: () => "peer" });
+  const team = new TeamStore(teamDb ?? (syncDb === ":memory:" ? ":memory:" : join(dirname(syncDb), "team.db")), {
+    tokenActive: (tokenId) => {
+      const row = store.db.prepare("SELECT revoked_at, expires_at FROM sync_token WHERE id = ?").get(Number(tokenId));
+      return !!row && !row.revoked_at && !(row.expires_at && row.expires_at < Date.now());
+    },
+  });
+  const routes = createSyncRoutes({ store, team, behindTls, getPeer: () => "peer" });
 
   // ---- the private remote MCP endpoint (T-107) -----------------------------------------------
   const hub = hubDb ? new HubStore(hubDb) : null;
@@ -262,10 +293,12 @@ export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "
     server,
     store,
     routes,
+    team,
     hub,
     stop: () => {
       server.stop(true);
       store.close();
+      team.close();
       hub?.close();
     },
     port: server.port,

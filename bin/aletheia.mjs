@@ -33,6 +33,11 @@
 //                                                          optional end-to-end encryption (passphrase via --passphrase or ALETHEIA_SYNC_PASSPHRASE)
 //   aletheia mcp-link create [--projects a,b] [--url https://hub.example] | list | revoke <id>
 //                                                          manage the private remote MCP endpoint
+//   aletheia team list | create <name> | add-project <team> <project> | add-member <team> --name n --role r --projects a,b
+//             | members <team> | revoke-member <team> <id> | share <team> <id> --projects a,b
+//             | board <team> [--project p] | pin|decision|memory <team> <text> --project p
+//             | brief <team> --project p | search <team> <query> | leave <team> | audit <team>
+//                                                          team mode (T-112); --token-id acts as a member, otherwise the local operator
 //   aletheia service install|uninstall|status [--write] [--cpu-quota X] [--memory-max Y]
 //                                                          auto-start unit/plist (dry-run by default; Linux/macOS only)
 //   aletheia audit [--limit n]                          read the sync audit log
@@ -138,6 +143,94 @@ async function handleInstall(command, flags, pos) {
   }
 }
 
+async function runTeamCommand(flags, pos) {
+  const { SyncStore } = await import("../src/hub/sync/store.mjs");
+  const { TeamStore } = await import("../src/hub/team.mjs");
+  const sync = new SyncStore(config.syncDb);
+  const account = sync.ensureAccount();
+  const team = new TeamStore(config.teamDb, {
+    tokenActive: (id) => {
+      const row = sync.db.prepare("SELECT revoked_at, expires_at FROM sync_token WHERE id = ?").get(Number(id));
+      return !!row && !row.revoked_at && !(row.expires_at && row.expires_at < Date.now());
+    },
+  });
+  try {
+    const tokenId = Number(flags["token-id"]);
+    const asMember = Number.isSafeInteger(tokenId) && tokenId > 0;
+    const actor = asMember ? tokenId : null;
+    const operator = !asMember;
+    const sub = pos[0] ?? "list";
+    const teamId = pos[1];
+
+    if (sub === "list") return out(team.listTeams(account.id, actor, { operator }));
+    if (sub === "create") {
+      if (!teamId) return die("Usage: aletheia team create <name> [--token-id id]");
+      return out(team.createTeam(account.id, teamId, { tokenId: actor, operator }));
+    }
+    if (!teamId) return die(`Usage: aletheia team ${sub} <team> ...`);
+
+    if (sub === "add-project") {
+      if (!pos[2]) return die("Usage: aletheia team add-project <team> <project>");
+      return out(team.addProject(account.id, teamId, actor, pos[2], { operator }));
+    }
+    if (sub === "members") return out(team.listMembers(account.id, teamId, actor, { operator }));
+    if (sub === "add-member") {
+      if (!flags.name) return die("Usage: aletheia team add-member <team> --name <n> [--role owner|editor|viewer] [--projects a,b]");
+      const minted = sync.mintToken(account.id, { scope: "sync", name: String(flags.name) });
+      const member = team.addMember(account.id, teamId, actor, {
+        name: String(flags.name),
+        role: typeof flags.role === "string" ? flags.role : "viewer",
+        projects: typeof flags.projects === "string" ? flags.projects.split(",") : [],
+        memberTokenId: minted.id,
+      }, { operator });
+      return out({ member, token: minted.token, note: "This token is shown once. Give it to the member as their device token." });
+    }
+    if (sub === "revoke-member") {
+      if (!pos[2]) return die("Usage: aletheia team revoke-member <team> <member-id>");
+      const revoked = team.revokeMember(account.id, teamId, actor, Number(pos[2]), { operator });
+      if (revoked.tokenId > 0) sync.revokeToken(account.id, revoked.tokenId);
+      return out(revoked);
+    }
+    if (sub === "share") {
+      if (!pos[2]) return die("Usage: aletheia team share <team> <member-id> --projects a,b");
+      return out(team.setShares(account.id, teamId, actor, Number(pos[2]), typeof flags.projects === "string" ? flags.projects.split(",") : [], { operator }));
+    }
+    if (sub === "board") return out(team.board(account.id, teamId, actor, { project: typeof flags.project === "string" ? flags.project : null }, { operator }));
+    if (sub === "pin" || sub === "decision" || sub === "memory") {
+      const body = pos.slice(2).join(" ");
+      if (!body) return die(`Usage: aletheia team ${sub} <team> <text> --project p`);
+      if (!flags.project) return die("--project is required for a shared entry.");
+      if (sub === "memory") {
+        return out(team.addEntry(account.id, teamId, actor, { project: flags.project, kind: "memory", title: typeof flags.title === "string" ? flags.title : "", text: body }, { operator }));
+      }
+      return out(team.addBoardEntry(account.id, teamId, actor, { project: flags.project, kind: sub, text: body }, { operator }));
+    }
+    if (sub === "brief") {
+      if (!flags.project) return die("Usage: aletheia team brief <team> --project p");
+      return out(team.brief(account.id, teamId, actor, { project: flags.project, days: Number(flags.days) || undefined, maxChars: Number(flags["max-chars"]) || undefined }, { operator }).text);
+    }
+    if (sub === "search") {
+      const query = pos.slice(2).join(" ");
+      if (!query) return die("Usage: aletheia team search <team> <query> [--project p]");
+      return out(team.search(account.id, teamId, actor, { query, project: typeof flags.project === "string" ? flags.project : null, limit: Number(flags.limit) || 20 }, { operator }));
+    }
+    if (sub === "leave") {
+      const left = team.leave(account.id, teamId, actor, { operator });
+      if (actor) sync.revokeToken(account.id, actor);
+      return out(left);
+    }
+    if (sub === "audit") {
+      const id = team.team(account.id, teamId).id;
+      team.authorize(account.id, id, actor, null, "manage", { operator });
+      return out(team.auditLog(id, Number(flags.limit) || 100));
+    }
+    return die("Usage: aletheia team list | create | add-project | add-member | members | revoke-member | share | board | pin | decision | memory | brief | search | leave | audit");
+  } finally {
+    team.close();
+    sync.close();
+  }
+}
+
 async function main() {
   const { flags, pos } = parseArgs(rest);
 
@@ -199,6 +292,7 @@ async function main() {
           return die(error.message);
         }
       }
+      case "team": return await runTeamCommand(flags, pos);
       case "service": {
         const { runServiceCommand } = await import("../src/service.mjs");
         try {

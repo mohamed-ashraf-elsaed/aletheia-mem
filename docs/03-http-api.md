@@ -136,3 +136,35 @@ flow with no meaning here.
 
 The exact wording of validation errors (the original uses zod) and the 404 HTML body are reproduced from
 observation, not from source. See [08-findings.md](08-findings.md).
+
+## 3.4 Team mode (T-112)
+
+Team routes serve the same store as [31-team.md](31-team.md). `/v1/team/*` needs `Authorization: Bearer <sync token>`;
+a read needs any valid token and a write needs `sync` or `admin`. `/api/hub/team/*` is the guarded local Hub route
+and acts as the local operator. Bodies are JSON; `team_id` accepts a numeric id or the team name.
+
+| Route | Method | Who | What |
+|---|---|---|---|
+| `/v1/team` | GET | member | the caller's teams, role and projects |
+| `/v1/team` | POST | valid token | create a team; the caller becomes its owner (`{name}`) |
+| `/v1/team/projects` | GET | member | named projects (`?team_id=`) |
+| `/v1/team/projects` | POST | owner | add `{team_id, project}` |
+| `/v1/team/members` | GET | owner | members, roles, projects and revoked state |
+| `/v1/team/members` | POST | owner | `{team_id, name, role, projects[], token_id?}`; mints a sync token when `token_id` is absent and returns it once |
+| `/v1/team/members/revoke` | POST | owner | `{team_id, member_id}`; also revokes that member's sync token |
+| `/v1/team/shares` | POST | owner | `{team_id, member_id, projects[]}` replaces a member's project shares |
+| `/v1/team/board` | GET | member | pins and decisions (`?team_id=&project=`) |
+| `/v1/team/board` | POST | editor/owner | `{team_id, project, kind: "pin"\|"decision", text}` |
+| `/v1/team/memory` | POST | editor/owner | `{team_id, project, kind?, title?, text, source_type?, source_id?}` |
+| `/v1/team/brief` | GET | member | `{team, project, text, facts[], decisions[], sourceIds[]}` (`?team_id=&project=&days=&maxChars=`) |
+| `/v1/team/search` | POST | member | `{team_id, query, project?, limit?}`; results respect project ACLs |
+| `/v1/team/leave` | POST | member | tombstones the caller's shared rows, removes its shares and revokes its token |
+| `/v1/team/audit` | GET | owner | append-only team actions (`?team_id=&limit=`) |
+
+Failures: `401` for a missing, revoked or expired token (`member_revoked`, `token_revoked`); `403` for the wrong
+role or a project the member does not share (`viewer_read_only`, `project_forbidden`, `not_member`); `404` for an
+unknown team, member or project; `400` for a duplicate team name, the last owner, or a malformed body.
+
+The store check is the gate: `TeamStore.authorize()` runs for the HTTP route, the CLI and a direct store call.
+A route cannot bypass it, and a test calls the store directly to prove that.
+

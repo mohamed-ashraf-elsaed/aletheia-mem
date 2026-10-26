@@ -43,6 +43,8 @@ export function loadConfig(overrides = {}) {
     syncPort: Number(overrides.syncPort ?? env.ALETHEIA_SYNC_PORT ?? 37791),
     // The device's own replica, outbox and cursor. Separate from sync.db (the hub's log).
     syncClientDb: overrides.syncClientDb ?? env.ALETHEIA_SYNC_CLIENT_DB ?? join(dataDir, "sync-client.db"),
+    // Team mode (T-112): named projects, members and shared memory. One file next to the sync log.
+    teamDb: overrides.teamDb ?? env.ALETHEIA_TEAM_DB ?? join(dataDir, "team.db"),
     // Optional bearer key for /v1 (tools). Leave empty on a single-user machine; the API is loopback-only anyway.
     apiKey: overrides.apiKey ?? env.ALETHEIA_API_KEY ?? "",
     promptsDir: overrides.promptsDir ?? join(import.meta.dir, "..", "prompts"),

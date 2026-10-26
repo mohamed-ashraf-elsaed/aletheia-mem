@@ -25,6 +25,13 @@ login exchanges the sync account's admin token for the session cookie (no separa
 Sessions are HttpOnly, SameSite=Strict, Secure-when-HTTPS, expire, and state-changing requests need the CSRF
 header; failed logins lock out with back-off. Loopback-only servers keep today's behaviour.
 
+Status update, 2026-10-26 (team mode): T-112 is `validated`. F12 is built as a self-hosted layer on Aletheia Sync:
+named projects, members that are device tokens with `owner`/`editor`/`viewer` roles, opt-in per-project shares,
+shared memory, a board of pins and decisions, a rule-based brief with source ids and ACL-scoped shared search.
+Every ACL check is in the store, and a viewer, a cross-project read, a revoked member and a revoked token are each
+tested. Not built: SSO, SCIM, compliance claims and server-readable team memory under E2EE. See
+[31-team.md](31-team.md) and `test/team-mode.test.mjs`.
+
 ## Decision
 
 The owner decided on 2026-10-26 that every feature claude-mem, and any rival, sells in a paid tier is built into Aletheia

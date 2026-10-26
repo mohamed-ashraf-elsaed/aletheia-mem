@@ -17,6 +17,8 @@ import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "./t
 import { sessionDetail, workOverview } from "./work.mjs";
 import { goalAction, proposeGoals } from "./goals.mjs";
 import { SyncStore } from "./sync/store.mjs";
+import { teamRequest } from "./team-api.mjs";
+import { TeamStore } from "./team.mjs";
 
 const MAX_BODY = 8 * 1024 * 1024;
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml" };
@@ -39,6 +41,13 @@ export function createHubRoutes({ hub, config, liveHub = null }) {
   const live = (frame) => liveHub?.broadcast(frame);
   let syncStore = null;
   const getSyncStore = () => syncStore ?? (syncStore = new SyncStore(config.syncDb));
+  let teamStore = null;
+  const getTeamStore = () => teamStore ?? (teamStore = new TeamStore(config.teamDb, {
+    tokenActive: (tokenId) => {
+      const row = getSyncStore().db.prepare("SELECT revoked_at, expires_at FROM sync_token WHERE id = ?").get(Number(tokenId));
+      return !!row && !row.revoked_at && !(row.expires_at && row.expires_at < Date.now());
+    },
+  }));
 
   async function readJson(request) {
     const len = Number(request.headers.get("content-length") ?? 0);
@@ -198,6 +207,25 @@ export function createHubRoutes({ hub, config, liveHub = null }) {
     }
     const tool = request.headers.get("x-tool") ?? undefined;
     let m;
+
+    // ---- T-112: team mode for the local Hub UI. The route guard already made this an operator session. ----
+    if (pathname === "/api/hub/team" || pathname.startsWith("/api/hub/team/")) {
+      const sync = getSyncStore();
+      const account = sync.ensureAccount();
+      const body = method === "GET" || method === "HEAD" ? null : await readJson(request);
+      const result = teamRequest({
+        path: pathname.slice("/api/hub/team".length) || "/",
+        method,
+        url,
+        body,
+        team: getTeamStore(),
+        sync,
+        accountId: account.id,
+        tokenId: null,
+        operator: true,
+      });
+      return result ? h.json(result.body, result.status) : h.json({ error: "Not found." }, 404);
+    }
 
     // ================= /v1: the universal API (what any tool, script or MCP bridge calls) =================
     if (isV1) {
