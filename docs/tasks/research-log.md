@@ -296,3 +296,16 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | https://www.anthropic.com/news/contextual-retrieval | contextual retrieval: 49% fewer failed retrievals, 67% with reranking |
 | 2026-10-26 | https://www.trychroma.com/research/context-rot | context rot: performance degrades as input grows; distractors hurt |
 | 2026-10-26 | https://www.sbert.net/examples/applications/retrieve_rerank/README.html | retrieve-and-rerank guide (cross-encoder reads query+document together) |
+
+## G. Fetches for the repository parity and growth plan (document 24)
+
+| Date | URL | What it gave |
+|---|---|---|
+| 2026-10-26 | https://api.github.com/repos/mohamed-ashraf-elsaed/aletheia-mem | current public state: 0 stars, public, Apache-2.0, 12 topics, Discussions disabled, last push 2026-10-26T09:24:31Z |
+| 2026-10-26 | https://registry.npmjs.org/aletheia-mem | HTTP 404: the package is not published |
+| 2026-10-26 | https://registry.npmjs.org/aletheia | HTTP 200: the name belongs to a different, experimental package; do not use it |
+| 2026-10-26 | https://news.ycombinator.com/showhn.html | Show HN rules: runnable, no sign-up barrier, title begins "Show HN", no friends' upvotes |
+| 2026-10-26 | https://docs.github.com/en/site-policy/acceptable-use-policies/github-acceptable-use-policies | section 4 prohibits rank abuse such as automated starring, and inauthentic interactions |
+| 2026-10-26 | https://www.reddit.com/r/ClaudeAI/about/rules.json | HTTP 403: subreddit rules not read; marked UNVERIFIED |
+| 2026-10-26 | https://www.reddit.com/r/LocalLLaMA/about/rules.json | HTTP 403: subreddit rules not read; marked UNVERIFIED |
+| 2026-10-26 | https://www.reddit.com/r/mcp/about/rules.json | HTTP 403: subreddit rules not read; marked UNVERIFIED |
