@@ -5,15 +5,16 @@ import { SyncStore } from "./store.mjs";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
 
-function scopeFor(token, allowed) {
-  if (!token) return false;
-  if (token.revoked_at) return false;
-  if (token.expires_at && token.expires_at < Date.now()) return false;
-  return allowed.includes(token.scope);
+/** 401 for an unknown, revoked or expired token; 403 for a valid token with the wrong scope; null when allowed. */
+function authDenied(token, allowed) {
+  if (!token) return 401;
+  if (token.revoked_at || (token.expires_at && token.expires_at < Date.now())) return 401;
+  if (!allowed.includes(token.scope)) return 403;
+  return null;
 }
 
 export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls = false, warn = (message) => console.warn(message) }) {
-  const joinAttempts = new Map();
+  const joinFailures = new Map();
 
   async function readJson(request) {
     try {
@@ -29,15 +30,18 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
     return match ? store.findToken(match[1]) : null;
   }
 
-  function rateLimited(accountId) {
-    const key = `${accountId}:${getPeer()}`;
-    const windowMs = 60_000;
+  /** Count only failed pairing attempts; a successful join clears the counter. */
+  function recordFailure(accountId) {
     const now = Date.now();
-    const entry = joinAttempts.get(key) ?? { count: 0, reset: now + windowMs };
-    if (entry.reset < now) entry.count = 0, entry.reset = now + windowMs;
+    const entry = joinFailures.get(accountId) ?? { count: 0, reset: now + 60_000 };
+    if (entry.reset < now) entry.count = 0, entry.reset = now + 60_000;
     entry.count += 1;
-    joinAttempts.set(key, entry);
+    joinFailures.set(accountId, entry);
     return entry.count > 5;
+  }
+
+  function clearFailures(accountId) {
+    joinFailures.delete(accountId);
   }
 
   async function handle(request) {
@@ -50,11 +54,14 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
     if (pathname === "/healthz" && method === "GET") return json({ status: "ok" });
 
     if (pathname === "/v1/sync/join" && method === "POST") {
-      if (rateLimited(accountId)) return json({ error: "Too many pairing attempts; wait a minute." }, 429);
       const body = await readJson(request);
       if (!body || typeof body.code !== "string" || typeof body.device_id !== "string") return json({ error: "code and device_id are required." }, 400);
       const result = store.redeemPairCode(accountId, body.code, { deviceId: body.device_id, name: body.name ?? body.device_id });
-      if (!result.ok) return json({ error: result.reason }, result.status);
+      if (!result.ok) {
+        if (recordFailure(accountId)) return json({ error: "Too many pairing attempts; wait a minute." }, 429);
+        return json({ error: result.reason }, result.status);
+      }
+      clearFailures(accountId);
       return json({ token: result.token, device_id: result.deviceId });
     }
 
@@ -62,7 +69,8 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
     const accountForToken = token ? token.account_id : null;
 
     if (pathname === "/v1/sync/push" && method === "POST") {
-      if (!scopeFor(token, ["sync", "admin"])) return json({ error: "A sync or admin token is required to push." }, token ? 403 : 401);
+      const pushDenied = authDenied(token, ["sync", "admin"]);
+      if (pushDenied) return json({ error: "A sync or admin token is required to push." }, pushDenied);
       const body = await readJson(request);
       if (!body || !Array.isArray(body.ops)) return json({ error: "ops must be an array." }, 400);
       const deviceId = request.headers.get("x-device-id") ?? token.device_id ?? null;
@@ -84,7 +92,8 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
     }
 
     if (pathname === "/v1/sync/pull" && method === "GET") {
-      if (!scopeFor(token, ["sync", "read", "mcp", "admin"])) return json({ error: "A valid token is required to pull." }, token ? 403 : 401);
+      const pullDenied = authDenied(token, ["sync", "read", "mcp", "admin"]);
+      if (pullDenied) return json({ error: "A valid token is required to pull." }, pullDenied);
       const since = Number(url.searchParams.get("since") ?? 0);
       const limit = Number(url.searchParams.get("limit") ?? 500);
       const result = store.pullOps(accountForToken, since, { limit });
@@ -95,23 +104,27 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
     }
 
     if (pathname === "/v1/sync/status" && method === "GET") {
-      if (!token) return json({ error: "A valid token is required." }, 401);
+      const statusDenied = authDenied(token, ["sync", "read", "mcp", "admin"]);
+      if (statusDenied) return json({ error: "A valid token is required." }, statusDenied);
       store.touchToken(token.id);
       return json(store.status(accountForToken));
     }
 
     if (pathname === "/v1/sync/snapshot" && method === "GET") {
-      if (!scopeFor(token, ["sync", "read", "mcp", "admin"])) return json({ error: "A valid token is required." }, token ? 403 : 401);
+      const snapshotDenied = authDenied(token, ["sync", "read", "mcp", "admin"]);
+      if (snapshotDenied) return json({ error: "A valid token is required." }, snapshotDenied);
       return json(store.snapshot(accountForToken));
     }
 
     if (pathname === "/v1/sync/devices" && method === "GET") {
-      if (!scopeFor(token, ["admin"])) return json({ error: "An admin token is required." }, token ? 403 : 401);
+      const devicesDenied = authDenied(token, ["admin"]);
+      if (devicesDenied) return json({ error: "An admin token is required." }, devicesDenied);
       return json({ devices: store.listDevices(accountForToken) });
     }
 
     if (pathname === "/v1/sync/revoke" && method === "POST") {
-      if (!scopeFor(token, ["admin"])) return json({ error: "An admin token is required." }, token ? 403 : 401);
+      const revokeDenied = authDenied(token, ["admin"]);
+      if (revokeDenied) return json({ error: "An admin token is required." }, revokeDenied);
       const body = await readJson(request);
       if (!body || typeof body.device_id !== "string") return json({ error: "device_id is required." }, 400);
       const revoked = store.revokeDevice(accountForToken, body.device_id);
@@ -120,12 +133,14 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
     }
 
     if (pathname === "/v1/sync/tokens" && method === "GET") {
-      if (!scopeFor(token, ["admin"])) return json({ error: "An admin token is required." }, token ? 403 : 401);
+      const tokensGetDenied = authDenied(token, ["admin"]);
+      if (tokensGetDenied) return json({ error: "An admin token is required." }, tokensGetDenied);
       return json({ tokens: store.listTokens(accountForToken) });
     }
 
     if (pathname === "/v1/sync/tokens" && method === "POST") {
-      if (!scopeFor(token, ["admin"])) return json({ error: "An admin token is required." }, token ? 403 : 401);
+      const tokensPostDenied = authDenied(token, ["admin"]);
+      if (tokensPostDenied) return json({ error: "An admin token is required." }, tokensPostDenied);
       const body = await readJson(request) ?? {};
       const minted = store.mintToken(accountForToken, { scope: body.scope ?? "sync", deviceId: body.device_id ?? null, name: body.name ?? null, projects: body.projects ?? [], opsPerDay: body.ops_per_day ?? null, bytesPerDay: body.bytes_per_day ?? null });
       store.audit(accountForToken, { tokenId: token.id, action: "token.mint", result: "ok", detail: { id: minted.id, scope: minted.scope } });
@@ -133,18 +148,21 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
     }
 
     if (pathname === "/v1/sync/audit" && method === "GET") {
-      if (!scopeFor(token, ["admin"])) return json({ error: "An admin token is required." }, token ? 403 : 401);
+      const auditDenied = authDenied(token, ["admin"]);
+      if (auditDenied) return json({ error: "An admin token is required." }, auditDenied);
       return json({ audit: store.auditLog(accountForToken, Number(url.searchParams.get("limit") ?? 100)) });
     }
 
     if (pathname === "/v1/sync/compact" && method === "POST") {
-      if (!scopeFor(token, ["admin"])) return json({ error: "An admin token is required." }, token ? 403 : 401);
+      const compactDenied = authDenied(token, ["admin"]);
+      if (compactDenied) return json({ error: "An admin token is required." }, compactDenied);
       const body = await readJson(request) ?? {};
       return json(store.compact(accountForToken, { retentionMs: body.retention_ms ?? undefined }));
     }
 
     if (pathname === "/v1/sync/purge" && method === "POST") {
-      if (!scopeFor(token, ["admin"])) return json({ error: "An admin token is required." }, token ? 403 : 401);
+      const purgeDenied = authDenied(token, ["admin"]);
+      if (purgeDenied) return json({ error: "An admin token is required." }, purgeDenied);
       const body = await readJson(request);
       if (!body || typeof body.entity_id !== "string") return json({ error: "entity_id is required." }, 400);
       return json(store.purgeEntity(accountForToken, body.entity_id, { actor: { tokenId: token.id, deviceId: null } }));
