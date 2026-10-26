@@ -28,6 +28,9 @@ search
   → facts_fts and memory_keys_fts (FTS5)
   → current facts by default; history and as-of on request
   → fact hits first, each with its episode; memory hits after
+
+context
+  → pinned and recent memories, then the current facts (cold facts are excluded), then the rules
 ```
 
 Every stage that can fail is a row or a file, not in-memory state. A kill -9 between windows leaves the job

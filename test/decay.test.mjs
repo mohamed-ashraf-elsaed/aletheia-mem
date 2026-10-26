@@ -33,10 +33,12 @@ describe("decay and pruning", () => {
       const report = prune(store, { now: NOW, apply: false });
       expect(report.factsCold).toBe(1);
       expect(store.getFact(fact.id).status).toBe("active"); // a report changes nothing
+      expect(store.context({ project: "shop" })).toContain("The retry service uses confidence policy");
 
       const applied = prune(store, { now: NOW, apply: true });
       expect(applied.applied.factsCold).toBe(1);
       expect(store.getFact(fact.id).status).toBe("cold");
+      expect(store.context({ project: "shop" })).not.toContain("old policy");
       expect(store.factsCurrent({ project: "shop", now: NOW })).toHaveLength(0);
       expect(store.factsHistory({ project: "shop" }).map((row) => row.id)).toContain(fact.id);
       expect(store.db.prepare("SELECT 1 FROM audit WHERE action = 'fact.cold' AND detail LIKE ?").get(`%"id":${fact.id}%`)).toBeTruthy();

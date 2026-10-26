@@ -1206,6 +1206,15 @@ export class HubStore {
     const parts = [`# Memory${scope === "all" ? " (all projects)" : project ? ` for ${project}` : ""}`];
     if (pinned.length) parts.push("", "## Pinned", ...pinned.map(line));
     if (recent.length) parts.push("", "## Recent", ...recent.map(line));
+    const now = Date.now();
+    const factWhere = ["status = 'active'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)"];
+    const factParams = [now, now];
+    if (project && scope !== "all") {
+      if (this.hasGlobal("facts")) { factWhere.push("(project = ? OR scope = 'global')"); } else { factWhere.push("project = ?"); }
+      factParams.push(project);
+    }
+    const facts = this.db.prepare(`SELECT * FROM facts WHERE ${factWhere.join(" AND ")} ORDER BY confidence DESC, recorded_at_epoch DESC, id DESC LIMIT 10`).all(...factParams);
+    if (facts.length) parts.push("", "## Facts", ...facts.map((fact) => `- fact #${fact.id} ${fact.text}`));
     const rules = this.rules.list().filter((r) => r.enabled && (!r.tools || !tool || r.tools.includes(tool)));
     if (rules.length) parts.push("", "## Rules", ...rules.map((r) => (r.when ? `- When ${r.when}: ${r.then}` : `- ${r.then}`)));
     let out = parts.join("\n");
