@@ -10,13 +10,18 @@
 //   aletheia rules list | add <text> [--when w] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
 //   aletheia tools                                        detected tools and how to connect each
 //   aletheia connect <tool> [--write]                     preview (default) or write the MCP config for a tool
+//   aletheia install <tool> [--write] [--dry-run]         preview (default) or write MCP, hooks and rules in one go
+//   aletheia uninstall <tool> [--write]                   remove only the entries the install manifest lists
+//   aletheia hook <tool> <event>                          hook entry point: read one JSON payload on stdin
+//   aletheia doctor                                       check the server, hooks, spool and last capture
 //   aletheia compress [--project p]                       turn raw events into observations (needs ALETHEIA_PROVIDER)
-import { readFileSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { normalizeHook, redact } from "../src/hub/capture.mjs";
 import { compressRecent } from "../src/hub/compress.mjs";
 import { importClaudeMem } from "../src/hub/importers.mjs";
+import { applyInstall, applyUninstall, doctor, formatPlan, formatUninstall, installerFor, installerIds, planUninstall } from "../src/hub/install.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "../src/hub/rules-sync.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "../src/hub/tools.mjs";
@@ -43,8 +48,86 @@ function parseArgs(args) {
 const out = (v) => console.log(typeof v === "string" ? v : JSON.stringify(v, null, 2));
 const die = (m) => { console.error(m); process.exit(1); };
 
+function installEnv(hub) {
+  return {
+    home: config.home,
+    bun: process.execPath,
+    hookScript: join(import.meta.dir, "aletheia.mjs"),
+    hookRunner: join(config.dataDir, "aletheia.bundle.mjs"),
+    mcpScript: join(import.meta.dir, "mcp.mjs"),
+    dataDir: config.dataDir,
+    dbPath: config.hubDb,
+    port: config.port,
+    rules: hub ? hub.rules.list() : [],
+  };
+}
+
+async function handleInstall(command, flags, pos) {
+  const id = pos[0];
+  if (!id) return die(`Usage: aletheia ${command} <tool>\nTools: ${installerIds().join(", ")}`);
+  let installer;
+  try {
+    installer = installerFor(id);
+  } catch (error) {
+    return die(error.message);
+  }
+  const write = !!flags.write && !flags["dry-run"];
+  // A dry run must not create the data directory or the database. Read existing rules only, and never for uninstall.
+  let hub = null;
+  if (command === "install" && (write || existsSync(config.hubDb))) {
+    try {
+      hub = new HubStore(config.hubDb);
+    } catch {
+      hub = null;
+    }
+  }
+  const env = installEnv(hub);
+  hub?.close();
+  try {
+    if (command === "install") {
+      const plan = installer.plan(env);
+      out(formatPlan(plan));
+      if (!write) return out("Dry run: nothing was written. Add --write to apply.");
+      const result = await applyInstall(plan, { dataDir: config.dataDir });
+      return out(result.changed ? `Wrote ${result.wrote.length} file(s):\n${result.wrote.map((file) => `  ${file}`).join("\n")}` : "Already installed; nothing changed.");
+    }
+    const plan = planUninstall(id, env, { dataDir: config.dataDir });
+    out(formatUninstall(plan));
+    if (!plan.installed) return;
+    if (!write) return out("Dry run: nothing was written. Add --write to remove.");
+    const result = applyUninstall(plan, { dataDir: config.dataDir });
+    return out(result.wrote.length ? `Removed our entries from ${result.wrote.length} file(s):\n${result.wrote.map((file) => `  ${file}`).join("\n")}` : "Nothing to remove; the manifest entry is gone.");
+  } catch (error) {
+    return die(error.message);
+  }
+}
+
 async function main() {
   const { flags, pos } = parseArgs(rest);
+
+  // Hooks run in the host tool's hot path: no store is opened here, and a watchdog guarantees a return.
+  if (cmd === "hook") {
+    const watchdog = setTimeout(() => process.exit(0), 150);
+    try {
+      const { runHook } = await import("../src/hub/hooks/run.mjs");
+      const result = await runHook({ tool: pos[0], event: pos[1], stdin: readFileSync(0, "utf8") });
+      if (result.stdout) process.stdout.write(result.stdout.endsWith("\n") ? result.stdout : `${result.stdout}\n`);
+    } catch {
+      // A hook never breaks the session.
+    }
+    clearTimeout(watchdog);
+    return;
+  }
+
+  if (cmd === "install" || cmd === "uninstall") return handleInstall(cmd, flags, pos);
+
+  if (cmd === "doctor") {
+    const checks = await doctor(installEnv(null));
+    for (const check of checks) out(`${check.ok ? "ok  " : "FAIL"} ${check.name.padEnd(20)} ${check.detail}`);
+    if (checks.some((check) => !check.ok)) process.exitCode = 1;
+    return;
+  }
+
   const hub = new HubStore(config.hubDb);
   const argv = mcpCommand({ bun: process.execPath, script: join(import.meta.dir, "mcp.mjs") });
   try {

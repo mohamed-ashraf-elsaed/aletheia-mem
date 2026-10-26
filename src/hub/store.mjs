@@ -6,7 +6,7 @@
 import { Database } from "bun:sqlite";
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
-import { sha256 } from "../lib/util.mjs";
+import { sha256 } from "../lib/hash.mjs";
 import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVector, unpackVector } from "./retrieval.mjs";
 
 const SCHEMA_VERSION = 2; // 2: porter stemming in the full-text index, memory_vectors
@@ -96,6 +96,7 @@ export class HubStore {
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
     this.db = new Database(path, { create: true });
     this.db.exec("PRAGMA journal_mode = WAL");
+    this.db.exec("PRAGMA synchronous = NORMAL");
     this.db.exec("PRAGMA busy_timeout = 3000");
     this.db.exec("PRAGMA foreign_keys = ON");
     const version = this.db.prepare("PRAGMA user_version").get().user_version;
@@ -106,9 +107,12 @@ export class HubStore {
       for (const name of ["memories_ai", "memories_ad", "memories_au"]) this.db.exec(`${"DR" + "OP"} TRIGGER IF EXISTS ${name}`);
       this.db.exec(`${"DR" + "OP"} TABLE IF EXISTS memories_fts`);
     }
-    this.db.exec(SCHEMA);
+    // A hook opens the store on every event. Re-running the whole schema costs several milliseconds, so skip it
+    // when this database already carries the current version (the version is written only after the schema runs).
+    const ready = hadMemories && version === SCHEMA_VERSION;
+    if (!ready) this.db.exec(SCHEMA);
     if (migrate) this.db.exec("INSERT INTO memories_fts(memories_fts) VALUES('rebuild')");
-    this.db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+    if (!ready) this.db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
     this.vecCache = null;
     this.termOptions = { max: 12, maxShare: 0.6 }; // see selectTerms. Swept on LoCoMo (docs/14): 12/0.6 loses no recall; 8/0.35 lost ~8 points
   }
@@ -124,7 +128,7 @@ export class HubStore {
   }
 
   /** Insert a memory. A memory with the same content (project, title, narrative) is not stored twice: returns the existing id. */
-  add(input, { actor = "api" } = {}) {
+  add(input, { actor = "api", audit = true } = {}) {
     const title = clean(input.title, 400) ?? "";
     const narrative = clean(input.narrative ?? input.text, 20000);
     if (!title.trim() && !(narrative ?? "").trim()) throw new RangeError("A memory needs a title or text.");
@@ -140,7 +144,7 @@ export class HubStore {
       .run(project, kind, clean(input.type, 40) || (kind === "event" ? "event" : "note"), title, clean(input.subtitle, 400), narrative, json(input.facts), json(input.concepts), json(input.files),
         clean(input.tool, 60) || "unknown", clean(input.sessionId ?? input.session_id, 200), input.pinned ? 1 : 0, clean(input.origin, 200), hash, at, at);
     this.statsCache = null;
-    if (actor !== "import") this.audit(actor, "memory.add", { id: Number(info.lastInsertRowid), kind, tool: input.tool ?? "unknown" });
+    if (actor !== "import" && audit) this.audit(actor, "memory.add", { id: Number(info.lastInsertRowid), kind, tool: input.tool ?? "unknown" });
     return { id: Number(info.lastInsertRowid), created: true };
   }
 
