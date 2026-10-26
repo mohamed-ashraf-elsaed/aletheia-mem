@@ -50,12 +50,18 @@ These are not `UNVERIFIED` facts about other projects; they are claims this proj
 
 | # | Claim | State | What would verify it |
 |---:|---|---|---|
-| 31 | "Works with Cursor, Gemini CLI, Codex CLI, Windsurf, OpenCode, Claude Code" | Config written from docs; **not tested on a real install** (`README.md`) | A real install test per tool (T-070, T-075) |
-| 32 | "Automatic capture through a tool's hooks" | **proven end-to-end for Claude Code and Command Code** in T-101 (2026-10-26); the other hosts are not installed or tested | A real install test per remaining tool (T-070, T-075) |
+| 31 | "Works with Cursor, Gemini CLI, Codex CLI, Windsurf, OpenCode, Claude Code" | Config written from official docs fetched 2026-10-26 and fixture-tested for six tools plus OpenCode; **not tested on a real install** (`README.md`). T-070 checked the documented rules formats, not the tools. | A real install test per tool (T-075) |
+| 32 | "Automatic capture through a tool's hooks" | **proven end-to-end through the installed hook commands for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf** in T-140 (2026-10-26). No host application was opened, so the host's own hook loader and trust UI are untested. OpenCode has no hook shipped. | Open each host, trust the hooks, run one session (manual-test section 7) |
 | 33 | "Answer accuracy is better" | Not measured | T-051, T-052 |
 | 34 | "p95 ≤ 50 ms at 50k rows" | **still not met**: 137.8 ms before the FTS `optimize` fix, 108.1 ms after it (2026-10-26) | T-047 / further index work |
 | 35 | "macOS and Windows supported" | Linux only tested | T-014 |
 | 36 | "30+ languages supported" | English only | T-087 to T-089 |
+| 37 | OpenCode plugin event payload fields | The official plugin page lists event names (`session.idle`, `message.updated`, `tool.execute.after`) but not their payload shape, so no capture plugin ships (T-068) | Read the `@opencode-ai/plugin` types or log one real event |
+| 38 | Codex hook trust flow | The installer writes non-managed hooks; Codex requires them to be reviewed with `/hooks` (docs, 2026-10-26) | Open Codex, review/trust, run one session |
+| 39 | Full TOML validation | The Codex MCP writer uses a structural guard (JSON-shaped file, duplicate table, unbalanced quotes), not a TOML parser, because no dependency is allowed | Add a TOML parser or validate with the Codex CLI before release |
+| 40 | Claude Desktop on Linux | `~/.config/Claude/claude_desktop_config.json` exists here, but the MCP quickstart names only macOS and Windows | Official Linux documentation or a Linux Desktop build |
+| 41 | Real tool read of the rules files | Every rules target was checked against its docs and written in temp folders; no tool was opened to confirm it loaded the rule (T-070) | Open each tool and read the active rules (manual-test section 7) |
+| 42 | Windsurf/Devin path stability | The docs now call the product Devin Desktop while the user hook path stays `~/.codeium/windsurf`; the MCP path moved to `~/.config/devin` | Re-fetch the docs after a release and test both MCP paths |
 
 ## Memory-building measurements (2026-10-26)
 

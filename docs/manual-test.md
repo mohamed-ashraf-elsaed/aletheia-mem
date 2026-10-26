@@ -151,9 +151,91 @@ Playwright MCP browser. Observed:
 and with a keyboard only (Tab through the header, open each tab, open a details block, and dismiss + restore one
 memory). The automated run proves the scripts load and the DOM is reachable; it does not assert pixel layout.
 
+## 7. The five more hosts (fixture-tested, NOT RUN BY AUTHOR)
+
+Every item in this section is **NOT RUN BY AUTHOR**. The formats come from the official docs fetched on
+2026-10-26 (listed in section 25); the installers and payloads are fixture-tested only. Do not treat a pass here
+as a real-install test.
+
+For each tool, use a temp HOME first, then a real one:
+
+```bash
+HOME=$(mktemp -d) bun bin/aletheia.mjs install <tool> --dry-run
+HOME=$(mktemp -d) bun bin/aletheia.mjs install <tool> --write
+bun bin/aletheia.mjs doctor
+```
+
+Then open the tool in a scratch project, run one prompt that mentions a unique phrase, and check:
+
+```bash
+bun bin/aletheia.mjs search "the unique phrase" --project <project-folder-name>
+```
+
+### Cursor (NOT RUN BY AUTHOR)
+
+1. `install cursor --write` writes `~/.cursor/mcp.json` and `~/.cursor/hooks.json` (version 1).
+2. Open a trusted workspace; Cursor loads user hooks from `~/.cursor/hooks.json`.
+3. Submit a prompt, run one Shell tool, let the answer finish, then close the conversation.
+4. `doctor` should show `6/6` for Cursor. `search` should find the prompt, the tool event and the assistant text.
+5. Confirm no `sk-ant-` key is stored. Confirm the assistant summary came from `afterAgentResponse`, not `stop`.
+6. Run `rules sync --tools cursor --dir <project> --write`; confirm `.cursor/rules/aletheia.mdc` is active.
+
+### Codex CLI (NOT RUN BY AUTHOR)
+
+1. `install codex --write` writes `~/.codex/config.toml`, `~/.codex/hooks.json` and `~/.codex/AGENTS.md`.
+2. Start Codex and run `/hooks`; review and trust the aletheia hooks. This step is required and has not been run.
+3. Run one prompt and one shell command, then finish the turn.
+4. `doctor` should show `5/5`. `search` should find the prompt, tool event and `last_assistant_message`.
+5. Confirm the TOML block sits next to the user's own tables and that `codex` still starts.
+6. A malformed `config.toml` must be refused, not overwritten.
+
+### Gemini CLI (NOT RUN BY AUTHOR)
+
+1. `install gemini-cli --write` merges `mcpServers` and `hooks` into `~/.gemini/settings.json`.
+2. Start Gemini CLI in a project and run one prompt with one tool call.
+3. `doctor` should show `5/5`. `search` should find `prompt`, the tool event and `prompt_response`.
+4. Confirm the existing `security`/other keys and hooks survived the merge.
+5. Confirm the hook timeout is milliseconds (`10000`), not 10 ms.
+
+### Windsurf / Devin Desktop (NOT RUN BY AUTHOR)
+
+1. `install windsurf --write` writes the MCP file (current `~/.config/devin/mcp_config.json` or an existing legacy
+   `~/.codeium/windsurf/mcp_config.json`), `~/.codeium/windsurf/hooks.json` and the global rules file.
+2. Open Cascade in a workspace, run a prompt, a shell command and one file edit, then finish the response.
+3. `doctor` should show `4/4`. `search` should find the prompt, both tool events and the response text.
+4. Expect **no** session-start context and **no** session-end summary: Cascade has neither event.
+5. Confirm the payload without a `cwd` is filed under the workspace folder (the hook runs from the root).
+6. `rules sync --tools windsurf --dir <project> --write`; confirm `.windsurf/rules/aletheia.md` starts with
+   `trigger: always_on`.
+
+### OpenCode (NOT RUN BY AUTHOR)
+
+This host is `mcp+rules`, not full capture.
+
+1. `install opencode --write` adds `mcp.aletheia` to `~/.config/opencode/opencode.json` and a block to
+   `~/.config/opencode/AGENTS.md`.
+2. Start OpenCode and confirm the aletheia MCP tools are listed.
+3. Confirm no plugin was written and no new rows appear from an OpenCode session; that is the documented limit.
+4. A JSONC-only `opencode.jsonc` is refused. Confirm the error names the file.
+
+### Claude Desktop (NOT RUN BY AUTHOR)
+
+1. Follow [claude-desktop.md](claude-desktop.md); merge the `mcpServers.aletheia` entry.
+2. Quit and reopen Claude Desktop, then look for the server under the tools icon.
+3. Confirm the server starts and a memory search works.
+4. The Linux path `~/.config/Claude/claude_desktop_config.json` is observed on this machine but is not in the MCP
+   quickstart; record whether your build reads it.
+
 ## What the automated tests already cover
 
 `test/install-claude.test.mjs`, `test/claude-hooks.test.mjs` and `test/e2e-capture.test.mjs` cover: the dry run,
 merge and backup, second-run idempotence, refusal of unparsable JSON, uninstall, the exact commands read back from
 the settings files, every recorded payload, secret redaction, the spool and flush, `doctor`, and the hook time
 budget. They run against a temporary `HOME`, never your real one.
+
+`test/install-cursor.test.mjs`, `test/install-codex.test.mjs`, `test/install-gemini.test.mjs`,
+`test/install-windsurf.test.mjs`, `test/install-opencode.test.mjs` and `test/e2e-more-hosts.test.mjs` add the same
+checks for the five new hosts, plus the TOML block guard, the single Gemini settings merge, the two Windsurf MCP
+paths, the OpenCode JSONC refusal, and a p95 under 100 ms per host. `test/uninstall.test.mjs` covers the generic
+uninstall and `--force`. `test/install-targets/rules.test.mjs` and `docs/verification/rules-targets.md` record the
+rules formats. None of these opens the host application.

@@ -142,7 +142,7 @@ A benchmark badge is *allowed* once the result has a dated command and raw outpu
 | Docker pulls | A published image on a registry | No Dockerfile (T-081) |
 | Latest release | A tagged GitHub release | No releases |
 | OpenSSF Scorecard | A real scorecard run | None |
-| "Works with <tool>" | A test on a real install of that tool | None for any tool (`README.md` says so) |
+| "Works with <tool>" | A test on a real install of that tool | None for any tool (`README.md` says so). 2026-10-26: six tools have fixture-tested hook configs and end-to-end runs through their installed hook commands; that is still not a real install test. |
 | Awesome-list mention | The list accepted the entry | No entry |
 | Trendshift / Vercel OSS / sponsor badges | Actual acceptance into the programme | Not a member; do not copy claude-mem's |
 
@@ -195,7 +195,7 @@ Effort is engineering or writing effort, not a time promise. Each tactic names t
 | Glama | Low | A public repository | "Add Server" is visible on `https://glama.ai/mcp/servers`. Exact steps **UNVERIFIED**. | — |
 | Smithery | Low | A public server | Landing page fetched (`https://smithery.ai`); submission steps **UNVERIFIED**. | — |
 | PulseMCP | Low | — | **UNVERIFIED**: `https://www.pulsemcp.com` returned HTTP 403, so its submission process was not read. | Assuming it is automatic. |
-| Integrations for each tool | High | A real install test per tool (T-055, T-075) | "Verified on <tool> <version> on <date>" with the config diff. | "Works with X" from documentation alone. |
+| Integrations for each tool | High | A real install test per tool (T-055, T-075) | "Verified on <tool> <version> on <date>" with the config diff. 2026-10-26 status: six hook configs are fixture-tested, none has a real install test. | "Works with X" from documentation alone. |
 | Talks and meetups | High | A measured result and a demo | A 10-minute "how we benchmarked memory and what failed" talk. | A product pitch with no numbers. |
 
 ### 24.5.1 What is explicitly out of scope
