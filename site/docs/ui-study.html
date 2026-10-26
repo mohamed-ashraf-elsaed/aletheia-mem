@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UI study: the claude-mem viewer · Aletheia docs</title>
+<meta name="description" content="This is a read-only study of the viewer that claude-mem serves on the owner's machine (http://127.0.0.1:37700/), done on 2026-10-27 with a real browser. Only structure and behav...">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/ui-study.html">
+<link rel="icon" type="image/png" sizes="64x64" href="../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"UI study: the claude-mem viewer","description":"This is a read-only study of the viewer that claude-mem serves on the owner's machine (http://127.0.0.1:37700/), done on 2026-10-27 with a real browser. Only structure and behav...","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/ui-study.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="ui-study-the-claude-mem-viewer">UI study: the claude-mem viewer</h1>
+<p>This is a read-only study of the viewer that claude-mem serves on the owner's machine (<code>http://127.0.0.1:37700/</code>), done on 2026-10-27 with a real browser. Only structure and behaviour are described, in our own words. No code, CSS, icon or copy text was reused. Things that were not observed are marked <code>UNVERIFIED</code> and listed in <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/tasks/unverified.md">unverified.md</a>.</p>
+<p>What was captured: the My Work page at about 920 px and at 375 px, the My Goals page at 375 px, the network list, the CSS keyframe names and the ARIA roles in use. Source: the local page itself, fetched 2026-10-27 (see <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/tasks/research-log.md">research-log.md</a>).</p>
+<h2 id="layout-and-navigation">Layout and navigation</h2>
+<ul><li>A top bar holds the product name, a team chip, a machine count, a live-updates indicator and external links.</li><li>A slim rail of icon buttons on the left switches between three pages: My Work, My Goals, My Rules. On wide screens the labels appear beside the icons.</li><li>At 375 px the rail becomes a bottom bar with three labelled buttons, and the header shrinks. The page did not scroll sideways.</li><li>The page address does not change when the page changes. Back and reload return to My Work. Aletheia puts the page and filters in the URL hash instead.</li><li>Two small switches sit above the header: a dark theme switch and a &quot;Spec IDs&quot; switch.</li></ul>
+<h2 id="status-indicators-and-what-drives-them">Status indicators and what drives them</h2>
+<div class="tablewrap"><table><thead><tr><th>Indicator</th><th>What it shows</th><th>What drives it</th></tr></thead><tbody><tr><td>&quot;Live updates&quot; dot</td><td>The page believes it gets pushes.</td><td>A request to an events endpoint made at load. How it behaves later is <code>UNVERIFIED</code>.</td></tr><tr><td>Card state pill (Working, Idle, Shipped)</td><td>The state of one request.</td><td>Derived on the server and sent in the work payload.</td></tr><tr><td>Spinner beside the pill</td><td>The card is being worked on or its title is being written.</td><td>Same payload.</td></tr><tr><td>Progress bar with a percent</td><td>How far a request is.</td><td>A review score the server stores; a card with no review says &quot;Not reviewed yet&quot;.</td></tr><tr><td>&quot;Needs you&quot; count</td><td>Items waiting on the owner.</td><td>Count from the payload.</td></tr><tr><td>&quot;Last refreshed&quot; line</td><td>Time of the last payload.</td><td>Client clock when the payload arrived.</td></tr></tbody></table></div>
+<h2 id="loading-empty-and-error-states">Loading, empty and error states</h2>
+<ul><li>Loading: the first paint is the shell; the cards appear after one request to the work endpoint. A skeleton was not seen, but the load was too fast to be sure.</li><li>Empty: the headline says &quot;Nothing needs you right now&quot; and the count of working items.</li><li>Error and offline: <code>UNVERIFIED</code>. The server stayed up.</li></ul>
+<h2 id="long-lists">Long lists</h2>
+<p>Five cards were shown, so no pagination, infinite scroll or virtualization was triggered. <code>UNVERIFIED</code> for larger stores. Long prompt text inside a card is cut with an ellipsis and the card body scrolls inside a fixed box.</p>
+<h2 id="filters-sort-and-search">Filters, sort and search</h2>
+<ul><li>A segmented &quot;View&quot; control switches between Cards, List and By agent.</li><li>A segmented &quot;Filter&quot; control shows All, Needs you and Shipped with a count on each.</li><li>A sort select (&quot;Needs you first&quot;) sits beside the filters. At 375 px it shrinks to an icon.</li><li>No search box was seen on the pages captured.</li></ul>
+<h2 id="how-text-is-rendered">How text is rendered</h2>
+<ul><li>Prompt text is shown as monospace, in a fixed-height box that scrolls. Ellipsis marks the cut.</li><li>A longer &quot;build story&quot; paragraph is shown as plain prose with a &quot;Read&quot; button that opens the full text.</li><li>Dates use a short local form (&quot;Oct 27, 1:18 am&quot;). Durations use a rough form (&quot;1 day&quot;, &quot;17 hr&quot;, &quot;Just started&quot;).</li></ul>
+<h2 id="motion">Motion</h2>
+<p>Keyframes found in the stylesheet: spin, ping, pulse, enter, exit, accordion-down, accordion-up. That points to a spinner, a pulsing dot, enter and exit transitions for popovers or dialogs, and animated expanders. The stylesheet has two reduced-motion rules. Which elements use them was not checked.</p>
+<h2 id="keyboard-and-accessibility">Keyboard and accessibility</h2>
+<ul><li>ARIA roles in use: switch, tablist, tab, tabpanel, progressbar, region. There is one live region.</li><li>Six elements carry a tabindex. Keyboard shortcuts: <code>UNVERIFIED</code>.</li><li>The progress bars carry a text value (&quot;92% complete&quot;).</li></ul>
+<h2 id="responsive-behaviour">Responsive behaviour</h2>
+<ul><li>About 920 px: two cards per row, a left icon rail.</li><li>375 px: one card per row, bottom tab bar, sort control collapsed to an icon, header title wraps.</li></ul>
+<h2 id="ideas-aletheia-takes-and-what-it-builds-differently">Ideas Aletheia takes, and what it builds differently</h2>
+<div class="tablewrap"><table><thead><tr><th>Idea seen</th><th>What Aletheia does</th></tr></thead><tbody><tr><td>Counts on filter chips</td><td>Filter chips show counts when the API returns a total.</td></tr><tr><td>Bottom bar on phones</td><td>Tabs stay on top and scroll sideways inside their own strip; the command palette covers jumping.</td></tr><tr><td>Progress shown as text and bar</td><td>Same: every bar has a text value.</td></tr><tr><td>Rough durations</td><td>Relative times (&quot;3 min ago&quot;) with the exact time in a tooltip.</td></tr><tr><td>Theme switch</td><td>Three-way switch: Auto, Dark, Light.</td></tr><tr><td>Address does not change</td><td>The page, filters, sort and page number live in the URL hash.</td></tr></tbody></table></div>
+<h2 id="what-the-study-did-not-find">What the study did not find</h2>
+<p>No pagination, no skeleton, no error state, no shortcuts and no search were seen. Aletheia's design for those parts comes from its own task list (<a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/tasks/TASKS.md">docs/tasks/TASKS.md</a>, T-148 to T-164), not from this study.</p>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>

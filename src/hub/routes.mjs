@@ -17,6 +17,8 @@ import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "./t
 import { sessionDetail, workOverview } from "./work.mjs";
 import { goalAction, proposeGoals } from "./goals.mjs";
 import { SyncStore } from "./sync/store.mjs";
+import { pageInfo, pagingOf, slicePage, whenOf } from "./paging.mjs";
+import { auditPage, dismissedPage, reviewRows, ruleSuggestionsPage, searchPage, sessionsPage } from "./lists.mjs";
 
 const MAX_BODY = 8 * 1024 * 1024;
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml" };
@@ -219,7 +221,16 @@ export function createHubRoutes({ hub, config }) {
       }
       if (pathname === "/v1/work/goals" && method === "GET") {
         const q = qs(url);
-        return h.json(proposeGoals(hub, { project: q.project || null, minSessions: q.minSessions, limit: q.limit }));
+        const paging = pagingOf(q);
+        const all = proposeGoals(hub, { project: q.project || null, minSessions: q.minSessions, limit: 500 });
+        const goals = slicePage(all.goals ?? [], paging);
+        return h.json({ ...all, goals, ...pageInfo({ total: (all.goals ?? []).length, ...paging, count: goals.length }) });
+      }
+      if (pathname === "/v1/work/sessions" && method === "GET") {
+        const q = qs(url);
+        const paging = pagingOf(q);
+        const out = sessionsPage(hub, { ...paging, project: q.project || null, state: ["in_progress", "finished"].includes(q.state) ? q.state : null, since: whenOf(q.since), until: whenOf(q.until, { end: true }), q: q.q || null });
+        return h.json({ ...out, ...pageInfo({ total: out.total, ...paging, count: out.items.length }) });
       }
       if ((m = /^\/v1\/work\/session\/(.+)$/.exec(pathname)) && method === "GET") {
         let id;
@@ -239,6 +250,22 @@ export function createHubRoutes({ hub, config }) {
         const b = await readJson(request);
         need(typeof b.query === "string" && b.query.trim(), "query is required.");
         const scope = b.scope === "all" ? "all" : "current";
+        if (b.offset != null || b.paged === true) {
+          const paging = pagingOf(b);
+          const page = searchPage(hub, { query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, scope, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, since: whenOf(b.since), until: whenOf(b.until, { end: true }), ...paging });
+          const detail = page.total === 0 ? hub.searchDetailed({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: 1, scope }) : { reason: null };
+          return h.json({
+            ...page,
+            ...pageInfo({ total: page.total, ...paging, count: page.facts.length + page.results.length }),
+            reason: detail.reason,
+            channels: {
+              facts: { lexical: true, keys: true, vector: false },
+              episodes: { lexical: true, vector: false },
+              fused: "none",
+              note: "This route answers from keyword channels only. Use the CLI with --semantic, or POST a query vector, for dense results.",
+            },
+          });
+        }
         const detailed = hub.searchDetailed({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope });
         return h.json({
           results: hub.search({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope }),
@@ -283,7 +310,13 @@ export function createHubRoutes({ hub, config }) {
     }
     if (pathname === "/api/hub/memories" && method === "GET") {
       const q = qs(url);
-      return h.json(hub.list({ project: q.project, kind: q.kind, type: q.type, tool: q.tool, pinned: q.pinned === "1", q: q.q, limit: q.limit, offset: q.offset }));
+      const paging = pagingOf(q);
+      const status = q.status === "dismissed" ? "dismissed" : "current";
+      const out = hub.list({
+        project: q.project, kind: q.kind, type: q.type, tool: q.tool, pinned: q.pinned === "1", q: q.q, ...paging,
+        since: whenOf(q.since), until: whenOf(q.until, { end: true }), sort: q.sort || "default", rowScope: q.scope || null, dismissedOnly: status === "dismissed",
+      });
+      return h.json({ ...out, ...pageInfo({ total: out.total, ...paging, count: out.items.length }), status });
     }
     if (pathname === "/api/hub/memories" && method === "POST") {
       const b = await readJson(request);
@@ -381,19 +414,32 @@ export function createHubRoutes({ hub, config }) {
       need(ask, "Set ALETHEIA_PROVIDER=claude-cli or openai to compress events into observations.", 409);
       return h.json(await compressRecent(hub, ask, { project: b.project }));
     }
-    if (pathname === "/api/hub/audit" && method === "GET") return h.json({ audit: hub.auditLog(Number(qs(url).limit) || 100) });
+    if (pathname === "/api/hub/audit" && method === "GET") {
+      const q = qs(url);
+      const paging = pagingOf(q);
+      const out = auditPage(hub, { ...paging, actor: q.actor || null, action: q.action || null, since: whenOf(q.since), until: whenOf(q.until, { end: true }) });
+      return h.json({ ...out, ...pageInfo({ total: out.total, ...paging, count: out.audit.length }) });
+    }
 
     // ---- T-135: the facts table (current by default, history on request) ----
     if (pathname === "/api/hub/facts" && method === "GET") {
       const q = qs(url);
-      return h.json(hub.listFacts({ project: q.project || undefined, history: q.history === "1" || q.history === "true", limit: Number(q.limit) || 100, offset: Number(q.offset) || 0 }));
+      const paging = pagingOf(q, { limit: 100 });
+      const status = ["current", "history", "dismissed"].includes(q.status) ? q.status : q.history === "1" || q.history === "true" ? "history" : "current";
+      const out = hub.listFacts({
+        project: q.project || undefined, status, ...paging, q: q.q || null, sort: q.sort || "recent", rowScope: q.scope || null,
+        since: whenOf(q.since), until: whenOf(q.until, { end: true }),
+      });
+      return h.json({ ...out, ...pageInfo({ total: out.total, ...paging, count: out.items.length }), status });
     }
 
     // ---- T-136: the review queue, near-duplicate pairs and their actions ----
     if (pathname === "/api/hub/review" && method === "GET") {
       const q = qs(url);
       const status = q.status || "pending";
-      const items = hub.reviewQueue({ status, limit: Number(q.limit) || 100 }).map(reviewItemView);
+      const paging = pagingOf(q);
+      const page = reviewRows(hub, { status, ...paging, type: q.type || null, project: q.project || null });
+      const items = page.rows.map(reviewItemView);
       const dismissed = dismissedPairs();
       const scanProject = q.project || hub.projects()[0]?.name || null;
       const duplicates = [];
@@ -409,7 +455,13 @@ export function createHubRoutes({ hub, config }) {
           (dismissed.has(key) ? dismissedDuplicates : duplicates).push(item);
         }
       }
-      return h.json({ items, duplicates, dismissedDuplicates, project: scanProject, status });
+      const dupPaging = { limit: pagingOf({ limit: q.dupLimit }).limit, offset: pagingOf({ offset: q.dupOffset }).offset };
+      return h.json({
+        items, ...pageInfo({ total: page.total, ...paging, count: items.length }),
+        duplicates: slicePage(duplicates, dupPaging), duplicatesTotal: duplicates.length,
+        dismissedDuplicates: slicePage(dismissedDuplicates, dupPaging), dismissedDuplicatesTotal: dismissedDuplicates.length,
+        project: scanProject, status,
+      });
     }
     if (pathname === "/api/hub/review/pairs" && method === "POST") {
       const b = await readJson(request);
@@ -470,13 +522,9 @@ export function createHubRoutes({ hub, config }) {
     // ---- T-137: rule suggestions, accept / dismiss / restore ----
     if (pathname === "/api/hub/rule-suggestions" && method === "GET") {
       const q = qs(url);
-      const where = [];
-      const params = [];
-      if (q.project) { where.push("project = ?"); params.push(q.project); }
-      if (q.status) { where.push("status = ?"); params.push(q.status); }
-      const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
-      const rows = hub.db.prepare(`SELECT * FROM rule_suggestions ${clause} ORDER BY created_at_epoch DESC, id DESC LIMIT ?`).all(...params, Math.min(Number(q.limit) || 100, 500));
-      return h.json({ items: rows.map((row) => ({ id: row.id, project: row.project, text: row.text, when: row.when_text, confidence: row.confidence, status: row.status, sourceType: row.source_type, createdAt: iso(row.created_at_epoch) })) });
+      const paging = pagingOf(q);
+      const out = ruleSuggestionsPage(hub, { ...paging, project: q.project || null, status: q.status || null, q: q.q || null, sort: q.sort || "newest" });
+      return h.json({ ...out, ...pageInfo({ total: out.total, ...paging, count: out.items.length }) });
     }
     if ((m = /^\/api\/hub\/rule-suggestions\/(\d+)$/.exec(pathname)) && method === "POST") {
       const b = await readJson(request);
@@ -511,7 +559,12 @@ export function createHubRoutes({ hub, config }) {
     }
 
     // T-123: dismiss is reversible; nothing is deleted here.
-    if (pathname === "/api/hub/dismissed" && method === "GET") return h.json({ items: hub.dismissedList({ limit: Number(qs(url).limit) || 100 }) });
+    if (pathname === "/api/hub/dismissed" && method === "GET") {
+      const q = qs(url);
+      const paging = pagingOf(q);
+      const out = dismissedPage(hub, { ...paging, type: q.type || null, project: q.project || null });
+      return h.json({ ...out, ...pageInfo({ total: out.total, ...paging, count: out.items.length }) });
+    }
     if (pathname === "/api/hub/dismiss" && method === "POST") {
       const b = await readJson(request);
       need(b && Number.isSafeInteger(Number(b.id)), "id is required.");
@@ -529,12 +582,14 @@ export function createHubRoutes({ hub, config }) {
       const account = store.ensureAccount();
       const status = store.status(account.id);
       const e2ee = store.e2eeStatus(account.id);
+      const devicePaging = pagingOf(qs(url));
       return h.json({
+        limit: devicePaging.limit, offset: devicePaging.offset, total: status.devices.length,
         epoch: status.epoch,
         headSeq: status.headSeq,
         deviceCount: status.deviceCount,
         e2ee: { enabled: e2ee.enabled, currentKid: e2ee.currentKid },
-        devices: status.devices.map((device) => ({
+        devices: slicePage(status.devices, devicePaging).map((device) => ({
           ...device,
           pendingOps: Math.max(0, status.headSeq - device.lastAckSeq),
           lastSync: device.lastSeen ? new Date(device.lastSeen).toISOString() : null,
