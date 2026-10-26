@@ -342,6 +342,56 @@ export const INSTALLERS = [
       return { file: join(env.home, ".codex", "hooks.json"), commands: Object.fromEntries(Object.keys(events).map((event) => [event, hookCommand({ bun: env.bun, hookScript: runnerFor(env), tool: "codex", event })])) };
     },
   }),
+  defineInstaller({
+    id: "gemini-cli",
+    name: "Gemini CLI",
+    capabilities: "full",
+    verification: "from-docs-only",
+    evidence: "https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/hooks/reference.md, docs/tools/mcp-server.md and docs/cli/gemini-md.md fetched 2026-10-26; Gemini 0.37.0 present, no hook run",
+    detection: [".gemini"],
+    notes: [
+      "Gemini keeps hooks and MCP servers in the same ~/.gemini/settings.json; the installer merges both.",
+      "Gemini hook timeouts are milliseconds; the installer writes 10000.",
+      "No real Gemini hook has run here.",
+    ],
+    events: ["SessionStart", "BeforeAgent", "AfterTool", "AfterAgent", "SessionEnd"],
+    plan(env) {
+      const file = join(env.home, ".gemini", "settings.json");
+      const events = { SessionStart: null, BeforeAgent: null, AfterTool: null, AfterAgent: null, SessionEnd: null };
+      const step = planJsonStep({
+        file,
+        kind: "settings",
+        title: `MCP and hooks in ${file}`,
+        mutate(doc) {
+          if (!plainObject(doc.mcpServers)) doc.mcpServers = {};
+          const existing = doc.mcpServers[SERVER_NAME];
+          if (existing && !(existing.command === env.bun && Array.isArray(existing.args) && existing.args[0] === env.mcpScript)) {
+            throw new RangeError(`${file} already has mcpServers.${SERVER_NAME} that is not ours. Left alone.`);
+          }
+          doc.mcpServers[SERVER_NAME] = { command: env.bun, args: [env.mcpScript] };
+          stripOurHooks(doc);
+          if (!plainObject(doc.hooks)) doc.hooks = {};
+          const commands = {};
+          for (const event of Object.keys(events)) {
+            const command = hookCommand({ bun: env.bun, hookScript: runnerFor(env), tool: "gemini-cli", event });
+            commands[event] = command;
+            doc.hooks[event] = [...(doc.hooks[event] ?? []), { hooks: [{ type: "command", command, timeout: 10000 }] }];
+          }
+          return { commands };
+        },
+      });
+      const rules = planRules({ tool: "gemini-cli", home: env.home, rules: env.rules ?? [] });
+      return { tool: "gemini-cli", name: "Gemini CLI", env, steps: [step, rules].filter(Boolean), notes: [
+        "Gemini keeps hooks and MCP servers in the same ~/.gemini/settings.json; the installer merges both.",
+        "Gemini hook timeouts are milliseconds; the installer writes 10000.",
+        "No real Gemini hook has run here.",
+      ] };
+    },
+    expectedHooks(env) {
+      const events = ["SessionStart", "BeforeAgent", "AfterTool", "AfterAgent", "SessionEnd"];
+      return { file: join(env.home, ".gemini", "settings.json"), commands: Object.fromEntries(events.map((event) => [event, hookCommand({ bun: env.bun, hookScript: runnerFor(env), tool: "gemini-cli", event })])) };
+    },
+  }),
 ];
 
 export const installerIds = () => INSTALLERS.map((installer) => installer.id);
@@ -457,7 +507,7 @@ export async function applyInstall(plan, { dataDir } = {}) {
   if (runner && !(await buildRunner(plan.env.hookScript, runner))) {
     runner = plan.env.hookScript;
     for (const step of plan.steps) {
-      if (step.kind !== "hooks" || !step.commands) continue;
+      if ((step.kind !== "hooks" && step.kind !== "settings") || !step.commands) continue;
       step.after = step.after.split(plan.env.hookRunner).join(runner);
       step.commands = Object.fromEntries(Object.entries(step.commands).map(([event, command]) => [event, command.split(plan.env.hookRunner).join(runner)]));
       step.changed = step.before !== step.after;

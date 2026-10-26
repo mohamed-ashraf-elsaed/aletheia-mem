@@ -105,7 +105,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-061 | Add the Cursor installer and hooks | P3 | T-058 | validated | 2026-10-26 | [T-061.md](T-061.md) |
 | T-062 | Add the Codex CLI installer | P3 | T-058 | validated | 2026-10-26 | [T-062.md](T-062.md) |
 | T-063 | Add a transcript watcher | P3 | T-062 | todo | — | [T-063.md](T-063.md) |
-| T-064 | Add the Gemini CLI installer and hooks | P3 | T-058 | todo | — | [T-064.md](T-064.md) |
+| T-064 | Add the Gemini CLI installer and hooks | P3 | T-058 | validated | 2026-10-26 | [T-064.md](T-064.md) |
 | T-065 | Add the Windsurf installer and hooks | P3 | T-058 | todo | — | [T-065.md](T-065.md) |
 | T-066 | Ship plugin manifests for each host | P3 | T-058 | todo | — | [T-066.md](T-066.md) |
 | T-067 | Add MCP Streamable HTTP transport | P3 | T-011 | todo | — | [T-067.md](T-067.md) |
