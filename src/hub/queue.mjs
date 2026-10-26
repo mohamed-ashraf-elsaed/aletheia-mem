@@ -3,6 +3,7 @@
 // leaves the work claimable again. Progress is recorded on the episode, so a resumed job does not redo a window.
 import { chunkEpisodes, storeFacts, extractWithUsage, FACTS_PROMPT_VERSION, modeInstruction as modeInstructionFor } from "./facts.mjs";
 import { mergeNearDuplicates } from "./dedupe.mjs";
+import { buildProjectSummary, buildSessionSummary } from "./summaries.mjs";
 import { modelFor } from "../refresh/providers.mjs";
 import { pricesFrom } from "./usage.mjs";
 
@@ -97,7 +98,8 @@ export function jobCounts(store) {
 }
 
 function pendingMemories(store, payload, limit = MAX_MEMORIES_PER_JOB) {
-  const where = ["m.kind IN ('prompt', 'event', 'summary')", "(e.id IS NULL OR e.extracted_at_epoch IS NULL)", "(coalesce(m.narrative, '') <> '' OR coalesce(m.title, '') <> '')"];
+  // A summary memory is derived data, not a source: extracting facts from it would feed the output back in.
+  const where = ["m.kind IN ('prompt', 'event')", "(e.id IS NULL OR e.extracted_at_epoch IS NULL)", "(coalesce(m.narrative, '') <> '' OR coalesce(m.title, '') <> '')"];
   const params = [];
   if (payload.project) { where.push("m.project = ?"); params.push(payload.project); }
   if (payload.sessionId) { where.push("m.session_id = ?"); params.push(payload.sessionId); }
@@ -160,7 +162,14 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
     }
   }
   const observations = mergeNearDuplicates(store, { project: payload.project ?? "default", maxRows: 2000 });
-  return { memories: memories.length, windows: windows.length, facts, deduped, rejected, mode, startedAt, merged: observations.merged };
+  let summaries = 0;
+  try {
+    if (payload.sessionId && buildSessionSummary(store, { project: payload.project ?? "default", sessionId: payload.sessionId, now: now() })) summaries++;
+    if (buildProjectSummary(store, { project: payload.project ?? "default", now: now() })) summaries++;
+  } catch (error) {
+    store.audit("extract", "summary.error", { message: String(error instanceof Error ? error.message : error).slice(0, 300) });
+  }
+  return { memories: memories.length, windows: windows.length, facts, deduped, rejected, mode, startedAt, merged: observations.merged, summaries };
 }
 
 /**

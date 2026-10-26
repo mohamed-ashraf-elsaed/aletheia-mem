@@ -834,8 +834,23 @@ export class HubStore {
   /** Memory hits first? No: a fact can carry a word the raw turn does not, so fact hits come first and cite it. */
   searchAll({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null } = {}) {
     const facts = this.searchFacts({ query, project, limit, includeHistory, asOf, queryVec });
-    const memories = this.ranked({ query, project, limit, queryVec }).map((memory) => ({ ...memory, kind: "memory", at: new Date(memory.created_at_epoch).toISOString(), source: { type: "memory", id: memory.id } }));
+    const memories = this.ranked({ query, project, limit, queryVec, includeHistory }).map((memory) => ({ ...memory, kind: "memory", at: new Date(memory.created_at_epoch).toISOString(), source: { type: "memory", id: memory.id } }));
     return [...facts, ...memories];
+  }
+
+  /**
+   * A generated summary is a historical artifact. Once every fact it cites is superseded, default search must not
+   * surface it as if it were current knowledge. History mode keeps it. A legacy or raw summary has no row here.
+   */
+  summaryIsCurrent(memory, { includeHistory = false, now = Date.now() } = {}) {
+    if (includeHistory || !memory || memory.kind !== "summary") return true;
+    const row = this.db.prepare("SELECT source_ids FROM summaries WHERE project = ? AND text = ? ORDER BY id DESC LIMIT 1").get(memory.project, memory.narrative ?? "");
+    if (!row) return true;
+    const ids = parse(row.source_ids).map(Number).filter(Number.isSafeInteger);
+    if (!ids.length) return true;
+    const placeholders = ids.map(() => "?").join(",");
+    const active = this.db.prepare(`SELECT COUNT(*) AS n FROM facts WHERE id IN (${placeholders}) AND status = 'active' AND (valid_to_epoch IS NULL OR valid_to_epoch > ?)`).get(...ids, now).n;
+    return active > 0;
   }
 
   /**
@@ -954,7 +969,7 @@ export class HubStore {
   }
 
   /** Full rows, best first. Same ranking as search(). */
-  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100 } = {}) {
+  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false } = {}) {
     const filters = [];
     const params = [];
     for (const [col, val] of [["project", project], ["kind", kind], ["type", type], ["tool", tool]]) if (val) { filters.push(`m.${col} = ?`); params.push(val); }
@@ -973,7 +988,7 @@ export class HubStore {
     const top = ids.slice(0, Math.min(Math.max(limit, 1), 200));
     if (!top.length) return [];
     const byId = new Map(this.db.prepare(`SELECT * FROM memories WHERE id IN (${top.map(() => "?").join(",")})`).all(...top).map((r) => [r.id, this.row(r)]));
-    return top.map((id) => byId.get(id)).filter(Boolean);
+    return top.map((id) => byId.get(id)).filter(Boolean).filter((memory) => this.summaryIsCurrent(memory, { includeHistory }));
   }
 
   // ---- vectors (semantic search, optional) --------------------------------------------------------------

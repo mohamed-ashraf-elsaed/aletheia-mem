@@ -15,6 +15,7 @@
 //   aletheia hook <tool> <event>                          hook entry point: read one JSON payload on stdin
 //   aletheia doctor                                       check the server, hooks, spool and last capture
 //   aletheia compress [--project p] [--daemon]         drain the extraction queue (provider or rule-based)
+//   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -219,6 +220,27 @@ async function main() {
         if (pos[0] !== "recompute") return die("Usage: aletheia importance recompute [--project p]");
         const { recomputeImportance } = await import("../src/hub/importance.mjs");
         return out(recomputeImportance(hub, { project: flags.project }));
+      }
+      case "summarize": {
+        const { buildEntitySummary, buildProjectSummary, buildSessionSummary, listSummaries } = await import("../src/hub/summaries.mjs");
+        const scope = typeof flags.scope === "string" ? flags.scope : "session";
+        if (scope === "session") {
+          if (!flags.session) return die("Usage: aletheia summarize --scope session --project p --session s");
+          const result = buildSessionSummary(hub, { project: flags.project ?? "default", sessionId: flags.session });
+          return out(result ? `summary #${result.id}: ${result.factIds.length} source fact(s), ${result.tokenCount} tokens` : "No active fact for that session; nothing summarised.");
+        }
+        if (scope === "project") {
+          if (!flags.project) return die("Usage: aletheia summarize --scope project --project p");
+          const result = buildProjectSummary(hub, { project: flags.project, days: Number(flags.days) || 7 });
+          return out(result ? `summary #${result.id}: ${result.factIds.length} source fact(s), ${result.tokenCount} tokens` : "No active fact in that window; nothing summarised.");
+        }
+        if (scope === "entity") {
+          if (!flags.entity) return die("Usage: aletheia summarize --scope entity --entity <id>");
+          const result = buildEntitySummary(hub, { entityId: Number(flags.entity) });
+          return out(result ? `summary #${result.id}: ${result.factIds.length} source fact(s), ${result.tokenCount} tokens` : "That entity has no active fact; nothing summarised.");
+        }
+        if (scope === "list") return out(listSummaries(hub, { project: flags.project, limit: Number(flags.limit) || 50 }));
+        return die(`Unknown scope "${scope}". Use session, project, entity or list.`);
       }
       case "compress": {
         const { runWorker, startBackgroundWorker } = await import("../src/hub/queue.mjs");
