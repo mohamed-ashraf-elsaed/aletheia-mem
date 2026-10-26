@@ -3,6 +3,7 @@
 // each stored fact records which mode and prompt version produced it.
 import { readFileSync } from "node:fs";
 import { redact } from "./redact.mjs";
+import { attachFactEntities } from "./entities.mjs";
 import { estimateTokens, pricesFrom, recordCall } from "./usage.mjs";
 
 export const FACTS_PROMPT_VERSION = "facts-v1";
@@ -309,6 +310,7 @@ export function storeFacts(store, { facts, project, mode = "rules", model = null
     });
     store.addKey({ ownerType: "fact", ownerId: result.id, keyType: "fact", text });
     for (const entity of fact.entities ?? []) store.addKey({ ownerType: "fact", ownerId: result.id, keyType: "entity", text: entity.name });
+    attachFactEntities(store, { factId: result.id, project, subject, object, text, entities: fact.entities ?? [], now });
     if (result.created) {
       added.push(result.id);
       const resolved = resolveContradictions(store, { factId: result.id, explicitSupersedes: fact.supersedesId, now });
