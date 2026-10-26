@@ -23,7 +23,7 @@ An unknown route is `404` with an HTML `Cannot <METHOD> <path>` body, like Expre
 | Route | Response |
 |---|---|
 | `GET /`, `/index.html` | the SPA shell (`public/index.html`) |
-| `GET /work-view/*` | files from `public/` (`/work-view/assets/...`, `/work-view/favicon.svg`) |
+| `GET /work-view/*` | files from `public/` (`/work-view/assets/...`, `/work-view/favicon.png`) |
 | `GET /health` | `{"status":"ok","timestamp":<ms>}` |
 
 ### `GET /api/work-view` — the snapshot

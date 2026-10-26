@@ -3,7 +3,7 @@
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
-<p align="center"><img src="../assets/logo.svg" alt="Aletheia" width="220"></p>
+<p align="center"><img src="../assets/logo.png" alt="Aletheia" width="320"></p>
 
 # Aletheia
 

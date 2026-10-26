@@ -154,8 +154,8 @@ Rule: a badge is a data read or an honest status. A static number that a human t
 
 | Item | Current | Task | Notes |
 |---|---|---|---|
-| Logo and wordmark | **Done 2026-10-26**: `docs/assets/logo.svg` and `logo-dark.svg`, original geometric mark, no text | T-083 | SVG only; no PNG because no renderer was installed. |
-| Social preview | **SVG card 2026-10-26**: `docs/assets/social.svg`, 1280×640 | T-083 | The repository setting is the owner's action; no PNG was rendered. |
+| Logo and wordmark | **Replaced 2026-10-27**: the owner's own logo (`docs/assets/logo.png`, brain mark `mark.png`, favicons in `site/`). The earlier SVG mark was removed | T-083 | Raster only; no SVG version of the new logo exists yet. |
+| Social preview | **PNG card 2026-10-27**: `docs/assets/social.png`, 1280×640, built from the new logo | T-083 | The repository setting is the owner's action: upload this file in Settings > Social preview. |
 | Demo GIF | **NOT RUN BY AUTHOR** | T-083 | Needs a real recorded session; no GIF is shipped. |
 | Issue templates | **Done 2026-10-26**: bug, feature and new-host forms | T-084 | The new-host form requires the vendor's hook payload docs URL. |
 | PR template | **Done 2026-10-26** | T-084 | Tests, docs, measurement command, no new dependency without a reason. |

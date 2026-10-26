@@ -5,7 +5,7 @@
 
 <div dir="rtl">
 
-<p align="center"><img src="../assets/logo.svg" alt="Aletheia" width="220"></p>
+<p align="center"><img src="../assets/logo.png" alt="Aletheia" width="320"></p>
 
 # Aletheia
 
