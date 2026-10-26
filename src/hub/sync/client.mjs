@@ -102,7 +102,7 @@ export class SyncClient {
     const ring = {};
     for (const key of data.keys ?? []) {
       try {
-        ring[String(key.kid)] = unwrapKey(key.wrappedKey, deriveKek(passphrase, key.salt)).toString("base64");
+        ring[String(key.kid)] = unwrapKey(key.wrappedKey, deriveKek(passphrase, key.salt, key.params)).toString("base64");
       } catch {
         throw new Error("Wrong passphrase.");
       }

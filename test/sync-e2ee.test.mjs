@@ -9,7 +9,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { computeContentHash, stableStringify } from "../src/hub/sync/engine.mjs";
-import { decryptPayload, deriveKek, encryptPayload, isEnvelope, unwrapKey, wrapKey } from "../src/hub/sync/e2ee.mjs";
+import { DEFAULT_KDF, decryptPayload, deriveKek, encryptPayload, isEnvelope, randomKey, unwrapKey, wrapKey } from "../src/hub/sync/e2ee.mjs";
 import { SyncClient } from "../src/hub/sync/client.mjs";
 import { startSyncServer } from "../src/hub/sync/server.mjs";
 
@@ -48,6 +48,19 @@ const joinClient = async (dir, code, name = "device") => {
 
 const serverBodies = () =>
   hub.store.db.prepare("SELECT body FROM sync_op WHERE account_id = ? AND body != ''").all(accountId).map((row) => row.body);
+
+const OLD_KDF = { name: "scrypt", N: 16384, r: 8, p: 1, keyLen: 32 };
+
+/** Write a wrapped data key with explicit params, as an account created before the KDF default changed would have. */
+function installOldKey(store, id, passphrase, params = OLD_KDF, kid = 1) {
+  const dataKey = randomKey(32);
+  const salt = randomKey(16).toString("base64");
+  const wrapped = wrapKey(dataKey, deriveKek(passphrase, salt, params));
+  store.db.prepare("INSERT INTO sync_e2ee_key (account_id, kid, salt, wrapped_key, kdf, params, created_at) VALUES (?,?,?,?,?,?,?)")
+    .run(Number(id), kid, salt, stableStringify(wrapped), params.name, stableStringify(params), Date.now());
+  store.db.prepare("UPDATE sync_account SET e2ee = 1, current_kid = ? WHERE id = ?").run(kid, Number(id));
+  return dataKey;
+}
 
 describe("T-117: end-to-end encryption for sync", () => {
   test("the crypto primitives round-trip, a wrong passphrase fails cleanly, tampering is rejected", () => {
@@ -218,7 +231,7 @@ describe("T-117: end-to-end encryption for sync", () => {
     } finally {
       device.close();
     }
-  });
+  }, 30_000);
 
   test("export-recovery-key round-trips without a passphrase and has 0600 permissions", async () => {
     const code = hub.store.createPairCode(accountId);
@@ -285,5 +298,89 @@ describe("T-117: end-to-end encryption for sync", () => {
     const e2ee = hub.store.e2eeStatus(accountId);
     expect(e2ee).toMatchObject({ enabled: true });
     expect(e2ee.currentKid).toBeGreaterThan(0);
+  });
+
+  test("an account created with the old scrypt parameters still unlocks from the record, not a constant", async () => {
+    const legacy = startSyncServer({ syncDb: join(temp, "legacy", "sync.db"), host: "127.0.0.1", port: 0, name: "default" });
+    try {
+      const id = legacy.store.ensureAccount("default").id;
+      installOldKey(legacy.store, id, PASSPHRASE);
+      expect(legacy.store.e2eeStatus(id).keys[0].params.N).toBe(OLD_KDF.N);
+      const code = legacy.store.createPairCode(id);
+      const device = new SyncClient(join(temp, "legacy", "client.db"), { name: "Legacy" });
+      const res = await fetch(`${legacy.url}/v1/sync/join`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, device_id: device.deviceId, name: "Legacy" }) });
+      const { token } = await res.json();
+      device.setMeta("hub_url", legacy.url);
+      device.setMeta("token", token);
+      try {
+        await device.unlockE2ee({ url: legacy.url, token, passphrase: PASSPHRASE });
+        const op = device.put("memory", { project: "shop", title: "legacy", narrative: `legacy-${MARKER}` });
+        expect(isEnvelope(op.payload)).toBe(true);
+        expect(JSON.stringify(op)).not.toContain(MARKER);
+      } finally {
+        device.close();
+      }
+    } finally {
+      legacy.stop();
+    }
+  });
+
+  test("upgrade-kdf re-wraps the data key under the OWASP minimum and never touches op ciphertext", async () => {
+    const legacy = startSyncServer({ syncDb: join(temp, "upgrade", "sync.db"), host: "127.0.0.1", port: 0, name: "default" });
+    try {
+      const id = legacy.store.ensureAccount("default").id;
+      installOldKey(legacy.store, id, PASSPHRASE);
+      const code = legacy.store.createPairCode(id);
+      const device = new SyncClient(join(temp, "upgrade", "client.db"), { name: "Upgrade" });
+      const res = await fetch(`${legacy.url}/v1/sync/join`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, device_id: device.deviceId, name: "Upgrade" }) });
+      const { token } = await res.json();
+      device.setMeta("hub_url", legacy.url);
+      device.setMeta("token", token);
+      try {
+        await device.unlockE2ee({ url: legacy.url, token, passphrase: PASSPHRASE });
+        device.put("memory", { project: "shop", title: "before", narrative: `before-${MARKER}` });
+        await device.push(legacy.url, token);
+      } finally {
+        device.close();
+      }
+      const bodiesBefore = legacy.store.db.prepare("SELECT body FROM sync_op WHERE body != ''").all().map((row) => row.body);
+      expect(bodiesBefore.length).toBeGreaterThan(0);
+      const before = legacy.store.e2eeStatus(id);
+      expect(before.keys[0].params.N).toBe(OLD_KDF.N);
+
+      const result = legacy.store.upgradeE2eeKdf(id, { passphrase: PASSPHRASE });
+      expect(result.upgraded).toEqual([1]);
+
+      const after = legacy.store.e2eeStatus(id);
+      expect(after.keys[0].params.N).toBe(DEFAULT_KDF.N);
+      expect(legacy.store.db.prepare("SELECT body FROM sync_op WHERE body != ''").all().map((row) => row.body)).toEqual(bodiesBefore);
+
+      const code2 = legacy.store.createPairCode(id);
+      const fresh = new SyncClient(join(temp, "upgrade", "fresh.db"), { name: "Fresh" });
+      const res2 = await fetch(`${legacy.url}/v1/sync/join`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: code2, device_id: fresh.deviceId, name: "Fresh" }) });
+      const token2 = (await res2.json()).token;
+      fresh.setMeta("hub_url", legacy.url);
+      fresh.setMeta("token", token2);
+      try {
+        await fresh.unlockE2ee({ url: legacy.url, token: token2, passphrase: PASSPHRASE });
+        await fresh.pull(legacy.url, token2);
+        expect(JSON.stringify(fresh.entities())).toContain(`before-${MARKER}`);
+      } finally {
+        fresh.close();
+      }
+    } finally {
+      legacy.stop();
+    }
+  });
+
+  test("upgrade-kdf refuses a wrong passphrase", () => {
+    const legacy = startSyncServer({ syncDb: join(temp, "upgrade-wrong", "sync.db"), host: "127.0.0.1", port: 0, name: "default" });
+    try {
+      const id = legacy.store.ensureAccount("default").id;
+      installOldKey(legacy.store, id, PASSPHRASE);
+      expect(() => legacy.store.upgradeE2eeKdf(id, { passphrase: "wrong" })).toThrow(/Wrong passphrase/);
+    } finally {
+      legacy.stop();
+    }
   });
 });

@@ -174,6 +174,15 @@ export async function runSyncCommand({ config, flags, pos, out }) {
   // ---- end-to-end encryption (T-117) -------------------------------------------------------------
   const passphrase = typeof flags.passphrase === "string" && flags.passphrase !== "" ? flags.passphrase : process.env.ALETHEIA_SYNC_PASSPHRASE;
 
+  if (sub === "upgrade-kdf") {
+    const store = hubStore(config);
+    try {
+      return store.upgradeE2eeKdf(store.ensureAccount().id, { passphrase });
+    } finally {
+      store.close();
+    }
+  }
+
   if (sub === "enable-e2ee") {
     const store = hubStore(config);
     try {
@@ -243,7 +252,7 @@ export async function runSyncCommand({ config, flags, pos, out }) {
     }
   }
 
-  return die("Usage: aletheia sync pair | join <url> <code> | status | devices | revoke <device> | push | pull | run | compact | purge <entity_id> | export <dir> | import <dir> | enable-e2ee | unlock-e2ee | rotate-key | change-passphrase | export-recovery-key --out <file> | purge-plaintext [--apply]");
+  return die("Usage: aletheia sync pair | join <url> <code> | status | devices | revoke <device> | push | pull | run | compact | purge <entity_id> | export <dir> | import <dir> | enable-e2ee | unlock-e2ee | rotate-key | change-passphrase | upgrade-kdf | export-recovery-key --out <file> | purge-plaintext [--apply]");
 }
 
 /**

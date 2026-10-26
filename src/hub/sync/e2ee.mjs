@@ -1,13 +1,15 @@
 // E2EE for sync (T-117): standard primitives only, from node:crypto.
 //   - AES-256-GCM, random 96-bit nonce per message, never reused; the GCM tag authenticates the
 //     associated data, so ciphertext cannot be moved between ops or entities.
-//   - scrypt for passphrase stretching: N=16384, r=8, p=1, 32-byte output (documented in docs/29 §29.6).
+//   - scrypt for passphrase stretching: OWASP minimum N=2^17, r=8, p=1, 32-byte output (docs/29 §29.6).
+//     Each wrapped key stores its own params, so older keys keep unlocking and `upgrade-kdf` re-wraps them.
 //   - random 256-bit data keys from crypto.getRandomValues.
 // The envelope { "@e2ee": 1, v: 1, kid, nonce, ct } marks an encrypted payload; kid names the data key.
 import { createCipheriv, createDecipheriv, randomBytes, scryptSync } from "node:crypto";
 
-export const KDF = { name: "scrypt", N: 16384, r: 8, p: 1, keyLen: 32 };
-const MAXMEM = 64 * 1024 * 1024;
+export const DEFAULT_KDF = { name: "scrypt", N: 131072, r: 8, p: 1, keyLen: 32 };
+export const KDF = DEFAULT_KDF; // legacy alias for older call sites; records carry their own params
+const MAXMEM = 256 * 1024 * 1024;
 
 const b64 = (buffer) => Buffer.from(buffer).toString("base64");
 const fromB64 = (text) => Buffer.from(String(text), "base64");
@@ -20,9 +22,14 @@ export function randomKey(bytes = 32) {
   return randomBytes(bytes);
 }
 
-/** scrypt(passphrase, salt) -> 32-byte key-encryption key. */
-export function deriveKek(passphrase, saltB64) {
-  return scryptSync(String(passphrase), fromB64(saltB64), KDF.keyLen, { N: KDF.N, r: KDF.r, p: KDF.p, maxmem: MAXMEM });
+/** scrypt(passphrase, salt, params?) -> 32-byte key-encryption key. `params` comes from the wrapped-key record. */
+export function deriveKek(passphrase, saltB64, params = null) {
+  const kdf = params && typeof params === "object" ? params : DEFAULT_KDF;
+  const N = Number.isSafeInteger(kdf.N) ? kdf.N : DEFAULT_KDF.N;
+  const r = Number.isSafeInteger(kdf.r) ? kdf.r : DEFAULT_KDF.r;
+  const p = Number.isSafeInteger(kdf.p) ? kdf.p : DEFAULT_KDF.p;
+  const keyLen = Number.isSafeInteger(kdf.keyLen) ? kdf.keyLen : DEFAULT_KDF.keyLen;
+  return scryptSync(String(passphrase), fromB64(saltB64), keyLen, { N, r, p, maxmem: MAXMEM });
 }
 
 /** Wrap a data key with a KEK: AES-256-GCM. Returns { v: 1, nonce, ct }. */
