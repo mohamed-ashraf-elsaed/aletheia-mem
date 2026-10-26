@@ -94,7 +94,7 @@ function addRuleForm(tools) {
     h("label", {}, "Rule", then),
     h("label", {}, "When (optional)", when),
     h("div", { class: "ui-inline" }, h("label", {}, "Scope", tier), h("label", {}, "Scope name", scopeName)),
-    checks ? h("label", {}, "Only for these tools (none checked = all)", checks) : null,
+    checks ? h("div", {}, h("div", { class: "ui-meta" }, "Only for these tools (none checked = all)"), checks) : null,
     h("div", { class: "ui-acts" }, h("button", { class: "primary", onclick: () => run(async () => {
       await api("/api/hub/rules", { method: "POST", body: { then: then.value, when: when.value, scopeTier: tier.value, scopeName: scopeName.value || "Everywhere", tools: [...document.querySelectorAll("input[name=rule-tool]:checked")].map((input) => input.value) } });
       toast("Rule added");
