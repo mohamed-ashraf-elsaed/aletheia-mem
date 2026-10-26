@@ -1,0 +1,14 @@
+Provider arm note, 2026-10-26.
+
+Endpoint: Ollama on 127.0.0.1:11434, model llama3.2:1b (pulled for this run).
+Trivial chat check:
+  curl -s -m 240 http://127.0.0.1:11434/v1/chat/completions ... -> HTTP 200 in 2.92 s.
+Extraction check (2 LoCoMo turns, facts-v1 prompt, 10-minute client timeout):
+  command: bun <scratchpad>/provider-probe.mjs
+  script result: TimeoutError ("The operation timed out.")
+  Ollama server log: POST /v1/chat/completions -> HTTP 500 after 4m41s.
+No validated facts were produced, so no provider recall number is claimed.
+Full command for a later run:
+  ALETHEIA_TRANSFORMERS_FROM=$PWD/bench/runtime bun run bench:locomo -- \
+    --data bench/data/locomo10.json --limit 1 --facts provider --model llama3.2:1b \
+    --out bench/results/<date>/our-facts-provider-conv26.json

@@ -13,12 +13,12 @@ this document.
 
 | Metric | claude-mem 15.2.1 | Aletheia today | Gap | Target |
 |---|---:|---:|---|---:|
-| LoCoMo Recall@5, raw turns (1,536 questions) | 36.0% | **57.5%** | +21.5 pts; 1.60× | **≥ 70%** |
-| LoCoMo Recall@5, same facts both sides (383 questions) | 57.7% | **67.6%** (73.7% with rerank) | +9.9 / +16.0 pts; 1.17× / 1.28× | **≥ 80%** |
-| LoCoMo MRR, same facts | 0.530 | **0.616** (0.686 with rerank) | +0.086 / +0.156 | **≥ 0.72** |
+| LoCoMo Recall@5, raw turns (1,536 questions) | 36.0% | **57.5%** (re-measured 2026-10-26: **57.4%**) | +21.5 pts; 1.60× | **≥ 70%** |
+| LoCoMo Recall@5, same facts both sides (383 questions) | 57.7% | **67.6%** (73.7% with rerank); re-measured 2026-10-26: **67.4%** / **73.9%** | +9.9 / +16.0 pts; 1.17× / 1.28× | **≥ 80%** |
+| LoCoMo MRR, same facts | 0.530 | **0.616** (0.686 with rerank); re-measured: **0.620** / **0.686** | +0.086 / +0.156 | **≥ 0.72** |
 | Search latency, idle, small store | p50 1,699 ms / p95 2,824 ms | **2.3–6 ms**; 350 ms with rerank | 390× faster without rerank | keep p95 ≤ 300 ms with rerank |
-| BM25 at 50,000 rows | not measured by us | **p50 71–104 ms, p95 124–185 ms** | misses the 50 ms target | **p95 ≤ 50 ms** |
-| Hybrid at 50,000 rows + 20,000 vectors | not measured by us | **p50 94–129 ms** | misses the 50 ms target | **p95 ≤ 50 ms** |
+| BM25 at 50,000 rows | not measured by us | **p50 71–104 ms, p95 124–185 ms**; 2026-10-26 re-run: p50 **93.1** / p95 **137.8**, after FTS `optimize` p50 **77.9** / p95 **108.1** | misses the 50 ms target | **p95 ≤ 50 ms** |
+| Hybrid at 50,000 rows + 20,000 vectors | not measured by us | **p50 94–129 ms**; 2026-10-26 re-run: p50 **94.7** / p95 **130.4** | misses the 50 ms target | **p95 ≤ 50 ms** |
 | Answer accuracy (LLM-judged) | no published number | **not measured** | unknown | see 22.6 |
 | Tokens injected at session start | not comparable | char-capped at 6,000 | not measured | measure first |
 
@@ -61,9 +61,12 @@ commands that already exist are marked `[exists]`.
 - **Stop condition:** if extracted facts give < +3 points, remove the claim that fact keys are a win and keep the
   feature as an optional index only.
 - **Command:** `bun bench/locomo-retrieval.mjs --data locomo10.json --extract --provider local --out facts.json && bun bench/locomo-retrieval.mjs --data locomo10.json --facts facts.json --out r.json`
-- **Run note 2026-10-26:** **not measured** in the memory-building change. `locomo10.json` is not in this repository and
-  the optional `@huggingface/transformers` runtime is not installed here, so the before/after Recall@5 comparison was
-  not run. The extraction and indexing code is in place ([26](26-memory-pipeline.md)); no recall claim is added.
+- **Run note 2026-10-26 (later run):** measured. The dataset and the optional runtime were installed; raw turns,
+  dataset facts and our rule-extracted facts were re-run. Our rule extractor added 1,672 facts and **+0.4 points**
+  Recall@5 (57.3% → 57.7%), below the +5 target. The dataset's own facts added +7.3 points. See
+  [22.9](#229-measured-on-2026-10-26-pipeline-finish).
+- **Run note 2026-10-26 (memory-building change):** not measured at that time: `locomo10.json` was not in this
+  repository and the optional `@huggingface/transformers` runtime was not installed. Superseded by the run note above.
 
 ### E03. Query expansion and rewriting
 
@@ -391,3 +394,90 @@ result with raw outputs. A change to the scoreboard requires:
 - a note on what did **not** move.
 
 The next scoreboard update is blocked on E01 (T-051). Until then, "answer accuracy: not measured" stays in the README.
+
+## 22.9 Measured on 2026-10-26 (pipeline finish)
+
+This section is the dated result set for the memory-pipeline run. It follows 22.8: commands, raw files, the delta,
+and what did not move.
+
+**Dataset.** `https://raw.githubusercontent.com/snap-research/locomo/main/data/locomo10.json`, fetched 2026-10-26.
+SHA-256 `79fa87e90f04081343b8c8debecb80a9a6842b76a7aa537dc9fdf651ea698ff4`. Licence: **CC BY-NC 4.0**
+(Attribution-NonCommercial 4.0 International), read from `LICENSE.txt` in the same repository, fetched 2026-10-26.
+The file is not committed (`bench/data/` is gitignored); the results below are derivable from the URL and the hash.
+
+**Runtime.** `@huggingface/transformers@4.3.1`, installed in `bench/runtime/` (gitignored, not a dependency of this
+package). Embedding model `Xenova/bge-small-en-v1.5`, 384 dims, int8 ONNX. Reranker `ms-marco-MiniLM-L-6-v2`.
+
+**Commands.**
+
+```bash
+export ALETHEIA_TRANSFORMERS_FROM=$PWD/bench/runtime
+bun run bench:locomo -- --data bench/data/locomo10.json --facts none    --out bench/results/2026-10-26/raw-turns.json
+bun run bench:locomo -- --data bench/data/locomo10.json --facts dataset --out bench/results/2026-10-26/dataset-facts.json
+bun run bench:locomo -- --data bench/data/locomo10.json --facts rules   --out bench/results/2026-10-26/our-facts-rules.json
+bun run bench:locomo -- --data bench/data/locomo10.json --limit 3 --facts dataset --rerank --out bench/results/2026-10-26/dataset-facts-3-rerank.json
+bun scripts/compare-bench.mjs bench/results/2026-10-26
+```
+
+### A. Reproduction of the previous numbers
+
+| Claim | Previous | Measured 2026-10-26 | Delta | Status |
+|---|---:|---:|---:|---|
+| Raw turns, all 10, hybrid Recall@5 | 57.5% | **57.4%** | −0.1 | reproduced |
+| Dataset facts, all 10, hybrid+facts Recall@5 | 65.2% | **64.8%** | −0.4 | reproduced |
+| Dataset facts, 3 conversations, hybrid+facts Recall@5 | 67.6% | **67.4%** | −0.2 | reproduced |
+| Dataset facts, 3 conversations, +rerank Recall@5 | 73.7% | **73.9%** | +0.2 | reproduced |
+| Dataset facts, 3 conversations, +rerank MRR | 0.686 | **0.686** | 0.000 | reproduced |
+| Dataset facts, all 10, +rerank Recall@5 | 72.5% | **72.3%** | −0.2 | reproduced |
+| Dataset facts, all 10, +rerank MRR | 0.679 | **0.680** | +0.001 | reproduced |
+
+The three numbers named in the work order (57.5, 67.6, 73.7) reproduce within 0.5 points, and so does the all-10
+rerank number (72.5). **No dated correction is needed.** One difference from the previous run is the runtime:
+`@huggingface/transformers` 4.3.1 produced the dense vectors here; the earlier run's exact version was not recorded
+(a gap this run closes).
+
+### B. Facts extracted by our own pipeline
+
+The same 1,536 questions, with facts extracted by `src/hub/facts.mjs` `extractFactsByRules` from the turns:
+
+| Arm | Facts added | Recall@5 | MRR | Delta vs hybrid |
+|---|---:|---:|---:|---:|
+| Hybrid, no facts | 0 | 57.3% | 0.494 | — |
+| Hybrid + our rule facts | 1,672 | **57.7%** | 0.492 | **+0.4 points** |
+| Hybrid + the dataset's facts (for scale) | ~1 per observation | 64.8% | 0.591 | +7.3 points |
+
+**Result: the rule extractor does not reproduce the fact-key gain.** 1,672 facts moved Recall@5 by +0.4 points, far
+below the +5 target in E02. The dataset's LLM-extracted facts still give +7.3. The stop condition in E02 ("< +3
+points: remove the claim that fact keys are a win") applies to *our* extraction, not to the dataset's facts. The
+feature stays as an optional index; no claim is made that rule extraction improves recall.
+
+A real-provider arm was attempted with Ollama on this machine. Ollama served `llama3.2:1b`; a trivial chat
+completion returned in 2.9 s, but the `facts-v1` extraction request over a **2-turn** window returned HTTP 500 after
+4 min 41 s, and the request did not produce a validated answer. **Real-provider extraction quality is not measured**,
+and no provider recall number is claimed here.
+
+### C. 50,000-row keyword search latency
+
+```bash
+bun run bench:scale -- 50000 20000            # before the index fix
+bun run bench:scale -- 50000 20000 --optimize # after HubStore.optimizeFts()
+```
+
+| Metric | Before | After the first index fix | Target |
+|---|---:|---:|---:|
+| BM25, all projects, p50 | 93.1 ms | **77.9 ms** | — |
+| BM25, all projects, p95 | 137.8 ms | **108.1 ms** | **≤ 50 ms** |
+| BM25, one project, p50 / p95 | 56.9 / 70.8 ms | **54.2 / 75.2 ms** | ≤ 50 ms p95 |
+| Hybrid (BM25 + 20k vectors), p50 / p95 | 94.7 / 130.4 ms | **129.0 / 203.6 ms** | ≤ 50 ms p95 |
+
+The first fix from E08 is FTS5 segment maintenance plus `PRAGMA optimize` (`HubStore.optimizeFts`, exposed as
+`aletheia optimize`). It lowers BM25 p95 by about 30 ms, but **the 50 ms target is still missed**. The hybrid number
+after the fix is noisier and not better in this run; no improvement is claimed for it. The honest statement stays
+"p95 is above 50 ms at 50,000 rows".
+
+### D. What did not move
+
+- Answer accuracy: still **not measured** (no reader/judge harness; T-051).
+- The claude-mem baseline was not re-run in this pass; the 36.0% row in 22.1 is from the 2026-10-25/26 run.
+- No confidence intervals: single run per configuration (E18/T-057 still open).
+- The 50k latency target: still missed after the first fix.

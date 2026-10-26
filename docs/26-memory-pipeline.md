@@ -44,8 +44,10 @@ claimable and the completed windows marked, so the restart neither loses nor rep
 | `memory_links` | `mentions`, `derived_from`, `supersedes`, `duplicate_of` | extractor, merge |
 | `jobs` | queue state, attempts, next attempt, lease, last error | hook queue drain, worker |
 | `fact_usage` | one row per model call: tokens in/out, model, mode, facts, status, raw rejected output | worker |
-| `review_queue` | same-time contradictions and low-confidence items | contradiction check |
-| `fact_vectors` | optional vectors for facts (written only by `setFactVector`) | caller |
+| `review_queue` | same-time contradictions, low-confidence items, ambiguous aliases and rule suggestions | contradiction check, entities, rule-suggest |
+| `rule_suggestions` | proposed rules from user corrections; status stays `pending` until a human decides | `rule-suggest.mjs` |
+| `summaries` | session, project and entity summaries with `source_ids` | `summaries.mjs`, worker and `aletheia summarize` |
+| `fact_vectors` | optional vectors for facts, written automatically when an embedder is supplied | worker, `aletheia embed` |
 
 The `memories` table is kept, not replaced by a view. That is the one deliberate difference from D4 §23.3: every
 existing read path and every existing test keeps working, and the additive migration copies rows into the new
@@ -95,8 +97,14 @@ aletheia compress [--project p]            drain the queue once (provider or rul
 aletheia compress --daemon [--interval n]  keep a worker running
 aletheia migrate [--dry-run] [--backup f]  add schema v3 to an old database, with a backup
 aletheia importance recompute [--project p]
-aletheia search <words> [--project p] [--history] [--as-of YYYY-MM-DD]
-aletheia doctor                            server, hooks, spool, last capture, queue, extraction
+aletheia search <words> [--project p] [--scope all] [--history] [--as-of YYYY-MM-DD] [--semantic] [--explain]
+aletheia embed [--limit n]                  write fact and memory vectors when the runtime is present
+aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
+aletheia prune [--apply]                    report, then apply, cold facts and shortened episodes
+aletheia promote <memory|episode|observation|fact> <id>   make a row global
+aletheia optimize                           rebuild FTS segments after a large import
+aletheia rules suggest | suggestions        propose and list review-only rules
+aletheia doctor                             server, hooks, spool, last capture, queue, extraction, database, FTS, vectors, model
 ```
 
 `aletheia doctor` now reports `queue` (pending, running, failed) and `extraction` (last mode, last successful call,
@@ -117,28 +125,32 @@ rejected count). A failed job makes the queue check fail.
 
 ## 26.7 What is not built
 
-- **Observation and summary generation from facts.** The old `compressRecent` path still produces observations when
-  called directly; the worker produces facts only. `summaries` is a table with no writer.
-- **Entity extraction and alias resolution.** `entities`, `entity_aliases` and `fact_entities` exist; the extractor
-  records entity names as retrieval keys but does not create entity rows. T-021 and T-022 remain `todo`.
-- **Automatic dedupe and merge.** `nearDuplicates` and `mergeObservations` exist and are tested, but the worker does
-  not call them on insert.
-- **Decay, cold facts and pruning.** T-031 remains `todo`. Nothing is deleted.
-- **Review UI.** `review_queue` is written; there is no page to resolve it.
-- **Automatic fact embeddings.** `fact_vectors` and `setFactVector` exist, but no code embeds facts; search accepts a
-  `queryVec` if a caller provides one.
-- **Real provider verification.** All provider tests use an injected `fetchImpl` or the `fake` provider. No real local
-  or remote endpoint was contacted in this run.
-- **Recall numbers.** LoCoMo was not run: `locomo10.json` is not in the repository and the optional
-  `@huggingface/transformers` runtime is not installed here. No recall claim is made.
+- **Review UI.** `review_queue` is written (contradictions, ambiguous aliases, low-confidence items, rule
+  suggestions); there is no page to resolve it. `aletheia rules suggestions` lists rule suggestions.
+- **Real-provider extraction quality.** The `local` provider code path is exercised with an injected `fetch` and the
+  `fake` provider. Ollama was reachable on this machine on 2026-10-26: a trivial `llama3.2:1b` chat call returned in
+  2.9 s, but the `facts-v1` request over a 2-turn window returned HTTP 500 after 4 min 41 s. No provider extraction
+  pass completed, so no provider recall number is claimed.
+- **Answer accuracy.** LoCoMo measures retrieval only. No reader/judge harness has been run (T-051).
+- **Graph retrieval.** Entities, aliases and `fact_entities` exist and are written by the extractor; there is no
+  graph traversal channel yet (T-048).
+- **Automatic pruning.** `aletheia prune` is still explicit. The worker builds summaries and embeddings; it never
+  prunes.
 
 ## 26.8 UNVERIFIED
 
-- Fact extraction quality on a real model and on LoCoMo: not measured.
-- A real Ollama/llama.cpp/LM Studio endpoint accepting the exact request body: not tested; only a fake `fetch`.
+- Fact extraction quality on a real model: the rule extractor was measured on LoCoMo on 2026-10-26 (1,672 facts,
+  Recall@5 57.3% → 57.7%, **+0.4 points**); the dataset's own facts gave 57.5% → 64.8% (**+7.3 points**). A real
+  local model's extraction was not completed, so its quality is not measured. See
+  [22 §22.9](22-improve-the-numbers.md).
+- A real Ollama endpoint accepting the exact extraction request body: one trivial chat completion succeeded (2.9 s);
+  the `facts-v1` request over a 2-turn window returned HTTP 500 after 4 min 41 s, so the exact body is not verified
+  against a real model.
 - Spearman on a human importance ranking: measured only on a synthetic 200-item rank (0.645).
 - Dedupe precision on human-labelled pairs: measured only on a synthetic 200-pair set (precision 1.00, recall 0.90).
 - Contradiction accuracy on the 50-pair knowledge-update set in D4: measured only on a synthetic 30-pair set (30/30).
+- LoCoMo dataset licence and hash are recorded in 22.9; the dataset itself is not committed.
+
 
 ## 26.9 Sources
 

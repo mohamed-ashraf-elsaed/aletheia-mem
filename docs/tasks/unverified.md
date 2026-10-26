@@ -63,11 +63,12 @@ These are claims this run deliberately does not make. Each was measured only on 
 
 | # | Claim | State | What would verify it |
 |---:|---|---|---|
-| 37 | Extracted facts raise LoCoMo Recall@5 by ≥5 points | **not measured**: `locomo10.json` is not in the repo and the optional embedding runtime is not installed | Download the dataset, install `@huggingface/transformers`, run the E02 command in [22](../22-improve-the-numbers.md) |
-| 38 | A real local OpenAI-compatible endpoint accepts the extraction request | **not tested**: provider tests inject `fetchImpl` or use the fake provider | Run `ALETHEIA_PROVIDER=local ALETHEIA_LOCAL_BASE_URL=... aletheia compress` against Ollama, llama.cpp or LM Studio |
+| 37 | Extracted facts raise LoCoMo Recall@5 by ≥5 points | **measured 2026-10-26, negative for the rule extractor**: our rules added 1,672 facts and +0.4 points (57.3% → 57.7%); the dataset's own facts added +7.3 points (57.5% → 64.8%). The +5 target is not met by our extraction. See [22 §22.9](../22-improve-the-numbers.md) | A real local model's extraction run (not completed) |
+| 38 | A real local OpenAI-compatible endpoint accepts the extraction request | **partially tested**: Ollama `llama3.2:1b` answered a trivial `/v1/chat/completions` call in 2.9 s on 2026-10-26, but the `facts-v1` prompt over a 2-turn window returned HTTP 500 after 4 min 41 s; no extraction answer was produced | Run the full `--facts provider` arm on a machine with a larger-context model |
 | 39 | Importance matches a human ranking (Spearman ≥0.5) | measured only on a synthetic 200-item rank (0.645) | Collect 200 human-ranked observations and rerun `test/importance.test.mjs` against them |
 | 40 | Near-duplicate precision and recall on human labels | measured only on a synthetic 200-pair set (precision 1.00, recall 0.90) | Build the human-labelled 200-pair set in D4 §23.9 and evaluate `src/hub/dedupe.mjs` |
 | 41 | Contradiction handling on the D4 knowledge-update set | measured only on a synthetic 30-pair set (30/30 newest-wins) | Build the 50-pair knowledge-update set and rerun `test/contradictions.test.mjs` |
+| 42 | 50k-row keyword search p95 ≤ 50 ms | **still missed**: 137.8 ms before the FTS `optimize` fix, 108.1 ms after it (2026-10-26) | T-047 / further index work |
 
 ## URLs referenced in the documents but not fetched as sources
 
@@ -86,7 +87,7 @@ evidence. They are listed so the research log is complete without pretending the
 | `https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem` | Proposed licence badge endpoint, not fetched |
 | `https://img.shields.io/github/stars/mohamed-ashraf-elsaed/aletheia-mem` | Proposed star badge endpoint, not fetched |
 | `https://mohamed-ashraf-elsaed.github.io/aletheia-mem/` | Homepage from the repository metadata; the site files were read locally |
-| `https://raw.githubusercontent.com/snap-research/locomo/main/data/locomo10.json` | Dataset URL from the existing benchmark plan (`docs/18`); not fetched in this run |
+| `https://raw.githubusercontent.com/snap-research/locomo/main/data/locomo10.json` | Fetched 2026-10-26 for T-132; SHA-256 and licence are in [22 §22.9](../22-improve-the-numbers.md). The file itself is gitignored. |
 
 ## Matrix cells marked `?` in D2 section 21.5
 
