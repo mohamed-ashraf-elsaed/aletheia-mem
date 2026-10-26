@@ -10,7 +10,7 @@
 //   aletheia import transcripts <tool> [--since DATE] [--dry-run] [--limit n]
 //                                                          back-fill from local session files (read-only)
 //   aletheia export [--format jsonl|markdown] [--project p] [--events] [--out file]
-//   aletheia rules list | add <text> [--when w] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
+//   aletheia rules list | add <text> [--when w] | lint [--dir path] [--tools a,b] [--json] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
 //   aletheia tools                                        detected tools and how to connect each
 //   aletheia connect <tool> [--write]                     preview (default) or write the MCP config for a tool
 //   aletheia install <tool> [--write] [--dry-run]         preview (default) or write MCP, hooks and rules in one go
@@ -550,7 +550,30 @@ async function main() {
           }
           return;
         }
-        return die("Usage: aletheia rules list | add <text> | sync | import");
+        if (sub === "lint") {
+          const { lintRules, formatFindings } = await import("../src/hub/rule-lint.mjs");
+          const dir = resolve(typeof flags.dir === "string" ? flags.dir : process.cwd());
+          const ids = typeof flags.tools === "string" ? flags.tools.split(",").map((id) => id.trim()).filter(Boolean) : TOOLS.map((tool) => tool.id);
+          const files = [];
+          for (const id of ids) {
+            if (!toolById(id)) return die(`Unknown tool: ${id}`);
+            for (const scope of ["project", "global"]) {
+              let path = null;
+              try {
+                path = targetPath(id, { scope, projectDir: scope === "project" ? dir : undefined, home: config.home });
+              } catch {
+                path = null;
+              }
+              if (path && existsSync(path)) files.push({ path, tool: id });
+            }
+          }
+          const result = lintRules({ rules: hub.rules.list(), files });
+          if (flags.json) return out(result);
+          out(formatFindings(result.findings));
+          if (result.findings.length) process.exitCode = 1;
+          return;
+        }
+        return die("Usage: aletheia rules list | add <text> | lint | sync | import");
       }
       case "tools": return out(detectTools(config.home).map((t) => `${t.installed ? "✔" : "·"} ${t.id.padEnd(12)} ${t.name}  rules: ${t.rulesProject}${t.rulesGlobal ? ` | ~/${t.rulesGlobal}` : ""}${t.canConnect ? "  mcp: yes" : ""}`).join("\n"));
       case "connect": {

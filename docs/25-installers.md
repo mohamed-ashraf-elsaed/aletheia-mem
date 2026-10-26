@@ -204,6 +204,19 @@ No hooks and no rules file. The config merge is documented and fixture-tested in
 [docs/claude-desktop.md](claude-desktop.md). The Linux path is observed on this machine, not in the MCP
 quickstart, and is marked UNVERIFIED.
 
+## Rule hygiene
+
+`aletheia rules lint [--dir path] [--tools a,b] [--json]` checks the store and the managed blocks before a sync.
+It reports duplicate rules once per group, direct `always`/`never` contradictions with the same scope and
+condition, a rule over 300 characters, an enabled set over 4,000 characters, instructions that ignore safety
+(`ignore previous instructions`, `bypass security`, `rm -rf /`, ...), and text that matches the redaction
+patterns (a secret). For every managed block that exists under the project directory or the user home it
+compares the parsed bullets with the enabled store rules: a rule only in the file and a rule only in the store
+are both drift, each with the file and line or the rule id. Each finding has a fix hint.
+
+The check is a warning, not a gate: `rules sync` still runs. `--json` returns `{findings, checked}`. A file
+without the managed-block markers is skipped, so a user's own CLAUDE.md/AGENTS.md text is never compared.
+
 ## End-to-end test
 
 `test/e2e-more-hosts.test.mjs` installs all six full-capability hosts into a temp HOME, reads the command back
