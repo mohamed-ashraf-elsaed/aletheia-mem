@@ -204,6 +204,68 @@ No hooks and no rules file. The config merge is documented and fixture-tested in
 [docs/claude-desktop.md](claude-desktop.md). The Linux path is observed on this machine, not in the MCP
 quickstart, and is marked UNVERIFIED.
 
+## Rule hygiene
+
+`aletheia rules lint [--dir path] [--tools a,b] [--json]` checks the store and the managed blocks before a sync.
+It reports duplicate rules once per group, direct `always`/`never` contradictions with the same scope and
+condition, a rule over 300 characters, an enabled set over 4,000 characters, instructions that ignore safety
+(`ignore previous instructions`, `bypass security`, `rm -rf /`, ...), and text that matches the redaction
+patterns (a secret). For every managed block that exists under the project directory or the user home it
+compares the parsed bullets with the enabled store rules: a rule only in the file and a rule only in the store
+are both drift, each with the file and line or the rule id. Each finding has a fix hint.
+
+The check is a warning, not a gate: `rules sync` still runs. `--json` returns `{findings, checked}`. A file
+without the managed-block markers is skipped, so a user's own CLAUDE.md/AGENTS.md text is never compared.
+
+## Plugin manifests
+
+Written 2026-10-26 from the official pages below. Every manifest carries `"x-aletheia-verification":
+"from-docs-only"`: it was parsed and its paths were resolved against this package, but no host was opened to
+load it. `test/manifests.test.mjs` checks the JSON, the paths and the hook commands.
+
+| Host | File | What it declares | Source (fetched 2026-10-26) |
+|---|---|---|---|
+| Claude Code | `.claude-plugin/plugin.json` | metadata, an inline `mcpServers.aletheia` (`bun ${CLAUDE_PLUGIN_ROOT}/bin/mcp.mjs`), `SessionStart` and `Stop` hooks running `bin/aletheia.mjs hook claude-code ...` | <https://code.claude.com/docs/en/plugins/manifest-reference> |
+| Codex | `.codex-plugin/plugin.json` | metadata and `SessionStart`/`Stop` hooks running `bin/aletheia.mjs hook codex ...` | <https://developers.openai.com/plugins/build/plugins> |
+| Qoder | `.qoder-plugin/plugin.json` | metadata only | <https://docs.qoder.com/cli/plugins-reference> |
+| Gemini CLI | `gemini-extension.json` | metadata and an `mcpServers.aletheia` entry using `${extensionPath}/bin/mcp.mjs` and `cwd: ${extensionPath}` | <https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/extensions/reference.md> |
+
+What was not written, and why:
+
+- **Codex MCP entry**: the official page says the compatibility layout can use a root `.mcp.json` and that
+  `.codex-plugin/plugin.json` remains supported, but it does not give the field table for the compatibility
+  manifest or the local `.mcp.json` server shape. Only the hook field, which the page names explicitly, is
+  written. The full compatibility schema is UNVERIFIED.
+- **Qoder components**: the page documents `mcpServers` and `hooks` as manifest fields, but not a variable for
+  the plugin root. A relative command would resolve against an unknown working directory, so no component is
+  claimed. The metadata shape is verified.
+- **Gemini hooks**: the reference says hooks live in `hooks/hooks.json` and are not in the manifest. No
+  extension hook file is shipped; the existing installers write the host's own hook files.
+
+No manifest claims a hook whose script is missing, and no path escapes the package.
+
+## Transcript watcher
+
+Tools without hooks can still be imported from their session files. `aletheia watch` polls the three verified
+layouts, keeps a byte offset and turn counter per file in `~/.aletheia/watcher.db`, and imports only new lines:
+
+```bash
+aletheia watch --once
+aletheia watch --interval 1000 --batch 50 --tool claude-code,command-code,codex
+```
+
+| Tool | Folder | Verified from |
+|---|---|---|
+| Claude Code | `~/.claude/projects/<slug>/<session>.jsonl` | T-121, 2026-10-26 |
+| Command Code | `~/.commandcode/projects/<slug>/<session>.jsonl` | T-121, 2026-10-26 |
+| Codex CLI | `~/.codex/sessions/<year>/<month>/<day>/rollout-*.jsonl` | two real rollouts on this machine, 2026-10-26 |
+
+The source files are opened read-only. A file that shrinks is re-read from zero. A line without a newline is
+left for the next pass. A JSON line the parser does not recognise, and a line that is not JSON, are stored as a
+`kind = "raw"` episode instead of being dropped. The polling loop is clamped to at least 1000 ms, takes a batch
+size per file, and the CLI sets `nice 10`. Restarting resumes at the stored offset; a re-read is deduped by
+`source_ref` and content hash.
+
 ## End-to-end test
 
 `test/e2e-more-hosts.test.mjs` installs all six full-capability hosts into a temp HOME, reads the command back

@@ -9,6 +9,7 @@ import { ValidationError, validateMarkFinished, validateReview, validateRuleActi
 import { EVIDENCE_KINDS } from "./readmodel/evidence.mjs";
 import { MIME_TYPES } from "./readmodel/work-product.mjs";
 import { BadRequest, createHubRoutes } from "./hub/routes.mjs";
+import { AlertStore } from "./hub/alerts.mjs";
 import { createLiveHub } from "./hub/live.mjs";
 import { createMcpHttpHandler } from "./hub/mcp-http.mjs";
 import { createLoginGuard } from "./hub/login.mjs";
@@ -68,12 +69,13 @@ export function startServer(config, {
   } catch {
     ask = null;
   }
-  const worker = config.extractionWorker ? startBackgroundWorker({ store: hub, ask, config, onTick: (result) => {
+  const alerts = new AlertStore(config.alertsDb);
+  const worker = config.extractionWorker ? startBackgroundWorker({ store: hub, ask, config, alerts, onTick: (result) => {
     const project = result.last?.project ?? null;
     for (const id of result.last?.factIds ?? []) liveHub.broadcast({ kind: "fact", id, project });
   } }) : null;
   const liveHub = createLiveHub(hub);
-  const hubRoutes = createHubRoutes({ hub, config, liveHub });
+  const hubRoutes = createHubRoutes({ hub, config, liveHub, alerts });
   // MCP over Streamable HTTP on the main (loopback) server. Optional bearer key, same one as /v1.
   const mcpHttp = createMcpHttpHandler({
     store: hub,
@@ -261,6 +263,7 @@ export function startServer(config, {
       server.stop(true);
       service.close();
       hub.close();
+      alerts.close();
       loginStore?.close();
     },
   };

@@ -104,16 +104,16 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-060 | Add the file-read gate and smart outline | P3 | T-059 | todo | — | [T-060.md](T-060.md) |
 | T-061 | Add the Cursor installer and hooks | P3 | T-058 | validated | 2026-10-26 | [T-061.md](T-061.md) |
 | T-062 | Add the Codex CLI installer | P3 | T-058 | validated | 2026-10-26 | [T-062.md](T-062.md) |
-| T-063 | Add a transcript watcher | P3 | T-062 | todo | — | [T-063.md](T-063.md) |
+| T-063 | Add a transcript watcher | P3 | T-062 | validated | 2026-10-26 | [T-063.md](T-063.md) |
 | T-064 | Add the Gemini CLI installer and hooks | P3 | T-058 | validated | 2026-10-26 | [T-064.md](T-064.md) |
 | T-065 | Add the Windsurf installer and hooks | P3 | T-058 | validated | 2026-10-26 | [T-065.md](T-065.md) |
-| T-066 | Ship plugin manifests for each host | P3 | T-058 | todo | — | [T-066.md](T-066.md) |
+| T-066 | Ship plugin manifests for each host | P3 | T-058 | validated | 2026-10-26 | [T-066.md](T-066.md) |
 | T-067 | Add MCP Streamable HTTP transport | P3 | T-011 | validated | 2026-10-26 | [T-067.md](T-067.md) |
 | T-068 | Add the OpenCode installer and plugin | P3 | T-058 | validated | 2026-10-26 | [T-068.md](T-068.md) |
 | T-069 | Add work-state and corpus MCP tools | P3 | T-017 | todo | — | [T-069.md](T-069.md) |
 | T-070 | Verify rules formats on real installs | P3 | T-058 | validated | 2026-10-26 | [T-070.md](T-070.md) |
 | T-071 | Add uninstall for every installer | P3 | T-058 | validated | 2026-10-26 | [T-071.md](T-071.md) |
-| T-072 | Add rule hygiene checks | P3 | T-058 | todo | — | [T-072.md](T-072.md) |
+| T-072 | Add rule hygiene checks | P3 | T-058 | validated | 2026-10-26 | [T-072.md](T-072.md) |
 | T-073 | Add `aletheia doctor` | P3 | T-007 | todo | — | [T-073.md](T-073.md) |
 | T-074 | Generate folder context files | P3 | T-059 | todo | — | [T-074.md](T-074.md) |
 | T-075 | Add a connector verification registry | P3 | T-070 | todo | — | [T-075.md](T-075.md) |
@@ -152,9 +152,9 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-109 | Add a local usage ledger and caps | P6 | T-106 | todo | — | [T-109.md](T-109.md) |
 | T-110 | Add remote login for the Hub | P6 | T-104 | validated | 2026-10-26 | [T-110.md](T-110.md) |
 | T-111 | Add an OAuth connector for ChatGPT and Claude.ai | P6 | T-107, T-110 | todo | — | [T-111.md](T-111.md) |
-| T-112 | Add team mode: shared memory, board, brief and search | P6 | T-102, T-103, T-104, T-108 | todo | — | [T-112.md](T-112.md) |
-| T-113 | Add purge, export and an erasure receipt | P6 | T-103 | todo | — | [T-113.md](T-113.md) |
-| T-114 | Add alert rules and webhooks | P6 | T-108 | todo | — | [T-114.md](T-114.md) |
+| T-112 | Add team mode: shared memory, board, brief and search | P6 | T-102, T-103, T-104, T-108 | validated | 2026-10-26 | [T-112.md](T-112.md) |
+| T-113 | Add purge, export and an erasure receipt | P6 | T-103 | validated | 2026-10-26 | [T-113.md](T-113.md) |
+| T-114 | Add alert rules and webhooks | P6 | T-108 | validated | 2026-10-26 | [T-114.md](T-114.md) |
 | T-115 | Add OIDC, SCIM, RBAC and DLP rules | P6 | T-110, T-108, T-112 | todo | — | [T-115.md](T-115.md) |
 | T-116 | Run My Work setup extraction on the user's own server | P6 | T-106 | todo | — | [T-116.md](T-116.md) |
 | T-117 | Add optional end-to-end encryption for sync | P6 | T-102 | validated | 2026-10-26 | [T-117.md](T-117.md) |

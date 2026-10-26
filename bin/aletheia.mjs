@@ -9,8 +9,10 @@
 //   aletheia import bundle <file.jsonl>                   restore an export
 //   aletheia import transcripts <tool> [--since DATE] [--dry-run] [--limit n]
 //                                                          back-fill from local session files (read-only)
+//   aletheia watch [--once] [--interval ms] [--batch n] [--tool a,b]
+//                                                          poll the verified transcript folders incrementally (read-only, nice 10)
 //   aletheia export [--format jsonl|markdown] [--project p] [--events] [--out file]
-//   aletheia rules list | add <text> [--when w] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
+//   aletheia rules list | add <text> [--when w] | lint [--dir path] [--tools a,b] [--json] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
 //   aletheia tools                                        detected tools and how to connect each
 //   aletheia connect <tool> [--write]                     preview (default) or write the MCP config for a tool
 //   aletheia install <tool> [--write] [--dry-run]         preview (default) or write MCP, hooks and rules in one go
@@ -33,9 +35,20 @@
 //                                                          optional end-to-end encryption (passphrase via --passphrase or ALETHEIA_SYNC_PASSPHRASE)
 //   aletheia mcp-link create [--projects a,b] [--url https://hub.example] | list | revoke <id>
 //                                                          manage the private remote MCP endpoint
+//   aletheia team list | create <name> | add-project <team> <project> | add-member <team> --name n --role r --projects a,b
+//             | members <team> | revoke-member <team> <id> | share <team> <id> --projects a,b
+//             | board <team> [--project p] | pin|decision|memory <team> <text> --project p
+//             | brief <team> --project p | search <team> <query> | leave <team> | audit <team>
+//                                                          team mode (T-112); --token-id acts as a member, otherwise the local operator
 //   aletheia service install|uninstall|status [--write] [--cpu-quota X] [--memory-max Y]
 //                                                          auto-start unit/plist (dry-run by default; Linux/macOS only)
 //   aletheia audit [--limit n]                          read the sync audit log
+//   aletheia erase [--project p | --id 12,fact:3 | --before DATE] [--apply] [--export file] [--receipt file]
+//                                                          report first; --apply exports, erases and signs a receipt
+//   aletheia erase verify <receipt.json>                  check a receipt's HMAC
+//   aletheia alerts add --event E --target webhook|file [--url u|--path p] [--secret s] [--allow-private]
+//                  | list | remove <id> | enable|disable <id> | test <id> | run | feed | check | emit <event> [--value n]
+//                                                          alert rules and delivery (T-114)
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
@@ -138,6 +151,153 @@ async function handleInstall(command, flags, pos) {
   }
 }
 
+async function runTeamCommand(flags, pos) {
+  const { SyncStore } = await import("../src/hub/sync/store.mjs");
+  const { TeamStore } = await import("../src/hub/team.mjs");
+  const sync = new SyncStore(config.syncDb);
+  const account = sync.ensureAccount();
+  const team = new TeamStore(config.teamDb, {
+    tokenActive: (id) => {
+      const row = sync.db.prepare("SELECT revoked_at, expires_at FROM sync_token WHERE id = ?").get(Number(id));
+      return !!row && !row.revoked_at && !(row.expires_at && row.expires_at < Date.now());
+    },
+  });
+  try {
+    const tokenId = Number(flags["token-id"]);
+    const asMember = Number.isSafeInteger(tokenId) && tokenId > 0;
+    const actor = asMember ? tokenId : null;
+    const operator = !asMember;
+    const sub = pos[0] ?? "list";
+    const teamId = pos[1];
+
+    if (sub === "list") return out(team.listTeams(account.id, actor, { operator }));
+    if (sub === "create") {
+      if (!teamId) return die("Usage: aletheia team create <name> [--token-id id]");
+      return out(team.createTeam(account.id, teamId, { tokenId: actor, operator }));
+    }
+    if (!teamId) return die(`Usage: aletheia team ${sub} <team> ...`);
+
+    if (sub === "add-project") {
+      if (!pos[2]) return die("Usage: aletheia team add-project <team> <project>");
+      return out(team.addProject(account.id, teamId, actor, pos[2], { operator }));
+    }
+    if (sub === "members") return out(team.listMembers(account.id, teamId, actor, { operator }));
+    if (sub === "add-member") {
+      if (!flags.name) return die("Usage: aletheia team add-member <team> --name <n> [--role owner|editor|viewer] [--projects a,b]");
+      const minted = sync.mintToken(account.id, { scope: "sync", name: String(flags.name) });
+      const member = team.addMember(account.id, teamId, actor, {
+        name: String(flags.name),
+        role: typeof flags.role === "string" ? flags.role : "viewer",
+        projects: typeof flags.projects === "string" ? flags.projects.split(",") : [],
+        memberTokenId: minted.id,
+      }, { operator });
+      return out({ member, token: minted.token, note: "This token is shown once. Give it to the member as their device token." });
+    }
+    if (sub === "revoke-member") {
+      if (!pos[2]) return die("Usage: aletheia team revoke-member <team> <member-id>");
+      const revoked = team.revokeMember(account.id, teamId, actor, Number(pos[2]), { operator });
+      if (revoked.tokenId > 0) sync.revokeToken(account.id, revoked.tokenId);
+      return out(revoked);
+    }
+    if (sub === "share") {
+      if (!pos[2]) return die("Usage: aletheia team share <team> <member-id> --projects a,b");
+      return out(team.setShares(account.id, teamId, actor, Number(pos[2]), typeof flags.projects === "string" ? flags.projects.split(",") : [], { operator }));
+    }
+    if (sub === "board") return out(team.board(account.id, teamId, actor, { project: typeof flags.project === "string" ? flags.project : null }, { operator }));
+    if (sub === "pin" || sub === "decision" || sub === "memory") {
+      const body = pos.slice(2).join(" ");
+      if (!body) return die(`Usage: aletheia team ${sub} <team> <text> --project p`);
+      if (!flags.project) return die("--project is required for a shared entry.");
+      if (sub === "memory") {
+        return out(team.addEntry(account.id, teamId, actor, { project: flags.project, kind: "memory", title: typeof flags.title === "string" ? flags.title : "", text: body }, { operator }));
+      }
+      return out(team.addBoardEntry(account.id, teamId, actor, { project: flags.project, kind: sub, text: body }, { operator }));
+    }
+    if (sub === "brief") {
+      if (!flags.project) return die("Usage: aletheia team brief <team> --project p");
+      return out(team.brief(account.id, teamId, actor, { project: flags.project, days: Number(flags.days) || undefined, maxChars: Number(flags["max-chars"]) || undefined }, { operator }).text);
+    }
+    if (sub === "search") {
+      const query = pos.slice(2).join(" ");
+      if (!query) return die("Usage: aletheia team search <team> <query> [--project p]");
+      return out(team.search(account.id, teamId, actor, { query, project: typeof flags.project === "string" ? flags.project : null, limit: Number(flags.limit) || 20 }, { operator }));
+    }
+    if (sub === "leave") {
+      const left = team.leave(account.id, teamId, actor, { operator });
+      if (actor) sync.revokeToken(account.id, actor);
+      return out(left);
+    }
+    if (sub === "audit") {
+      const id = team.team(account.id, teamId).id;
+      team.authorize(account.id, id, actor, null, "manage", { operator });
+      return out(team.auditLog(id, Number(flags.limit) || 100));
+    }
+    return die("Usage: aletheia team list | create | add-project | add-member | members | revoke-member | share | board | pin | decision | memory | brief | search | leave | audit");
+  } finally {
+    team.close();
+    sync.close();
+  }
+}
+
+async function runAlertsCommand(flags, pos, hub) {
+  const { AlertStore, deliverDue, extractionFailures, queueDepth } = await import("../src/hub/alerts.mjs");
+  const store = new AlertStore(config.alertsDb);
+  try {
+    const sub = pos[0] ?? "list";
+    if (sub === "list") return out(store.listRules());
+    if (sub === "add") {
+      try {
+        const rule = store.addRule({
+          name: typeof flags.name === "string" ? flags.name : undefined,
+          event: typeof flags.event === "string" ? flags.event : "",
+          target: typeof flags.target === "string" ? flags.target : (flags.url ? "webhook" : "file"),
+          url: typeof flags.url === "string" ? flags.url : null,
+          path: typeof flags.path === "string" ? flags.path : null,
+          secret: typeof flags.secret === "string" ? flags.secret : null,
+          allowPrivate: flags["allow-private"] === true,
+          countThreshold: Number(flags.count) || 1,
+          minValue: flags["min-value"] == null ? null : Number(flags["min-value"]),
+          windowS: Number(flags.window) || 3600,
+          rateLimitS: flags["rate-limit"] == null ? 300 : Number(flags["rate-limit"]),
+          enabled: !flags.disabled,
+        });
+        return out(rule);
+      } catch (error) {
+        return die(error.message);
+      }
+    }
+    if (sub === "remove" || sub === "enable" || sub === "disable") {
+      if (!pos[1]) return die(`Usage: aletheia alerts ${sub} <id>`);
+      const id = Number(pos[1]);
+      const result = sub === "remove" ? store.removeRule(id) : store.updateRule(id, { enabled: sub === "enable" });
+      return out(result ?? { removed: false });
+    }
+    if (sub === "test") {
+      if (!pos[1]) return die("Usage: aletheia alerts test <id>");
+      const queued = store.testRule(Number(pos[1]));
+      if (!queued) return die(`No alert rule #${pos[1]}.`);
+      return out({ queued, ...(await deliverDue(store)) });
+    }
+    if (sub === "run") return out(await deliverDue(store));
+    if (sub === "feed") return out(store.feed({ limit: Number(flags.limit) || 100 }));
+    if (sub === "check") {
+      const depth = queueDepth(hub);
+      const failures = extractionFailures(hub);
+      const queued = store.emit("queue.depth", { value: depth, detail: { depth } });
+      if (failures) queued.push(...store.emit("extraction.failed", { value: failures, detail: { failures, window: "1h" } }));
+      return out({ queueDepth: depth, failures, queued });
+    }
+    if (sub === "emit") {
+      const event = pos[1];
+      if (!event) return die("Usage: aletheia alerts emit <event> [--value n]");
+      return out({ queued: store.emit(event, { value: flags.value == null ? null : Number(flags.value) }) });
+    }
+    return die("Usage: aletheia alerts add | list | remove <id> | enable|disable <id> | test <id> | run | feed | check | emit <event>");
+  } finally {
+    store.close();
+  }
+}
+
 async function main() {
   const { flags, pos } = parseArgs(rest);
 
@@ -199,12 +359,69 @@ async function main() {
           return die(error.message);
         }
       }
+      case "team": return await runTeamCommand(flags, pos);
       case "service": {
         const { runServiceCommand } = await import("../src/service.mjs");
         try {
           return out(runServiceCommand({ config, flags, pos }));
         } catch (error) {
           return die(error.message);
+        }
+      }
+      case "alerts": return await runAlertsCommand(flags, pos, hub);
+      case "erase": {
+        const { applyErase, erasePlan, formatEraseReport, loadEraseKey, readReceipt, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } = await import("../src/hub/erasure.mjs");
+        if (pos[0] === "verify") {
+          const file = pos[1] ?? (typeof flags.receipt === "string" ? flags.receipt : null);
+          if (!file) return die("Usage: aletheia erase verify <receipt.json>");
+          const key = loadEraseKey(config.erasureKey, { create: false });
+          const result = verifyReceipt(readReceipt(file), key);
+          out(result.ok ? `ok ${file}` : `FAIL ${result.reason}`);
+          if (!result.ok) process.exitCode = 1;
+          return;
+        }
+        let before = null;
+        if (flags.before) {
+          before = Date.parse(String(flags.before));
+          if (!Number.isFinite(before)) return die("--before needs a date, for example 2026-01-31.");
+        }
+        const idValues = flags.id == null ? [] : String(flags.id).split(",").map((value) => value.trim()).filter(Boolean);
+        const plan = erasePlan(hub, { project: typeof flags.project === "string" ? flags.project : null, ids: idValues, before });
+        out(formatEraseReport(plan));
+        if (!flags.apply) return out("Report only. Add --apply to erase.");
+        if (!plan.counts.memories && !plan.counts.observations && !plan.counts.episodes && !plan.counts.facts) {
+          return out("Nothing matched; no export, no receipt, nothing deleted.");
+        }
+        const { SyncClient } = await import("../src/hub/sync/client.mjs");
+        const { SyncStore } = await import("../src/hub/sync/store.mjs");
+        const { TeamStore } = await import("../src/hub/team.mjs");
+        let syncStore = null;
+        let syncClient = null;
+        let teamStore = null;
+        if (existsSync(config.syncDb)) syncStore = new SyncStore(config.syncDb);
+        if (existsSync(config.syncClientDb)) syncClient = new SyncClient(config.syncClientDb);
+        if (existsSync(config.teamDb)) teamStore = new TeamStore(config.teamDb);
+        try {
+          const exportPath = typeof flags.export === "string" ? flags.export : join(config.erasureExportDir, `erase-${receiptId()}.jsonl`);
+          writePreEraseExport(hub, { path: exportPath, project: plan.scope.project });
+          out(`Pre-erase export: ${exportPath}`);
+          const result = applyErase(hub, plan, {
+            syncStore,
+            syncClient,
+            accountId: syncStore?.ensureAccount().id ?? null,
+            teamStore,
+            project: plan.scope.project,
+          });
+          const receipt = signReceipt(plan, { key: loadEraseKey(config.erasureKey), exports: [exportPath] });
+          const receiptPath = typeof flags.receipt === "string" ? flags.receipt : join(config.erasureReceiptDir, `${receipt.id}.json`);
+          writeReceipt(receipt, receiptPath);
+          out(`Erased ${JSON.stringify(result.counts)}; sync entities purged ${result.sync.entities}, local sync rows ${result.sync.localRows}.`);
+          out(`Receipt: ${receiptPath}\nVerify: aletheia erase verify ${receiptPath}`);
+          return;
+        } finally {
+          syncClient?.close();
+          syncStore?.close();
+          teamStore?.close();
         }
       }
       case "audit": {
@@ -296,7 +513,7 @@ async function main() {
         }
         if (pos[0] === "claude-mem") return out(importClaudeMem(hub, flags.path ?? config.sourceDb, { includePrompts: !flags["no-prompts"], project: flags.project || null }));
         if (pos[0] === "bundle") return out(hub.importBundle(readFileSync(pos[1] ?? die("Usage: aletheia import bundle <file>"), "utf8")));
-        return die("Usage: aletheia import claude-mem | bundle <file> | transcripts <claude-code|command-code> [--since DATE] [--dry-run]");
+        return die("Usage: aletheia import claude-mem | bundle <file> | transcripts <claude-code|command-code|codex> [--since DATE] [--dry-run]");
       }
       case "export": {
         const body = flags.format === "markdown" ? hub.exportMarkdown({ project: flags.project }) : hub.exportBundle({ project: flags.project, includeEvents: !!flags.events });
@@ -335,7 +552,30 @@ async function main() {
           }
           return;
         }
-        return die("Usage: aletheia rules list | add <text> | sync | import");
+        if (sub === "lint") {
+          const { lintRules, formatFindings } = await import("../src/hub/rule-lint.mjs");
+          const dir = resolve(typeof flags.dir === "string" ? flags.dir : process.cwd());
+          const ids = typeof flags.tools === "string" ? flags.tools.split(",").map((id) => id.trim()).filter(Boolean) : TOOLS.map((tool) => tool.id);
+          const files = [];
+          for (const id of ids) {
+            if (!toolById(id)) return die(`Unknown tool: ${id}`);
+            for (const scope of ["project", "global"]) {
+              let path = null;
+              try {
+                path = targetPath(id, { scope, projectDir: scope === "project" ? dir : undefined, home: config.home });
+              } catch {
+                path = null;
+              }
+              if (path && existsSync(path)) files.push({ path, tool: id });
+            }
+          }
+          const result = lintRules({ rules: hub.rules.list(), files });
+          if (flags.json) return out(result);
+          out(formatFindings(result.findings));
+          if (result.findings.length) process.exitCode = 1;
+          return;
+        }
+        return die("Usage: aletheia rules list | add <text> | lint | sync | import");
       }
       case "tools": return out(detectTools(config.home).map((t) => `${t.installed ? "✔" : "·"} ${t.id.padEnd(12)} ${t.name}  rules: ${t.rulesProject}${t.rulesGlobal ? ` | ~/${t.rulesGlobal}` : ""}${t.canConnect ? "  mcp: yes" : ""}`).join("\n"));
       case "connect": {
@@ -376,8 +616,31 @@ async function main() {
         const { formatPruneReport, prune } = await import("../src/hub/retention.mjs");
         return out(formatPruneReport(prune(hub, { apply: !!flags.apply })));
       }
+      case "watch": {
+        const { TranscriptWatcher } = await import("../src/hub/watcher.mjs");
+        const { setPriority } = await import("node:os");
+        try { setPriority(0, 10); } catch { /* nice is best effort */ }
+        const tools = typeof flags.tool === "string" ? flags.tool.split(",").map((tool) => tool.trim()).filter(Boolean) : undefined;
+        const watcher = new TranscriptWatcher({
+          store: hub, home: config.home, dbPath: config.watchDb, tools,
+          batchSize: Number(flags.batch) || 200, intervalMs: Number(flags.interval) || 1000,
+        });
+        try {
+          if (flags.once) return out(watcher.watchOnce());
+          out(`Watching ${config.home} for ${tools ? tools.join(", ") : "all verified transcript tools"} (nice 10, ${watcher.intervalMs} ms, batch ${watcher.batchSize}).`);
+          watcher.start({ onTick: (result) => { if (result.added || result.errors) out(`${new Date().toISOString()}  added ${result.added}, skipped ${result.skipped}, errors ${result.errors}`); } });
+          await new Promise((resolve) => {
+            for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, resolve);
+          });
+          return;
+        } finally {
+          watcher.close();
+        }
+      }
       case "compress": {
         const { runWorker, startBackgroundWorker } = await import("../src/hub/queue.mjs");
+        const { AlertStore } = await import("../src/hub/alerts.mjs");
+        const alerts = new AlertStore(config.alertsDb);
         let ask = null;
         try {
           ask = makeProvider(config);
@@ -392,17 +655,18 @@ async function main() {
         }
         if (flags.daemon) {
           const worker = startBackgroundWorker({
-            store: hub, ask, config, embedder, intervalMs: Number(flags.interval) || 2000,
+            store: hub, ask, config, embedder, alerts, intervalMs: Number(flags.interval) || 2000,
             onTick: (result) => { if (result?.processed) out(`processed ${result.processed} job(s), ${result.last?.facts ?? 0} new fact(s), ${result.last?.embedded ?? 0} embedded`); },
             onError: (error) => out(`worker error: ${error.message}`),
           });
           out(`Extraction worker running (${mode}${embedder ? `, embeddings ${embedder.model}` : ", keyword only"}); Ctrl-C to stop.`);
           await new Promise((resolve) => {
-            for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { worker.stop(); resolve(); });
+            for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { worker.stop(); alerts.close(); resolve(); });
           });
           return;
         }
-        const result = await runWorker({ store: hub, ask, config, embedder });
+        const result = await runWorker({ store: hub, ask, config, embedder, alerts });
+        alerts.close();
         const last = result.last ? `\nlast: ${result.last.memories} memories, ${result.last.windows} window(s), ${result.last.facts} new fact(s), ${result.last.rejected} rejected, ${result.last.embedded ?? 0} embedded` : "";
         return out(`Extraction mode: ${mode}${embedder ? `; embeddings ${embedder.model}` : "; keyword only"}\nqueue: ${JSON.stringify(result.counts)}${last}`);
       }

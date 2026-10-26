@@ -19,6 +19,10 @@ import { goalAction, proposeGoals } from "./goals.mjs";
 import { SyncStore } from "./sync/store.mjs";
 import { pageInfo, pagingOf, slicePage, whenOf } from "./paging.mjs";
 import { auditPage, dismissedPage, reviewRows, ruleSuggestionsPage, searchPage, sessionsPage } from "./lists.mjs";
+import { AlertStore, deliverDue, extractionFailures, queueDepth } from "./alerts.mjs";
+import { applyErase, erasePlan, loadEraseKey, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } from "./erasure.mjs";
+import { teamRequest } from "./team-api.mjs";
+import { TeamStore } from "./team.mjs";
 
 const MAX_BODY = 8 * 1024 * 1024;
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml" };
@@ -34,13 +38,22 @@ function absDir(p, what = "projectDir") {
   return resolve(p);
 }
 
-export function createHubRoutes({ hub, config, liveHub = null }) {
+export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) {
   const mcpScript = join(import.meta.dir, "..", "..", "bin", "mcp.mjs");
   const argv = () => mcpCommand({ bun: process.execPath, script: mcpScript });
   const qs = (url) => Object.fromEntries(url.searchParams);
   const live = (frame) => liveHub?.broadcast(frame);
   let syncStore = null;
   const getSyncStore = () => syncStore ?? (syncStore = new SyncStore(config.syncDb));
+  let teamStore = null;
+  const getTeamStore = () => teamStore ?? (teamStore = new TeamStore(config.teamDb, {
+    tokenActive: (tokenId) => {
+      const row = getSyncStore().db.prepare("SELECT revoked_at, expires_at FROM sync_token WHERE id = ?").get(Number(tokenId));
+      return !!row && !row.revoked_at && !(row.expires_at && row.expires_at < Date.now());
+    },
+  }));
+  let alertStore = alerts;
+  const getAlerts = () => alertStore ?? (alertStore = new AlertStore(config.alertsDb));
 
   async function readJson(request) {
     const len = Number(request.headers.get("content-length") ?? 0);
@@ -200,6 +213,114 @@ export function createHubRoutes({ hub, config, liveHub = null }) {
     }
     const tool = request.headers.get("x-tool") ?? undefined;
     let m;
+
+    // ---- T-112: team mode for the local Hub UI. The route guard already made this an operator session. ----
+    if (pathname === "/api/hub/team" || pathname.startsWith("/api/hub/team/")) {
+      const sync = getSyncStore();
+      const account = sync.ensureAccount();
+      const body = method === "GET" || method === "HEAD" ? null : await readJson(request);
+      const result = teamRequest({
+        path: pathname.slice("/api/hub/team".length) || "/",
+        method,
+        url,
+        body,
+        team: getTeamStore(),
+        sync,
+        accountId: account.id,
+        tokenId: null,
+        operator: true,
+      });
+      return result ? h.json(result.body, result.status) : h.json({ error: "Not found." }, 404);
+    }
+
+    // ---- T-113: erasure report, apply and receipt verification for the local UI/admin session ----
+    if (pathname === "/api/hub/erasure/report" && method === "POST") {
+      const b = await readJson(request);
+      const before = b.before == null ? null : typeof b.before === "number" ? b.before : Date.parse(String(b.before));
+      need(before == null || Number.isFinite(before), "before must be a date or an epoch.");
+      const plan = erasePlan(hub, { project: b.project ?? null, ids: Array.isArray(b.ids) ? b.ids : b.id == null ? [] : [b.id], before });
+      return h.json({ plan });
+    }
+    if (pathname === "/api/hub/erasure/apply" && method === "POST") {
+      const b = await readJson(request);
+      const before = b.before == null ? null : typeof b.before === "number" ? b.before : Date.parse(String(b.before));
+      need(before == null || Number.isFinite(before), "before must be a date or an epoch.");
+      const plan = erasePlan(hub, { project: b.project ?? null, ids: Array.isArray(b.ids) ? b.ids : b.id == null ? [] : [b.id], before });
+      if (!plan.counts.memories && !plan.counts.observations && !plan.counts.episodes && !plan.counts.facts) {
+        return h.json({ plan, erased: false, note: "Nothing matched; no export and no receipt." });
+      }
+      const exportPath = typeof b.export_path === "string" && b.export_path ? b.export_path : join(config.erasureExportDir, `erase-${receiptId()}.jsonl`);
+      writePreEraseExport(hub, { path: exportPath, project: plan.scope.project });
+      const sync = getSyncStore();
+      const result = applyErase(hub, plan, {
+        syncStore: sync,
+        accountId: sync.ensureAccount().id,
+        teamStore: existsSync(config.teamDb) ? getTeamStore() : null,
+        project: plan.scope.project,
+      });
+      const receipt = signReceipt(plan, { key: loadEraseKey(config.erasureKey), exports: [exportPath] });
+      const receiptPath = typeof b.receipt_path === "string" && b.receipt_path ? b.receipt_path : join(config.erasureReceiptDir, `${receipt.id}.json`);
+      writeReceipt(receipt, receiptPath);
+      return h.json({ erased: true, plan, sync: result.sync, exportPath, receiptPath, receipt });
+    }
+    if (pathname === "/api/hub/erasure/verify" && method === "POST") {
+      const b = await readJson(request);
+      need(b && b.receipt && typeof b.receipt === "object", "receipt (the JSON object) is required.");
+      const key = loadEraseKey(config.erasureKey, { create: false });
+      const result = verifyReceipt(b.receipt, key);
+      return h.json(result, result.ok ? 200 : 400);
+    }
+
+    // ---- T-114: alert rules, the feed and delivery controls for the local UI/admin session ----
+    if (pathname === "/api/hub/alerts/rules" && method === "GET") return h.json({ rules: getAlerts().listRules() });
+    if (pathname === "/api/hub/alerts/rules" && method === "POST") {
+      const b = await readJson(request);
+      try {
+        return h.json({ rule: getAlerts().addRule({
+          name: b.name, event: b.event, countThreshold: b.countThreshold ?? b.count_threshold,
+          minValue: b.minValue ?? b.min_value, windowS: b.windowS ?? b.window_s,
+          target: b.target, url: b.url, path: b.path, secret: b.secret,
+          allowPrivate: b.allowPrivate === true || b.allow_private === true,
+          enabled: b.enabled !== false, rateLimitS: b.rateLimitS ?? b.rate_limit_s,
+        }) }, 201);
+      } catch (error) {
+        throw new BadRequest(error instanceof Error ? error.message : String(error));
+      }
+    }
+    if ((m = /^\/api\/hub\/alerts\/rules\/(\d+)$/.exec(pathname))) {
+      if (method === "PATCH") {
+        const b = await readJson(request);
+        try {
+          const rule = getAlerts().updateRule(Number(m[1]), {
+            name: b.name, event: b.event, countThreshold: b.countThreshold ?? b.count_threshold,
+            minValue: b.minValue ?? b.min_value, windowS: b.windowS ?? b.window_s,
+            target: b.target, url: b.url, path: b.path, secret: b.secret,
+            allowPrivate: b.allowPrivate ?? b.allow_private,
+            enabled: b.enabled, rateLimitS: b.rateLimitS ?? b.rate_limit_s,
+          });
+          return rule ? h.json({ rule }) : h.json({ error: "That alert rule does not exist." }, 404);
+        } catch (error) {
+          throw new BadRequest(error instanceof Error ? error.message : String(error));
+        }
+      }
+      if (method === "DELETE") return getAlerts().removeRule(Number(m[1])) ? h.json({ deleted: true }) : h.json({ error: "That alert rule does not exist." }, 404);
+    }
+    if (pathname === "/api/hub/alerts/feed" && method === "GET") return h.json({ deliveries: getAlerts().feed({ limit: Number(qs(url).limit) || 100 }) });
+    if (pathname === "/api/hub/alerts/test" && method === "POST") {
+      const b = await readJson(request);
+      need(b && Number.isSafeInteger(Number(b.id)), "id is required.");
+      const queued = getAlerts().testRule(Number(b.id));
+      need(queued, "That alert rule does not exist.", 404);
+      return h.json({ queued, ...(await deliverDue(getAlerts())) });
+    }
+    if (pathname === "/api/hub/alerts/run" && method === "POST") return h.json(await deliverDue(getAlerts()));
+    if (pathname === "/api/hub/alerts/check" && method === "POST") {
+      const depth = queueDepth(hub);
+      const failures = extractionFailures(hub);
+      const queued = getAlerts().emit("queue.depth", { value: depth, detail: { depth } });
+      if (failures) queued.push(...getAlerts().emit("extraction.failed", { value: failures, detail: { failures, window: "1h" } }));
+      return h.json({ queueDepth: depth, failures, queued });
+    }
 
     // ================= /v1: the universal API (what any tool, script or MCP bridge calls) =================
     if (isV1) {

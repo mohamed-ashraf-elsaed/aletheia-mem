@@ -577,3 +577,21 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | https://docs.claude.com/en/docs/claude-code/mcp (redirected to https://code.claude.com/docs/en/mcp) | Claude Code remote MCP syntax for T-107: `claude mcp add --transport http <name> <url> --header "Authorization: Bearer <token>"` and the `mcpServers` JSON shape with `type: http`, `url`, `headers` |
 | 2026-10-26 | https://modelcontextprotocol.io/quickstart/user and https://modelcontextprotocol.io/docs/develop/connect-remote-servers | Claude Desktop MCP config (`claude_desktop_config.json`, `mcpServers`) and remote-server connection flow; used for the T-107 client snippets (Desktop snippet config-written-from-docs, not tested on a real install) |
 | 2026-10-27 | http://127.0.0.1:37700/ (the owner's local claude-mem viewer, opened with the Playwright browser) | Layout, navigation, status chips, card and list views, filters, mobile bottom bar, network calls (`/api/work-view`, `/api/work-view/events`), CSS keyframe names, ARIA roles. Used for docs/ui-study.md. Only structure was recorded; the owner's prompt text was not copied. |
+
+## C. Plugin and extension manifests (T-066)
+
+| Date | URL | What it gave |
+|---|---|---|
+| 2026-10-26 | https://code.claude.com/docs/en/plugins/manifest-reference | `.claude-plugin/plugin.json`, required `name`, metadata fields, inline `mcpServers` shape, inline `hooks` shape, `${CLAUDE_PLUGIN_ROOT}` in `args` and hook commands, path rules |
+| 2026-10-26 | https://developers.openai.com/plugins/build/plugins | Codex portable root `plugin.json`, `.codex-plugin/plugin.json` as a supported compatibility fallback, `hooks` allowed directly in the compatibility manifest, `${PLUGIN_ROOT}`; no field table for the compatibility manifest and no local `.mcp.json` server shape |
+| 2026-10-26 | https://docs.qoder.com/cli/plugins-reference | `.qoder-plugin/plugin.json`, required `name`, optional metadata fields, `mcpServers`/`hooks` component fields; no plugin-root path variable documented |
+| 2026-10-26 | https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/extensions/reference.md | `gemini-extension.json`, `name`, `version`, `description`, `mcpServers`, `cwd`, `${extensionPath}`; hooks live in `hooks/hooks.json`, not the manifest |
+| 2026-10-26 | https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/extensions/index.md | extension install/manage commands and the extension gallery link |
+
+## D. Local transcript formats (T-063)
+
+| Date | Path | What it gave |
+|---|---|---|
+| 2026-10-26 | `~/.codex/sessions/2026/05/11/rollout-2026-05-11T13-28-24-019e1694-b216-7b83-92d3-e6090e35ed46.jsonl` | real Codex rollout: top-level `timestamp`/`type`; `session_meta.payload.id` and `.cwd`; `response_item.payload.type = "message"` with `role` and `input_text`/`output_text` content; `event_msg` and `turn_context` are noise |
+| 2026-10-26 | `~/.codex/sessions/2026/05/11/rollout-2026-05-11T13-50-25-019e16a8-dc40-7ce1-9854-d8ebe041ba45.jsonl` | second real rollout; same shape, used to confirm the parser |
+| 2026-10-26 | `~/.codex/history.jsonl` | a separate prompt history file (`session_id`, `ts`, `text`), not the session transcript; not imported by the watcher |

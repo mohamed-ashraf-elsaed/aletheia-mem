@@ -386,6 +386,29 @@ systemctl --user enable --now aletheia.service
 The macOS plist is `from-docs-only` (Apple launchd docs, fetched 2026-10-26) and is not tested on a real Mac.
 Windows is not supported.
 
+## 12. The transcript watcher (NOT RUN BY AUTHOR)
+
+The watcher reads the three verified folders read-only and imports only new lines. `test/watcher.test.mjs` uses
+fixture files, not a live host session.
+
+```bash
+HOME=$(mktemp -d) bun bin/aletheia.mjs watch --once --tool claude-code,command-code,codex
+HOME=$(mktemp -d) bun bin/aletheia.mjs watch --interval 1000 --batch 50
+```
+
+1. Confirm the first pass reports the fixture files and the expected turns; a second pass reports `added 0`.
+2. Append one line to a transcript file, run `watch --once`, and confirm only that line is added.
+3. Append a line without a trailing newline; the pass reports `partial` and adds nothing. Finish the line and
+   the turn is added once.
+4. Append `{"type":"future_event"}` or a line that is not JSON; it is stored as a raw episode, not dropped.
+5. Check `~/.aletheia/watcher.db` has one `watch_state` row per file and that its `offset` equals the file size.
+6. Confirm the source files' bytes and mtimes did not change and no file was written under the three folders.
+7. The polling loop runs with `nice 10`, an interval of at least 1000 ms and the configured batch size.
+
+The Codex layout was read from two real rollouts on this machine (2026-10-26): `session_meta` carries the id and
+cwd, `response_item`/`message` carries `user`/`assistant` text, and developer messages are skipped. No live
+Claude Code, Command Code or Codex session was watched while it was being written.
+
 ## What the automated tests already cover
 
 `test/install-claude.test.mjs`, `test/claude-hooks.test.mjs` and `test/e2e-capture.test.mjs` cover: the dry run,

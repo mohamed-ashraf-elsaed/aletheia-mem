@@ -4,7 +4,8 @@ Status: implemented, 2026-10-26 (T-102, T-103, T-104, T-108; E2EE T-117). This p
 
 Aletheia Sync is a free, self-hosted, dependency-free way to move memory between devices. It is an
 append-only operation log with per-operation results, tombstones, device pairing, scoped tokens and an
-optional end-to-end encryption mode (§29.6).
+optional end-to-end encryption mode (§29.6). Team mode builds on the same tokens and account: see
+[31-team.md](31-team.md).
 
 ## 29.1 Protocol
 
