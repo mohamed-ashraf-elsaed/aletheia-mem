@@ -1,0 +1,7 @@
+{
+  "id": "chill",
+  "language": "en",
+  "languageName": "English",
+  "style": "chill",
+  "instruction": "Write in plain conversational English. Keep the same facts, identifiers, paths and commands."
+}

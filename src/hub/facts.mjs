@@ -21,6 +21,32 @@ function factsPromptText() {
   return factPromptText;
 }
 
+const MODES_DIR = new URL("./modes/", import.meta.url);
+const modeCache = new Map();
+export const MODE_IDS = ["code", "chill", "language-en", "language-es"];
+
+/** Load one mode JSON. An unknown mode is a configuration error with the known ids in the message. */
+export function loadMode(id = "code") {
+  const key = String(id || "code");
+  if (modeCache.has(key)) return modeCache.get(key);
+  if (!/^[a-z0-9-]+$/.test(key)) throw new RangeError(`Invalid extraction mode "${key}". Use one of: ${MODE_IDS.join(", ")}.`);
+  let doc;
+  try {
+    doc = JSON.parse(readFileSync(new URL(`${key}.json`, MODES_DIR), "utf8"));
+  } catch {
+    throw new RangeError(`Unknown extraction mode "${key}". Use one of: ${MODE_IDS.join(", ")}.`);
+  }
+  if (typeof doc.instruction !== "string" || typeof doc.language !== "string") throw new RangeError(`Mode "${key}" needs instruction and language.`);
+  modeCache.set(key, doc);
+  return doc;
+}
+
+/** The text appended to the fact prompt. It changes style and output language, never the schema. */
+export function modeInstruction(id = "code") {
+  const mode = loadMode(id);
+  return `MODE: ${mode.id}. Output language: ${mode.language} (${mode.languageName ?? mode.language}). ${mode.instruction}`;
+}
+
 const ENTITY_TYPES = ["person", "service", "file", "repo", "library", "concept", "org"];
 
 // An imperative sentence is a rule or an instruction, not a fact about the world. Keep this list narrow so a real

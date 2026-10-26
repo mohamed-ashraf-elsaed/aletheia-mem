@@ -1,7 +1,8 @@
 // The extraction queue: capture writes a job and returns; a worker claims one job at a time, survives a restart,
 // retries provider errors with exponential backoff, and never runs inside a hook. Jobs are rows, so a kill -9
 // leaves the work claimable again. Progress is recorded on the episode, so a resumed job does not redo a window.
-import { chunkEpisodes, storeFacts, extractWithUsage, FACTS_PROMPT_VERSION } from "./facts.mjs";
+import { chunkEpisodes, storeFacts, extractWithUsage, FACTS_PROMPT_VERSION, modeInstruction as modeInstructionFor } from "./facts.mjs";
+import { modelFor } from "../refresh/providers.mjs";
 import { pricesFrom } from "./usage.mjs";
 
 export const JOB_TYPE = "extract_session";
@@ -123,7 +124,8 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
     maxChars: charBudget ?? config.factBudget?.maxChars ?? 12_000,
   };
   const windows = chunkEpisodes(episodes.map((episode) => ({ episodeId: episode.id, text: episode.text, createdAtEpoch: episode.created_at_epoch, tool: episode.tool, kind: episode.kind })), budget);
-  const model = ask ? config.extractModel ?? config.openai?.model ?? "unknown" : "rules";
+  const model = ask ? ask.modelFor?.("extract") || modelFor(config, "extract") || "unknown" : "rules";
+  const instruction = modeInstruction || modeInstructionFor(config.mode ?? "code");
   const priceTable = prices ?? pricesFrom(config);
   let facts = 0;
   let rejected = 0;
@@ -132,7 +134,7 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
 
   for (const [index, window] of windows.entries()) {
     const result = await extractWithUsage(store, {
-      window, project: payload.project ?? "default", ask, modeInstruction,
+      window, project: payload.project ?? "default", ask, modeInstruction: instruction,
       model, batchId: `${job.id}:${index}`, prices: priceTable, now: now(),
     });
     if (result.rejected) {
