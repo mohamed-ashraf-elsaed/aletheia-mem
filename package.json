@@ -40,6 +40,7 @@
     "start": "bun bin/aletheia-server.mjs",
     "dev": "bun --watch bin/aletheia-server.mjs",
     "test": "bun test",
+    "check:tasks": "bun scripts/check-tasks.mjs",
     "check:live": "bun scripts/diff-against-live.mjs",
     "bench:locomo": "bun bench/locomo-retrieval.mjs",
     "bench:claude-mem": "bun bench/claude-mem-baseline.mjs",
