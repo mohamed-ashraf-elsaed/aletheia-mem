@@ -1,0 +1,24 @@
+services:
+  aletheia:
+    build: .
+    image: aletheia-mem:local
+    # Linux only. The server binds 127.0.0.1 in the host network namespace, so it is reachable only
+    # from this machine. On Docker Desktop, replace network_mode with:
+    #   ports: ["127.0.0.1:37790:37790"]
+    # and set ALETHEIA_HOST=0.0.0.0. That turns on Hub login; create an admin token first (docs/29).
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      ALETHEIA_DATA_DIR: /data
+      ALETHEIA_PORT: "37790"
+    volumes:
+      - aletheia-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:37790/healthz >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  aletheia-data:

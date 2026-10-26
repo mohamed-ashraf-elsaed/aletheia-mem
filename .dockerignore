@@ -1,0 +1,13 @@
+.git
+.github
+.commandcode
+node_modules
+bench/data
+bench/runtime
+bench/results
+docs
+site
+test
+*.log
+.env
+.env.*
