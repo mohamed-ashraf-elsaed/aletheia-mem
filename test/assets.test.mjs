@@ -10,7 +10,7 @@ const size = (path) => {
   expect(bytes.subarray(0, 8).toString("hex")).toBe("89504e470d0a1a0a");
   return { width: bytes.readUInt32BE(16), height: bytes.readUInt32BE(20) };
 };
-const files = ["docs/assets/logo.png", "docs/assets/mark.png", "docs/assets/social.png", "site/assets/mark.png", "site/assets/social.png", "site/favicon.png", "site/favicon-32.png", "site/apple-touch-icon.png", "public/favicon.png"];
+const files = ["docs/assets/logo.png", "docs/assets/mark.png", "docs/assets/social.png", "site/assets/mark.png", "site/assets/logo.png", "site/assets/social.png", "site/favicon.png", "site/favicon-32.png", "site/apple-touch-icon.png", "public/favicon.png"];
 
 describe("visual assets", () => {
   test("every asset exists, is a real PNG and stays small enough for a README", () => {
@@ -36,6 +36,7 @@ describe("visual assets", () => {
     expect(read("README.md")).not.toContain("logo.svg");
     expect(read("site/index.html")).toContain("assets/mark.png");
     expect(read("site/index.html")).toContain("assets/social.png");
+    expect(read("site/index.html")).toContain("assets/logo.png");
     expect(read("site/index.html")).toContain('rel="icon"');
     expect(read("public/index.html")).toContain("/work-view/favicon.png");
     expect(read("public/work.html")).toContain("/work-view/favicon.png");

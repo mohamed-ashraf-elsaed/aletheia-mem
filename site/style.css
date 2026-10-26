@@ -9,7 +9,8 @@ header.top .wrap{display:flex;align-items:center;justify-content:space-between;h
 .brand{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--fg);text-decoration:none}
 .brand img{width:26px;height:26px}
 nav a{margin-left:18px;color:var(--mut);text-decoration:none;font-size:15px}nav a:hover{color:var(--fg)}
-.hero{padding:72px 0 40px}
+.hero{padding:72px 0 40px;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:40px;align-items:center}
+.hero-logo{width:100%;height:auto;border-radius:20px;border:1px solid var(--line);box-shadow:0 18px 50px rgba(20,60,110,.28)}
 .hero h1{font-size:clamp(2rem,5vw,3.2rem);line-height:1.1;margin:0 0 16px;letter-spacing:-.02em}
 .hero p.lead{font-size:1.2rem;color:var(--mut);max-width:640px;margin:0 0 28px}
 .etym{display:inline-block;background:var(--accbg);color:var(--acc);border-radius:999px;padding:4px 12px;font-size:14px;margin-bottom:18px}
@@ -33,6 +34,7 @@ th{background:var(--code);font-weight:600}tr:last-child td{border-bottom:0}
 details{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:12px 16px;margin-bottom:10px}
 summary{cursor:pointer;font-weight:600}details p{color:var(--mut);margin:10px 0 0}
 footer{border-top:1px solid var(--line);padding:28px 0;color:var(--mut);font-size:.9rem}
+@media (max-width:820px){.hero{grid-template-columns:1fr;gap:28px}.hero-logo{max-width:420px;margin:0 auto}}
 @media (max-width:560px){nav a:not(.gh){display:none}.hero{padding-top:44px}}
 .doc{padding:40px 20px 60px}
 .doc article{max-width:820px}
