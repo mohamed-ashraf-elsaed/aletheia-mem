@@ -38,6 +38,13 @@ keys, links, dismissals and review rows), asks the hub for a T-103 purge and wri
 lists counts and ids but never content. `aletheia erase verify` checks a receipt. An offline device's copy and
 a compromised server are not covered; see [03-http-api.md](03-http-api.md#35-erasure-t-113).
 
+Status update, 2026-10-26 (alerts): T-114 is `validated`. F15 is built as local rules over named events
+(device pairing, token revoke, quota, sync error, extraction failure, queue depth). Delivery goes to a local
+file or a webhook signed with HMAC-SHA256, with per-rule count/value thresholds, a rate limit, timeouts and
+exponential retries. A webhook that resolves to a private, loopback or link-local address is refused unless the
+rule opts in. The security-page "alerts" product remains UNVERIFIED; this is our own rule engine, not a claim
+about theirs. See [03-http-api.md](03-http-api.md#36-alerts-t-114).
+
 ## Decision
 
 The owner decided on 2026-10-26 that every feature claude-mem, and any rival, sells in a paid tier is built into Aletheia

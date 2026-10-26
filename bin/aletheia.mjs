@@ -44,6 +44,9 @@
 //   aletheia erase [--project p | --id 12,fact:3 | --before DATE] [--apply] [--export file] [--receipt file]
 //                                                          report first; --apply exports, erases and signs a receipt
 //   aletheia erase verify <receipt.json>                  check a receipt's HMAC
+//   aletheia alerts add --event E --target webhook|file [--url u|--path p] [--secret s] [--allow-private]
+//                  | list | remove <id> | enable|disable <id> | test <id> | run | feed | check | emit <event> [--value n]
+//                                                          alert rules and delivery (T-114)
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
@@ -234,6 +237,65 @@ async function runTeamCommand(flags, pos) {
   }
 }
 
+async function runAlertsCommand(flags, pos, hub) {
+  const { AlertStore, deliverDue, extractionFailures, queueDepth } = await import("../src/hub/alerts.mjs");
+  const store = new AlertStore(config.alertsDb);
+  try {
+    const sub = pos[0] ?? "list";
+    if (sub === "list") return out(store.listRules());
+    if (sub === "add") {
+      try {
+        const rule = store.addRule({
+          name: typeof flags.name === "string" ? flags.name : undefined,
+          event: typeof flags.event === "string" ? flags.event : "",
+          target: typeof flags.target === "string" ? flags.target : (flags.url ? "webhook" : "file"),
+          url: typeof flags.url === "string" ? flags.url : null,
+          path: typeof flags.path === "string" ? flags.path : null,
+          secret: typeof flags.secret === "string" ? flags.secret : null,
+          allowPrivate: flags["allow-private"] === true,
+          countThreshold: Number(flags.count) || 1,
+          minValue: flags["min-value"] == null ? null : Number(flags["min-value"]),
+          windowS: Number(flags.window) || 3600,
+          rateLimitS: flags["rate-limit"] == null ? 300 : Number(flags["rate-limit"]),
+          enabled: !flags.disabled,
+        });
+        return out(rule);
+      } catch (error) {
+        return die(error.message);
+      }
+    }
+    if (sub === "remove" || sub === "enable" || sub === "disable") {
+      if (!pos[1]) return die(`Usage: aletheia alerts ${sub} <id>`);
+      const id = Number(pos[1]);
+      const result = sub === "remove" ? store.removeRule(id) : store.updateRule(id, { enabled: sub === "enable" });
+      return out(result ?? { removed: false });
+    }
+    if (sub === "test") {
+      if (!pos[1]) return die("Usage: aletheia alerts test <id>");
+      const queued = store.testRule(Number(pos[1]));
+      if (!queued) return die(`No alert rule #${pos[1]}.`);
+      return out({ queued, ...(await deliverDue(store)) });
+    }
+    if (sub === "run") return out(await deliverDue(store));
+    if (sub === "feed") return out(store.feed({ limit: Number(flags.limit) || 100 }));
+    if (sub === "check") {
+      const depth = queueDepth(hub);
+      const failures = extractionFailures(hub);
+      const queued = store.emit("queue.depth", { value: depth, detail: { depth } });
+      if (failures) queued.push(...store.emit("extraction.failed", { value: failures, detail: { failures, window: "1h" } }));
+      return out({ queueDepth: depth, failures, queued });
+    }
+    if (sub === "emit") {
+      const event = pos[1];
+      if (!event) return die("Usage: aletheia alerts emit <event> [--value n]");
+      return out({ queued: store.emit(event, { value: flags.value == null ? null : Number(flags.value) }) });
+    }
+    return die("Usage: aletheia alerts add | list | remove <id> | enable|disable <id> | test <id> | run | feed | check | emit <event>");
+  } finally {
+    store.close();
+  }
+}
+
 async function main() {
   const { flags, pos } = parseArgs(rest);
 
@@ -304,6 +366,7 @@ async function main() {
           return die(error.message);
         }
       }
+      case "alerts": return await runAlertsCommand(flags, pos, hub);
       case "erase": {
         const { applyErase, erasePlan, formatEraseReport, loadEraseKey, readReceipt, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } = await import("../src/hub/erasure.mjs");
         if (pos[0] === "verify") {
@@ -530,6 +593,8 @@ async function main() {
       }
       case "compress": {
         const { runWorker, startBackgroundWorker } = await import("../src/hub/queue.mjs");
+        const { AlertStore } = await import("../src/hub/alerts.mjs");
+        const alerts = new AlertStore(config.alertsDb);
         let ask = null;
         try {
           ask = makeProvider(config);
@@ -544,17 +609,18 @@ async function main() {
         }
         if (flags.daemon) {
           const worker = startBackgroundWorker({
-            store: hub, ask, config, embedder, intervalMs: Number(flags.interval) || 2000,
+            store: hub, ask, config, embedder, alerts, intervalMs: Number(flags.interval) || 2000,
             onTick: (result) => { if (result?.processed) out(`processed ${result.processed} job(s), ${result.last?.facts ?? 0} new fact(s), ${result.last?.embedded ?? 0} embedded`); },
             onError: (error) => out(`worker error: ${error.message}`),
           });
           out(`Extraction worker running (${mode}${embedder ? `, embeddings ${embedder.model}` : ", keyword only"}); Ctrl-C to stop.`);
           await new Promise((resolve) => {
-            for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { worker.stop(); resolve(); });
+            for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { worker.stop(); alerts.close(); resolve(); });
           });
           return;
         }
-        const result = await runWorker({ store: hub, ask, config, embedder });
+        const result = await runWorker({ store: hub, ask, config, embedder, alerts });
+        alerts.close();
         const last = result.last ? `\nlast: ${result.last.memories} memories, ${result.last.windows} window(s), ${result.last.facts} new fact(s), ${result.last.rejected} rejected, ${result.last.embedded ?? 0} embedded` : "";
         return out(`Extraction mode: ${mode}${embedder ? `; embeddings ${embedder.model}` : "; keyword only"}\nqueue: ${JSON.stringify(result.counts)}${last}`);
       }

@@ -190,4 +190,32 @@ An erasure of an offline device's copy is not possible from here: revoke its tok
 E2EE account cannot be matched by project or content id, so pass the entity ids explicitly or purge on the
 device that holds the key.
 
+## 3.6 Alerts (T-114)
+
+The guarded local UI/admin path. The CLI is `aletheia alerts ...`. Events: `device.paired`, `token.revoked`,
+`quota.hit`, `sync.error`, `extraction.failed`, `queue.depth`. A rule either appends one JSON line to a local
+file or POSTs to a webhook. A webhook body is signed with `X-Aletheia-Signature: sha256=<hex>` (HMAC-SHA256 over
+the exact body) when the rule has a secret.
+
+| Route | Method | What |
+|---|---|---|
+| `/api/hub/alerts/rules` | GET | every rule; the secret is reported only as `hasSecret` |
+| `/api/hub/alerts/rules` | POST | add a rule: `{name, event, target: "webhook"\|"file", url?, path?, secret?, countThreshold?, minValue?, windowS?, rateLimitS?, allowPrivate?, enabled?}` |
+| `/api/hub/alerts/rules/:id` | PATCH | update any of those fields |
+| `/api/hub/alerts/rules/:id` | DELETE | remove one rule |
+| `/api/hub/alerts/feed` | GET | deliveries, newest first (`?limit=`) |
+| `/api/hub/alerts/test` | POST | `{id}` queues one test delivery for that rule and delivers what is due |
+| `/api/hub/alerts/run` | POST | deliver every due row once |
+| `/api/hub/alerts/check` | POST | read queue depth and extraction failures, emit those events, queue matches |
+
+Delivery rules: `countThreshold` N waits for N events in `windowS`; `minValue` gates a numeric event such as
+`queue.depth`; `rateLimitS` allows one delivery per rule per window. A 2xx is final; 5xx/429, a timeout or a
+network error retries with exponential backoff (1 s, 2 s, 4 s, ..., capped at 60 s) up to five attempts; other
+4xx and a refused target fail immediately. A webhook target that resolves to a private, loopback or link-local
+address is refused unless the rule sets `allowPrivate`. A name that does not resolve is refused (fail closed).
+`sync.error` fires from the sync server's 500 path; `device.paired` from a successful join; `token.revoked` from
+`/v1/sync/revoke`; `quota.hit` when a push hits a quota; `extraction.failed` and `queue.depth` from the
+extraction worker. An alert store or delivery failure never takes the server or the queue down.
+
+
 

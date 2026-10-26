@@ -49,6 +49,8 @@ export function loadConfig(overrides = {}) {
     erasureKey: overrides.erasureKey ?? env.ALETHEIA_ERASURE_KEY ?? join(dataDir, "erasure.key"),
     erasureReceiptDir: overrides.erasureReceiptDir ?? join(dataDir, "erasure-receipts"),
     erasureExportDir: overrides.erasureExportDir ?? join(dataDir, "erasure-exports"),
+    // Alert rules and their delivery queue (T-114).
+    alertsDb: overrides.alertsDb ?? env.ALETHEIA_ALERTS_DB ?? join(dataDir, "alerts.db"),
     // Optional bearer key for /v1 (tools). Leave empty on a single-user machine; the API is loopback-only anyway.
     apiKey: overrides.apiKey ?? env.ALETHEIA_API_KEY ?? "",
     promptsDir: overrides.promptsDir ?? join(import.meta.dir, "..", "prompts"),
