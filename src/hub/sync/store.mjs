@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS sync_account (
   name TEXT NOT NULL,
   epoch INTEGER NOT NULL DEFAULT 1,
   head_seq INTEGER NOT NULL DEFAULT 0,
+  min_seq INTEGER NOT NULL DEFAULT 0,
   created_at INTEGER NOT NULL
 );
 CREATE TABLE IF NOT EXISTS sync_device (
@@ -72,10 +73,12 @@ CREATE TABLE IF NOT EXISTS sync_head (
   kind TEXT NOT NULL,
   hlc INTEGER NOT NULL,
   device_id TEXT NOT NULL,
+  device_seq INTEGER NOT NULL,
   content_hash TEXT NOT NULL,
   deleted INTEGER NOT NULL,
   seq INTEGER NOT NULL,
   supersedes TEXT NOT NULL DEFAULT '[]',
+  payload TEXT,
   PRIMARY KEY (account_id, entity_id)
 );
 CREATE TABLE IF NOT EXISTS sync_audit (
@@ -132,6 +135,16 @@ export class SyncStore {
     this.db.exec("PRAGMA busy_timeout = 3000");
     this.db.exec("PRAGMA foreign_keys = ON");
     this.db.exec(SCHEMA);
+    this.ensureSyncColumns();
+  }
+
+  /** Additive columns for databases created before they existed. */
+  ensureSyncColumns() {
+    const accountColumns = this.db.prepare("PRAGMA table_info(sync_account)").all().map((column) => column.name);
+    if (!accountColumns.includes("min_seq")) this.db.exec("ALTER TABLE sync_account ADD COLUMN min_seq INTEGER NOT NULL DEFAULT 0");
+    const headColumns = this.db.prepare("PRAGMA table_info(sync_head)").all().map((column) => column.name);
+    if (!headColumns.includes("payload")) this.db.exec("ALTER TABLE sync_head ADD COLUMN payload TEXT");
+    if (!headColumns.includes("device_seq")) this.db.exec("ALTER TABLE sync_head ADD COLUMN device_seq INTEGER NOT NULL DEFAULT 0");
   }
 
   close() {
@@ -263,8 +276,8 @@ export class SyncStore {
     try {
       const insertOp = this.db.prepare(`INSERT INTO sync_op (account_id, seq, epoch, entity_id, entity_type, kind, device_id, device_seq, hlc, content_hash, body, deleted, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`);
       const findHead = this.db.prepare("SELECT * FROM sync_head WHERE account_id = ? AND entity_id = ?");
-      const upsertHead = this.db.prepare(`INSERT INTO sync_head (account_id, entity_id, entity_type, kind, hlc, device_id, content_hash, deleted, seq, supersedes) VALUES (?,?,?,?,?,?,?,?,?,?)
-        ON CONFLICT(account_id, entity_id) DO UPDATE SET entity_type=excluded.entity_type, kind=excluded.kind, hlc=excluded.hlc, device_id=excluded.device_id, content_hash=excluded.content_hash, deleted=excluded.deleted, seq=excluded.seq, supersedes=excluded.supersedes`);
+      const upsertHead = this.db.prepare(`INSERT INTO sync_head (account_id, entity_id, entity_type, kind, hlc, device_id, device_seq, content_hash, deleted, seq, supersedes, payload) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+        ON CONFLICT(account_id, entity_id) DO UPDATE SET entity_type=excluded.entity_type, kind=excluded.kind, hlc=excluded.hlc, device_id=excluded.device_id, device_seq=excluded.device_seq, content_hash=excluded.content_hash, deleted=excluded.deleted, seq=excluded.seq, supersedes=excluded.supersedes, payload=excluded.payload`);
       for (const op of ops ?? []) {
         const check = validateOp(op);
         if (!check.ok) {
@@ -282,7 +295,8 @@ export class SyncStore {
         const head = findHead.get(Number(accountId), op.entity_id);
         const supersedes = [...new Set([...(parse(head?.supersedes, [])), ...(op.supersedes ?? [])])];
         if (!head || compareOps(op, head) > 0) {
-          upsertHead.run(Number(accountId), op.entity_id, op.entity_type, op.op, op.hlc, op.device_id, op.content_hash, op.op === "delete" ? 1 : 0, headSeq, JSON.stringify(supersedes));
+          const payload = op.op === "put" ? stableStringify(op.payload) : op.op === "delete" ? null : head?.payload ?? null;
+          upsertHead.run(Number(accountId), op.entity_id, op.entity_type, op.op, op.hlc, op.device_id, op.seq, op.content_hash, op.op === "delete" ? 1 : 0, headSeq, JSON.stringify(supersedes), payload);
         } else if (op.supersedes?.length) {
           this.db.prepare("UPDATE sync_head SET supersedes = ? WHERE account_id = ? AND entity_id = ?").run(JSON.stringify(supersedes), Number(accountId), op.entity_id);
         }
@@ -299,14 +313,17 @@ export class SyncStore {
     return { results, head_seq: headSeq, epoch: account.epoch };
   }
 
-  /** Pull ops with seq > since. Returns {epoch, head_seq, ops, has_more}. */
+  /** Pull ops with seq > since. Returns {epoch, head_seq, ops, has_more, snapshot_required}. */
   pullOps(accountId, since = 0, { limit = 500 } = {}) {
     const account = this.accountById(accountId);
     const lim = Math.min(Math.max(Number(limit) || 500, 1), 1000);
-    const rows = this.db.prepare("SELECT * FROM sync_op WHERE account_id = ? AND seq > ? AND epoch = ? ORDER BY seq ASC LIMIT ?").all(Number(accountId), Number(since) || 0, account.epoch, lim);
-    const ops = rows.map((row) => JSON.parse(row.body));
+    const sinceSeq = Number(since) || 0;
+    const rows = this.db.prepare("SELECT * FROM sync_op WHERE account_id = ? AND seq > ? AND epoch = ? ORDER BY seq ASC LIMIT ?").all(Number(accountId), sinceSeq, account.epoch, lim);
+    const ops = rows.filter((row) => row.body).map((row) => JSON.parse(row.body));
     const hasMore = rows.length === lim;
-    return { epoch: account.epoch, head_seq: account.head_seq, ops, has_more: hasMore };
+    // A cursor older than the oldest body we still serve must re-bootstrap from the snapshot.
+    const snapshotRequired = sinceSeq < account.min_seq;
+    return { epoch: account.epoch, head_seq: account.head_seq, ops, has_more: hasMore, snapshot_required: snapshotRequired };
   }
 
   status(accountId) {
@@ -319,7 +336,10 @@ export class SyncStore {
     };
   }
 
-  /** Snapshot of the winning head per entity. Used by a device older than the retention window. */
+  /**
+   * Snapshot of the winning state per entity, self-contained (payload included). A device whose cursor is
+   * older than the retention window re-bootstraps from this instead of replaying the log.
+   */
   snapshot(accountId) {
     const account = this.accountById(accountId);
     const heads = this.db.prepare("SELECT * FROM sync_head WHERE account_id = ? ORDER BY entity_id").all(Number(accountId)).map((head) => ({
@@ -328,10 +348,12 @@ export class SyncStore {
       op: head.kind,
       hlc: head.hlc,
       device_id: head.device_id,
+      device_seq: head.device_seq,
       content_hash: head.content_hash,
       deleted: !!head.deleted,
       supersedes: parse(head.supersedes, []),
       seq: head.seq,
+      payload: head.payload == null ? null : JSON.parse(head.payload),
     }));
     return { epoch: account.epoch, head_seq: account.head_seq, entities: heads };
   }
@@ -345,16 +367,22 @@ export class SyncStore {
     const devices = this.listDevices(accountId).filter((device) => !device.revoked);
     const safeSeq = devices.length ? Math.min(...devices.map((device) => device.lastAckSeq)) : account.head_seq;
     const cutoff = Date.now() - retentionMs;
+    // Drop only bodies that a newer put or delete superseded. dismiss/restore heads keep their content bodies.
     const superseded = this.db.prepare(`
       SELECT op.seq FROM sync_op op
       JOIN sync_head head ON head.account_id = op.account_id AND head.entity_id = op.entity_id
       WHERE op.account_id = ? AND op.epoch = ? AND op.seq <= ? AND op.created_at < ? AND op.seq < head.seq
+        AND head.kind IN ('put', 'delete')
     `).all(Number(accountId), account.epoch, safeSeq, cutoff).map((row) => row.seq);
-    if (!superseded.length) return { dropped: 0, safeSeq, retentionMs };
-    const placeholders = superseded.map(() => "?").join(",");
-    const info = this.db.prepare(`UPDATE sync_op SET body = '' WHERE account_id = ? AND seq IN (${placeholders})`).run(Number(accountId), ...superseded);
-    this.audit(accountId, { action: "sync.compact", result: "ok", detail: { dropped: info.changes, safeSeq, retentionMs } });
-    return { dropped: info.changes, safeSeq, retentionMs };
+    let dropped = 0;
+    if (superseded.length) {
+      const placeholders = superseded.map(() => "?").join(",");
+      const info = this.db.prepare(`UPDATE sync_op SET body = '' WHERE account_id = ? AND seq IN (${placeholders})`).run(Number(accountId), ...superseded);
+      dropped = info.changes;
+    }
+    this.db.prepare("UPDATE sync_account SET min_seq = ? WHERE id = ?").run(safeSeq, Number(accountId));
+    this.audit(accountId, { action: "sync.compact", result: "ok", detail: { dropped, safeSeq, retentionMs } });
+    return { dropped, safeSeq, retentionMs };
   }
 
   /** Purge one entity everywhere: write a tombstone head and drop every body for that entity. */
@@ -366,7 +394,7 @@ export class SyncStore {
     this.db.exec("BEGIN IMMEDIATE");
     try {
       this.db.prepare("UPDATE sync_op SET body = '' WHERE account_id = ? AND entity_id = ?").run(Number(accountId), entityId);
-      const tombstone = { device_id: "server", seq: 0, hlc: Number(head.hlc) + 1, entity_type: head.entity_type, entity_id, op: "delete", payload: null, supersedes: null, content_hash: null };
+      const tombstone = { device_id: "server", seq: 0, hlc: Number(head.hlc) + 1, entity_type: head.entity_type, entity_id: entityId, op: "delete", payload: null, supersedes: null, content_hash: null };
       tombstone.content_hash = computeContentHash(tombstone);
       headSeq += 1;
       this.db.prepare("INSERT INTO sync_op (account_id, seq, epoch, entity_id, entity_type, kind, device_id, device_seq, hlc, content_hash, body, deleted, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
@@ -423,8 +451,8 @@ export class SyncStore {
 
   // ---- folder transport -------------------------------------------------------------------------
 
-  /** All ops, oldest first, for the folder export (signed op files). */
+  /** All ops with a body, oldest first, for the folder export (signed op files). */
   allOps(accountId) {
-    return this.db.prepare("SELECT * FROM sync_op WHERE account_id = ? ORDER BY seq ASC").all(Number(accountId)).map((row) => JSON.parse(row.body));
+    return this.db.prepare("SELECT * FROM sync_op WHERE account_id = ? ORDER BY seq ASC").all(Number(accountId)).filter((row) => row.body).map((row) => JSON.parse(row.body));
   }
 }

@@ -108,6 +108,18 @@ export class SyncClient {
     return info.changes > 0;
   }
 
+  /** Re-bootstrap this device from a hub snapshot (self-contained heads). */
+  applySnapshot(snapshot) {
+    let applied = 0;
+    for (const entity of snapshot?.entities ?? []) {
+      const op = { device_id: entity.device_id, seq: entity.device_seq, hlc: entity.hlc, entity_type: entity.entity_type, entity_id: entity.entity_id, op: entity.op, payload: entity.payload ?? null, supersedes: entity.supersedes ?? null, content_hash: entity.content_hash };
+      if (this.applyRemote(op)) applied++;
+    }
+    if (snapshot?.epoch != null) this.setMeta("epoch", snapshot.epoch);
+    this.setCursor(snapshot?.head_seq ?? 0);
+    return { applied, head_seq: snapshot?.head_seq ?? 0 };
+  }
+
   outbox() {
     return this.db.prepare("SELECT * FROM sync_op WHERE source = 'local' AND acked = 0 ORDER BY seq ASC").all().map((row) => this.toOp(row));
   }
@@ -198,7 +210,7 @@ export class SyncClient {
     if (data.epoch && this.setEpoch(data.epoch)) since = 0;
     for (const op of data.ops ?? []) this.applyRemote(op);
     this.setCursor(data.head_seq);
-    return { pulled: (data.ops ?? []).length, head_seq: data.head_seq, epoch: data.epoch };
+    return { pulled: (data.ops ?? []).length, head_seq: data.head_seq, epoch: data.epoch, snapshot_required: !!data.snapshot_required };
   }
 
   /** Folder transport: export every local op as a signed file set for Git/Syncthing/Dropbox. */
