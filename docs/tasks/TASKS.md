@@ -180,3 +180,4 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-142 | Add the /v1/work query layer and route | P6 | none | validated | 2026-10-26 | [T-142.md](T-142.md) |
 | T-143 | Replace the Work tab with Aletheia's own overview | P6 | T-142 | validated | 2026-10-26 | [T-143.md](T-143.md) |
 | T-144 | Add owner goals from typed prompts | P6 | T-143 | validated | 2026-10-26 | [T-144.md](T-144.md) |
+| T-145 | Add the read-only session page | P6 | T-143 | validated | 2026-10-26 | [T-145.md](T-145.md) |

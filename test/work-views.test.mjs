@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { parseRoute } from "../public/ui-core.js";
-import { factLineView, goalView, goalsView, sessionCardView, workEmptyView, workHeaderView, workNeedsView, WORK_EMPTY } from "../public/work-view.js";
+import { factLineView, goalView, goalsView, sessionCardView, sessionDetailView, workEmptyView, workHeaderView, workNeedsView, WORK_EMPTY } from "../public/work-view.js";
 
 const fact = {
   id: 7,
@@ -121,5 +121,42 @@ describe("T-144: the goal view", () => {
     const all = goalsView({ project: "shop", goals: [goal], dismissedGoals: [{ ...goal, id: "fedcba9876543210", dismissed: true }] });
     expect(all.goals).toHaveLength(1);
     expect(all.dismissedGoals[0]).toMatchObject({ id: "fedcba9876543210", dismissed: true });
+  });
+});
+
+describe("T-145: the session page view", () => {
+  test("a session detail shows the ordered timeline, summary and facts with sources, and no actions", () => {
+    const detail = {
+      id: "s1",
+      project: "shop",
+      tool: "claude-code",
+      firstAt: "2026-10-26T09:00:00.000Z",
+      lastAt: "2026-10-26T09:58:00.000Z",
+      promptCount: 2,
+      toolCount: 1,
+      summary: { id: 4, text: "Session summary: retry work", at: "2026-10-26T09:58:00.000Z" },
+      timeline: [
+        { id: 1, kind: "prompt", text: "Add a retry button", at: "2026-10-26T09:00:00.000Z", tool: "claude-code", source: "w:s1:1" },
+        { id: 2, kind: "tool", text: "Edited RetryButton.tsx", at: "2026-10-26T09:05:00.000Z", tool: "claude-code", source: "w:s1:2" },
+        { id: 3, kind: "prompt", text: "fix the retry state", at: "2026-10-26T09:10:00.000Z", tool: "claude-code", source: "w:s1:3" },
+        { id: 4, kind: "summary", text: "Session summary: retry work", at: "2026-10-26T09:58:00.000Z", tool: null, source: "memory" },
+      ],
+      facts: [{ ...fact, id: 7 }],
+    };
+    const view = sessionDetailView(detail);
+    expect(view).toMatchObject({ id: "s1", project: "shop", title: "Session s1", promptLabel: "2 prompts", toolLabel: "1 tool event" });
+    expect(view.timeline.map((item) => item.kind)).toEqual(["prompt", "tool", "prompt", "summary"]);
+    expect(view.timeline.map((item) => item.kindLabel)).toEqual(["Prompt", "Tool event", "Prompt", "Summary"]);
+    expect(view.timeline[0].source).toBe("w:s1:1");
+    expect(view.summary).toContain("retry work");
+    expect(view.facts[0]).toMatchObject({ id: 7, sourceLabel: "episode #12 · memory:4" });
+    expect(view).not.toHaveProperty("actions");
+  });
+
+  test("a session with no rows still has a readable empty timeline", () => {
+    const view = sessionDetailView({ id: "s9", project: "shop", timeline: [], facts: [], promptCount: 0, toolCount: 0 });
+    expect(view.timeline).toEqual([]);
+    expect(view.facts).toEqual([]);
+    expect(view.summary).toBe("No summary yet.");
   });
 });
