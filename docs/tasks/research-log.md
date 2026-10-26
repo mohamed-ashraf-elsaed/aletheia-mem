@@ -335,3 +335,238 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | https://arxiv.org/html/2501.13956 | full text: `valid_at`/`invalid_at` edge facts and the bi-temporal model (event time and ingestion time) |
 | 2026-10-26 | https://docs.claude-mem.ai/cursor | HTTP 200 on re-fetch during verification; page cited by matrix row F-I13 |
 | 2026-10-26 | https://docs.claude-mem.ai/grok-bot | HTTP 200 on re-fetch during verification; page cited by matrix row F-I26 |
+| date | URL | what it gave |
+| 2026-10-26 | https://cmem.ai | Home: Pro = hosted observation, cloud sync, private MCP link; $30/month after 30 day trial; TeamBrain pilot, no public price; local engine free |
+| 2026-10-26 | https://cmem.ai/pricing | Tiers Pro $30, Heavy $70, Max $100 (+billed overage); trial rules (card needed, no prepaid, ends at 30 days or usage spent); TeamBrain price not public; FAQ on storage |
+| 2026-10-26 | https://cmem.ai/pro | Fetched; server HTML held only nav and footer text. Content UNVERIFIED |
+| 2026-10-26 | https://cmem.ai/teambrain | TeamBrain marketing: shared tasks, handoffs, each member opts in per project, owner holds billing and invites |
+| 2026-10-26 | https://cmem.ai/design-partners | TeamBrain pilot: 8-team cohort, 2 enrolled, price agreed on a fit call, shared memory and access controls still in development |
+| 2026-10-26 | https://cmem.ai/features | Features page: capture, search, sync; says MCP recall alone does not capture |
+| 2026-10-26 | https://cmem.ai/dreaming | Hosted observation described as background observer that CMEM Pro runs on its hosted service |
+| 2026-10-26 | https://cmem.ai/security | Security page: shared activity log and alerts use the user's own security checks; mechanism not described |
+| 2026-10-26 | https://cmem.ai/privacy | Privacy: sync is opt-in; MCP link is a secret URL, can be reissued; account deletion erases cloud data; no training on memory |
+| 2026-10-26 | https://cmem.ai/terms | Terms: paid plans billed through Stripe; service may change or be discontinued; as-is, user keeps own backups |
+| 2026-10-26 | https://cmem.ai/chatgpt | ChatGPT connection: read-only, OAuth, needs Developer mode and Pro or trial; revocable; does not capture ChatGPT chats |
+| 2026-10-26 | https://cmem.ai/chatgpt-install.md | Exact connector setup: MCP URL https://cmem.ai/api/mcp, OAuth, tool names memory_search, timeline, get_observations, get_summaries |
+| 2026-10-26 | https://cmem.ai/integrations | Capture vs recall split; private MCP link usable from Cursor, Codex, Gemini CLI, Windsurf |
+| 2026-10-26 | https://cmem.ai/how-it-works | Local-first architecture statement: SQLite plus FTS5, optional cloud sync carries finished memory |
+| 2026-10-26 | https://cmem.ai/knowledge-agents | Knowledge agents page (no pricing, no hosted claim) |
+| 2026-10-26 | https://cmem.ai/changelog | Release notes: 13.34.1 30-day trial copy; 13.26.1 cloud sync auth pause; 15.2.1 latest |
+| 2026-10-26 | https://cmem.ai/.well-known/oauth-protected-resource | OAuth protected-resource metadata for https://cmem.ai/api/mcp: scopes read:memory, spend:inference |
+| 2026-10-26 | https://cmem.ai/api/mcp | Unauthenticated GET returned 401 invalid_token (confirms bearer/OAuth gate) |
+| 2026-10-26 | https://cmem.ai/connect | Redirects to login (GitHub or Google OAuth). Page content behind login, UNVERIFIED |
+| 2026-10-26 | https://cmem.ai/dashboard | Redirects to login. Dashboard content UNVERIFIED |
+| 2026-10-26 | https://cmem.ai/teambrain/start | Redirects to login. Team plan and seat price UNVERIFIED |
+| 2026-10-26 | https://docs.claude-mem.ai/llms.txt | Docs index; used to find every hosted, sync, TeamBrain and Pro page |
+| 2026-10-26 | https://docs.claude-mem.ai/sitemap.xml | Fetched (HTTP 200); llms.txt used as the page list |
+| 2026-10-26 | https://docs.claude-mem.ai/cloud-sync.md | Cloud sync: what syncs, push and pull lanes, batching limits, 64 device cap, settings, status endpoint, privacy warning |
+| 2026-10-26 | https://docs.claude-mem.ai/hosted-server.md | Hosted server beta: Postgres plus BullMQ, api keys, /v1/mcp, rate limits, quotas, metering, deletion, audit, pgvector search, endpoint list |
+| 2026-10-26 | https://docs.claude-mem.ai/cmem-pro-headless.md | Installer OAuth pairing, settings keys, cmem-observer gateway base URL, fallback behaviour |
+| 2026-10-26 | https://docs.claude-mem.ai/usage/teambrain.md | TeamBrain client flow: invite join, per-member sharing, board, no browser tokens |
+| 2026-10-26 | https://docs.claude-mem.ai/usage/my-work.md | My Work is local; Connect Claude.ai/ChatGPT buttons open CMEM Cloud setup; TeamBrain tab |
+| 2026-10-26 | https://docs.claude-mem.ai/usage/backups.md | Local snapshots; cloud sync and backups differ |
+| 2026-10-26 | https://docs.claude-mem.ai/usage/knowledge-agents.md | Knowledge agents are local corpus files primed into a Claude session |
+| 2026-10-26 | https://docs.claude-mem.ai/telemetry.md | Telemetry whitelist (PostHog), includes trial and funnel fields; opt-out |
+| 2026-10-26 | https://docs.claude-mem.ai/usage/export-import.md | Local export/import (free) |
+| 2026-10-26 | https://docs.claude-mem.ai/usage/quota-fallback.md | Free quota fallback feature (not paid) |
+| 2026-10-26 | https://docs.claude-mem.ai/usage/multi-key-rotation.md | Free multi-key rotation (not paid) |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/docs/ip-boundary.md | List of reserved commercial/private areas: hosted cloud, team sync, admin dashboard, SSO/SAML/SCIM, RBAC, audit UI, DLP, premium knowledge agents, managed evals |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/docs/license.md | Apache-2.0 core; reserved areas not shipped |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/docs/server-architecture-and-team-vision.md | Server-beta design: identity triad, team/project scope, local-hook-team mapping, audit chain |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/services/sync-api/src/index.ts | Hub routes /v1/sync/ops, /changes, /status, /ws; internal routes; limits 500 ops, 8 MB; per-user lock; 503 retryable |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/services/sync-api/src/store.ts | pushOps conflict rules (stale_revision, revision_hash_conflict), device cap 64, getChanges snapshot, fan-out |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/services/sync-api/src/schema.ts | Hub tables sync_users, sync_ops, sync_entity_heads, sync_devices; no retention or compaction |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/services/sync-api/src/auth.ts | Bearer plus X-User-Id verified against cmem.ai /api/pro/sync/verify; 900 s verdict cache; 401 vs 403 subscription_inactive |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/services/sync-api/src/canonical-content.ts | Canonical op body: fields, kinds, tombstone shape, 256000 byte cap, stable id hash, payload fields |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/services/sync-api/src/projection.ts | Hub forwards ops to the Pro app (projection) before returning 200 |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/services/sync-api/src/projection-protocol.ts | Projection request wire format, 100 ops / 4 MB pages, 45 s timeout |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/services/sync-api/fly.toml | Hub deploy config: Fly, TOKEN_VERIFY_URL and INTERNAL_PROJECTOR_URL on cmem.ai; forward-mode note to a Supabase function |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/services/sync-api/.env.example | Hub env: DATABASE_URL, TOKEN_VERIFY_URL, INTERNAL_PROJECTOR_URL, CMEM_INTERNAL_PROJECTOR_SECRET |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/workers/sync-hub/src/kill-switch.ts | Cloudflare Worker hub variant; kill switch to poll mode; cost note about 0.03 USD per user per month |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/workers/sync-hub/METADATA-CONTRACT.md | Hub owns device identity, cursors, and the projection checkpoint to Turbopuffer |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/src/services/sync/CloudSync.ts | Client push drain: synced_at queue, outbox, queueDelete tombstone, dead-letter, backoff, ack validation |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/src/services/sync/SyncApply.ts | Client apply: one transaction per batch with cursor, echo guard, rev rules, title parking, epoch reset |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/src/services/sync/SyncClient.ts | Client pull and WebSocket advisory channel, epoch handling, polling tiers |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/src/shared/cmem-gateway.ts | cmem.ai inference gateway detection, cm_pro_ key rules, terminal codes subscription_inactive, allowance_exhausted, key_invalid, fallback marker |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/src/npx-cli/cmem-pro-costs.ts | Installer endpoints: /api/installer/oauth/start, /api/pro/trial/poll, /api/inference/v1 |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/src/shared/teambrain.ts | TeamBrain client API: /api/teambrain/brief, /search, /cli/status, /cli/board, /cli/membership, /cli/leave; bearer plus X-User-Id |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/src/npx-cli/commands/teambrain.ts | teambrain join/start/status/share/leave; invite token in OAuth pairing |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/src/services/work-view/hosted-intent.ts | Hosted setup extraction: POST /api/pro/intent, gzip, 2 MiB cap, install credentials headers, no client retry |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/src/storage/postgres/schema.ts | Hosted server tables: teams, projects, team_members, api_keys, audit_log, observations, usage_events, rate_limit_counters, observation_embeddings |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/src/server/middleware/postgres-auth.ts | Hosted server auth middleware: key hash lookup, team and project scoping |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/plans/2026-07-22-cmem-launch.md | Plan: closed claude-mem-pro app on Vercel, Supabase control plane, Turbopuffer content store, outage history (dated 2026-07-22) |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/plugin/skills/cloud-sync/SKILL.md | Cloud-sync skill: setup only through the installer, never paste token in chat |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/3763 | Maintainer answer 2026-09-12: hosted observer is DeepSeek V4 Flash via OpenRouter, server-picked; sync only pushes post-connect memories |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/3444 | Request to backfill pre-launch local memories to cloud (closed, folded into plan-12) |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/4086 | Sync blocked by revision_hash_conflict after manual DB merge; whole batch rejected; no rebase tool |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/3964 | Stale origin_device_id ops at outbox head blocked sync permanently (fixed by #3973) |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/4191 | Hub push response head_seq vs projected_seq invariant stuck; 33 hour 500/429 outage |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/4198 | Hub projector stalled, projected_seq stays behind head_seq, every push fails |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/4231 | Retry backoff ignored, 429 storm (fixed, Retry-After now a floor) |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/4228 | sync_outbox grew to 1.2 GB when sync not configured |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/4842 | work_state never syncs; hub contentKinds lacks it on production |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/4841 | Request to show origin device name; maintainer says production hub does not return names and that part is not in the repo |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/4131 | --runtime server help implies self-hosted but install needs cmem.ai OAuth |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/4605 | Privacy text vs defaults; README says no card, pricing FAQ says card required |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/blob/7325fb7818ff7426665d85922db642ec0931bdcd/src/shared/openrouter-base-url.ts | Client appends /chat/completions to a base URL (seen in grep output; file not read in full) |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/3848 | Title only: claim of ~64% extra API cost from claude-mem (body not read) |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/4580 | Title only: observations lost during quota cooldown if worker restarts (body not read) |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/issues/4805 | Title only: delete leaves Chroma docs (body not read) |
+| date | URL | what it gave |
+| 2026-10-26 | https://mem0.ai/pricing | Mem0 plans Hobby/Starter/Pro/Enterprise, limits, feature matrix, compliance badges |
+| 2026-10-26 | https://docs.mem0.ai/platform/platform-vs-oss | Mem0 platform vs OSS feature gap list |
+| 2026-10-26 | https://supermemory.ai/pricing | Supermemory plans, credits, rate card, self-host and connector gating |
+| 2026-10-26 | https://supermemory.ai/docs/deployment/self-hosting | Supermemory self-host: platform-only features list |
+| 2026-10-26 | https://www.getzep.com/pricing | Zep Flex/Flex Plus/Enterprise prices, credits, limits, features, deployment options |
+| 2026-10-26 | https://raw.githubusercontent.com/getzep/zep/main/README.md | Zep Community Edition deprecated; legacy folder |
+| 2026-10-26 | https://blog.getzep.com/announcing-a-new-direction-for-zeps-open-source-strategy/ | Zep reason for ending Community Edition; Graphiti focus |
+| 2026-10-26 | https://www.letta.com/pricing | Letta Free/Pro/API/Teams Pro/Enterprise prices and limits (page content is the docs pricing page) |
+| 2026-10-26 | https://www.cognee.ai/pricing | Cognee Free/Standard/Enterprise BYOC prices and features |
+| 2026-10-26 | https://mastra.ai/pricing | Mastra Platform Starter/Teams/Enterprise prices, memory token and retrieval storage meters, self-hosted enterprise |
+| 2026-10-26 | https://raw.githubusercontent.com/mastra-ai/mastra/main/LICENSE.md | Mastra licence: Apache-2.0 except ee/ directories |
+| 2026-10-26 | https://raw.githubusercontent.com/mastra-ai/mastra/main/ee/LICENSE | Mastra Enterprise Edition licence: source-available, no production use |
+| 2026-10-26 | https://memorilabs.ai/pricing | Memori OSS, Cloud Free, Team, Business, Enterprise prices and included features |
+| 2026-10-26 | https://raw.githubusercontent.com/MemoriLabs/Memori/main/LICENSE | Memori licence is Apache-2.0 |
+| 2026-10-26 | https://raw.githubusercontent.com/MemoriLabs/Memori/main/README.md | Memori README: cloud, BYODB self-host, advanced augmentation free for developers |
+| 2026-10-26 | https://vectorize.io/pricing | Hindsight self-host/Cloud/Enterprise, per-operation prices, feature table |
+| 2026-10-26 | https://raw.githubusercontent.com/vectorize-io/hindsight/main/README.md | Hindsight README cloud description, MIT |
+| 2026-10-26 | https://hindsight.vectorize.io/ | Hindsight docs home: $5 free credit on sign-up with GitHub |
+| 2026-10-26 | https://docs.memvid.com/concepts/capacity-and-plans.md | Memvid docs plan table ($9.99, $49.99) and capacity limits |
+| 2026-10-26 | https://memvid.com/pricing | Memvid pricing page: fetched, JS-rendered, returned only contact page text (UNVERIFIED) |
+| 2026-10-26 | https://raw.githubusercontent.com/memvid/memvid/main/README.md | Memvid README: Apache-2.0, single .mv2 file |
+| 2026-10-26 | https://raw.githubusercontent.com/memodb-io/memobase/main/README.md | Memobase README: Apache-2.0, cloud free tier mentioned, no prices |
+| 2026-10-26 | https://www.memobase.io/en/login | Memobase cloud login URL from README: HTTP 404 |
+| 2026-10-26 | https://docs.memobase.io/ | Memobase docs: reachable, no pricing page found in text |
+| 2026-10-26 | https://memos.openmem.net/pricing | MemOS cloud plans Free/Starter/Pro/Enterprise and API limits |
+| 2026-10-26 | https://raw.githubusercontent.com/MemTensor/MemOS/main/README.md | MemOS README: Cloud API vs self-host vs plugins table |
+| 2026-10-26 | https://raw.githubusercontent.com/Gentleman-Programming/engram/main/README.md | Engram README: cloud optional, local SQLite authoritative, MIT |
+| 2026-10-26 | https://raw.githubusercontent.com/Gentleman-Programming/engram/main/docs/engram-cloud/README.md | Engram Cloud is self-hosted (engram cloud serve), dashboard, project-scoped sync |
+| 2026-10-26 | https://engram.gentlemanprogramming.com/ | Engram site: no pricing text found |
+| 2026-10-26 | https://raw.githubusercontent.com/mksglu/context-mode/main/README.md | Context Mode README: no cloud, no account; ELv2 no-hosted-service clause |
+| 2026-10-26 | https://raw.githubusercontent.com/mksglu/context-mode/main/LICENSE | Context Mode licence: Elastic License 2.0 |
+| 2026-10-26 | https://context-mode.com | Context Mode site: no pricing text found |
+| 2026-10-26 | https://raw.githubusercontent.com/rohitg00/agentmemory/main/README.md | agentmemory README: no cloud pricing stated, comparison table, Apache-2.0 via API |
+| 2026-10-26 | https://agent-memory.dev | agentmemory site: no account, no cloud |
+| 2026-10-26 | https://basicmemory.com/pricing | Basic Memory Team $15, Business $30, Agent Infrastructure custom; features |
+| 2026-10-26 | https://raw.githubusercontent.com/TencentCloud/TencentDB-Agent-Memory/main/README.md | TencentDB Agent Memory: MIT, local docker start-all, Memory Hub team ACLs |
+| 2026-10-26 | https://tencentcloud.github.io/TencentDB-Agent-Memory/ | TencentDB site: JS-rendered, no text (UNVERIFIED for price) |
+| 2026-10-26 | https://cmem.ai/pricing | claude-mem OSS free; CMEM Pro $30, Heavy $70, Max $100; TeamBrain unpriced |
+| 2026-10-26 | https://claude.com/pricing | Claude plans Free/Pro/Max/Team prices; memory row per plan |
+| 2026-10-26 | https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context | Claude memory availability by plan, team owner control |
+| 2026-10-26 | https://cursor.com/pricing | Cursor pricing page as served: Free/Plus/Premium/Super/Ultra/Teams/Enterprise (content looks Grok-branded; see note) |
+| 2026-10-26 | https://cursor.com/docs/context/memories | Cursor docs: memories URL serves Rules page; Team Rules on Team/Enterprise |
+| 2026-10-26 | https://windsurf.com/pricing | Windsurf (Devin) Free/Pro/Max/Teams/Enterprise prices |
+| 2026-10-26 | https://docs.windsurf.com/windsurf/cascade/memories | Windsurf memories and rules doc; system-level rules for enterprise |
+| 2026-10-26 | https://github.com/features/copilot/plans | Copilot plans: Free/Pro/Pro+/Max prices (two price sets appear on page) |
+| 2026-10-26 | https://docs.github.com/en/copilot/concepts/agents/copilot-memory | Copilot Memory: public preview, paid plans, 28-day expiry, admin controls |
+| 2026-10-26 | https://one.google.com/about/google-ai-plans/ | Google AI plans page fetched in Arabic locale; prices not readable (UNVERIFIED) |
+| 2026-10-26 | https://support.google.com/gemini/answer/15637730 | Gemini personalization help: memory of past chats, not available to everyone |
+| 2026-10-26 | https://chatgpt.com/pricing | ChatGPT pricing: HTTP 403 (UNVERIFIED) |
+| 2026-10-26 | https://help.openai.com/en/articles/8590148-memory-faq | OpenAI memory FAQ: HTTP 403 this run (UNVERIFIED) |
+| 2026-10-26 | https://www.byterover.dev/pricing | ByteRover Free/Pro $15/Enterprise features |
+| 2026-10-26 | https://pieces.app/pricing | Pieces Pro $18.99, Enterprise $22.99 |
+| 2026-10-26 | https://memmachine.ai/pricing | MemMachine OSS/Pro $79/Enterprise |
+| 2026-10-26 | https://www.graphlit.com/pricing | Graphlit tiers and wind-down notice |
+| 2026-10-26 | https://backboard.io/pricing | Backboard pricing update blog: Free $5 credit, Pro $9/mo |
+| 2026-10-26 | https://www.memoryplugin.com/pricing | MemoryPlugin: Core plan shown $89/year (struck $180), lifetime option; partial read |
+| 2026-10-26 | https://mempalace.tech | MemPalace comparison table of rival prices (third-party claim only) |
+| 2026-10-26 | https://github.com/supermemoryai/supermemory/issues/1140 | User issue: pricing page shows no concrete figures (written before current page) |
+| 2026-10-26 | https://github.com/mem0ai/mem0/issues/6895 | Mem0 issue: OSS graph memory removed in v3 |
+| 2026-10-26 | https://hn.algolia.com/api/v1/search?query=Cursor%20Pricing%20Changes&tags=story | HN search result titles only (not opened): Cursor pricing-change threads, e.g. item 44496285 |
+| 2026-10-26 | https://api.github.com/search/repositories (topics ai-memory, agent-memory, mcp-memory, llm-memory, claude-code-memory, context-engineering, memory-layer, ai-agent-memory, coding-agent memory) | candidate repos with stars, push date, licence, language |
+| 2026-10-26 | https://api.github.com/search/repositories (queries: ruler, rulesync, AGENTS.md sync, skills sync) | rules-sync candidates |
+| 2026-10-26 | https://api.github.com/search/repositories (byterover, mempalace, obsidian memory, benchmark harness) | ByteRover and MemPalace repo data; extra candidates |
+| 2026-10-26 | https://hn.algolia.com/api/v1/search (Show HN memory for Claude Code; persistent memory AI coding agents; MCP memory server; agent memory open source local) | Show HN titles, dates, URLs, item ids |
+| 2026-10-26 | https://api.github.com/repos/<owner>/<repo> and /commits?per_page=1 for the 51 new products and the 10 refreshed docs/21 products plus snap-research/locomo, xiaowu0162/LongMemEval, modelcontextprotocol/servers | stars, last commit, licence, language, open issues, archived flag, created date |
+| 2026-10-26 | https://api.github.com/repos/<owner>/<repo>/readme for the same repos | README text: storage, tools, install commands, benchmark claims |
+| 2026-10-26 | https://api.github.com/repos/<owner>/<repo>/issues?state=open&sort=comments (36 repos) | open issues used as weaknesses |
+| 2026-10-26 | https://api.github.com/repos/letta-ai/letta | archived=false, pushed_at 2026-10-18 |
+| 2026-10-26 | https://api.github.com/repos/thedotmack/claude-mem/releases/latest | v15.2.1 published 2026-10-25 |
+| 2026-10-26 | https://api.github.com/repos/MemPalace/mempalace/issues/39 | title of reproduction issue, state closed, 2026-04-07 |
+| 2026-10-26 | https://api.github.com/repos/punkpeye/awesome-mcp-servers/readme | Knowledge & Memory section entry count (138, approximate) |
+| 2026-10-26 | https://api.github.com/repos/hesreallyhim/awesome-claude-code/contents | repo listing only, not scanned for memory entries |
+| 2026-10-26 | https://pypi.org/pypi/<package>/json (mempalace, honcho-ai, memu-py, omega-memory, superlocalmemory, memsearch, memanto, telemem, agentmemory, mnemon, semantica, mengram-ai, mirix, simplemem, lightmem, basic-memory, hindsight-all) | versions, licences, python requirements; name-collision findings |
+| 2026-10-26 | https://registry.npmjs.org/<package>/latest (hippo-memory, ownmem, claude-smart, openwolf, @cortexkit/magic-context, @intellectronica/ruler, rulesync, memora) | npm versions and licences |
+| 2026-10-26 | https://arxiv.org/abs/2402.17753 | LoCoMo paper abstract: no venue, no scores |
+| 2026-10-26 | https://arxiv.org/abs/2410.10813 | LongMemEval: 500 questions, ICLR 2025 in comments, 30% drop |
+| 2026-10-26 | https://arxiv.org/html/2510.27246v1 | BEAM paper table 1: Vanilla, RAG, LIGHT across four backbones and four lengths |
+| 2026-10-26 | https://iclr.cc/virtual/2026/poster/10006595 | seen only as a search result for BEAM venue; page not opened |
+| 2026-10-26 | https://arxiv.org/html/2507.05257v3 | MemoryAgentBench table 3 (10 systems) |
+| 2026-10-26 | https://arxiv.org/abs/2504.19413 | Mem0 paper abstract: relative gains, latency, token savings |
+| 2026-10-26 | https://arxiv.org/abs/2501.13956 | Zep paper: DMR 94.8 vs 93.4, LongMemEval relative gains |
+| 2026-10-26 | https://arxiv.org/abs/2512.12818 | Hindsight paper: LongMemEval 91.4 and 83.6, LoCoMo 89.61 |
+| 2026-10-26 | https://www.getzep.com/blog/lies-damn-lies-statistics-is-mem0-really-sota-in-agent-memory/ | Zep corrected 75.14, Mem0 66.88 and 68.44, latency, cat 5 exclusion |
+| 2026-10-26 | https://blog.getzep.com/lies-damn-lies-statistics-is-mem0-really-sota-in-agent-memory/ | 301 redirect to the URL above |
+| 2026-10-26 | https://github.com/getzep/zep-papers/issues/5 | Mem0 vs Zep LoCoMo dispute: 84 vs 58.44, reply with 75.14 |
+| 2026-10-26 | https://github.com/mem0ai/mem0/issues/3944 | user rerun of Mem0 on LoCoMo scoring about 0.20; fixed |
+| 2026-10-26 | https://github.com/EverMind-AI/EverMemOS/issues/73 | EverOS reproduction 52.22 and 38.38 vs 93.0 claimed |
+| 2026-10-26 | https://github.com/Mirix-AI/MIRIX/issues/6 | MIRIX LoCoMo run 0.6234 on one conversation; BM25 hardcoded |
+| 2026-10-26 | https://github.com/MemPalace/mempalace/issues/27 | README-vs-code discrepancy list; maintainer doc commits 2026-10-12 |
+| 2026-10-26 | https://github.com/MemPalace/mempalace/issues/39 | independent reproduction: R@5 and end-to-end accuracy by mode |
+| 2026-10-26 | https://github.com/aiming-lab/SimpleMem/issues/94 | 531 tokens per query question, no reply |
+| 2026-10-26 | https://www.letta.com/blog/benchmarking-ai-agent-memory | Letta 74.0 on LoCoMo with GPT-4o mini, Mem0 68.5 cited, method |
+| 2026-10-26 | https://dev.to/penfieldlabs/we-audited-locomo-64-of-the-answer-key-is-wrong-and-the-judge-accepts-up-to-63-of-intentionally-33lg | LoCoMo audit: 99 errors in 1,540 q, judge accepts 62.81% of wrong answers |
+| 2026-10-26 | https://mem0.ai/research | Mem0 LoCoMo 92.5, LongMemEval 94.4, tokens |
+| 2026-10-26 | https://mem0.ai/library/agent-memory/ai-memory-benchmarks-in-2026 | Mem0's table of third-party and own scores (ByteRover, EverMemOS, Dakera, ZeroMemory, BEAM) |
+| 2026-10-26 | https://mem0.ai/blog/ai-memory-benchmarks | 404 |
+| 2026-10-26 | https://supermemory.ai/research/longmembench | Supermemory LongMemEval-S 97% (gpt-4o), 84.6 gpt-5, 85.2 gemini-3-pro |
+| 2026-10-26 | https://mastra.ai/research/observational-memory | Mastra OM scores and comparator table (Hindsight, Supermemory 81.6, Zep 71.2) |
+| 2026-10-26 | https://honcho.dev/evals/ | Honcho LongMemEval S 90.4, LoCoMo 89.9, BEAM 0.630 etc |
+| 2026-10-26 | https://hindsight.vectorize.io/blog/2026/04/02/beam-sota | Hindsight BEAM tiers and Honcho comparison |
+| 2026-10-26 | https://www.webull.com/news/15304952493908992 | Exabase BEAM 76.9/75.0/68.0 press release |
+| 2026-10-26 | https://www.hpcwire.com/bigdatawire/this-just-in/exabase-reports-state-of-the-art-results-on-beam-memory-benchmark/ | 403 blocked; UNVERIFIED via this URL |
+| 2026-10-26 | https://vectorize.io/articles/mempalace-benchmarks | seen only in search summary: MemPalace tuning on test set; not opened (UNVERIFIED) |
+| 2026-10-26 | https://github.com/dial481/locomo-audit | named by the Penfield post; not opened |
+| 2026-10-26 | https://code.claude.com/docs/en/memory | Claude Code CLAUDE.md and auto memory behaviour, location, 200 lines or 25KB |
+| 2026-10-26 | https://docs.cline.bot/features/memory-bank | Cline Memory Bank files and loading |
+| 2026-10-26 | https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html | Gemini CLI GEMINI.md hierarchy and /memory commands |
+| 2026-10-26 | https://developers.openai.com/codex/memories | 308 redirect |
+| 2026-10-26 | https://learn.chatgpt.com/docs/customization/memories?surface=app | Codex memories: local, off by default, ~/.codex/memories/ |
+| 2026-10-26 | https://kiro.dev/docs/steering/ | Kiro steering locations and inclusion modes |
+| 2026-10-26 | https://docs.augmentcode.com/setup-augment/memories | 404; Augment memories UNVERIFIED |
+| 2026-10-26 | https://github.com/MemPalace/mempalace | README: 96.6% R@5 raw, ChromaDB, install |
+| 2026-10-26 | https://github.com/memoket/memoket-kite | README: KITE 93.51 and 85.60 |
+| 2026-10-26 | https://github.com/FlowElement-xinliuyuansu/m_flow | README: M-flow benchmark tables |
+| 2026-10-26 | https://github.com/qualixar/superlocalmemory | README: SLM LoCoMo table |
+| 2026-10-26 | https://github.com/sachitrafa/YourMemory | README: YourMemory LoCoMo recall chart and quota note |
+| 2026-10-26 | https://github.com/tstockham96/engram | README: LoCoMo 80.0 claim |
+| 2026-10-26 | https://github.com/tigerless-labs/agent-memory | README: bounded LongMemEval-S result |
+| 2026-10-26 | https://github.com/moorcheh-ai/memanto | README: 89.8 and 87.1 with TODO |
+| 2026-10-26 | https://github.com/vshulcz/deja-vu | README: 97.2 R@5, hit@1 figures |
+| 2026-10-26 | https://github.com/kitfunso/hippo-memory | README: 74.0 R@5, retraction note |
+| 2026-10-26 | https://github.com/hyperb1iss/sibyl | README: no benchmark number published |
+| 2026-10-26 | https://github.com/TeleAI-UAGI/telemem | README: ZH-4O 86.33 |
+| 2026-10-26 | https://github.com/aiming-lab/SimpleMem | README: LoCoMo F1 claims |
+| 2026-10-26 | https://github.com/grpcer/ownmem | README: own-corpus recall |
+| 2026-10-26 | https://github.com/TheWinci/mimirs | README: Recall@10 on four codebases |
+| 2026-10-26 | https://github.com/ReflexioAI/claude-smart | README: 3x claim |
+| 2026-10-26 | https://github.com/Lyellr88/marm-memory | README: unstable concurrency ratio |
+| 2026-10-26 | https://github.com/zjunlp/LightMem | README: reproduction scripts |
+| 2026-10-26 | https://github.com/<owner>/<repo> READMEs for TonyStef/Grov, cytostack/openwolf, cortexkit/magic-context, okf-memory/okf-agent-memory, omega-memory/omega-memory, yoloshii/ClawMem, notkurt/ghost, DiaaAj/a-mem-mcp, campfirein/byterover-cli, plastic-labs/honcho, NevaMind-AI/memU, EverMind-AI/EverOS, zilliztech/memsearch, Mirix-AI/MIRIX, alibaizhanov/mengram, semantica-agi/semantica, mnemon-dev/mnemon, 0xK3vin/MegaMemory, Dataojitori/nocturne_memory, agentic-box/memora, elvismdev/mem0-mcp-selfhosted, intellectronica/ruler, dyoshikawa/rulesync, xingkongliang/skills-manager, microsoft/apm, knowns-dev/knowns, mjalalimanesh/skillhub-local, OSU-NLP-Group/HippoRAG | product descriptions, install commands, tool support (read via the readme API above) |
+| 2026-10-26 | https://github.com/xiaowu0162/LongMemEval-V2 | named in LongMemEval README; not opened |
+| 2026-10-26 | https://news.ycombinator.com/item?id=47007379 | Show HN: Ghost |
+| 2026-10-26 | https://news.ycombinator.com/item?id=47053534 | Show HN: mem0-mcp-selfhosted |
+| 2026-10-26 | https://news.ycombinator.com/item?id=47116615 | Show HN: Engram (tstockham96) |
+| 2026-10-26 | https://news.ycombinator.com/item?id=49975380 | Show HN: SkillHub Local |
+| 2026-10-26 | https://news.ycombinator.com/item?id=46126066 / 46569660 / 49487838 / 47203115 / 47182534 / 49731353 / 47979991 / 48048713 / 47472965 / 47207442 / 47165499 / 49020619 / 47289727 / 46966203 | other Show HN items listed in section 8 of the competitors file (titles and dates only) |
+| 2026-10-26 | web search: Zep Lies Damn Lies; Letta filesystem; LoCoMo audit; MemoryAgentBench; MemPalace criticism; BEAM; Supermemory memorybench; Mastra OM; reddit r/ClaudeCode | search summaries that located the primary pages; reddit search reached no thread |
+| date | URL | what it gave |
+| 2026-10-26 | https://api.github.com/search/issues?q=repo:thedotmack/claude-mem+is:pr+is:open | 59 open PRs with title, author, association, comments, reactions, labels, first 1500 chars of body |
+| 2026-10-26 | https://api.github.com/search/issues?q=repo:thedotmack/claude-mem+is:pr+is:merged+merged:>=2026-07-28 | 983 PRs merged in the last 90 days (53 by posthog[bot]); basis for the 104 feat PRs |
+| 2026-10-26 | https://api.github.com/search/issues?q=repo:thedotmack/claude-mem+is:pr&sort=comments&order=desc | Top 1000 PRs by comment count; top 40 non-bot used |
+| 2026-10-26 | https://api.github.com/search/issues?q=repo:thedotmack/claude-mem+is:pr&sort=reactions&order=desc | Top 1000 PRs by reaction count; top 40 non-bot used |
+| 2026-10-26 | https://api.github.com/search/issues?q=repo:thedotmack/claude-mem+is:pr+is:closed+is:unmerged+-author:thedotmack+created:>=2026-07-21 | 200 external closed-unmerged PRs created since 2026-07-21 (first run, rate-limited after 200 rows) |
+| 2026-10-26 | https://api.github.com/search/issues?q=repo:thedotmack/claude-mem+is:pr+is:closed+is:unmerged+-author:thedotmack+created:<2026-07-21 | 639 external closed-unmerged PRs created before 2026-07-21 |
+| 2026-10-26 | https://api.github.com/search/issues?q=repo:thedotmack/claude-mem+is:pr | Total PR count 2518 (correction of the 5,087 in the brief) |
+| 2026-10-26 | https://api.github.com/search/issues?q=repo:thedotmack/claude-mem+is:pr+is:open | Open count 59 |
+| 2026-10-26 | https://api.github.com/search/issues?q=repo:thedotmack/claude-mem+is:pr+is:merged | Merged count 1481 |
+| 2026-10-26 | https://api.github.com/search/issues?q=repo:thedotmack/claude-mem+is:pr+is:closed+is:unmerged | Closed-unmerged count 978 |
+| 2026-10-26 | https://api.github.com/search/issues?q=repo:thedotmack/claude-mem+is:pr+is:closed+is:unmerged+author:thedotmack | Maintainer closed-unmerged count 199; shows 60-PR gap in search counts |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/pull/589 | Body and comments: folder CLAUDE.md feature flag; closed in favour of #913 |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/pull/1233 | Body and comments: OpenCode integration; closed by maintainer without merge |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/pull/1722 | Body and comments: multi-node network mode; author replaced it |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/pull/1246 | Body and comments: branch-scoped memory; closed in backlog pass, refiled as issue #2038 |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/pull/2908 | Body and comments: Kimi Code CLI; superseded by merged #3547 |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/pull/1207 | Body: GitHub Copilot provider reading an OpenClaw token file |
+| 2026-10-26 | https://github.com/thedotmack/claude-mem/pull/1333 | Body: Codex CLI transcript-based capture |
+| 2026-10-26 | https://cmem.ai/pricing | CMEM Pro $30, Heavy $70, Max $100 (re-fetched by the reviewer) |

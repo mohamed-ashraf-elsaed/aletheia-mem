@@ -8,7 +8,7 @@ import { join } from "node:path";
 const DIR = process.env.TASKS_DIR ?? "docs/tasks";
 const TABLE = join(DIR, "TASKS.md");
 const VALID = new Set(["todo", "doing", "implemented", "validated", "failed"]);
-const PHASES = new Set(["P0", "P1", "P2", "P3", "P4", "P5"]);
+const PHASES = new Set(["P0", "P1", "P2", "P3", "P4", "P5", "P6"]);
 const errors = [];
 const warnings = [];
 
@@ -82,7 +82,7 @@ for (const t of parsed) {
   byId.set(t.id, t);
   if (!t.title) fail(`${t.id}: missing title in heading`);
   if (!VALID.has(t.status ?? "")) fail(`${t.id}: status "${t.status}" is not one of ${[...VALID].join(", ")}`);
-  if (!PHASES.has(t.phase ?? "")) fail(`${t.id}: phase "${t.phase}" is not P0-P5`);
+  if (!PHASES.has(t.phase ?? "")) fail(`${t.id}: phase "${t.phase}" is not P0-P6`);
   if (!t.validation) fail(`${t.id}: no non-empty Validation command block`);
   if (!t.history) fail(`${t.id}: empty Status history`);
   if (t.status === "validated") {

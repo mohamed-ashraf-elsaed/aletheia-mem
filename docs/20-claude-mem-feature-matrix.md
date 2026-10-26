@@ -23,8 +23,8 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 
 | ID | Feature | What it does (one sentence) | Source | Paid or free | Aletheia status | Gap task |
 |---|---|---|---|---|---|---|
-| F-C01 | Five lifecycle hooks | Runs SessionStart, UserPromptSubmit, PostToolUse, Stop and SessionEnd handlers so capture needs no manual step. | https://docs.claude-mem.ai/architecture/hooks | Free | **missing**. `capture` takes one payload from stdin; no hook is installed (`src/hub/capture.mjs:45`). | T-058 |
-| F-C02 | Hook installer for Claude Code | Registers the hook commands in Claude Code's plugin settings. | https://docs.claude-mem.ai/installation | Free | **missing**. The CLI has no `install` command (`bin/aletheia.mjs`). | T-058 |
+| F-C01 | Five lifecycle hooks | Runs SessionStart, UserPromptSubmit, PostToolUse, Stop and SessionEnd handlers so capture needs no manual step. | https://docs.claude-mem.ai/architecture/hooks | Free | **partial** (CORRECTED 2026-10-26: hooks now exist for Claude Code and Command Code, `src/hub/hooks/`, validated T-059 and T-100; other tools have none). Earlier text: `capture` takes one payload from stdin; no hook is installed (`src/hub/capture.mjs:45`). | T-058 |
+| F-C02 | Hook installer for Claude Code | Registers the hook commands in Claude Code's plugin settings. | https://docs.claude-mem.ai/installation | Free | **parity** (CORRECTED 2026-10-26: `aletheia install claude-code` exists, T-058 validated; not yet proven for every Claude Code version). | T-058 |
 | F-C03 | Per-tool payload adapters | Normalises Claude Code, Codex, Cursor, Kimi, Windsurf, Antigravity and raw payload shapes. | `src/cli/adapters/` (repo tree) | Free | **partial**. One normaliser understands Claude-style and generic shapes only (`src/hub/capture.mjs:45`). | T-059 |
 | F-C04 | Transcript watcher | Ingests session files for tools that have no hooks. | https://docs.claude-mem.ai/architecture/overview | Free | **missing**. No watcher. | T-063 |
 | F-C05 | Secret redaction | Replaces 12 vendor key patterns plus optional generic credentials before storage. | https://docs.claude-mem.ai/usage/auto-redaction | Free | **better**. 15 patterns, redaction always on, not opt-in (`src/hub/capture.mjs:8-24`). | — |
@@ -79,7 +79,7 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | F-S20 | Bulk import and export | Moves memory in and out in a documented format. | https://docs.claude-mem.ai/usage/export-import | Free | **better**. JSONL bundle, Markdown export, claude-mem import (`src/hub/store.mjs:431,492`; `src/hub/importers.mjs:14`). | — |
 | F-S21 | Import safety | Validates the export before applying it. | https://docs.claude-mem.ai/usage/export-import | Free | **parity**. Manifest and version check, per-line errors, transaction (`src/hub/store.mjs:454`). | — |
 | F-S22 | Data deletion | Deletes a memory and its derived rows. | https://docs.claude-mem.ai/hosted-server | Free local / paid hosted | **parity**. `remove` deletes the row and cascades vectors (`src/hub/store.mjs:178`). | — |
-| F-S23 | Tombstones for sync | Keeps deletion records so devices converge. | https://docs.claude-mem.ai/cloud-sync | Paid | **out-of-scope** for local v1; needed for P5. | T-095 |
+| F-S23 | Tombstones for sync | Keeps deletion records so devices converge. | https://docs.claude-mem.ai/cloud-sync | Paid | **planned** (CORRECTED 2026-10-26: was out-of-scope). | T-103 |
 
 ## 20.4 Context injection
 
@@ -172,10 +172,10 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 
 | ID | Feature | What it does (one sentence) | Source | Paid or free | Aletheia status | Gap task |
 |---|---|---|---|---|---|---|
-| F-T01 | Cloud sync | Replicates observations, summaries and prompts across devices through a sync hub. | https://docs.claude-mem.ai/cloud-sync | **Paid** (cmem.ai Pro account; price not stated on the page fetched) | **out-of-scope**. | T-095 |
-| F-T02 | TeamBrain | Board, brief and team search beside personal memory. | https://docs.claude-mem.ai/usage/teambrain | Free local / paid hosted | **out-of-scope** for v1. | T-091 |
-| F-T03 | Hosted Postgres server | Multi-tenant server with API keys, audit and split workers. | https://docs.claude-mem.ai/hosted-server | **Paid** | **out-of-scope**. | T-091 |
-| F-T04 | SSO, RBAC, DLP | Enterprise identity and data-loss controls. | https://docs.claude-mem.ai/hosted-server | **Paid** | **out-of-scope**. | — |
+| F-T01 | Cloud sync | Replicates observations, summaries and prompts across devices through a sync hub. | https://docs.claude-mem.ai/cloud-sync | **Paid** (cmem.ai Pro account; Pro $30/month per cmem.ai/pricing, fetched 2026-10-26) | **planned** (CORRECTED 2026-10-26: was out-of-scope; owner decision, see docs/27; price now stated: Pro $30/month, cmem.ai/pricing fetched 2026-10-26). | T-102 |
+| F-T02 | TeamBrain | Board, brief and team search beside personal memory. | https://docs.claude-mem.ai/usage/teambrain | Free local / paid hosted | **planned** (CORRECTED 2026-10-26: was out-of-scope for v1). | T-112 |
+| F-T03 | Hosted Postgres server | Multi-tenant server with API keys, audit and split workers. | https://docs.claude-mem.ai/hosted-server | **Paid** | **planned** (CORRECTED 2026-10-26: was out-of-scope). | T-108 |
+| F-T04 | SSO, RBAC, DLP | Enterprise identity and data-loss controls. | https://docs.claude-mem.ai/hosted-server | **Paid** | **planned, lowest priority** (CORRECTED 2026-10-26: the cited page never mentions SSO, RBAC or DLP; the only source is the repo's reserved-features list, see docs/27 F13). | T-115 |
 | F-T05 | Free self-hosted sharing | Shares a bundle or a server with a team without a vendor account. | Not in claude-mem docs (this project's plan) | Free | **partial**. Bundle export/import works; no shared server (`src/hub/store.mjs:431`). | T-096 |
 | F-T06 | Review queue | Proposes shared memories for approval. | https://docs.claude-mem.ai/usage/teambrain | Paid upstream | **missing**. | T-094 |
 | F-T07 | Device identity | Keeps a stable device id for sync. | https://docs.claude-mem.ai/cloud-sync | Paid | **missing**. | T-095 |
@@ -283,3 +283,28 @@ Even after the gaps above are closed, four things stay hard:
 4. **An installed base.** 103,244 stars means its issue reports are a free test corpus. Aletheia has none.
 
 The honest counter-position is not "we do everything they do". It is: one local store, no telemetry, no second runtime, rules written into every tool's own file, and a benchmark anyone can rerun. That is the claim [21](21-competitor-landscape.md) tests against the rest of the market.
+
+
+## 20.9 User needs found in claude-mem pull requests (added 2026-10-26)
+
+Source: [docs/research/A4-claude-mem-prs.md](research/A4-claude-mem-prs.md). 683 of 2,518 PRs analysed (59 open, 1,481 merged,
+978 closed unmerged); the theme counts come from a title-keyword classifier and about 1 in 8 sampled rows was misfiled.
+"Closed unmerged" is not always "rejected". These rows are evidence of demand, not of what claude-mem will build.
+
+| ID | Need (PR count) | Example PRs | Aletheia status | Task |
+|---|---|---|---|---|
+| F-N01 | Support another AI tool (81) | #1233, #1355, #1758 | **partial**: hooks for Claude Code and Command Code; MCP config for 10 tools | T-062, T-064, T-065, T-068, T-124 |
+| F-N02 | More model providers and presets for the observer (72) | see A4 section 2 | **partial**: `claude-cli` and one OpenAI-compatible endpoint | T-119 |
+| F-N03 | Hooks that fail open, run fast, survive compaction (64) | see A4 section 2 | **partial**: spool and compact re-inject exist | T-009 |
+| F-N04 | Windows, Linux, macOS stability (57) | see A4 section 2 | **partial**: only Linux is tested | T-014 |
+| F-N05 | Sync, backup, team, self-hosted server (52; 37 external closed vs 3 merged) | #1722, #824, #2544 | **planned** | T-102 to T-112 |
+| F-N06 | Privacy: redaction, auth, loopback (35; 30 closed vs 1 merged) | #1157, #3680 | **partial**, ahead on redaction | T-010, T-011 |
+| F-N07 | Project and worktree scoping (25) | see A4 | **partial** | T-033 |
+| F-N08 | Quota fallback and spend guard (24) | see A4 | **missing** | T-109, T-119 |
+| F-N09 | Exclude memory per project (18) | see A4 | **missing** | T-016 |
+| F-N10 | Stop writing CLAUDE.md into folders (17; 16 closed vs 0 merged; #589 has 29 reactions) | #589, #672 | **better**: we write only a managed block in files you choose; no test yet | T-122 |
+| F-N11 | Output in the user's language (8 closed vs 0) | #2623, #398 | **missing** | T-120 |
+| F-N12 | Back-fill and portable export/import (11 closed vs 0) | #1129, #1773 | **partial**: bundle export/import exists, no transcript back-fill | T-121 |
+| F-N13 | More MCP tools and HTTP transport (14 closed vs 0) | #662, #1393 | **partial**: stdio only | T-067 |
+| F-N14 | Time-aware and reinforcement ranking (9 vs 1 merged) | #1257, #3414 | **partial**: importance score built | T-030 |
+| F-N15 | Reversible dismiss, delete from viewer/CLI/MCP (7 vs 2) | #3114, #2925 | **partial**: delete only | T-123 |
