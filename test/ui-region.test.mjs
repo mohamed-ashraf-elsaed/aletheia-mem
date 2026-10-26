@@ -1,4 +1,4 @@
-// T-155: Region states, the paged list and its URL state, and optimistic actions. Fake DOM, fake location.
+// T-207: Region states, the paged list and its URL state, and optimistic actions. Fake DOM, fake location.
 import { beforeEach, describe, expect, test } from "bun:test";
 import { installFakeDom } from "./support/fake-dom.mjs";
 
@@ -28,7 +28,7 @@ function fakeEnv(start = "#/memory") {
   return env;
 }
 
-describe("T-155: Region", () => {
+describe("T-207: Region", () => {
   test("loading shows the skeleton, then the content", async () => {
     let release;
     const r = R.region({ load: () => new Promise((resolve) => { release = resolve; }), render: (data) => text(data.items.join(",")), skeleton: () => C.skeleton({ kind: "card", count: 2 }) });
@@ -103,7 +103,7 @@ describe("T-155: Region", () => {
   });
 });
 
-describe("T-155: list state in the URL", () => {
+describe("T-207: list state in the URL", () => {
   const defaults = { limit: 25, q: "", kind: "" };
   test("read: defaults, values, bad numbers, unknown limits", () => {
     expect(R.readListState("#/memory", defaults)).toEqual({ limit: 25, q: "", kind: "", page: 1 });
@@ -128,7 +128,7 @@ describe("T-155: list state in the URL", () => {
   });
 });
 
-describe("T-155: paged list", () => {
+describe("T-207: paged list", () => {
   const rowsOf = (total) => Array.from({ length: total }, (_, i) => ({ id: i + 1 }));
   const makeList = (env, total = 312, extra = {}) => {
     const calls = [];
@@ -238,7 +238,7 @@ describe("T-155: paged list", () => {
   });
 });
 
-describe("T-155: optimistic actions", () => {
+describe("T-207: optimistic actions", () => {
   const toastText = () => dom.getElementById("ui-toasts")?.textContent ?? "";
   test("apply first, then the request, then an Undo toast", async () => {
     const order = [];

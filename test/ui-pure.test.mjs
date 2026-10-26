@@ -4,7 +4,7 @@ import {
   offsetForPage, pagerModel, parseHash, queryTerms, regionReduce, relativeTime, updatedAgo,
 } from "../public/ui-pure.js";
 
-describe("T-149: pager maths", () => {
+describe("T-201: pager maths", () => {
   test("first page of 312 rows at 25 per page", () => {
     const m = pagerModel({ total: 312, limit: 25, offset: 0 });
     expect(m).toMatchObject({ page: 1, pageCount: 13, from: 1, to: 25, hasPrev: false, hasNext: true, label: "Showing 1 to 25 of 312" });
@@ -37,7 +37,7 @@ describe("T-149: pager maths", () => {
   });
 });
 
-describe("T-149: relative time and numbers", () => {
+describe("T-201: relative time and numbers", () => {
   const now = Date.parse("2026-10-27T12:00:00Z");
   test("english short forms", () => {
     expect(relativeTime(now - 10_000, now)).toBe("just now");
@@ -74,7 +74,7 @@ describe("T-149: relative time and numbers", () => {
   });
 });
 
-describe("T-149: highlight escaping", () => {
+describe("T-201: highlight escaping", () => {
   test("hits are split out and HTML stays text", () => {
     const parts = highlightParts("<b>Retry</b> the retry loop", "retry");
     expect(parts.map((p) => p.text).join("")).toBe("<b>Retry</b> the retry loop");
@@ -103,7 +103,7 @@ describe("T-149: highlight escaping", () => {
   });
 });
 
-describe("T-149: hash state", () => {
+describe("T-201: hash state", () => {
   test("round trip", () => {
     const hash = buildHash(["memory", "facts"], { page: 3, q: "a b", kind: "" }, { page: 1 });
     expect(hash).toBe("#/memory/facts?page=3&q=a+b");
@@ -122,7 +122,7 @@ describe("T-149: hash state", () => {
   });
 });
 
-describe("T-149: Region state machine", () => {
+describe("T-201: Region state machine", () => {
   test("idle -> loading -> success", () => {
     let s = regionReduce(REGION_INITIAL, { type: "load" });
     expect(s.status).toBe("loading");
@@ -161,7 +161,7 @@ describe("T-149: Region state machine", () => {
   });
 });
 
-describe("T-149: polling backoff", () => {
+describe("T-201: polling backoff", () => {
   test("doubles per failure and caps", () => {
     expect([0, 1, 2, 3, 10].map((failures) => nextPollDelay({ base: 5000, max: 60_000, failures }))).toEqual([5000, 10_000, 20_000, 40_000, 60_000]);
   });
@@ -173,7 +173,7 @@ describe("T-149: polling backoff", () => {
   });
 });
 
-describe("T-149: keyboard helpers", () => {
+describe("T-201: keyboard helpers", () => {
   test("Tab wraps in a dialog", () => {
     expect(trapTarget(3, 2, false)).toBe(0);
     expect(trapTarget(3, 0, true)).toBe(2);

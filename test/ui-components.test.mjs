@@ -1,4 +1,4 @@
-// T-152: the component system, driven through a small fake DOM. Covers structure, roles, keyboard, focus handling
+// T-204: the component system, driven through a small fake DOM. Covers structure, roles, keyboard, focus handling
 // and states. Real rendering is checked in a browser (docs/manual-test.md).
 import { beforeEach, describe, expect, test } from "bun:test";
 import { readFileSync, readdirSync } from "node:fs";
@@ -17,7 +17,7 @@ beforeEach(async () => {
 
 const NAMES = ["button", "iconButton", "badge", "statusDot", "toast", "undoToast", "modal", "confirmDialog", "promptDialog", "drawer", "tabs", "segmented", "toggle", "withTooltip", "popover", "card", "statTile", "skeleton", "spinner", "brainLoader", "progressBar", "emptyState", "errorState", "pager", "listView", "enterList", "codeBlock", "markdownView", "timeline", "chipFilters", "highlight", "clampText", "disclosure", "timeEl", "mono", "banner", "field", "copyText", "startClock", "icon", "isFocusable", "resetUi"];
 
-describe("T-152: the library", () => {
+describe("T-204: the library", () => {
   test("every component named in the task is exported as a function", () => {
     for (const name of NAMES) expect(typeof C[name]).toBe("function");
   });
@@ -36,7 +36,7 @@ describe("T-152: the library", () => {
   });
 });
 
-describe("T-152: buttons", () => {
+describe("T-204: buttons", () => {
   test("label, variant, icon slot and a plain click", () => {
     let clicks = 0;
     const b = C.button({ label: "Save", variant: "primary", icon: "check", onClick: () => { clicks += 1; } });
@@ -92,7 +92,7 @@ describe("T-152: buttons", () => {
   });
 });
 
-describe("T-152: toasts", () => {
+describe("T-204: toasts", () => {
   test("three show at once, the rest wait and appear as others close", async () => {
     const handles = ["a", "b", "c", "d", "e"].map((text) => C.toast(text, { duration: 0 }));
     const region = dom.getElementById("ui-toasts");
@@ -125,7 +125,7 @@ describe("T-152: toasts", () => {
   });
 });
 
-describe("T-152: dialogs", () => {
+describe("T-204: dialogs", () => {
   test("a modal traps Tab, closes on Escape and returns focus", async () => {
     const opener = C.button({ label: "Open" });
     dom.body.append(opener);
@@ -200,7 +200,7 @@ describe("T-152: dialogs", () => {
   });
 });
 
-describe("T-152: tabs, segmented control, toggle", () => {
+describe("T-204: tabs, segmented control, toggle", () => {
   test("tabs expose roles and the active one", () => {
     const t = C.tabs({ items: [{ id: "a", label: "A" }, { id: "b", label: "B", count: 1200 }], active: "a", label: "Views" });
     expect(t.getAttribute("role")).toBe("tablist");
@@ -262,7 +262,7 @@ describe("T-152: tabs, segmented control, toggle", () => {
   });
 });
 
-describe("T-152: popover and tooltip", () => {
+describe("T-204: popover and tooltip", () => {
   test("a popover opens on click, closes on Escape and gives focus back", () => {
     const anchor = C.button({ label: "Server" });
     dom.body.append(anchor);
@@ -294,7 +294,7 @@ describe("T-152: popover and tooltip", () => {
   });
 });
 
-describe("T-152: progress, tiles, skeletons", () => {
+describe("T-204: progress, tiles, skeletons", () => {
   test("a determinate bar carries its value and a text", () => {
     const p = C.progressBar({ value: 40, max: 200, label: "Import" });
     const bar = p.querySelector(".ui-progress");
@@ -334,7 +334,7 @@ describe("T-152: progress, tiles, skeletons", () => {
   });
 });
 
-describe("T-152: empty and error states", () => {
+describe("T-204: empty and error states", () => {
   test("empty state shows the fix command with a copy button", async () => {
     const e = C.emptyState({ title: "Nothing yet", text: "Install capture.", command: "aletheia install claude-code" });
     dom.body.append(e);
@@ -367,7 +367,7 @@ describe("T-152: empty and error states", () => {
   });
 });
 
-describe("T-152: the pager", () => {
+describe("T-204: the pager", () => {
   test("labels, current page and disabled ends", () => {
     const p = C.pager({ total: 312, limit: 25, offset: 0, onChange() {} });
     expect(p.getAttribute("aria-label")).toBe("Pagination");
@@ -413,7 +413,7 @@ describe("T-152: the pager", () => {
   });
 });
 
-describe("T-152: text components", () => {
+describe("T-204: text components", () => {
   test("highlight marks matches and keeps hostile text as text", () => {
     const el = C.highlight("<b>Retry</b> and retry", "retry");
     expect(el.querySelectorAll("mark").length).toBe(2);

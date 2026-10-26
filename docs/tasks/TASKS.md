@@ -183,20 +183,20 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-145 | Add the read-only session page | P6 | T-143 | validated | 2026-10-26 | [T-145.md](T-145.md) |
 | T-146 | Retire the iframe and offer the classic viewer from Tools | P6 | T-143 | validated | 2026-10-26 | [T-146.md](T-146.md) |
 | T-147 | Test the Work view and guard the old branding | P6 | T-142, T-143, T-144, T-145, T-146 | validated | 2026-10-26 | [T-147.md](T-147.md) |
-| T-148 | Study claude-mem's viewer and derive Aletheia's design tokens | P6 | none | validated | 2026-10-26 | [T-148.md](T-148.md) |
-| T-149 | Add DOM-free UI logic: pager, time, highlight, hash params, Region machine | P6 | T-148 | validated | 2026-10-26 | [T-149.md](T-149.md) |
-| T-150 | Add a safe Markdown renderer | P6 | T-148 | validated | 2026-10-26 | [T-150.md](T-150.md) |
-| T-151 | Add limit, offset and total to every list route | P6 | none | validated | 2026-10-26 | [T-151.md](T-151.md) |
-| T-152 | Build the component system | P6 | T-148, T-149 | validated | 2026-10-26 | [T-152.md](T-152.md) |
-| T-153 | Build the app shell, theme toggle, search, shortcuts and palette | P6 | T-152, T-150 | todo | — | [T-153.md](T-153.md) |
-| T-154 | Add the live status bar and connection banner | P6 | T-153 | todo | — | [T-154.md](T-154.md) |
-| T-155 | Add the Region wrapper, paged list controller and Pager | P6 | T-149, T-152, T-151 | validated | 2026-10-26 | [T-155.md](T-155.md) |
-| T-156 | Rebuild the Memory tab | P6 | T-155, T-150, T-151 | todo | — | [T-156.md](T-156.md) |
-| T-157 | Rebuild the Review queue | P6 | T-156 | todo | — | [T-157.md](T-157.md) |
-| T-158 | Rebuild the Rules tab | P6 | T-155 | todo | — | [T-158.md](T-158.md) |
-| T-159 | Rebuild the Tools tab | P6 | T-155 | todo | — | [T-159.md](T-159.md) |
-| T-160 | Add the first-run guide | P6 | T-156 | todo | — | [T-160.md](T-160.md) |
-| T-161 | Add motion and reduced-motion support | P6 | T-152 | todo | — | [T-161.md](T-161.md) |
-| T-162 | Accessibility and responsive pass | P6 | T-156, T-157, T-158, T-159, T-161 | todo | — | [T-162.md](T-162.md) |
-| T-163 | Restyle the Work tab | P6 | T-162 | todo | — | [T-163.md](T-163.md) |
-| T-164 | Seed demo data, measure performance, update docs and screenshots | P6 | T-163 | todo | — | [T-164.md](T-164.md) |
+| T-200 | Study claude-mem's viewer and derive Aletheia's design tokens | P6 | none | validated | 2026-10-26 | [T-200.md](T-200.md) |
+| T-201 | Add DOM-free UI logic: pager, time, highlight, hash params, Region machine | P6 | T-200 | validated | 2026-10-26 | [T-201.md](T-201.md) |
+| T-202 | Add a safe Markdown renderer | P6 | T-200 | validated | 2026-10-26 | [T-202.md](T-202.md) |
+| T-203 | Add limit, offset and total to every list route | P6 | none | validated | 2026-10-26 | [T-203.md](T-203.md) |
+| T-204 | Build the component system | P6 | T-200, T-201 | validated | 2026-10-26 | [T-204.md](T-204.md) |
+| T-205 | Build the app shell, theme toggle, search, shortcuts and palette | P6 | T-204, T-202 | todo | — | [T-205.md](T-205.md) |
+| T-206 | Add the live status bar and connection banner | P6 | T-205 | todo | — | [T-206.md](T-206.md) |
+| T-207 | Add the Region wrapper, paged list controller and Pager | P6 | T-201, T-204, T-203 | validated | 2026-10-26 | [T-207.md](T-207.md) |
+| T-208 | Rebuild the Memory tab | P6 | T-207, T-202, T-203 | todo | — | [T-208.md](T-208.md) |
+| T-209 | Rebuild the Review queue | P6 | T-208 | todo | — | [T-209.md](T-209.md) |
+| T-210 | Rebuild the Rules tab | P6 | T-207 | todo | — | [T-210.md](T-210.md) |
+| T-211 | Rebuild the Tools tab | P6 | T-207 | todo | — | [T-211.md](T-211.md) |
+| T-212 | Add the first-run guide | P6 | T-208 | todo | — | [T-212.md](T-212.md) |
+| T-213 | Add motion and reduced-motion support | P6 | T-204 | todo | — | [T-213.md](T-213.md) |
+| T-214 | Accessibility and responsive pass | P6 | T-208, T-209, T-210, T-211, T-213 | todo | — | [T-214.md](T-214.md) |
+| T-215 | Restyle the Work tab | P6 | T-214 | todo | — | [T-215.md](T-215.md) |
+| T-216 | Seed demo data, measure performance, update docs and screenshots | P6 | T-215 | todo | — | [T-216.md](T-216.md) |

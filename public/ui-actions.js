@@ -1,4 +1,4 @@
-// Optimistic actions and long tasks (T-155, T-156). An action changes the screen first, sends the request, and
+// Optimistic actions and long tasks (T-207, T-208). An action changes the screen first, sends the request, and
 // rolls the screen back if the request fails. When it succeeds, an Undo toast stays for 8 seconds.
 import { progressBar, toast, undoToast } from "./ui-components.js";
 import { h } from "./ui-dom.js";

@@ -87,4 +87,4 @@ has two reduced-motion rules. Which elements use them was not checked.
 ## What the study did not find
 
 No pagination, no skeleton, no error state, no shortcuts and no search were seen. Aletheia's design for those parts
-comes from its own task list ([docs/tasks/TASKS.md](tasks/TASKS.md), T-148 to T-164), not from this study.
+comes from its own task list ([docs/tasks/TASKS.md](tasks/TASKS.md), T-200 to T-216), not from this study.

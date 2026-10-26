@@ -18,7 +18,7 @@ function assertInert(root) {
   }
 }
 
-describe("T-150: Markdown blocks", () => {
+describe("T-202: Markdown blocks", () => {
   test("headings shift down one level so the page keeps its own h1", () => {
     expect(html("# Title\n\n### Small")).toContain("<h2");
     expect(html("### Small")).toContain("<h4");
@@ -75,7 +75,7 @@ describe("T-150: Markdown blocks", () => {
   });
 });
 
-describe("T-150: Markdown inline", () => {
+describe("T-202: Markdown inline", () => {
   test("code, strong, emphasis and strikethrough", () => {
     const out = html("`x` **b** *i* ~~d~~");
     for (const tag of ["<code", "<strong", "<em", "<del"]) expect(out).toContain(tag);
@@ -101,7 +101,7 @@ describe("T-150: Markdown inline", () => {
   });
 });
 
-describe("T-150: hostile input stays inert", () => {
+describe("T-202: hostile input stays inert", () => {
   const attacks = [
     "<script>alert(1)</script>",
     "[x](javascript:alert(1))",

@@ -5,7 +5,7 @@ import { contrast, report, themeTokens } from "../scripts/contrast.mjs";
 
 const css = readFileSync(join(import.meta.dir, "..", "public", "ui-theme.css"), "utf8");
 
-describe("T-148: design tokens", () => {
+describe("T-200: design tokens", () => {
   test("contrast maths matches known values", () => {
     expect(contrast("#000000", "#ffffff")).toBeCloseTo(21, 1);
     expect(contrast("#777777", "#ffffff")).toBeCloseTo(4.48, 1);

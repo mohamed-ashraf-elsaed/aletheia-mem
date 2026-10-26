@@ -1,4 +1,4 @@
-// The brain mark, the loader, the empty-state picture and the favicon (T-152). All built from the logo's idea: a
+// The brain mark, the loader, the empty-state picture and the favicon (T-204). All built from the logo's idea: a
 // brain drawn as a network of nodes. Colours come from CSS variables, so both themes work. The favicon is a static
 // data URL with literal colours because a favicon cannot read page variables.
 const NS = "http://www.w3.org/2000/svg";
