@@ -1,6 +1,7 @@
 // HTTP server: static SPA, the /api/work-view* routes, /api/work-state, and /api/setup/*.
 // Same contract as the original worker; see docs/03-http-api.md.
 import { existsSync, readFileSync, statSync } from "node:fs";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { extname, join, normalize, sep } from "node:path";
 import { HttpError, WorkViewService } from "./app.mjs";
 import { isCrossOrigin, isLocalRequest, isSameOriginJson } from "./http/guards.mjs";
@@ -8,6 +9,7 @@ import { ValidationError, validateMarkFinished, validateReview, validateRuleActi
 import { EVIDENCE_KINDS } from "./readmodel/evidence.mjs";
 import { MIME_TYPES } from "./readmodel/work-product.mjs";
 import { BadRequest, createHubRoutes } from "./hub/routes.mjs";
+import { createMcpHttpHandler } from "./hub/mcp-http.mjs";
 import { startBackgroundWorker } from "./hub/queue.mjs";
 import { HubStore } from "./hub/store.mjs";
 import { makeProvider } from "./refresh/providers.mjs";
@@ -41,6 +43,21 @@ export function startServer(config, { autoRefresh = null } = {}) {
   }
   const worker = config.extractionWorker ? startBackgroundWorker({ store: hub, ask, config }) : null;
   const hubRoutes = createHubRoutes({ hub, config });
+  // MCP over Streamable HTTP on the main (loopback) server. Optional bearer key, same one as /v1.
+  const mcpHttp = createMcpHttpHandler({
+    store: hub,
+    authorize: config.apiKey
+      ? async (request) => {
+          const header = request.headers.get("authorization") ?? "";
+          const match = /^Bearer\s+(.+)$/i.exec(header);
+          if (!match) return { status: 401, error: "A valid bearer key is required." };
+          const wanted = createHash("sha256").update(String(match[1])).digest();
+          const expected = createHash("sha256").update(String(config.apiKey)).digest();
+          if (!timingSafeEqual(wanted, expected)) return { status: 401, error: "A valid bearer key is required." };
+          return { token: { scope: "local" }, projects: null };
+        }
+      : null,
+  });
   const html = new Map();
   const indexHtml = () => {
     const path = join(config.publicDir, "index.html");
@@ -75,6 +92,9 @@ export function startServer(config, { autoRefresh = null } = {}) {
     const url = new URL(request.url);
     const { pathname } = url;
     const method = request.method;
+
+    // ---- MCP over Streamable HTTP (its own bearer auth and Origin rules)
+    if (pathname === "/mcp") return await mcpHttp(request);
 
     // ---- static
     if (method === "GET" && (pathname === "/" || pathname === "/index.html")) {

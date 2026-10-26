@@ -37,41 +37,61 @@ function fmtFull(m) {
   return [`#${m.id} [${m.type}] ${m.title}`, `${m.project} · ${m.tool} · ${new Date(m.created_at_epoch).toISOString()}`, m.subtitle ?? "", m.narrative ?? "", m.facts.length ? `Facts: ${m.facts.join("; ")}` : "", m.files.length ? `Files: ${m.files.join(", ")}` : ""].filter(Boolean).join("\n");
 }
 
-/** Run one tool. `ctx`: { store, tool (the calling client), cwd }. Never throws: errors come back as isError results. */
+/** Run one tool. `ctx`: { store, tool (the calling client), cwd, projects (allowed projects, null = all) }.
+ *  Never throws: errors come back as isError results. */
 export function callTool(name, args = {}, ctx) {
   const { store } = ctx;
+  const allowed = ctx.projects?.length ? (project) => ctx.projects.includes(project) : null;
+  const scopedProject = (project) => {
+    if (allowed && project && !allowed(project)) return fail(`Project "${project}" is not allowed for this token.`);
+    return null;
+  };
   try {
     switch (name) {
       case "search": {
         if (typeof args.query !== "string" || !args.query.trim()) return fail("query is required.");
         const limit = args.limit ?? 20;
-        const facts = store.searchFacts({ query: args.query, project: args.project, limit: Math.min(limit, 10) });
+        const pickProject = allowed ? (args.project ?? (ctx.projects.length === 1 ? ctx.projects[0] : undefined)) : args.project;
+        const facts = store.searchFacts({ query: args.query, project: pickProject, limit: Math.min(limit, 10) }).filter((fact) => !allowed || allowed(fact.project));
         const factLines = facts.map((fact) => `fact #${fact.id} ${fact.text}${fact.source?.episodeId ? ` (episode #${fact.source.episodeId})` : ""}`);
-        const detailed = store.searchDetailed({ query: args.query, project: args.project, type: args.type, kind: args.kind, limit });
-        const index = store.search({ query: args.query, project: args.project, type: args.type, kind: args.kind, limit });
+        const detailed = store.searchDetailed({ query: args.query, project: pickProject, type: args.type, kind: args.kind, limit });
+        const index = store.search({ query: args.query, project: pickProject, type: args.type, kind: args.kind, limit }).filter((row) => !allowed || allowed(row.project));
         const memoryIndex = fmtIndex(index);
-        if (!factLines.length && !index.length) return text(`No matches. ${REASON[detailed.reason] ?? ""}`.trim());
+        if (!factLines.length && !index.length) {
+          const reason = detailed.reason ? (REASON[detailed.reason] ?? "filtered") : (allowed ? "filtered" : "");
+          return text(`No matches. ${reason}`.trim());
+        }
         return text([...factLines, memoryIndex].filter(Boolean).join("\n"));
       }
       case "timeline": {
+        const denied = scopedProject(args.project);
+        if (denied) return denied;
         const t = store.timeline({ anchor: args.anchor, query: args.query, project: args.project, before: args.before ?? 5, after: args.after ?? 5 });
         if (!t.anchor) return text("Nothing to anchor on.");
-        return text(t.items.map((m) => `${m.id === t.anchor ? "→" : " "} #${m.id} ${new Date(m.created_at_epoch).toISOString().slice(0, 16)} [${m.type}] ${m.title}`).join("\n"));
+        const items = t.items.filter((m) => !allowed || allowed(m.project));
+        if (!items.length || !items.some((m) => m.id === t.anchor)) return text("Nothing to anchor on.");
+        return text(items.map((m) => `${m.id === t.anchor ? "→" : " "} #${m.id} ${new Date(m.created_at_epoch).toISOString().slice(0, 16)} [${m.type}] ${m.title}`).join("\n"));
       }
       case "get_observations": {
         if (!Array.isArray(args.ids) || !args.ids.length) return fail("ids is required (an array of numbers).");
-        const rows = store.getMany(args.ids);
+        const rows = store.getMany(args.ids).filter((row) => !allowed || allowed(row.project));
         return text(rows.length ? rows.map(fmtFull).join("\n\n---\n\n") : "No memory has those ids.");
       }
       case "save_memory": {
         if (typeof args.text !== "string" || !args.text.trim()) return fail("text is required.");
         const body = redact(args.text);
         const project = args.project ?? (ctx.cwd ? projectKeyForPath(ctx.cwd) : "default");
+        const denied = scopedProject(project);
+        if (denied) return denied;
         const r = store.add({ project, kind: "note", type: args.type ?? "note", title: redact(args.title) || body.replace(/\s+/g, " ").slice(0, 100), narrative: body, tool: ctx.tool ?? "mcp", pinned: !!args.pinned }, { actor: ctx.tool ?? "mcp" });
         return text(r.created ? `Saved as #${r.id} in ${project}.` : `Already saved as #${r.id}.`);
       }
-      case "session_start_context":
-        return text(store.context({ project: args.project ?? (ctx.cwd ? projectKeyForPath(ctx.cwd) : undefined), limit: args.limit ?? 20, tool: ctx.tool }));
+      case "session_start_context": {
+        const denied = scopedProject(args.project);
+        if (denied) return denied;
+        const project = allowed ? (args.project ?? ctx.projects[0]) : args.project ?? (ctx.cwd ? projectKeyForPath(ctx.cwd) : undefined);
+        return text(store.context({ project, limit: args.limit ?? 20, tool: ctx.tool }));
+      }
       case "list_rules": {
         const rules = store.rules.list().filter((r) => r.enabled);
         return text(rules.length ? rules.map((r) => `- ${r.when ? `When ${r.when}: ` : ""}${r.then}  [${r.scopeTier === "everywhere" ? "everywhere" : r.scopeName}]`).join("\n") : "No rules yet.");

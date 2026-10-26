@@ -571,3 +571,4 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | https://github.com/thedotmack/claude-mem/pull/1333 | Body: Codex CLI transcript-based capture |
 | 2026-10-26 | https://cmem.ai/pricing | CMEM Pro $30, Heavy $70, Max $100 (re-fetched by the reviewer) |
 | 2026-10-26 | https://cmem.ai/api/inference/v1 | NOT fetched: endpoint name read from claude-mem client code (see research/A1-claude-mem-paid.md F2) |
+| 2026-10-26 | https://modelcontextprotocol.io/specification/2025-03-26/basic/transports | MCP Streamable HTTP rules used for T-067: single endpoint for POST and GET, Accept header, Origin validation, Mcp-Session-Id, 202-for-notifications, 405-when-no-SSE, batch handling |
