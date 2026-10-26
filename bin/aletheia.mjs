@@ -28,6 +28,8 @@
 //   aletheia language [set <tag> | list] [--project p]  output language for facts and summaries (empty clears)
 //   aletheia optimize                                   rebuild FTS segments after a large import
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
+//   aletheia sync pair | join <url> <code> | status | devices | revoke <device> | push | pull | run | compact | purge <entity_id> | export <dir> | import <dir>
+//   aletheia audit [--limit n]                          read the sync audit log
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
@@ -175,6 +177,19 @@ async function main() {
   const argv = mcpCommand({ bun: process.execPath, script: join(import.meta.dir, "mcp.mjs") });
   try {
     switch (cmd) {
+      case "sync": {
+        const { runSyncCommand } = await import("../src/hub/sync/cli.mjs");
+        try {
+          return out(await runSyncCommand({ config, flags, pos, out }));
+        } catch (error) {
+          return die(error.message);
+        }
+      }
+      case "audit": {
+        const { readAudit } = await import("../src/hub/sync/cli.mjs");
+        const rows = readAudit(config, Number(flags.limit) || 100);
+        return out(rows.length ? rows.map((row) => `${new Date(row.ts).toISOString()}  ${row.action}  ${row.result}${row.device_id ? `  ${row.device_id}` : ""}${row.detail ? `  ${JSON.stringify(row.detail).slice(0, 120)}` : ""}`).join("\n") : "No sync audit entries.");
+      }
       case "capture": {
         let payload;
         try { payload = JSON.parse(readFileSync(0, "utf8")); } catch { return void process.exit(0); } // a hook must never break the tool
