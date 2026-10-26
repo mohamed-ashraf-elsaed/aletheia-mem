@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>10. Rebuild guide · Aletheia docs</title>
+<meta name="description" content="How to build this from nothing, in the order that keeps every step testable. Each step names the file, what it must do, and the check that tells you it is right. The finished co...">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/10-rebuild-guide.html">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"10. Rebuild guide","description":"How to build this from nothing, in the order that keeps every step testable. Each step names the file, what it must do, and the check that tells you it is right. The finished co...","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/10-rebuild-guide.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/logo.svg" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="10-rebuild-guide">10. Rebuild guide</h1>
+<p>How to build this from nothing, in the order that keeps every step testable. Each step names the file, what it must do, and the check that tells you it is right. The finished code is the reference; this is the path.</p>
+<h2 id="step-0-inspect-the-original">Step 0. Inspect the original</h2>
+<pre><code class="language-bash">ss -ltnp | grep bun                                  # find the worker port
+curl -s localhost:&lt;port&gt;/ | head                     # index.html -&gt; /work-view/assets/index-*.js
+curl -s localhost:&lt;port&gt;/api/work-view | jq 'keys'   # the snapshot contract
+ls ~/.claude/plugins/cache/thedotmack/claude-mem/*/   # scripts/, skills/, ui/work-view/</code></pre>
+<p>Useful facts: <code>ui/work-view/</code> is the whole front end; <code>scripts/worker-service.cjs.map</code> lists the original source file names (no embedded source) and lets you slice the minified bundle per module; <code>skills/request-progress/scripts/request-groups.mjs</code> is unminified and holds the ledger logic.</p>
+<h2 id="step-1-skeleton-and-static-serving">Step 1. Skeleton and static serving</h2>
+<p><code>bin/aletheia-server.mjs</code>, <code>src/config.mjs</code>, <code>src/server.mjs</code>: <code>Bun.serve</code> on <code>127.0.0.1</code>, serve <code>public/</code> (copy <code>ui/work-view/*</code>), <code>/</code> returns <code>index.html</code>, <code>/work-view/*</code> returns files. <em>Check:</em> the page loads and shows an error banner (no API yet).</p>
+<h2 id="step-2-guards">Step 2. Guards</h2>
+<p><code>src/http/guards.mjs</code>: loopback peer, loopback <code>Host</code>, no proxy headers; POST needs same-origin JSON. <em>Check:</em> spoofed <code>Host</code> over a raw socket gets 403 (<code>test/server.test.mjs</code>).</p>
+<h2 id="step-3-read-model-bottom-up">Step 3. Read model, bottom up</h2>
+<p>Build and test each in isolation:</p>
+<ol><li><code>readmodel/text.mjs</code>: request text cleaning, <code>isHumanActionRequest</code>, title, keys, <code>originalFor</code>.</li><li><code>readmodel/work-state.mjs</code>: the fold. <em>Check:</em> null deletes, done closes, list vs task fields.</li><li><code>readmodel/work-product.mjs</code>: parse git/PR output and tool calls.</li><li><code>readmodel/project.mjs</code>: project keys, scratch-folder derivation.</li><li><code>readmodel/rules.mjs</code>, <code>goals.mjs</code>, <code>lifecycle.mjs</code>: folded lists to rules, goals, stops.</li><li><code>ledger/read.mjs</code>: read ledger files (start with an empty ledger).</li><li><code>readmodel/agent-view.mjs</code> then <code>projection.mjs</code>: the big two. Port query by query, with the same limits and ordering; keep the &quot;missing column gives empty&quot; helper while comparing with the original, then fix F1.</li><li><code>store/reviews.mjs</code> and the content fingerprint.</li></ol>
+<p><em>Check:</em> run the original and your server on the same database and use <code>scripts/diff-against-live.mjs</code> until the diff is empty (use <code>ALETHEIA_BUG_COMPAT=1</code> while the original has F1).</p>
+<h2 id="step-4-source-reader-and-snapshot">Step 4. Source reader and snapshot</h2>
+<p><code>source.mjs</code>: open read-only, signatures for change detection, fold + view + evidence hashes inside one transaction, <code>goalLinks</code>. <code>app.mjs</code>: fingerprint and review per card, <code>rulesFile</code>, <code>setup</code>, composite revision. <em>Check:</em> top-level key order equals the original's.</p>
+<h2 id="step-5-actions">Step 5. Actions</h2>
+<p><code>app.mjs</code> (<code>review</code>, <code>saveRule</code>, <code>markAgentFinished</code>, <code>loadRulesInClaudeCode</code>), <code>store/overlay.mjs</code> (own work-state log, ids offset by 2^40), <code>http/validate.mjs</code>. <em>Check:</em> the lifecycle tests in <code>test/server.test.mjs</code>, including the 409 cases.</p>
+<h2 id="step-6-events">Step 6. Events</h2>
+<p>SSE in <code>app.mjs</code>: <code>retry: 1000</code>, snapshot on connect, publish when <code>[revision, connected, error, setup]</code> changes, heartbeat 15 s. <em>Check:</em> the page's &quot;Live updates&quot; dot is green and a saved rule appears without reload.</p>
+<h2 id="step-7-evidence-and-files">Step 7. Evidence and files</h2>
+<p><code>readmodel/evidence.mjs</code> and the <code>file</code> route. <em>Check:</em> every URL in a snapshot resolves (200 or a clean 404).</p>
+<h2 id="step-8-ledger-writer">Step 8. Ledger writer</h2>
+<p><code>ledger/commands.mjs</code>: extract from <code>request-groups.mjs</code> the validators and writers; keep file formats identical so the original can read what you write and the reverse. <em>Check:</em> <code>bin/ledger.mjs</code> commands round trip (<code>test/refresh.test.mjs</code>).</p>
+<h2 id="step-9-refresh">Step 9. Refresh</h2>
+<p><code>refresh/orchestrator.mjs</code>: the five steps and the retry rule. <code>refresh/providers.mjs</code>: one function per model backend. <code>refresh/auto-refresh.mjs</code>: the scheduler and <code>refresh.json</code> states. <code>POST /api/work-state/entries</code> so the vendored <code>save_goals.py</code> works unchanged. <em>Check:</em> fake-model end-to-end test, then <code>scripts/smoke-refresh.mjs</code> with a real model on synthetic data.</p>
+<h2 id="step-10-optional-human-copy">Step 10. Optional: human copy</h2>
+<p><code>humancopy.mjs</code>: bounded input, fingerprint, validated output, cache. Without a provider it must still report <code>unavailable</code>.</p>
+<h2 id="design-rules-to-keep">Design rules to keep</h2>
+<ul><li>Never write to the source database. Put your own writes in a store you own and fold them in.</li><li>Everything the page shows must be derivable from rows, ledger files and your own stores. No hidden state.</li><li>A reviewer's &quot;checked&quot; mark is bound to a content fingerprint, so changed work is never silently approved.</li><li>A model's output is data: validate it with strict shape and length rules, and retry once with the refusal quoted.</li><li>Keep the refresh optional and off by default; it sends prompts to a model.</li></ul>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>

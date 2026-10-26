@@ -17,13 +17,22 @@
 <meta name="twitter:description" content="Free, local memory and rules for every AI coding tool. MCP, REST and CLI.">
 <link rel="stylesheet" href="style.css">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Aletheia","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, macOS (Bun >= 1.1)","description":"A free, local memory and rules hub for AI coding tools, with MCP, REST and CLI interfaces.","license":"https://www.apache.org/licenses/LICENSE-2.0","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/","codeRepository":"https://github.com/mohamed-ashraf-elsaed/aletheia-mem","author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"}}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Aletheia","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (tested); macOS and Windows untested","description":"A free, local memory and rules hub for AI coding tools, with MCP, REST and CLI interfaces.","license":"https://www.apache.org/licenses/LICENSE-2.0","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/","codeRepository":"https://github.com/mohamed-ashraf-elsaed/aletheia-mem","author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Is it really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Apache-2.0, no account, no hosted tier, no telemetry. Optional LLM features call the model you configure, and only then."}},
+{"@type":"Question","name":"How is it different from claude-mem?","acceptedAnswer":{"@type":"Answer","text":"Both are open source. claude-mem has more features, including per-tool installers, a live viewer and a smart file reader. Aletheia is smaller and tool-neutral: one store for any tool, rules sync, and migration both ways."}},
+{"@type":"Question","name":"Does it replace claude-mem?","acceptedAnswer":{"@type":"Answer","text":"No. It runs beside it on its own port and never writes to claude-mem's database."}},
+{"@type":"Question","name":"Where is my data?","acceptedAnswer":{"@type":"Answer","text":"In ~/.aletheia/hub.db on your machine. Nothing leaves it unless you turn on an LLM provider or share an export."}},
+{"@type":"Question","name":"Does it work with my tool?","acceptedAnswer":{"@type":"Answer","text":"If your tool speaks MCP or reads an instruction file, probably. Configs are written from documentation and fixture-tested; none has been tested on a real install."}}
+]}
 </script>
 </head>
 <body>
 <header class="top"><div class="wrap">
   <a class="brand" href="./"><img src="assets/logo.svg" alt="" width="26" height="26">Aletheia</a>
-  <nav aria-label="Main"><a href="#features">Features</a><a href="#numbers">Numbers</a><a href="#tools">Tools</a><a href="#start">Quick start</a><a href="#faq">FAQ</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+  <nav aria-label="Main"><a href="#features">Features</a><a href="#numbers">Numbers</a><a href="#tools">Tools</a><a href="docs/">Docs</a><a href="#start">Quick start</a><a href="#faq">FAQ</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
 </div></header>
 
 <main>

@@ -23,3 +23,5 @@ jobs:
         run: bun scripts/check-docs-links.mjs
       - name: Translations match the English README
         run: bun scripts/i18n-check.mjs
+      - name: Docs site and sitemap agree
+        run: bun scripts/build-site.mjs && bun scripts/check-sitemap.mjs

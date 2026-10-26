@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>6. Frontend · Aletheia docs</title>
+<meta name="description" content="public/ is the original's production build, copied unchanged from claude-mem/15.2.0/ui/work-view/: index.html, assets/index-s8vzksbN.js (798 KB, React + Vite, minified, no sourc...">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/06-frontend.html">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"6. Frontend","description":"public/ is the original's production build, copied unchanged from claude-mem/15.2.0/ui/work-view/: index.html, assets/index-s8vzksbN.js (798 KB, React + Vite, minified, no sourc...","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/06-frontend.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/logo.svg" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="6-frontend">6. Frontend</h1>
+<h2 id="what-it-is">What it is</h2>
+<p><code>public/</code> is the original's production build, copied unchanged from <code>claude-mem/15.2.0/ui/work-view/</code>: <code>index.html</code>, <code>assets/index-s8vzksbN.js</code> (798 KB, React + Vite, minified, no source map), <code>assets/index-C6x466ZD.css</code>, a lazily loaded <code>setup-page-*.js</code> chunk, fonts (Geist, Hanken Grotesk), three images, <code>favicon.svg</code>, <code>icons.svg</code>. The clone serves these byte for byte. The decision not to rewrite the UI is deliberate: the original source is not shipped, the bundle is Apache-2.0, and it already speaks the API in <a href="03-http-api.html">03-http-api.md</a>.</p>
+<h2 id="runtime-contract-read-from-the-bundle">Runtime contract (read from the bundle)</h2>
+<div class="tablewrap"><table><thead><tr><th>Aspect</th><th>Behaviour</th></tr></thead><tbody><tr><td>Entry</td><td><code>GET /</code> returns <code>index.html</code>, which loads <code>/work-view/assets/index-s8vzksbN.js</code> (module) and the CSS.</td></tr><tr><td>Data</td><td><code>fetch('/api/work-view')</code>, then a single <code>EventSource('/api/work-view/events')</code>. It listens to <code>work-view</code> (replace the snapshot) and <code>heartbeat</code>. The setup chunk also listens to <code>setup-scan</code>, <code>setup-state</code>, <code>setup-import</code>.</td></tr><tr><td>Writes</td><td><code>POST /api/work-view/review</code>, <code>/rules</code>, <code>/rules/load-in-claude-code</code>, <code>/agents/mark-finished</code> with <code>Content-Type: application/json</code>.</td></tr><tr><td>Setup chunk</td><td>Loaded only when the URL has <code>?setup=1</code>. Uses <code>/api/setup/*</code>, <code>/api/search</code>, <code>/api/memory/save</code>, <code>/api/observation/:id</code>. None of these exist in the clone; the chunk shows an error if opened.</td></tr><tr><td>Query parameters</td><td><code>?goal=&lt;goal id&gt;</code> focuses a goal; `?theme=dark\</td><td>light<code> forces a theme (else </code>prefers-color-scheme<code>); </code>?source=sample<code> renders built-in demo data without the API; </code>?setup=1` opens onboarding.</td></tr><tr><td>Storage</td><td>None found: no <code>localStorage</code> or <code>sessionStorage</code> calls in the bundle. State lives in the page and the snapshot.</td></tr><tr><td>History API</td><td><code>history.replaceState</code> only, to drop <code>?setup</code>.</td></tr><tr><td>Navigation</td><td>Sidebar: <strong>Monitor</strong> &gt; My Work; <strong>Steer</strong> &gt; My Goals, My Rules. My Work has Cards, List and By agent views, filters (All, Needs you, Shipped) and a sort menu. The header shows &quot;Live updates&quot; while the event stream is connected, a machine count, and a link to <code>/viewer</code> (the original's classic viewer, absent in the clone).</td></tr><tr><td>Cards</td><td>Each card shows: status chip (Working / Needs you / Shipped), a recent-activity box, &quot;Next step&quot;, the goal it serves (&quot;No goal&quot; when unaligned, &quot;Goal not linked yet&quot; when the alignment step has not seen it), stage, start time, run time, a progress meter (<code>progress.percent</code>) with &quot;reviewed &lt;time&gt;&quot; and a projected finish.</td></tr></tbody></table></div>
+<h2 id="known-gaps-in-the-clone">Known gaps in the clone</h2>
+<ul><li><code>/viewer</code> and <code>/tv</code> (other pages of the original) are not provided. The header link 404s.</li><li>Anything in the setup chunk beyond its first screen.</li><li>The header shows a &quot;Star&quot; button with a star count. Whether it fetches the count from GitHub at runtime was not checked; if it does, that is the original's behaviour and it needs internet access.</li></ul>
+<h2 id="replacing-the-ui">Replacing the UI</h2>
+<p>To write your own front end, you need only: one JSON snapshot, one event stream, four POSTs. Use <code>GET /api/work-view</code> as a typed contract (the key list is asserted in <code>test/server.test.mjs</code>) and keep the fingerprint round trip: send the fingerprint you rendered when reviewing, and re-render from the returned snapshot after any <code>409</code>.</p>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>

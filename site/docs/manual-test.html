@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Manual test: real Claude Code and Command Code sessions · Aletheia docs</title>
+<meta name="description" content="This is the check a person runs once on a real machine. The automated tests use a temporary HOME; they cannot prove that the host tool calls our hooks.">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/manual-test.html">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Manual test: real Claude Code and Command Code sessions","description":"This is the check a person runs once on a real machine. The automated tests use a temporary HOME; they cannot prove that the host tool calls our hooks.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/manual-test.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/logo.svg" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="manual-test-real-claude-code-and-command-code-sessions">Manual test: real Claude Code and Command Code sessions</h1>
+<p>This is the check a person runs once on a real machine. The automated tests use a temporary <code>HOME</code>; they cannot prove that the host tool calls our hooks.</p>
+<p>Legend: <strong>RUN BY AUTHOR</strong> means the command was run on 2026-10-26. <strong>NOT RUN BY AUTHOR</strong> means it needs a real interactive session and was not run.</p>
+<h2 id="0-prerequisites">0. Prerequisites</h2>
+<ul><li>Bun 1.1 or newer: <code>bun --version</code>.</li><li>This repository checked out.</li><li>No server needed. Hooks write to the SQLite store directly. Start <code>bun bin/aletheia-server.mjs</code> only if you want the Hub UI or the MCP server.</li></ul>
+<h2 id="1-preview-safe-writes-nothing">1. Preview (safe, writes nothing)</h2>
+<p><strong>RUN BY AUTHOR</strong></p>
+<pre><code class="language-bash">HOME=$(mktemp -d) bun bin/aletheia.mjs install claude-code --dry-run</code></pre>
+<p>Expected: three steps (<code>mcp</code>, <code>hooks</code>, <code>rules</code>) and &quot;Dry run: nothing was written.&quot;</p>
+<h2 id="2-install-into-your-real-home">2. Install into your real HOME</h2>
+<p><strong>NOT RUN BY AUTHOR</strong></p>
+<pre><code class="language-bash">bun bin/aletheia.mjs install claude-code --write
+bun bin/aletheia.mjs install command-code --write</code></pre>
+<p>Expected: each prints three written files and builds <code>~/.aletheia/aletheia.bundle.mjs</code>. Check the backups exist:</p>
+<pre><code class="language-bash">ls ~/.claude/*.aletheia-bak-* ~/.claude.json.aletheia-bak-* ~/.commandcode/*.aletheia-bak-* 2&gt;/dev/null</code></pre>
+<p>Run the install again. Expected: every step says <code>done</code> and &quot;Already installed; nothing changed.&quot; No new backups.</p>
+<h2 id="3-a-real-claude-code-session">3. A real Claude Code session</h2>
+<p><strong>NOT RUN BY AUTHOR</strong></p>
+<pre><code class="language-bash">cd /path/to/a/git/repo
+claude</code></pre>
+<p>Inside the session:</p>
+<ol><li>Ask: <code>What memory or rules do you have for this project?</code> The answer should mention the pinned memory and rules from the SessionStart block. The block starts with <code>&lt;aletheia-memory&gt;</code>.</li><li>Submit a normal prompt: <code>Add a short comment to README.md</code>.</li><li>Let it run a tool (read or edit the file).</li><li>Run <code>/compact</code>, then ask again: <code>What memory do you see now?</code> The context should be injected again.</li><li>Exit with <code>/exit</code>.</li></ol>
+<p>Then in a shell:</p>
+<pre><code class="language-bash">bun bin/aletheia.mjs search &quot;README&quot;
+bun bin/aletheia.mjs doctor</code></pre>
+<p>Expected:</p>
+<ul><li><code>search</code> finds the prompt and the tool event with tool <code>claude-code</code>.</li><li><code>doctor</code> prints <code>ok server</code> only if a server is running; <code>ok hooks claude-code</code> must say <code>5/5</code>; <code>ok spool</code> must say <code>empty</code>; <code>last capture</code> must show a recent time.</li></ul>
+<h2 id="4-a-real-command-code-session">4. A real Command Code session</h2>
+<p><strong>NOT RUN BY AUTHOR</strong></p>
+<pre><code class="language-bash">cd /path/to/a/git/repo
+cmd</code></pre>
+<p>Inside the session:</p>
+<ol><li>Ask: <code>What memory do you have for this project?</code> The SessionStart context should be visible.</li><li>Ask it to run a shell command, e.g. <code>Run ls and tell me what you see</code>.</li><li>End the turn normally.</li></ol>
+<p>Then:</p>
+<pre><code class="language-bash">bun bin/aletheia.mjs search &quot;ls&quot; --tool command-code
+bun bin/aletheia.mjs doctor</code></pre>
+<p>Expected:</p>
+<ul><li><code>search</code> finds the <code>SHELL:</code> tool event.</li><li><code>doctor</code> prints <code>ok hooks command-code</code> with <code>3/3</code>.</li><li><strong>Prompts are not captured in Command Code.</strong> That is expected: it has no <code>UserPromptSubmit</code> hook.</li><li><code>SessionEnd</code> summaries are not captured either.</li></ul>
+<p>If a hook does not fire, run <code>cmd --debug</code> and <code>tail -f ~/.commandcode/logs/command.log</code>. For Claude Code, check <code>~/.claude/settings.json</code> still contains the <code># aletheia-managed</code> entries.</p>
+<h2 id="5-uninstall">5. Uninstall</h2>
+<p><strong>NOT RUN BY AUTHOR</strong></p>
+<pre><code class="language-bash">bun bin/aletheia.mjs uninstall claude-code --write
+bun bin/aletheia.mjs uninstall command-code --write</code></pre>
+<p>Expected: only the <code># aletheia-managed</code> hooks and the <code>aletheia</code> MCP server are removed. Your own hooks, your other MCP servers, <code>permissions</code>, <code>model</code> and other settings remain. The managed rules block is removed from <code>~/.claude/CLAUDE.md</code> and <code>~/.commandcode/AGENTS.md</code>; text outside the markers stays.</p>
+<p>A second uninstall prints <code>&lt;tool&gt; ... is not installed</code>.</p>
+<h2 id="6-the-one-ui-work-memory-rules-tools">6. The one UI (Work, Memory, Rules, Tools)</h2>
+<p>The shell is checked by <code>test/one-ui.test.mjs</code> (routes, tab containers, API shapes, DOM-free helpers). A real Chromium check was also run.</p>
+<p><strong>RUN BY AUTHOR, 2026-10-26</strong> with a temporary server and a temporary HOME:</p>
+<pre><code class="language-bash">HOME=/tmp/aletheia-ui-home ALETHEIA_DATA_DIR=/tmp/aletheia-ui-data ALETHEIA_PORT=38881 \
+  bun bin/aletheia-server.mjs</code></pre>
+<p>Opened <code>http://127.0.0.1:38881/#/memory</code>, then <code>#/rules</code>, <code>#/tools</code> and <code>#/work</code> in Chromium through the connected Playwright MCP browser. Observed:</p>
+<ul><li>The header stayed visible on all four tabs: tab bar, project selector, search box and a green health dot labelled &quot;Server healthy&quot;.</li><li>The Memory tab rendered the stats, memories, facts Current/History toggle, review queue, dismissed rows and both details blocks. No console errors.</li><li>Typing <code>retry</code> in the header search and pressing Enter kept the <code>#/memory</code> route and printed the channels (<code>facts: lexical + keys</code>, <code>episodes: lexical</code>, <code>fused: none</code>) and the empty-store reason.</li><li>The Rules tab rendered the editor, suggestions, sync and import panels; no console errors.</li><li>The Tools tab rendered the installer cards, the hook counts, spool sizes and the full doctor table; no console errors.</li><li>The Work tab showed Aletheia's own view, not the old iframe: a health/last-capture/queue/mode strip, &quot;Now&quot; with three sessions (one in progress, two finished), &quot;Needs you&quot; with a contradiction, a rule suggestion and a dismissed row, &quot;Recent memory&quot; with source and importance, and a goal with two dated quotes.</li><li>The session page <code>#/work/session/s1?project=shop</code> showed the summary, an ordered timeline (prompt, tool, prompt, summary) and the extracted fact with its source. No console errors.</li><li><code>prefers-color-scheme: dark</code> was emulated; the page stayed readable and the shell colours switched.</li></ul>
+<p><strong>NOT RUN BY AUTHOR:</strong> a person should still check the Work tab at 375 px width, with a keyboard only (Tab through the header, open each tab, open a details block, pin and restore a goal), and with a real live capture over more than 10 seconds to see the refresh. The automated run proves the scripts load and the DOM is reachable; it does not assert pixel layout or the timer under a real host.</p>
+<h3 id="work-view-steps-run-by-author-2026-10-26">Work view steps (RUN BY AUTHOR, 2026-10-26)</h3>
+<ol><li>Seed a temporary hub (the fixture in <code>test/work.test.mjs</code> creates prompts, tool events, a summary, a fact, a review item, a rule suggestion, a dismissal and a job).</li><li>Start the server with a temporary <code>HOME</code>, <code>ALETHEIA_DATA_DIR</code> and <code>ALETHEIA_HUB_DB</code>; open <code>/#/work</code>. This pass used port 38882; the earlier Memory/Rules/Tools pass used 38881.</li><li>Confirm the strip, Now, Needs you, Recent memory and Goals all use the seeded values; open a session link and confirm the timeline and fact source; open Tools and confirm the classic viewer link appears only when the old database exists.</li></ol>
+<h2 id="7-the-five-more-hosts-fixture-tested-not-run-by-author">7. The five more hosts (fixture-tested, NOT RUN BY AUTHOR)</h2>
+<p>Every item in this section is <strong>NOT RUN BY AUTHOR</strong>. The formats come from the official docs fetched on 2026-10-26 (listed in section 25); the installers and payloads are fixture-tested only. Do not treat a pass here as a real-install test.</p>
+<p>For each tool, use a temp HOME first, then a real one:</p>
+<pre><code class="language-bash">HOME=$(mktemp -d) bun bin/aletheia.mjs install &lt;tool&gt; --dry-run
+HOME=$(mktemp -d) bun bin/aletheia.mjs install &lt;tool&gt; --write
+bun bin/aletheia.mjs doctor</code></pre>
+<p>Then open the tool in a scratch project, run one prompt that mentions a unique phrase, and check:</p>
+<pre><code class="language-bash">bun bin/aletheia.mjs search &quot;the unique phrase&quot; --project &lt;project-folder-name&gt;</code></pre>
+<h3 id="cursor-not-run-by-author">Cursor (NOT RUN BY AUTHOR)</h3>
+<ol><li><code>install cursor --write</code> writes <code>~/.cursor/mcp.json</code> and <code>~/.cursor/hooks.json</code> (version 1).</li><li>Open a trusted workspace; Cursor loads user hooks from <code>~/.cursor/hooks.json</code>.</li><li>Submit a prompt, run one Shell tool, let the answer finish, then close the conversation.</li><li><code>doctor</code> should show <code>6/6</code> for Cursor. <code>search</code> should find the prompt, the tool event and the assistant text.</li><li>Confirm no <code>sk-ant-</code> key is stored. Confirm the assistant summary came from <code>afterAgentResponse</code>, not <code>stop</code>.</li><li>Run <code>rules sync --tools cursor --dir &lt;project&gt; --write</code>; confirm <code>.cursor/rules/aletheia.mdc</code> is active.</li></ol>
+<h3 id="codex-cli-not-run-by-author">Codex CLI (NOT RUN BY AUTHOR)</h3>
+<ol><li><code>install codex --write</code> writes <code>~/.codex/config.toml</code>, <code>~/.codex/hooks.json</code> and <code>~/.codex/AGENTS.md</code>.</li><li>Start Codex and run <code>/hooks</code>; review and trust the aletheia hooks. This step is required and has not been run.</li><li>Run one prompt and one shell command, then finish the turn.</li><li><code>doctor</code> should show <code>5/5</code>. <code>search</code> should find the prompt, tool event and <code>last_assistant_message</code>.</li><li>Confirm the TOML block sits next to the user's own tables and that <code>codex</code> still starts.</li><li>A malformed <code>config.toml</code> must be refused, not overwritten.</li></ol>
+<h3 id="gemini-cli-not-run-by-author">Gemini CLI (NOT RUN BY AUTHOR)</h3>
+<ol><li><code>install gemini-cli --write</code> merges <code>mcpServers</code> and <code>hooks</code> into <code>~/.gemini/settings.json</code>.</li><li>Start Gemini CLI in a project and run one prompt with one tool call.</li><li><code>doctor</code> should show <code>5/5</code>. <code>search</code> should find <code>prompt</code>, the tool event and <code>prompt_response</code>.</li><li>Confirm the existing <code>security</code>/other keys and hooks survived the merge.</li><li>Confirm the hook timeout is milliseconds (<code>10000</code>), not 10 ms.</li></ol>
+<h3 id="windsurf-devin-desktop-not-run-by-author">Windsurf / Devin Desktop (NOT RUN BY AUTHOR)</h3>
+<ol><li><code>install windsurf --write</code> writes the MCP file (current <code>~/.config/devin/mcp_config.json</code> or an existing legacy <code>~/.codeium/windsurf/mcp_config.json</code>), <code>~/.codeium/windsurf/hooks.json</code> and the global rules file.</li><li>Open Cascade in a workspace, run a prompt, a shell command and one file edit, then finish the response.</li><li><code>doctor</code> should show <code>4/4</code>. <code>search</code> should find the prompt, both tool events and the response text.</li><li>Expect <strong>no</strong> session-start context and <strong>no</strong> session-end summary: Cascade has neither event.</li><li>Confirm the payload without a <code>cwd</code> is filed under the workspace folder (the hook runs from the root).</li><li><code>rules sync --tools windsurf --dir &lt;project&gt; --write</code>; confirm <code>.windsurf/rules/aletheia.md</code> starts with <code>trigger: always_on</code>.</li></ol>
+<h3 id="opencode-not-run-by-author">OpenCode (NOT RUN BY AUTHOR)</h3>
+<p>This host is <code>mcp+rules</code>, not full capture.</p>
+<ol><li><code>install opencode --write</code> adds <code>mcp.aletheia</code> to <code>~/.config/opencode/opencode.json</code> and a block to <code>~/.config/opencode/AGENTS.md</code>.</li><li>Start OpenCode and confirm the aletheia MCP tools are listed.</li><li>Confirm no plugin was written and no new rows appear from an OpenCode session; that is the documented limit.</li><li>A JSONC-only <code>opencode.jsonc</code> is refused. Confirm the error names the file.</li></ol>
+<h3 id="claude-desktop-not-run-by-author">Claude Desktop (NOT RUN BY AUTHOR)</h3>
+<ol><li>Follow <a href="claude-desktop.html">claude-desktop.md</a>; merge the <code>mcpServers.aletheia</code> entry.</li><li>Quit and reopen Claude Desktop, then look for the server under the tools icon.</li><li>Confirm the server starts and a memory search works.</li><li>The Linux path <code>~/.config/Claude/claude_desktop_config.json</code> is observed on this machine but is not in the MCP quickstart; record whether your build reads it.</li></ol>
+<h2 id="8-two-machine-sync-not-run-by-author">8. Two-machine sync (NOT RUN BY AUTHOR)</h2>
+<p>The sync engine is covered by <code>test/sync-core.test.mjs</code>, <code>test/sync-tombstones.test.mjs</code>, <code>test/sync-devices.test.mjs</code> and <code>test/tokens-quotas-audit.test.mjs</code>, all against temporary data dirs and a loopback hub. A real two-machine run has not been done.</p>
+<p><strong>NOT RUN BY AUTHOR.</strong> To run it by hand, on the hub machine:</p>
+<pre><code class="language-bash">bun bin/aletheia-sync.mjs --port 37791 --db ~/.aletheia/sync.db
+aletheia sync pair --db ~/.aletheia/sync.db</code></pre>
+<p>On the device machine:</p>
+<pre><code class="language-bash">aletheia sync join http://&lt;hub-host&gt;:37791 &lt;code&gt; --name laptop
+aletheia sync run</code></pre>
+<p>Expected: the device lists on the hub (<code>aletheia sync devices</code>), pushes and pulls move ops, and a revoke on the hub makes the device's next call fail. A non-loopback bind must print the TLS warning unless <code>--behind-tls</code> is set.</p>
+<h3 id="e2ee-on-two-machines-not-run-by-author">E2EE on two machines (NOT RUN BY AUTHOR)</h3>
+<p>The E2EE paths are covered by <code>test/sync-e2ee.test.mjs</code> against temp dirs and a loopback hub; no real two-machine E2EE run has been done.</p>
+<p><strong>NOT RUN BY AUTHOR.</strong> On the hub machine:</p>
+<pre><code class="language-bash">aletheia sync enable-e2ee --passphrase '&lt;passphrase&gt;'
+aletheia sync pair
+aletheia sync export-recovery-key --out ~/aletheia-recovery.key
+ls -l ~/aletheia-recovery.key   # expect -rw------- (0600)</code></pre>
+<p>On each device machine:</p>
+<pre><code class="language-bash">aletheia sync join &lt;url&gt; &lt;code&gt;
+aletheia sync unlock-e2ee --passphrase '&lt;passphrase&gt;'
+aletheia sync run</code></pre>
+<p>Expected: <code>aletheia sync status</code> shows E2EE on; the server's <code>sync.db</code> has no plaintext titles (the ops show an <code>@e2ee</code> envelope); a wrong passphrase fails cleanly; <code>aletheia sync rotate-key</code> and <code>aletheia sync change-passphrase</code> work; and without the passphrase or the recovery file the data is unreadable.</p>
+<h2 id="9-a-real-client-against-the-remote-mcp-endpoint-not-run-by-author">9. A real client against the remote MCP endpoint (NOT RUN BY AUTHOR)</h2>
+<p>The endpoint is tested with raw <code>fetch</code> in <code>test/remote-mcp.test.mjs</code>; no real MCP client has connected to it.</p>
+<p><strong>NOT RUN BY AUTHOR.</strong> To run it by hand, on the hub machine:</p>
+<pre><code class="language-bash">bun bin/aletheia-sync.mjs --db ~/.aletheia/sync.db --hub-db ~/.aletheia/hub.db
+aletheia mcp-link create --projects shop</code></pre>
+<p>Then, on the same machine or a device that can reach the hub over a TLS tunnel:</p>
+<pre><code class="language-bash">claude mcp add --transport http aletheia http://127.0.0.1:37791/mcp --header &quot;Authorization: Bearer &lt;token&gt;&quot;</code></pre>
+<p>Expected: <code>claude mcp list</code> shows the server connected; a prompt like &quot;search memory for backoff&quot; finds the memory; <code>aletheia audit</code> shows one <code>mcp.call</code> row per tool call; <code>aletheia mcp-link revoke &lt;id&gt;</code> makes the next call fail with 401. For a remote hub the URL must be the tunnel's HTTPS URL and the hub must run with <code>--behind-tls</code>; add <code>--mcp-origins https://claude.ai</code> if a browser-based client is used.</p>
+<h2 id="10-hub-login-from-a-browser-not-run-by-author">10. Hub login from a browser (NOT RUN BY AUTHOR)</h2>
+<p>The session, CSRF, lock-out and expiry paths are tested by <code>test/hub-login.test.mjs</code> against <code>fetch</code>; no real browser login has been run.</p>
+<p><strong>NOT RUN BY AUTHOR.</strong> Mint an admin token on the hub machine:</p>
+<pre><code class="language-bash">aletheia mcp-link create --scope admin</code></pre>
+<p>Start the server on a non-loopback bind behind a TLS tunnel:</p>
+<pre><code class="language-bash">bun bin/aletheia-server.mjs --host 0.0.0.0 --behind-tls</code></pre>
+<p>Open the tunnel URL in a browser. Expected: the login page appears; the admin token logs in; the Hub tabs load; a dismiss or pair action works (the UI sends the CSRF header); a server restart ends the session; five wrong tokens lock the login page with a wait message.</p>
+<h2 id="what-the-automated-tests-already-cover">What the automated tests already cover</h2>
+<p><code>test/install-claude.test.mjs</code>, <code>test/claude-hooks.test.mjs</code> and <code>test/e2e-capture.test.mjs</code> cover: the dry run, merge and backup, second-run idempotence, refusal of unparsable JSON, uninstall, the exact commands read back from the settings files, every recorded payload, secret redaction, the spool and flush, <code>doctor</code>, and the hook time budget. They run against a temporary <code>HOME</code>, never your real one.</p>
+<p><code>test/install-cursor.test.mjs</code>, <code>test/install-codex.test.mjs</code>, <code>test/install-gemini.test.mjs</code>, <code>test/install-windsurf.test.mjs</code>, <code>test/install-opencode.test.mjs</code> and <code>test/e2e-more-hosts.test.mjs</code> add the same checks for the five new hosts, plus the TOML block guard, the single Gemini settings merge, the two Windsurf MCP paths, the OpenCode JSONC refusal, and a p95 under 100 ms per host. <code>test/uninstall.test.mjs</code> covers the generic uninstall and <code>--force</code>. <code>test/install-targets/rules.test.mjs</code> and <code>docs/verification/rules-targets.md</code> record the rules formats. None of these opens the host application.</p>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>30. The private remote MCP endpoint · Aletheia docs</title>
+<meta name="description" content="Status: implemented, 2026-10-26 (T-107, on top of T-067 and T-104/T-108). This page describes the code that exists and is tested by test/remote-mcp.test.mjs.">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/30-remote-mcp.html">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"30. The private remote MCP endpoint","description":"Status: implemented, 2026-10-26 (T-107, on top of T-067 and T-104/T-108). This page describes the code that exists and is tested by test/remote-mcp.test.mjs.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/30-remote-mcp.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/logo.svg" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="30-the-private-remote-mcp-endpoint">30. The private remote MCP endpoint</h1>
+<p>Status: implemented, 2026-10-26 (T-107, on top of T-067 and T-104/T-108). This page describes the code that exists and is tested by <code>test/remote-mcp.test.mjs</code>.</p>
+<p>Aletheia's MCP server (search, timeline, get_observations, save_memory, context, rules) is also reachable over the MCP Streamable HTTP transport from other machines. The same tool handlers run over stdio and HTTP.</p>
+<h2 id="301-what-it-is">30.1 What it is</h2>
+<p>The sync hub serves one MCP endpoint at <code>/mcp</code> when it is started with the Hub database path. Every request needs a bearer token from the sync account (the same tokens T-104/T-108 manage), with the token in the <code>Authorization</code> header — never in the URL, because URLs leak into logs and shell history.</p>
+<div class="tablewrap"><table><thead><tr><th>Token scope</th><th>What it can call</th></tr></thead><tbody><tr><td><code>mcp</code>, <code>read</code></td><td>the read tools only: search, timeline, get_observations, session_start_context, list_rules</td></tr><tr><td><code>sync</code>, <code>admin</code></td><td>all tools, including save_memory, add_rule, dismiss_memory, restore_memory</td></tr></tbody></table></div>
+<p>A token with named projects can only read those projects and only write into them. An empty project list means every project. Every <code>tools/call</code> writes one append-only audit row (<code>action = mcp.call</code>) with the tool name, the project and the result — never the payload or the arguments.</p>
+<p>Rate limit: 60 MCP requests per minute per token; the answer is 429 with <code>Retry-After</code>. Revoking a token makes the next call 401. Origin validation is on: no Origin header (non-browser clients) and loopback origins pass, and extra origins can be allowed explicitly. Unknown origins get 403.</p>
+<h2 id="302-create-a-link">30.2 Create a link</h2>
+<p>On the hub machine (hub-side; it reads <code>sync.db</code> directly):</p>
+<pre><code class="language-bash">aletheia mcp-link create --projects shop,api</code></pre>
+<p>Prints, once:</p>
+<ul><li>the endpoint URL, for example <code>http://127.0.0.1:37791/mcp</code> — no secret in the path;</li><li>the bearer token (shown once, stored only as a hash);</li><li>the copy-ready client config for Claude Code and Claude Desktop.</li></ul>
+<p>The command syntax in the snippets comes from the official Claude Code MCP reference (https://docs.claude.com/en/docs/claude-code/mcp, fetched 2026-10-26):</p>
+<pre><code class="language-bash">claude mcp add --transport http aletheia http://127.0.0.1:37791/mcp --header &quot;Authorization: Bearer &lt;token&gt;&quot;</code></pre>
+<p>Claude Desktop (<code>claude_desktop_config.json</code>, same <code>mcpServers</code> shape the Claude Code docs show for other clients):</p>
+<pre><code class="language-json">{
+  &quot;mcpServers&quot;: {
+    &quot;aletheia&quot;: {
+      &quot;type&quot;: &quot;http&quot;,
+      &quot;url&quot;: &quot;http://127.0.0.1:37791/mcp&quot;,
+      &quot;headers&quot;: { &quot;Authorization&quot;: &quot;Bearer &lt;token&gt;&quot; }
+    }
+  }
+}</code></pre>
+<p>Manage links:</p>
+<pre><code class="language-bash">aletheia mcp-link list
+aletheia mcp-link revoke &lt;id&gt;</code></pre>
+<p>The same actions exist in the Tools tab of the Hub UI under &quot;Remote access&quot;.</p>
+<h2 id="303-remote-use-tunnel-or-reverse-proxy">30.3 Remote use (tunnel or reverse proxy)</h2>
+<p>The sync hub binds to loopback by default. For remote use it must sit behind TLS. Any reverse proxy or tunnel works — no vendor lock. A Cloudflare Tunnel example (same pattern as docs/29 §29.8):</p>
+<pre><code class="language-bash">bun bin/aletheia-sync.mjs --db ~/.aletheia/sync.db --hub-db ~/.aletheia/hub.db
+cloudflared tunnel --url http://127.0.0.1:37791
+aletheia mcp-link create --projects shop --url https://&lt;assigned-host&gt;.trycloudflare.com</code></pre>
+<p>A non-loopback bind without <code>--behind-tls</code> prints a warning: the bearer token would otherwise travel in clear text. With <code>--behind-tls</code>, add the client origins you expect with <code>--mcp-origins https://claude.ai,...</code> so a browser-based client passes the Origin check.</p>
+<h2 id="304-what-is-not-covered">30.4 What is not covered</h2>
+<ul><li>The endpoint authenticates with a bearer token, not OAuth. The ChatGPT/Claude.ai connector (OAuth 2.1) is T-111, not built.</li><li>TLS itself is delegated to the proxy or tunnel; Aletheia does not terminate TLS.</li><li>Payloads are plaintext to the hub process (redaction runs before send, but there is no end-to-end encryption on this endpoint; E2EE is T-117, not built, and docs/29 §29.6 states the threat).</li><li>A real-client connection test has not been run; see docs/manual-test.md §9 (NOT RUN BY AUTHOR).</li></ul>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>

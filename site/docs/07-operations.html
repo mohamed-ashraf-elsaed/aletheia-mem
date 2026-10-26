@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>7. Operations · Aletheia docs</title>
+<meta name="description" content="bun bin/aletheia-server.mjs">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/07-operations.html">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"7. Operations","description":"bun bin/aletheia-server.mjs","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/07-operations.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/logo.svg" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="7-operations">7. Operations</h1>
+<h2 id="requirements">Requirements</h2>
+<ul><li>Bun &gt;= 1.1 (tested on 1.3.10). Nothing to install: no dependencies.</li><li>A claude-mem database. Without one the page loads and shows &quot;Local work-state database is unavailable.&quot;</li><li>For the refresh: <code>python3</code> (stdlib only) and either the <code>claude</code> CLI (logged in) or an OpenAI-compatible key.</li><li>Linux or macOS. Windows is untested.</li></ul>
+<h2 id="run">Run</h2>
+<pre><code class="language-bash">bun bin/aletheia-server.mjs</code></pre>
+<p>It prints the port, the database path, the data directory and whether the refresh is on. Stop with Ctrl-C (SIGINT/SIGTERM close the database handles).</p>
+<h2 id="run-as-a-user-service-systemd">Run as a user service (systemd)</h2>
+<p><code>scripts/aletheia.service</code>:</p>
+<pre><code class="language-ini">[Unit]
+Description=aletheia-mem
+After=default.target
+
+[Service]
+WorkingDirectory=%h/Projects/aletheia-mem
+ExecStart=%h/.bun/bin/bun bin/aletheia-server.mjs
+Environment=ALETHEIA_PORT=37790
+# Environment=ALETHEIA_PROVIDER=claude-cli
+Restart=on-failure
+
+[Install]
+WantedBy=default.target</code></pre>
+<pre><code class="language-bash">mkdir -p ~/.config/systemd/user
+cp scripts/aletheia.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now aletheia
+journalctl --user -u aletheia -f</code></pre>
+<h2 id="sharing-the-originals-ledger">Sharing the original's ledger</h2>
+<p>By default the clone keeps its own ledger. To read what the original's refresh already produced, set <code>ALETHEIA_LEDGER_DIR=~/.claude-mem/work-view</code>. Both servers then read the same files. Do not enable the clone's refresh on that directory while the original's refresh is also on: two writers, one ledger. (A refresh in one process refuses to start while another live pid holds <code>state: running</code>, but the check is a courtesy, not a lock.)</p>
+<h2 id="security-model">Security model</h2>
+<ul><li>Binds <code>127.0.0.1</code> only. Refuses any request whose peer, <code>Host</code> or forwarding headers say it is not local.</li><li>POSTs must be same-origin JSON.</li><li>The database is opened read-only with <code>query_only</code>. The server writes only under its data directory, plus two explicit user actions: <strong>Load in Claude Code</strong> appends one <code>@&lt;rules file&gt;</code> line to <code>ALETHEIA_CLAUDE_MD</code>, and saving a rule rewrites <code>ALETHEIA_RULES_FILE</code>.</li><li>The file route serves only absolute, <code>..</code>-free paths with an allow-listed extension that exist as regular files, with <code>nosniff</code> and a sandbox CSP.</li><li>Do not put the server behind a reverse proxy: the proxy headers make it refuse.</li><li>The page and API expose your prompts and tool calls. Treat the port like a local password manager.</li></ul>
+<h2 id="files-and-growth">Files and growth</h2>
+<div class="tablewrap"><table><thead><tr><th>Path</th><th>Grows with</th><th>Safe to delete?</th></tr></thead><tbody><tr><td><code>&lt;data&gt;/overlay.db</code></td><td>each rule or &quot;finished&quot; action</td><td>no: your saved rules live here</td></tr><tr><td><code>&lt;data&gt;/work-view-reviews.db</code></td><td>each checked card</td><td>yes (marks are lost)</td></tr><tr><td><code>&lt;ledger&gt;/</code></td><td>refreshes</td><td>yes; the next refresh rebuilds it (costs model calls)</td></tr><tr><td><code>&lt;data&gt;/human-copy.json</code>, <code>human-copy-usage.jsonl</code></td><td>model calls</td><td>yes</td></tr><tr><td><code>&lt;ledger&gt;/failed-answers/</code></td><td>refused model answers</td><td>yes</td></tr></tbody></table></div>
+<h2 id="troubleshooting">Troubleshooting</h2>
+<div class="tablewrap"><table><thead><tr><th>Symptom</th><th>Cause and fix</th></tr></thead><tbody><tr><td>Page says the work-state database is unavailable</td><td><code>CLAUDE_MEM_DB</code> wrong or claude-mem not installed. <code>ls ~/.claude-mem/claude-mem.db</code>.</td></tr><tr><td>403 &quot;available only on this computer&quot;</td><td>You used a non-loopback host name, a proxy, or <code>0.0.0.0</code>. Use <code>http://localhost:&lt;port&gt;</code>.</td></tr><tr><td>403 on a POST</td><td>Browser sent another <code>Origin</code> (a different port or host) or a non-JSON content type.</td></tr><tr><td>No agents shown, 0 observations</td><td>Running with <code>ALETHEIA_BUG_COMPAT=1</code>, or your database has no <code>observations</code> rows.</td></tr><tr><td>Cards but no progress meters</td><td>The refresh has not run. Set a provider, then check <code>&lt;ledger&gt;/refresh.json</code>.</td></tr><tr><td><code>refresh.json</code> says <code>failed</code></td><td>Read <code>error</code> and <code>steps</code>; look in <code>&lt;ledger&gt;/failed-answers/</code>. A provider error shows the CLI's first line.</td></tr><tr><td><code>waiting-for-agent</code></td><td>(original only) no logged-in agent CLI; the clone reports <code>failed</code> with the provider error instead.</td></tr><tr><td>Rule saved but Claude Code does not follow it</td><td>Click <strong>Load in Claude Code</strong>, or add <code>@&lt;rules path&gt;</code> to your CLAUDE.md yourself.</td></tr><tr><td>Port in use</td><td><code>ALETHEIA_PORT=&lt;n&gt;</code>.</td></tr></tbody></table></div>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>

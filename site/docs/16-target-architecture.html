@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>16. Target architecture · Aletheia docs</title>
+<meta name="description" content="Where the system goes from today's repo (01 describes what exists). Every design choice cites the evidence behind it (14) or says it is a judgement. Status tags: built, partial,...">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/16-target-architecture.html">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"16. Target architecture","description":"Where the system goes from today's repo (01 describes what exists). Every design choice cites the evidence behind it (14) or says it is a judgement. Status tags: built, partial,...","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/16-target-architecture.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/logo.svg" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="16-target-architecture">16. Target architecture</h1>
+<p>Where the system goes from today's repo (<a href="01-architecture.html">01</a> describes what exists). Every design choice cites the evidence behind it (<a href="14-research-ai-memory.html">14</a>) or says it is a judgement. Status tags: <strong>built</strong>, <strong>partial</strong>, <strong>planned</strong>.</p>
+<h2 id="161-context">16.1 Context</h2>
+<pre><code>                 ┌────────────────────────────────────────────────────────────────────┐
+  Claude Code ──►│                                                                    │
+  Codex CLI   ──►│  hooks / transcripts   ┌──────────────┐   MCP (stdio, HTTP)        │◄── agent asks
+  Cursor      ──►│  ─────────────────────►│              │◄───────────────────────────│    (search, timeline,
+  Gemini CLI  ──►│   capture adapters     │  MEMORY HUB  │   REST /v1                 │     get, save, rules)
+  Windsurf    ──►│                        │  (one local  │◄───────────────────────────│
+  OpenCode …  ──►│  files (rules sync) ◄──│   process)   │   CLI `aletheia`              │◄── scripts, CI
+                 │                        └──────┬───────┘                            │
+                 └───────────────────────────────┼────────────────────────────────────┘
+                                                 │ optional, explicit
+                         ┌───────────────────────┼─────────────────────────┐
+                         ▼                       ▼                         ▼
+                 local models (ONNX)     model providers          other systems
+                 embeddings, reranker    (claude CLI, OpenAI-    (import: claude-mem,
+                                          compatible, Ollama)      Markdown, exports)</code></pre>
+<p>Trust boundaries: tools are untrusted writers (they may carry prompt-injected text); memory is untrusted data when read back; the local machine user is trusted; the network is not part of the product except explicit model calls.</p>
+<h2 id="162-containers">16.2 Containers</h2>
+<div class="tablewrap"><table><thead><tr><th>Container</th><th>Responsibility</th><th>Tech</th><th>Status</th></tr></thead><tbody><tr><td><strong>Server</strong> (<code>bin/aletheia-server.mjs</code>)</td><td>HTTP API, UI hosting, SSE, change polling</td><td>Bun, no framework</td><td>built</td></tr><tr><td><strong>MCP server</strong> (<code>bin/mcp.mjs</code>)</td><td>Tool surface for agents, stdio</td><td>JSON-RPC 2.0</td><td>built, SDK-verified; HTTP transport planned</td></tr><tr><td><strong>CLI</strong> (<code>bin/aletheia.mjs</code>)</td><td>Capture, search, rules, connect, import/export</td><td>Bun</td><td>built</td></tr><tr><td><strong>Store</strong> (<code>src/hub/store.mjs</code>)</td><td>Memories, rules, vectors, audit, settings</td><td>SQLite WAL + FTS5</td><td>built</td></tr><tr><td><strong>Retrieval</strong> (<code>retrieval.mjs</code>, <code>embed.mjs</code>, <code>rerank.mjs</code>)</td><td>Candidate generation, fusion, rerank</td><td>BM25 + ONNX bi/cross encoders</td><td>built</td></tr><tr><td><strong>Ingestion</strong> (<code>capture.mjs</code>, <code>compress.mjs</code>)</td><td>Redact, normalise, extract, consolidate</td><td>pure JS + optional model</td><td>partial</td></tr><tr><td><strong>Adapters</strong> (<code>tools.mjs</code>, <code>rules-sync.mjs</code>, <code>importers.mjs</code>)</td><td>Per-tool facts and file formats</td><td>data tables + small functions</td><td>partial</td></tr><tr><td><strong>My Work</strong> (<code>src/readmodel</code>, <code>ledger</code>, <code>refresh</code>)</td><td>claude-mem's view, clone</td><td>as <a href="01-architecture.html">01</a></td><td>built</td></tr><tr><td><strong>Hub UI</strong> (<code>public-hub/</code>)</td><td>Manage memory, rules, tools, migration</td><td>ES modules, no build</td><td>partial</td></tr><tr><td><strong>Eval harness</strong> (<code>bench/</code>, <code>test/</code>)</td><td>Reproducible measurements</td><td>Bun</td><td>built for retrieval; answer-accuracy planned</td></tr></tbody></table></div>
+<p>One process, one SQLite file, zero required dependencies. Optional packages (<code>@huggingface/transformers</code>) add semantic search and reranking. Rationale: the audience installs this next to a dozen other tools; every extra moving part (Chroma + Python + <code>uv</code>, as in claude-mem) is a support cost, and a measured one: its search takes seconds, ours milliseconds (<a href="14-research-ai-memory.html#146-measured-results">14</a>).</p>
+<h2 id="163-data-model-v2">16.3 Data model v2</h2>
+<p>Today: one <code>memories</code> table with a <code>kind</code>. Target: <strong>events are immutable; everything else is derived and re-derivable.</strong></p>
+<pre><code>events            (id, ts, tool, session, project, kind, payload_redacted, source_hash)         immutable, append-only
+episodes          (id, event_ids, project, tool, session, round_text, ts)                        round-level units (LongMemEval: best granularity)
+facts             (id, subject_entity, predicate, object, text, source_episode,
+                   valid_from, valid_to NULL, recorded_at, superseded_by NULL, confidence)      bi-temporal; contradiction sets valid_to, never deletes
+entities          (id, name, kind, aliases[], project)                                           people, files, services, concepts
+links             (src, dst, kind, weight)                                                       fact↔entity, episode↔file, entity↔entity
+keys              (id, owner_kind, owner_id, text, source)                                       retrieval keys: episode text, fact text, summaries
+vectors           (key_id, model, dim, blob)                                                     optional
+rules             (id, scope, when, then, enabled, tools[], source, history[])
+summaries         (id, covers[], text, level)                                                    consolidated old episodes, provenance kept
+audit             (id, ts, actor, action, detail)</code></pre>
+<p>Today's <code>memories</code> rows map to <code>episodes</code> + <code>keys</code> (observation/note/prompt) and to <code>summaries</code>; the migration is additive. Rules for the model:</p>
+<ol><li><strong>Provenance is mandatory.</strong> A fact, summary or recalled snippet links to the events that support it. The UI and MCP output show it.</li><li><strong>Time has two axes.</strong> <em>Valid time</em> (when it was true) and <em>record time</em> (when we learned it) as in Graphiti's bi-temporal model (<a href="14-research-ai-memory.html#142-findings-that-shape-the-design">14</a>). &quot;We use Postgres&quot; becoming &quot;we moved to MySQL&quot; invalidates the first fact; both stay queryable.</li><li><strong>Deletion is explicit and audited.</strong> Forgetting lowers rank and eventually archives; only the user hard-deletes.</li><li><strong>Memory is data, never instructions.</strong> Anything read back is wrapped and labelled; the server never executes memory text.</li></ol>
+<h2 id="164-ingestion-pipeline">16.4 Ingestion pipeline</h2>
+<pre><code>raw hook payload
+  → normalise per tool                        (built: Claude-style + generic)
+  → redact secrets, strip &lt;private&gt;           (built: 14 formats + URL credentials)
+  → event stored                              (built as memory kind=event)
+  → segment into rounds (episodes)            (built: one event/turn per row)
+  → [optional model] extract facts, entities  (planned; prompt + strict validator like compress.mjs)
+  → resolve entities, detect contradictions   (planned; invalidate older facts, never delete)
+  → dedupe (exact now; near-duplicate planned: TF-IDF cosine like claude-mem's dedup)
+  → index keys: BM25 always, vectors if enabled (built)
+  → reinforce if seen again                   (planned)</code></pre>
+<p>Extraction is the only step that costs model calls. Defaults: <strong>off</strong>; when on, batched per session, with the cost shown before and after, and local-model support through any OpenAI-compatible endpoint (built for <code>compress</code>). Measured value of extraction: +8.4 Recall@5 points when facts are indexed as extra keys (<a href="14-research-ai-memory.html#146-measured-results">14</a>; facts there come from the dataset).</p>
+<h2 id="165-retrieval-pipeline">16.5 Retrieval pipeline</h2>
+<pre><code>query (+ optional task text, project, tool, time hint)
+  1 understand   : content terms; time expressions → date range; names → entity/speaker filter        (planned; terms built)
+  2 candidates   : BM25 over keys (rare terms first) ‖ dense KNN ‖ pinned ‖ recent ‖ entity neighbours   (BM25, dense, pinned built)
+  3 fuse         : reciprocal rank fusion, k=60                                                         (built)
+  4 rerank       : cross-encoder on top 30                                                              (built, optional)
+  5 pack         : token budget, dedupe by source episode, MMR diversity, neighbour stitching           (planned)
+  6 assemble     : provenance footers, &quot;no relevant memory&quot; when scores are below a floor               (planned)</code></pre>
+<p>Why each stage (evidence): fusion of keyword and dense retrieval beats either alone on LoCoMo here (57.5 vs 55.1 and 49.5 Recall@5); a reranker added the last gain in Anthropic's contextual-retrieval report and here (65.2 → 72.5 on all 1,536 questions, MRR .588 → .679); fact keys follow LongMemEval's key-expansion result (+7.7 points here); time-aware filtering follows LongMemEval's temporal result (only reliable with a strong time-range extractor, so planned behind a model call). Performance engineering already measured: pinning FTS as the outer join took a filtered query from 267 ms to 2 ms; gentle rare-term pruning (12 terms, 60%) cut 50k-row BM25 from 156 ms to about 104 ms with no recall change on LoCoMo, and aggressive pruning (71 ms) was not adopted because a person's name can sit in over a third of a conversation's turns; an index made &quot;newest 30&quot; about 440× faster (222 → 0.5 ms).</p>
+<p><strong>Injection policy.</strong> The measured finding that repository context files can lower agent success and raise cost by over 20% (<a href="14-research-ai-memory.html#142-findings-that-shape-the-design">14</a>) drives three rules: (a) session-start text is small and budgeted, pinned items first; (b) task-specific recall happens on demand through MCP, not by default; (c) rules are minimal, human-written, linted for size and conflicts. Whether our policy beats &quot;inject nothing&quot; is an experiment in <a href="18-benchmark-plan.html">18</a>, not an assumption.</p>
+<h2 id="166-consolidation-and-forgetting">16.6 Consolidation and forgetting</h2>
+<ul><li><strong>Reinforcement:</strong> a memory recalled and used (or re-observed) gains weight; weight decays with time. Ranking uses weight as a small prior, never as a filter.</li><li><strong>Consolidation:</strong> episodes older than N days with low weight are summarised (model optional; extractive fallback) into <code>summaries</code> with <code>covers[]</code>; originals stay in cold storage.</li><li><strong>Contradictions:</strong> a new fact with the same subject and predicate and a different object sets <code>valid_to</code> on the old one and records <code>superseded_by</code>.</li><li><strong>Budget:</strong> per-project size cap with a report of what would be archived; nothing is dropped without a user-visible audit entry.</li></ul>
+<h2 id="167-tool-integration">16.7 Tool integration</h2>
+<div class="tablewrap"><table><thead><tr><th>Mechanism</th><th>Used for</th><th>Notes</th></tr></thead><tbody><tr><td>Hooks</td><td>Capture, session-start context</td><td>Per-tool installer writes the hook config with a backup; verified against real installs (planned)</td></tr><tr><td>MCP</td><td>Agent-initiated search, save, rules</td><td>Stdio built; Streamable HTTP planned (spec 2025-11-25 requires Origin validation, localhost binding, auth)</td></tr><tr><td>REST <code>/v1</code></td><td>Anything else</td><td>Loopback only; optional bearer key</td></tr><tr><td>Files</td><td>Rules</td><td>Managed block; <code>AGENTS.md</code> as the common target, tool-specific files where the tool needs them</td></tr></tbody></table></div>
+<p>Tool facts live in one registry (<code>tools.mjs</code>) with a <code>verifiedOn</code> date per entry and a CI smoke test per pinned tool version (planned). Verified so far (2026-10-25, official docs): Cursor <code>mcp.json</code>, Gemini CLI <code>settings.json</code>, Codex <code>config.toml</code>, Claude Code <code>claude mcp add</code> and scopes, OpenCode <code>mcp</code> block, MCP stdio framing; corrected: Windsurf's current docs name <code>~/.config/devin/mcp_config.json</code>, the registry now tries both paths.</p>
+<h2 id="168-security">16.8 Security</h2>
+<div class="tablewrap"><table><thead><tr><th>Threat</th><th>Control</th><th>Status</th></tr></thead><tbody><tr><td>Hostile web page calls the local API</td><td>Loopback bind; Host and Origin validation; same-origin JSON for writes; <code>maxRequestBodySize</code></td><td>built, tested</td></tr><tr><td>DNS rebinding</td><td>Host header allow-list</td><td>built, tested</td></tr><tr><td>Secrets stored in memory</td><td>Redaction before store; <code>&lt;private&gt;</code> dropped; fuzzed formats</td><td>built; list must keep growing</td></tr><tr><td>Stored text hijacks the agent (memory poisoning)</td><td>Label as data; no auto-exec; shared memory needs review</td><td>planned (policy), UI wraps text as text</td></tr><tr><td>XSS in the UI</td><td>Text nodes only; test forbids raw markup insertion</td><td>built</td></tr><tr><td>Config corruption by connectors</td><td>Preview, backup, refuse invalid JSON, idempotent</td><td>built</td></tr><tr><td>Supply chain</td><td>Zero required dependencies; optional ones pinned</td><td>built</td></tr><tr><td>Path abuse</td><td>Absolute-path checks, folder existence, file size caps</td><td>built</td></tr><tr><td>Multi-user machine</td><td>File modes 0600 for ledger; hub DB mode to be set</td><td>partial</td></tr></tbody></table></div>
+<h2 id="169-observability-and-evaluation">16.9 Observability and evaluation</h2>
+<ul><li>Every search logs (locally) the query shape, candidate counts per retriever, final ranks, latency, and which results the agent fetched. This powers &quot;why was this recalled&quot; and the online metric <em>fetch rate of returned ids</em>.</li><li>Offline: <code>bench/</code> runs the benchmark suite; CI fails on regression beyond a tolerance.</li><li>Cost: every model call is logged with tokens and price; the UI shows totals.</li></ul>
+<h2 id="1610-deployment">16.10 Deployment</h2>
+<p>Single <code>bun</code> process (user service). Planned: <code>bun build --compile</code> single binary; Docker image; Homebrew/npm wrappers. No daemon manager beyond systemd/launchd.</p>
+<h2 id="1611-decisions-adr-summary">16.11 Decisions (ADR summary)</h2>
+<div class="tablewrap"><table><thead><tr><th>#</th><th>Decision</th><th>Alternatives rejected</th><th>Why</th><th>Revisit when</th></tr></thead><tbody><tr><td>1</td><td>SQLite (WAL, FTS5) is the only required store</td><td>Postgres, Chroma service</td><td>One file, zero ops, ms latency measured</td><td>&gt; 1M memories or multi-user server</td></tr><tr><td>2</td><td>Embeddings and rerank are optional local ONNX models</td><td>Hosted embeddings; Chroma</td><td>Privacy, cost, no network; 384-d model gives usable recall</td><td>A model clearly better at similar size</td></tr><tr><td>3</td><td>Reciprocal rank fusion</td><td>Learned weights, score blending</td><td>No score calibration needed; measured gain</td><td>Enough labelled data to learn weights</td></tr><tr><td>4</td><td>No telemetry at all</td><td>Opt-out telemetry</td><td>Trust is the product for secret-adjacent data</td><td>Never</td></tr><tr><td>5</td><td>MCP + REST + CLI + files</td><td>One of them</td><td>Tools differ in what they can call</td><td>A single standard dominates</td></tr><tr><td>6</td><td>Events immutable, facts bi-temporal</td><td>Overwrite on update</td><td>Knowledge-update questions need history</td><td>n/a</td></tr><tr><td>7</td><td>Brute-force vector scan up to ~100k</td><td>HNSW, sqlite-vec</td><td>25 ms p50 at 20k measured, no native extension, works in Bun</td><td>Latency &gt; 50 ms p95</td></tr><tr><td>8</td><td>Extraction by model is opt-in</td><td>On by default</td><td>Cost and privacy; value measured separately</td><td>Local extraction model good enough</td></tr><tr><td>9</td><td>No tokens or financial layer</td><td>Token</td><td>non-goal</td><td>n/a</td></tr></tbody></table></div>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>
