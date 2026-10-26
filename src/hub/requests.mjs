@@ -70,6 +70,14 @@ function sessionGroups(store, scope) {
       .sort((a, b) => a.at - b.at || a.id - b.id);
     session.tools.sort((a, b) => a.at - b.at || a.id - b.id);
     session.ended = store.sessionEnd(session.project, session.sessionId) ?? null;
+    session.summaries = store.db
+      .prepare("SELECT id, created_at_epoch AS at FROM memories WHERE project = ? AND session_id = ? AND kind = 'summary' ORDER BY created_at_epoch DESC, id DESC")
+      .all(session.project, session.sessionId);
+    session.summarized = session.summaries.length > 0;
+    session.factIds = store.db
+      .prepare("SELECT f.id FROM facts f JOIN episodes e ON e.id = f.episode_id WHERE f.project = ? AND e.session_id = ?")
+      .all(session.project, session.sessionId)
+      .map((row) => row.id);
   }
   return [...map.values()];
 }
@@ -106,6 +114,30 @@ function buildRequest(sessions, { now, activeMs, project }) {
   const goalKey = topic?.key ?? NO_GOAL;
   const id = sha256(`${first.project}\u0000${goalKey}\u0000${first.sessionId}`).slice(0, 16);
   const ended = !!last.ended;
+  const completedSessions = sorted.filter((session) => session.ended || session.summarized);
+  const factIds = [...new Set(sorted.flatMap((session) => session.factIds))];
+  const summaryIds = sorted.flatMap((session) => session.summaries.map((summary) => summary.id));
+  const sessionCount = sorted.length;
+  const progress = status === "Shipped" ? 100 : sessionCount ? Math.min(99, Math.round((100 * completedSessions.length) / sessionCount)) : 0;
+
+  // ETA is only reported when there is a measured pace: at least two sessions with distinct starts and at least one
+  // completed session. Otherwise it is null, never a guess.
+  let eta = null;
+  let etaEvidence = null;
+  if (status !== "Shipped") {
+    const starts = sorted.map((session) => session.firstAt).filter(Number.isFinite).sort((a, b) => a - b);
+    if (starts.length >= 2 && completedSessions.length > 0) {
+      const gaps = [];
+      for (let i = 1; i < starts.length; i++) gaps.push(starts[i] - starts[i - 1]);
+      const pace = gaps.reduce((sum, gap) => sum + gap, 0) / gaps.length;
+      const remainingSessions = sessionCount - completedSessions.length;
+      if (pace > 0 && remainingSessions > 0) {
+        eta = now + pace * remainingSessions;
+        etaEvidence = { paceMs: Math.round(pace), remainingSessions };
+      }
+    }
+  }
+
   return {
     id,
     project: first.project,
@@ -120,10 +152,21 @@ function buildRequest(sessions, { now, activeMs, project }) {
     lastAt: iso(lastAt),
     lastAtEpoch: lastAt,
     runningTimeMs: Math.max(0, (ended ? lastAt : now) - firstAt),
-    sessionCount: sorted.length,
+    sessionCount,
     promptCount: sorted.reduce((sum, session) => sum + session.prompts.length, 0),
     toolCount: sorted.reduce((sum, session) => sum + session.tools.length, 0),
     ended,
+    progress,
+    progressEvidence: {
+      sessionCount,
+      completedSessions: completedSessions.length,
+      completedSessionIds: completedSessions.map((session) => session.sessionId),
+      factIds,
+      summaryIds,
+    },
+    eta: iso(eta),
+    etaEpoch: eta,
+    etaEvidence,
     evidence: {
       sessionIds: sorted.map((session) => session.sessionId),
       promptIds: sorted.flatMap((session) => session.prompts.map((p) => p.id)),
