@@ -3,9 +3,10 @@
 // fails, the already-redacted item goes to a local spool file and the next successful hook flushes it.
 import { loadConfig } from "../../config.mjs";
 import { HubStore } from "../store.mjs";
+import { isProjectExcluded } from "../capture.mjs";
 import claudeCode from "./claude-code.mjs";
 import commandCode from "./command-code.mjs";
-import { enqueueCompression, flushSpool, readPayload, spoolAppend } from "./shared.mjs";
+import { enqueueCompression, flushSpool, projectOf, readPayload, spoolAppend } from "./shared.mjs";
 
 export const ADAPTERS = { "claude-code": claudeCode, "command-code": commandCode };
 
@@ -29,6 +30,12 @@ export async function runHook({ tool, event, stdin, config, dataDir } = {}) {
     adapter = adapterFor(tool);
   } catch (error) {
     return { ...fallback, error: error.message };
+  }
+
+  // An excluded project is skipped before any row (memory or episode) is written. The hook still exits 0.
+  const project = projectOf(payload);
+  if (isProjectExcluded(project, cfg.excludedProjects ?? [])) {
+    return { ...fallback, stored: false, queued: false, reason: "excluded_project", project };
   }
 
   let item = empty();

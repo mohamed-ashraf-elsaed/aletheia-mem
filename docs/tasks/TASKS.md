@@ -56,7 +56,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-013 | Add a documentation link checker | P0 | none | todo | — | [T-013.md](T-013.md) |
 | T-014 | Add Linux, macOS and Windows CI | P0 | T-002 | todo | — | [T-014.md](T-014.md) |
 | T-015 | Add a benchmark protocol test | P0 | none | todo | — | [T-015.md](T-015.md) |
-| T-016 | Add excluded projects and context scope | P0 | none | todo | — | [T-016.md](T-016.md) |
+| T-016 | Add excluded projects and context scope | P0 | none | validated | 2026-10-26 | [T-016.md](T-016.md) |
 | T-017 | Add schema v3 with an additive migration | P1 | T-003 | validated | 2026-10-26 | [T-017.md](T-017.md) |
 | T-018 | Add fact extraction with a strict validator | P1 | T-017 | validated | 2026-10-26 | [T-018.md](T-018.md) |
 | T-019 | Batch extraction and record its cost | P1 | T-018 | validated | 2026-10-26 | [T-019.md](T-019.md) |
