@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { parseRoute } from "../public/ui-core.js";
-import { factLineView, sessionCardView, workEmptyView, workHeaderView, workNeedsView, WORK_EMPTY } from "../public/work-view.js";
+import { factLineView, goalView, goalsView, sessionCardView, workEmptyView, workHeaderView, workNeedsView, WORK_EMPTY } from "../public/work-view.js";
 
 const fact = {
   id: 7,
@@ -92,5 +92,34 @@ describe("T-143: the Work overview view", () => {
   test("the session hash still routes to Work", () => {
     expect(parseRoute("#/work/session/s1?project=shop")).toBe("work");
     expect(parseRoute("#/work")).toBe("work");
+  });
+});
+
+describe("T-144: the goal view", () => {
+  test("a goal shows its count, session count, last-seen date and dated quote ids", () => {
+    const goal = {
+      id: "0123456789abcdef",
+      label: "Add a retry button to checkout",
+      count: 3,
+      sessionCount: 2,
+      projects: ["shop"],
+      firstSeen: "2026-10-26T09:00:00.000Z",
+      lastSeen: "2026-10-26T11:40:00.000Z",
+      pinned: true,
+      dismissed: false,
+      quotes: [
+        { id: 11, at: "2026-10-26T09:00:00.000Z", project: "shop", sessionId: "s1", text: "Add a retry button to checkout" },
+        { id: 12, at: "2026-10-26T11:40:00.000Z", project: "shop", sessionId: "s2", text: "please add retry button for payments" },
+      ],
+    };
+    const view = goalView(goal);
+    expect(view).toMatchObject({ id: "0123456789abcdef", countLabel: "3 quotes", sessionLabel: "2 sessions", pinned: true });
+    expect(view.lastSeen).toContain("2026-10-26 11:40");
+    expect(view.quotes.map((quote) => quote.id)).toEqual([11, 12]);
+    expect(view.quotes[0].at).toContain("2026-10-26");
+
+    const all = goalsView({ project: "shop", goals: [goal], dismissedGoals: [{ ...goal, id: "fedcba9876543210", dismissed: true }] });
+    expect(all.goals).toHaveLength(1);
+    expect(all.dismissedGoals[0]).toMatchObject({ id: "fedcba9876543210", dismissed: true });
   });
 });
