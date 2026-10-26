@@ -21,6 +21,12 @@ export const TOOL_DEFS = [
 const text = (t) => ({ content: [{ type: "text", text: t }] });
 const fail = (t) => ({ content: [{ type: "text", text: t }], isError: true });
 
+const REASON = {
+  no_terms: "The query had no searchable words.",
+  no_rows: "The store has no memories yet.",
+  filtered: "Memories exist, but the project/kind/type/tool filter or the query terms excluded all of them.",
+};
+
 function fmtIndex(rows) {
   if (!rows.length) return "No matches.";
   return rows.map((r) => `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title}  (${r.project}, ${r.tool}${r.pinned ? ", pinned" : ""})`).join("\n");
@@ -39,7 +45,10 @@ export function callTool(name, args = {}, ctx) {
         const limit = args.limit ?? 20;
         const facts = store.searchFacts({ query: args.query, project: args.project, limit: Math.min(limit, 10) });
         const factLines = facts.map((fact) => `fact #${fact.id} ${fact.text}${fact.source?.episodeId ? ` (episode #${fact.source.episodeId})` : ""}`);
-        const memoryIndex = fmtIndex(store.search({ query: args.query, project: args.project, type: args.type, kind: args.kind, limit }));
+        const detailed = store.searchDetailed({ query: args.query, project: args.project, type: args.type, kind: args.kind, limit });
+        const index = store.search({ query: args.query, project: args.project, type: args.type, kind: args.kind, limit });
+        const memoryIndex = fmtIndex(index);
+        if (!factLines.length && !index.length) return text(`No matches. ${REASON[detailed.reason] ?? ""}`.trim());
         return text([...factLines, memoryIndex].filter(Boolean).join("\n"));
       }
       case "timeline": {

@@ -1064,6 +1064,25 @@ export class HubStore {
     return top.map((id) => byId.get(id)).filter(Boolean).filter((memory) => this.summaryIsCurrent(memory, { includeHistory }));
   }
 
+  /**
+   * ranked() plus the reason an empty result is empty: no_terms (nothing to search for), no_rows (the store has no
+   * rows at all), filtered (rows exist but the project/kind/type/tool filter or the terms excluded every one).
+   */
+  searchDetailed({ query, project, kind, type, tool, limit = 20, queryVec = null, includeHistory = false, scope = "current" } = {}) {
+    const items = this.ranked({ query, project, kind, type, tool, limit, queryVec, includeHistory, scope });
+    if (items.length) return { items, reason: null };
+    if (!contentTerms(query).length) return { items, reason: "no_terms" };
+    const where = [];
+    const params = [];
+    const filtered = Boolean(project || kind || type || tool);
+    if (project && scope !== "all") { where.push("(project = ? OR scope = 'global')"); params.push(project); }
+    for (const [column, value] of [["kind", kind], ["type", type], ["tool", tool]]) if (value) { where.push(`${column} = ?`); params.push(value); }
+    const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    const rows = this.db.prepare(`SELECT COUNT(*) AS n FROM memories ${clause}`).get(...params).n;
+    if (rows === 0) return { items, reason: filtered ? "filtered" : "no_rows" };
+    return { items, reason: "filtered" };
+  }
+
   // ---- vectors (semantic search, optional) --------------------------------------------------------------
 
   setVector(id, model, vec) {

@@ -178,7 +178,9 @@ async function main() {
         const body = rows.length ? rows.map((r) => (r.kind === "fact"
           ? `fact #${r.id} ${r.at.slice(0, 10)} [${r.status}] ${r.text} (source episode #${r.source?.episodeId ?? "-"})`
           : `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title} (${r.project}, ${r.tool})`)).join("\n") : "No matches.";
-        return out(flags.explain ? `${body}\n${formatChannels(channels)}` : body);
+        if (!flags.explain) return out(body);
+        const reason = rows.length ? null : hub.searchDetailed({ query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20, scope: flags.scope === "all" ? "all" : "current" }).reason;
+        return out(`${body}${reason ? ` (${reason})` : ""}\n${formatChannels(channels)}`);
       }
       case "embed": {
         const { createEmbedderIfAvailable } = await import("../src/hub/embed.mjs");
