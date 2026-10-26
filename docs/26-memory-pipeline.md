@@ -17,7 +17,7 @@ hook (Claude Code / Command Code)
 worker (server background task or `aletheia compress --daemon`)
   → jobs row                                     src/hub/queue.mjs
   → claim one oldest-due job (BEGIN IMMEDIATE)
-  → episode per memory row (source_ref = memory:<id>)
+  → episode per memory row (and any episode written directly, e.g. a back-filled transcript)
   → windows of 20 episodes / 12,000 chars        src/hub/facts.mjs (chunkEpisodes)
   → provider (extract model) or rule extractor
   → strict validator, one retry with the refusal
@@ -43,7 +43,7 @@ claimable and the completed windows marked, so the restart neither loses nor rep
 | Table | Holds | Written by |
 |---|---|---|
 | `memories` | raw capture rows, unchanged since v2 | hooks, `/v1`, CLI |
-| `episodes` | one immutable row per captured memory; `source_ref = memory:<id>`; `extracted_at_epoch` is the window checkpoint | worker |
+| `episodes` | one immutable row per captured memory or imported transcript turn; `source_ref = memory:<id>` or `transcript:<tool>:<session>:<turn>`; `extracted_at_epoch` is the window checkpoint | worker, transcript import |
 | `facts` | subject, predicate, object, text, valid and record time, confidence, status, extractor mode, prompt version, model | extractor |
 | `memory_keys` | fact text and entity names as extra retrieval keys | extractor |
 | `memory_links` | `mentions`, `derived_from`, `supersedes`, `duplicate_of` | extractor, merge |

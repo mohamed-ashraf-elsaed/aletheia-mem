@@ -6,6 +6,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { HubStore } from "../src/hub/store.mjs";
+import { executeJob, JOB_TYPE } from "../src/hub/queue.mjs";
 import { findTranscripts, importTranscripts, parseTranscript, transcriptRoot } from "../src/hub/transcripts.mjs";
 
 const root = join(import.meta.dir, "..");
@@ -72,7 +73,7 @@ describe("T-121: transcript back-fill", () => {
     expect(cc.episodes.map((e) => e.text)).toEqual(["Command Code prompt about the checkout.", "Command Code answer about Postgres."]);
   });
 
-  test("import writes episodes and one job per session, is idempotent, and never changes the source", () => {
+  test("import writes episodes and one job per session, is idempotent, and never changes the source", async () => {
     const db = join(temp, "hub.db");
     const store = new HubStore(db);
     const first = importTranscripts(store, { tool: "claude-code", home });
@@ -84,6 +85,21 @@ describe("T-121: transcript back-fill", () => {
     expect(JSON.stringify(episodes)).not.toContain("sk-ant-api03");
     const jobs = store.db.prepare("SELECT payload FROM jobs").all().map((row) => JSON.parse(row.payload));
     expect(jobs).toEqual(expect.arrayContaining([{ project: "shop", sessionId: "session-a", source: "backfill" }]));
+
+    // The queued job must actually extract: a back-filled episode has no memory row, so the worker has to
+    // pick standalone episodes up directly.
+    const job = store.db.prepare("SELECT * FROM jobs WHERE type = ? AND payload LIKE ?").get(JOB_TYPE, "%session-a%");
+    const ask = async (prompt) => {
+      const episodeId = Number(/EPISODE_IDS: \[(\d+)/.exec(prompt)?.[1]);
+      return JSON.stringify({ facts: [{ subject: "retry button", predicate: "uses", object: "exponential backoff", text: "The retry button uses exponential backoff", confidence: 0.9, episode_ids: [episodeId] }] });
+    };
+    const extracted = await executeJob(store, job, { ask, config: { mode: "code", factBudget: { maxEpisodes: 50, maxChars: 40_000 } } });
+    expect(extracted.episodes).toBeGreaterThan(0);
+    expect(extracted.facts).toBeGreaterThan(0);
+    const facts = store.factsCurrent({ project: "shop" });
+    expect(facts.length).toBeGreaterThan(0);
+    expect(facts[0].episode_id).toBeGreaterThan(0);
+
     const second = importTranscripts(store, { tool: "claude-code", home });
     expect(second).toMatchObject({ added: 0, skipped: 5 });
     expect(store.db.prepare("SELECT COUNT(*) AS n FROM jobs").get().n).toBe(jobs.length);
