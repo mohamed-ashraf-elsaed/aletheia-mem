@@ -1,9 +1,9 @@
 // The one UI shell (T-134, T-205): one page at /, hash routes, a shared header (brand, tabs with a sliding
 // indicator, project, search, theme), a status bar, shortcuts and the command palette. Each tab is a module in
 // ./tabs/ loaded on first visit, so the shell stays small. Nothing here builds markup from strings.
-import { SUBVIEWS, TABS, parseRoute, routeOf } from "./ui-core.js";
+import { SUBVIEWS, TABS, isDemo, parseRoute, routeOf } from "./ui-core.js";
 import { brainMark } from "./ui-brand.js";
-import { errorState, segmented, startClock, tabs, toast } from "./ui-components.js";
+import { banner, errorState, segmented, startClock, tabs, toast } from "./ui-components.js";
 import { byId, h, state, swap } from "./ui-dom.js";
 import { installKeys, openPalette, openShortcuts } from "./ui-keys.js";
 import { enter, watchVisibility } from "./ui-motion.js";
@@ -125,6 +125,12 @@ function mountTheme() {
 function boot() {
   watchVisibility();
   startClock();
+  // ?demo=1 labels the page: every row on it was made up by scripts/seed-demo.mjs.
+  if (isDemo(globalThis.location.search)) {
+    const slot = byId("ui-banner-slot");
+    if (slot) slot.append(banner({ tone: "info", text: "Demo mode. The data on this page is made up by scripts/seed-demo.mjs. None of it came from a real tool." }));
+    document.documentElement.setAttribute("data-demo", "1");
+  }
   state.project = storedProject();
   swap(byId("ui-brand-mark"), brainMark({ size: 30 }));
 

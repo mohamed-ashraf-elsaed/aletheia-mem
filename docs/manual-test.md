@@ -157,6 +157,36 @@ horizontally and every button, tab link, select, search box and details summary 
 automated run proves the scripts load and the DOM is reachable; it does not assert pixel layout or the timer under a
 real host.
 
+### The rebuilt UI (RUN BY AUTHOR, 2026-10-26 UTC)
+
+Run with the connected Playwright Chromium on a temporary data folder seeded by `scripts/seed-demo.mjs` (150 rows, then 5,000 rows
+for the measurements), server on port 37891, `HOME` pointing at an empty temporary folder:
+
+```bash
+bun scripts/seed-demo.mjs --data "$TMP/data" --rows 150
+ALETHEIA_DATA_DIR="$TMP/data" HOME="$TMP/home" ALETHEIA_PORT=37891 bun bin/aletheia-server.mjs --host 127.0.0.1
+```
+
+Observed:
+
+- All four tabs and every page inside them render with no console error and no Content-Security-Policy violation (13 routes, then a
+  dialog, the palette, a popover and the theme switch).
+- Paging: Next, `]`, Back and reload keep the page and the filters in the address; a page past the end jumps to the last page.
+- Optimistic actions: Dismiss hides the card at once, shows an Undo toast, and Undo brings it back in place; Pin toggles at once.
+- Status bar: ten indicators with live data; killing the server shows the "connection lost" banner with a counting-down retry and a red
+  tab icon; starting it again clears the banner and reconnects the WebSocket.
+- First-run guide: on an empty store it shows three steps; a note posted through the API flipped it to "arrived" and the page then
+  listed the memory.
+- Themes: Auto follows the system, Dark and Light stick across reload.
+- Reduced motion (emulated): dialogs fade in 80 ms with no movement; an idle page has no looping animation.
+- Widths 375, 768, 1280 and 1920 px on 15 routes: no sideways scroll; a keyboard walk of 45 Tab stops on three pages shows a visible
+  ring on every stop; no control without a name.
+- Numbers are in [ui-design.md](ui-design.md#measured-performance).
+
+**NOT RUN BY AUTHOR:** a real screen reader (NVDA, VoiceOver, Orca), a real phone or touch screen, Firefox and Safari, a high-contrast
+or forced-colours mode, a 4K display, and a long session against a live capture from a real tool. The automated checks only look at
+names, roles and structure.
+
 ### Work view steps (RUN BY AUTHOR, 2026-10-26)
 
 1. Seed a temporary hub (the fixture in `test/work.test.mjs` creates prompts, tool events, a summary, a fact, a

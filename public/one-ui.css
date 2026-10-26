@@ -15,7 +15,7 @@ html, body { min-height: 100%; }
   border-bottom: 1px solid var(--ui-border);
 }
 .ui-brand { display: inline-flex; align-items: center; gap: 10px; flex: none; min-height: var(--ui-touch); color: var(--ui-text); text-decoration: none; border-radius: var(--ui-radius); }
-.ui-brand-mark { display: inline-flex; filter: drop-shadow(0 0 8px var(--ui-glow-color)); }
+.ui-brand-mark { display: inline-flex; width: 30px; height: 26px; flex: none; filter: drop-shadow(0 0 8px var(--ui-glow-color)); }
 .ui-brand-word { font-size: var(--ui-text-lg); font-weight: 700; letter-spacing: 0.01em; }
 .ui-nav { align-self: stretch; display: flex; min-width: 0; }
 .ui-nav .ui-tablist { align-items: stretch; }
@@ -44,7 +44,7 @@ html, body { min-height: 100%; }
 
 /* ---- status strip ---- */
 .ui-statusbar {
-  position: relative; display: flex; align-items: center; gap: var(--ui-space-1); min-height: 40px; padding: 2px var(--ui-space-4); overflow-x: auto; scrollbar-width: thin;
+  position: relative; display: flex; align-items: center; gap: var(--ui-space-1); min-height: 45px; padding: 2px var(--ui-space-4); overflow-x: auto; scrollbar-width: thin;
   background: var(--ui-s0); border-bottom: 1px solid var(--ui-border);
 }
 .ui-status-item {

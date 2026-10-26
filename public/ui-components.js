@@ -572,7 +572,7 @@ export function errorState({ title = "Could not load this", message, onRetry, er
 
 /** A banner across the top of a region, for example "Connection lost". `action` is a button config. */
 export function banner({ tone = "warning", text, action = null, id } = {}) {
-  const el = h("div", { class: `ui-banner tone-${tone}`, role: "status", id }, icon(tone === "danger" ? "wifi-off" : "alert", { size: 16 }), h("span", { class: "ui-banner-text" }, text), action ? button({ label: action.label, size: "sm", onClick: action.onClick }) : null);
+  const el = h("div", { class: `ui-banner tone-${tone}`, role: "status", id }, icon(tone === "danger" ? "wifi-off" : tone === "info" ? "info" : "alert", { size: 16 }), h("span", { class: "ui-banner-text" }, text), action ? button({ label: action.label, size: "sm", onClick: action.onClick }) : null);
   el.setText = (next) => { el.querySelector(".ui-banner-text").textContent = next; };
   return el;
 }

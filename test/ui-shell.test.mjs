@@ -316,3 +316,14 @@ describe("T-205: the palette", () => {
 });
 
 afterAll(() => restoreGlobals());
+
+describe("T-216: demo label and the page's security headers", () => {
+  test("?demo=1 is the only thing that marks demo mode", async () => {
+    const { isDemo } = await import("../public/ui-core.js");
+    expect(isDemo("?demo=1")).toBe(true);
+    expect(isDemo("?x=1&demo=1")).toBe(true);
+    expect(isDemo("?demo=0")).toBe(false);
+    expect(isDemo("")).toBe(false);
+    expect(isDemo(undefined)).toBe(false);
+  });
+});

@@ -22,6 +22,9 @@ const STATIC_TYPES = {
   ".webp": "image/webp", ".png": "image/png", ".ttf": "font/ttf", ".woff2": "font/woff2", ".json": "application/json", ".map": "application/json",
 };
 const BASE_HEADERS = { "Content-Security-Policy": "frame-ancestors 'self'", "X-Frame-Options": "SAMEORIGIN" };
+// The app page loads only its own scripts and styles. Same-origin requests and sockets, data: images for the tab icon,
+// no inline script, no inline style attribute, no plugin, no form posting elsewhere.
+const APP_CSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'";
 
 const json = (body, status = 200, extra = {}) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...BASE_HEADERS, ...extra } });
@@ -145,7 +148,7 @@ export function startServer(config, {
 
     // ---- static
     if (method === "GET" && (pathname === "/" || pathname === "/index.html")) {
-      return new Response(indexHtml(), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", ...BASE_HEADERS } });
+      return new Response(indexHtml(), { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", ...BASE_HEADERS, "Content-Security-Policy": APP_CSP } });
     }
     if (method === "GET" && pathname === "/health") return json({ status: "ok", timestamp: Date.now() });
     if (method === "GET" && (pathname.startsWith("/work-view/") || /\.(?:svg|webp|png|ttf|woff2)$/.test(pathname)) && !pathname.startsWith("/api/")) {

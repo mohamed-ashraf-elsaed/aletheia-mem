@@ -142,6 +142,9 @@ export function tabIdFromElement(element) {
   return TABS.some((tab) => tab.id === element) ? element : DEFAULT_TAB;
 }
 
+/** True when the page was opened with ?demo=1, which is how screenshots and demos of seeded data are labelled. */
+export const isDemo = (search) => new URLSearchParams(String(search ?? "")).get("demo") === "1";
+
 /** The optional legacy viewer is offered only when the old database exists. */
 export function classicViewerAvailable(overview) {
   return overview?.claudeMem?.exists === true;

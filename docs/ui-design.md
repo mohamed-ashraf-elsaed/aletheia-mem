@@ -94,9 +94,60 @@ light accent        on s0  5.70:1  (min 3) pass
 light accent        on s1  6.14:1  (min 3) pass
 ```
 
-## Brand details
+## Brand details as built
 
-- The brain mark is an inline SVG of connected nodes. It sits in the header and animates as the loading mark: the
-  nodes pulse one after another.
-- The favicon is an SVG that changes in three states (idle, working, error) by swapping a data URL in JavaScript.
-- The empty-state picture is an inline SVG that uses the same palette through CSS variables.
+- The brain mark (17 nodes, 34 lines) is an inline SVG in the header. As the loader its nodes pulse one after another; it stops under
+  reduced motion and while the tab is hidden.
+- The tab icon is an SVG data URL in three states: idle (cyan), working (teal with a dot) and error (red with a dot). It follows the
+  status bar.
+- Empty states use the faded brain with a small symbol (plus, magnifier, check, cross, rules). All colours are CSS variables, so both
+  themes work.
+
+## Screenshots
+
+Twelve captures of the running app are in [screenshots/](screenshots/) (WebP, 420 KB in all) and shown in
+[06-frontend.md](06-frontend.md). They were taken 2026-10-26 (UTC) from the Playwright Chromium on the seeded demo store, in dark and
+light, at 1280 px and 375 px. Each shows the "Demo mode" banner because the page was opened with `?demo=1`. None shows real data.
+
+## Accessibility audit
+
+Contrast is in the table above and enforced by `test/ui-contrast.test.mjs`. `test/ui-a11y.test.mjs` checks names, roles, ids, tab
+order, directions and the stylesheet rules on every page. A Chromium pass over 15 routes at 375, 768, 1280 and 1920 px (60
+combinations, with a 200-character unbroken token and an Arabic paragraph in the data) found no page that scrolls sideways, no
+control without a name and no duplicate id, after the fixes listed in [T-214](tasks/T-214.md). The two remaining targets under 40 px
+are disabled Markdown task-list checkboxes and checkboxes inside a 40 px label.
+
+## Measured performance
+
+Machine: Intel Core i7-8850H, 12 logical CPUs, 30 GB RAM, Linux 7.0.0-38-generic. Browser: Chromium 156 through Playwright. Server and
+browser on loopback, server started with `nice -n 10`, other processes running (the owner's tools and an agent). Date: 2026-10-26,
+23:34 to 23:55 UTC. Data: `scripts/seed-demo.mjs --rows 5000` (5,000 memories, 1,667 facts, 278 review items), one run per
+number unless a count is given. These are single-machine numbers, not a benchmark.
+
+| Measure | Result |
+|---|---|
+| First paint of the shell (7 cold loads) | 68, 72, 76, 92, 92, 104, 104 ms; median 92 ms. **Under 100 ms in 5 of 7 loads, not in all.** |
+| Layout shift, Memory page with 5,000 rows | 0.107 before the fixes in T-214 and T-216 (an empty status strip and brand mark changed height when script ran); after: Memory 0.012, Work 0.016, Rules 0.010, Tools 0.010, Facts 0.034 (under the 0.1 "good" line) |
+| Scrolling a page of 100 cards (5,723 DOM nodes) | 302 frames in 4.0 s: median 13.3 ms, p95 13.4 ms, worst 13.5 ms, 0 frames over 33 ms |
+| Clicking Next on the 5,000-row list until new rows show | 21 to 30 ms (8 clicks), scroll position kept |
+
+API time per request (`bun scripts/measure-api.mjs`, 200 requests each, median and p95 in ms):
+
+| Request | Median | p95 |
+|---|---|---|
+| `GET /api/hub/memories?limit=25 (random page)` | 6.1 | 13.3 |
+| `GET /api/hub/memories?limit=100 (random page)` | 6.5 | 12.4 |
+| `GET /api/hub/memories?q=retry&limit=25` | 8.6 | 14.1 |
+| `GET /api/hub/memories?sort=oldest&since=… (date range)` | 10.1 | 20.7 |
+| `GET /api/hub/facts?limit=25 (random page)` | 8.0 | 17.4 |
+| `GET /api/hub/review?status=pending&limit=10&dupes=0` | 2.9 | 8.3 |
+| `GET /api/hub/dismissed?limit=25` | 1.0 | 3.4 |
+| `GET /api/hub/audit?limit=25` | 0.3 | 2.1 |
+| `GET /v1/work/sessions?limit=10` | 42.1 | 54.2 |
+| `GET /v1/work?sessions=1&facts=8&review=6` | 64.7 | 78.5 |
+| `POST /v1/search (limit 25, paged)` | 31.2 | 38.7 |
+| `GET /v1/health` | 34.8 | 43.4 |
+
+Not measured: other machines, a spinning disk, Firefox or Safari, a store larger than 5,000 rows, and touch scrolling on a phone.
+The health check (`/v1/health`) runs a SQLite quick check, which is why it costs 35 ms on this store; the status bar asks for it
+every 10 to 30 s.
