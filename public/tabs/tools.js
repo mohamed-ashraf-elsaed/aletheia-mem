@@ -1,13 +1,14 @@
 // T-138: the Tools tab. Read-only status from `aletheia doctor`: installed, hooks present, last capture,
 // spool size, plus copy-ready commands. No install, uninstall or connect button is offered here.
 import { classicViewerAvailable, formatWhen } from "../ui-core.js";
-import { activityDetails, api, chip, copy, errorCard, errorText, h, settledValue, swap } from "../ui-dom.js";
+import { activityDetails, api, chip, copy, errorCard, errorText, h, run, settledValue, swap, toast } from "../ui-dom.js";
 
 export async function renderTools() {
   const root = document.getElementById("ui-tools");
-  const [doctorResult, overviewResult] = await Promise.allSettled([api("/api/hub/doctor"), api("/api/hub/overview")]);
+  const [doctorResult, overviewResult, syncResult] = await Promise.allSettled([api("/api/hub/doctor"), api("/api/hub/overview"), api("/api/hub/sync/status")]);
   const data = settledValue(doctorResult, null);
   const overview = settledValue(overviewResult, null);
+  const sync = settledValue(syncResult, null);
   if (!data) {
     swap(root, h("h1", {}, "Tools"), errorCard(errorText(doctorResult, "Doctor")));
     return;
@@ -25,6 +26,7 @@ export async function renderTools() {
     h("div", { class: "ui-meta" }, `Data: ${data.dataDir}`, ` · generated ${formatWhen(data.generatedAt)}`, overview ? ` · provider: ${overview.provider}` : ""),
     h("div", {}, ...data.tools.map(toolCard)),
     classicViewerCard(overview),
+    syncPanel(sync, syncResult, renderTools),
     h("h2", {}, "Doctor checks"),
     checksTable,
     activityDetails());
@@ -50,4 +52,54 @@ function toolCard(tool) {
     h("div", { class: "ui-row" }, h("b", {}, "Copy-ready commands")),
     h("pre", { class: "ui-pre" }, [tool.commands.install, tool.commands.uninstall, tool.commands.doctor, `mcp: ${tool.commands.mcp}`, ...Object.entries(tool.hooks.commands).map(([event, command]) => `${event}: ${command}`)].join("\n")),
     h("div", { class: "ui-acts" }, h("button", { onclick: () => copy([tool.commands.install, tool.commands.uninstall, tool.commands.doctor, `mcp: ${tool.commands.mcp}`].join("\n")) }, "Copy commands")));
+}
+
+/** The Sync section (T-102, T-104): devices, last sync, pending ops, revoke, and a pairing code. */
+function syncPanel(sync, result, refresh) {
+  if (!sync) return errorCard(errorText(result, "Sync"));
+  const devices = sync.devices ?? [];
+  return h("section", { class: "ui-card" },
+    h("h2", {}, "Sync"),
+    h("p", { class: "ui-meta" }, `Epoch ${sync.epoch} · head seq ${sync.headSeq} · ${devices.length} paired device(s)`),
+    devices.length ? h("div", {}, ...devices.map((device) => deviceCard(device, refresh))) : h("div", { class: "ui-empty" }, "No paired devices. Pair a device below."),
+    pairControls(refresh));
+}
+
+function deviceCard(device, refresh) {
+  return h("div", { class: "ui-card" },
+    h("div", { class: "ui-row" },
+      h("b", {}, device.name ?? device.deviceId),
+      device.revoked ? chip("revoked", "bad") : chip("paired", "ok")),
+    h("div", { class: "ui-meta" },
+      h("span", {}, `device: ${device.deviceId}`),
+      h("span", {}, `last sync: ${device.lastSync ? formatWhen(device.lastSync) : "never"}`),
+      h("span", {}, `pending ops: ${device.pendingOps}`)),
+    h("div", { class: "ui-acts" },
+      h("button", {
+        disabled: device.revoked,
+        onclick: () => {
+          if (!confirm(`Revoke ${device.name ?? device.deviceId}? Its token stops working on the next call, and it can no longer push or pull. The device keeps its local copy.`)) return;
+          run(async () => {
+            await api("/api/hub/sync/revoke", { method: "POST", body: { device_id: device.deviceId } });
+            toast("Revoked");
+            await refresh();
+          });
+        },
+      }, "Revoke")));
+}
+
+function pairControls(refresh) {
+  const out = h("div", {});
+  const button = h("button", {
+    class: "primary",
+    onclick: () => run(async () => {
+      const pair = await api("/api/hub/sync/pair", { method: "POST", body: {} });
+      const join = `aletheia sync join ${pair.url} ${pair.code}`;
+      swap(out,
+        h("div", { class: "ui-meta" }, `Pairing code: ${pair.code}`),
+        h("pre", { class: "ui-pre" }, join),
+        h("div", { class: "ui-acts" }, h("button", { onclick: () => copy(join) }, "Copy join command")));
+    }),
+  }, "Show pairing code");
+  return h("div", { class: "ui-acts" }, button, out);
 }

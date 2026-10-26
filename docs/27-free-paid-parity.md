@@ -6,6 +6,11 @@ Status update, 2026-10-26: T-119 (provider presets and fallback), T-120 (output 
 back-fill), T-122 (no project-folder writes) and T-123 (reversible dismiss) are `validated`; so are the one-UI tasks
 T-134 to T-139. The rest of the table is still planned. See [tasks/TASKS.md](tasks/TASKS.md).
 
+Status update, 2026-10-26 (sync): T-102 (replicated log with per-operation results), T-103 (tombstones, compaction
+and purge), T-104 (device pairing, tokens and revoke) and T-108 (scoped tokens, quotas and audit log) are
+`validated`. The design and behaviour are recorded in [29-sync.md](29-sync.md). End-to-end encryption (T-117) is
+not built, so this page does not claim "end-to-end encrypted".
+
 ## Decision
 
 The owner decided on 2026-10-26 that every feature claude-mem, and any rival, sells in a paid tier is built into Aletheia

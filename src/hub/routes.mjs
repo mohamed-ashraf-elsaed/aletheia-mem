@@ -16,6 +16,7 @@ import { parseRulesFromText, syncTool, targetPath } from "./rules-sync.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "./tools.mjs";
 import { sessionDetail, workOverview } from "./work.mjs";
 import { goalAction, proposeGoals } from "./goals.mjs";
+import { SyncStore } from "./sync/store.mjs";
 
 const MAX_BODY = 8 * 1024 * 1024;
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml" };
@@ -35,6 +36,8 @@ export function createHubRoutes({ hub, config }) {
   const mcpScript = join(import.meta.dir, "..", "..", "bin", "mcp.mjs");
   const argv = () => mcpCommand({ bun: process.execPath, script: mcpScript });
   const qs = (url) => Object.fromEntries(url.searchParams);
+  let syncStore = null;
+  const getSyncStore = () => syncStore ?? (syncStore = new SyncStore(config.syncDb));
 
   async function readJson(request) {
     const len = Number(request.headers.get("content-length") ?? 0);
@@ -518,6 +521,40 @@ export function createHubRoutes({ hub, config }) {
       const b = await readJson(request);
       need(b && Number.isSafeInteger(Number(b.id)), "id is required.");
       return h.json(hub.restore(b.type ?? "memory", Number(b.id), { actor: "ui" }));
+    }
+
+    // ---- T-102/104: sync status, pairing and revoke for the Tools tab ----
+    if (pathname === "/api/hub/sync/status" && method === "GET") {
+      const store = getSyncStore();
+      const account = store.ensureAccount();
+      const status = store.status(account.id);
+      return h.json({
+        epoch: status.epoch,
+        headSeq: status.headSeq,
+        deviceCount: status.deviceCount,
+        devices: status.devices.map((device) => ({
+          ...device,
+          pendingOps: Math.max(0, status.headSeq - device.lastAckSeq),
+          lastSync: device.lastSeen ? new Date(device.lastSeen).toISOString() : null,
+        })),
+      });
+    }
+    if (pathname === "/api/hub/sync/pair" && method === "POST") {
+      const store = getSyncStore();
+      const account = store.ensureAccount();
+      const code = store.createPairCode(account.id);
+      hub.audit("ui", "sync.pair", { code: "created" });
+      return h.json({ code, url: `http://127.0.0.1:${config.syncPort}` });
+    }
+    if (pathname === "/api/hub/sync/revoke" && method === "POST") {
+      const b = await readJson(request);
+      need(b && typeof b.device_id === "string", "device_id is required.");
+      const store = getSyncStore();
+      const account = store.ensureAccount();
+      const revoked = store.revokeDevice(account.id, b.device_id);
+      store.audit(account.id, { deviceId: b.device_id, action: "device.revoke", result: revoked ? "ok" : "missing" });
+      hub.audit("ui", "sync.revoke", { deviceId: b.device_id, revoked });
+      return h.json({ revoked });
     }
     return h.json({ error: "Not found." }, 404);
   }

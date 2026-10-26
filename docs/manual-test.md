@@ -240,6 +240,30 @@ This host is `mcp+rules`, not full capture.
 4. The Linux path `~/.config/Claude/claude_desktop_config.json` is observed on this machine but is not in the MCP
    quickstart; record whether your build reads it.
 
+## 8. Two-machine sync (NOT RUN BY AUTHOR)
+
+The sync engine is covered by `test/sync-core.test.mjs`, `test/sync-tombstones.test.mjs`,
+`test/sync-devices.test.mjs` and `test/tokens-quotas-audit.test.mjs`, all against temporary data dirs and a
+loopback hub. A real two-machine run has not been done.
+
+**NOT RUN BY AUTHOR.** To run it by hand, on the hub machine:
+
+```bash
+bun bin/aletheia-sync.mjs --port 37791 --db ~/.aletheia/sync.db
+aletheia sync pair --db ~/.aletheia/sync.db
+```
+
+On the device machine:
+
+```bash
+aletheia sync join http://<hub-host>:37791 <code> --name laptop
+aletheia sync run
+```
+
+Expected: the device lists on the hub (`aletheia sync devices`), pushes and pulls move ops, and a revoke on
+the hub makes the device's next call fail. A non-loopback bind must print the TLS warning unless
+`--behind-tls` is set.
+
 ## What the automated tests already cover
 
 `test/install-claude.test.mjs`, `test/claude-hooks.test.mjs` and `test/e2e-capture.test.mjs` cover: the dry run,
