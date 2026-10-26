@@ -183,3 +183,4 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-145 | Add the read-only session page | P6 | T-143 | validated | 2026-10-26 | [T-145.md](T-145.md) |
 | T-146 | Retire the iframe and offer the classic viewer from Tools | P6 | T-143 | validated | 2026-10-26 | [T-146.md](T-146.md) |
 | T-147 | Test the Work view and guard the old branding | P6 | T-142, T-143, T-144, T-145, T-146 | validated | 2026-10-26 | [T-147.md](T-147.md) |
+| T-148 | Fix the transcript back-fill CI flake | P6 | T-121 | validated | 2026-10-26 | [T-148.md](T-148.md) |

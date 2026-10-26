@@ -2,7 +2,7 @@
 // opened read-only; the test hashes them before and after and checks they are byte-identical.
 import { afterAll, describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { HubStore } from "../src/hub/store.mjs";
@@ -110,6 +110,29 @@ describe("T-121: transcript back-fill", () => {
     store.close();
 
     for (const [file, hash] of hashes) expect(createHash("sha256").update(readFileSync(file)).digest("hex")).toBe(hash);
+  });
+
+  test("a session whose only turn duplicates another session is still queued (CI order flake regression)", () => {
+    const home2 = join(temp, "order-home");
+    const dir = join(transcriptRoot("claude-code", home2), "-tmp-order");
+    mkdirSync(dir, { recursive: true });
+    const shared = { type: "user", sessionId: "multi", cwd: projectDir, timestamp: OLD, message: { role: "user", content: "Build a retry button" } };
+    write(join(dir, "multi.jsonl"), [
+      shared,
+      { type: "assistant", sessionId: "multi", cwd: projectDir, timestamp: OLD, message: { role: "assistant", content: "Done" } },
+    ]);
+    write(join(dir, "single.jsonl"), [
+      { type: "user", sessionId: "single", cwd: projectDir, timestamp: OLD, message: { role: "user", content: "Build a retry button" } },
+    ]);
+    const older = new Date(Date.parse(OLD));
+    const newer = new Date(Date.parse(OLD) + 60_000);
+    utimesSync(join(dir, "single.jsonl"), older, older);
+    utimesSync(join(dir, "multi.jsonl"), newer, newer); // force "multi" first, like the CI failure
+
+    const store = new HubStore(join(temp, "order.db"));
+    const result = importTranscripts(store, { tool: "claude-code", home: home2 });
+    expect(result).toMatchObject({ files: 2, added: 2, skipped: 1, queued: 2 });
+    store.close();
   });
 
   test("a dry run counts without writing, and --since filters by the turn timestamp", () => {
