@@ -142,13 +142,13 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-098 | Add entity summaries and belief tracking | P5 | T-021, T-032 | todo | — | [T-098.md](T-098.md) |
 | T-100 | Add the Command Code installer and hooks | P3 | T-058 | validated | 2026-10-26 | [T-100.md](T-100.md) |
 | T-101 | Prove automatic capture end to end | P3 | T-058, T-059, T-100 | validated | 2026-10-26 | [T-101.md](T-101.md) |
-| T-102 | Build Aletheia Sync: a replicated log with per-operation results | P6 | T-017 | todo | — | [T-102.md](T-102.md) |
-| T-103 | Add tombstones, compaction and purge to sync | P6 | T-102 | todo | — | [T-103.md](T-103.md) |
-| T-104 | Add device pairing, device tokens and revoke | P6 | T-102 | todo | — | [T-104.md](T-104.md) |
+| T-102 | Build Aletheia Sync: a replicated log with per-operation results | P6 | T-017 | validated | 2026-10-26 | [T-102.md](T-102.md) |
+| T-103 | Add tombstones, compaction and purge to sync | P6 | T-102 | validated | 2026-10-26 | [T-103.md](T-103.md) |
+| T-104 | Add device pairing, device tokens and revoke | P6 | T-102 | validated | 2026-10-26 | [T-104.md](T-104.md) |
 | T-105 | Add live update frames over WebSocket | P6 | T-102 | todo | — | [T-105.md](T-105.md) |
 | T-106 | Run hosted-style extraction as a server-side worker | P6 | T-020 | todo | — | [T-106.md](T-106.md) |
 | T-107 | Serve a private remote MCP endpoint | P6 | T-067, T-104 | todo | — | [T-107.md](T-107.md) |
-| T-108 | Add scoped API tokens, quotas and an audit log | P6 | T-102 | todo | — | [T-108.md](T-108.md) |
+| T-108 | Add scoped API tokens, quotas and an audit log | P6 | T-102 | validated | 2026-10-26 | [T-108.md](T-108.md) |
 | T-109 | Add a local usage ledger and caps | P6 | T-106 | todo | — | [T-109.md](T-109.md) |
 | T-110 | Add remote login for the Hub | P6 | T-104 | todo | — | [T-110.md](T-110.md) |
 | T-111 | Add an OAuth connector for ChatGPT and Claude.ai | P6 | T-107, T-110 | todo | — | [T-111.md](T-111.md) |

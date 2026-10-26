@@ -35,6 +35,12 @@ export function loadConfig(overrides = {}) {
     publicDir: overrides.publicDir ?? join(import.meta.dir, "..", "public"),
     hubDb: overrides.hubDb ?? env.ALETHEIA_HUB_DB ?? join(dataDir, "hub.db"),
     hubUiDir: overrides.hubUiDir ?? join(import.meta.dir, "..", "public-hub"),
+    // Aletheia Sync: a separate SQLite log. The hub server and `aletheia sync` read the same file.
+    syncDb: overrides.syncDb ?? env.ALETHEIA_SYNC_DB ?? join(dataDir, "sync.db"),
+    syncHost: overrides.syncHost ?? env.ALETHEIA_SYNC_HOST ?? "127.0.0.1",
+    syncPort: Number(overrides.syncPort ?? env.ALETHEIA_SYNC_PORT ?? 37791),
+    // The device's own replica, outbox and cursor. Separate from sync.db (the hub's log).
+    syncClientDb: overrides.syncClientDb ?? env.ALETHEIA_SYNC_CLIENT_DB ?? join(dataDir, "sync-client.db"),
     // Optional bearer key for /v1 (tools). Leave empty on a single-user machine; the API is loopback-only anyway.
     apiKey: overrides.apiKey ?? env.ALETHEIA_API_KEY ?? "",
     promptsDir: overrides.promptsDir ?? join(import.meta.dir, "..", "prompts"),
