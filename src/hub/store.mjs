@@ -485,6 +485,274 @@ export class HubStore {
     return info.changes > 0;
   }
 
+  // ---- episodes, facts, provenance (schema v3) ---------------------------------------------------------
+
+  /** One raw turn or tool step. Episodes are append-only; `source_ref` makes a memory's episode idempotent. */
+  addEpisode(input = {}) {
+    const project = clean(input.project, 200)?.trim() || "default";
+    const sourceRef = clean(input.sourceRef ?? input.source_ref, 300);
+    if (sourceRef) {
+      const existing = this.db.prepare("SELECT * FROM episodes WHERE source_ref = ?").get(sourceRef);
+      if (existing) return existing;
+    }
+    const text = String(input.text ?? "").slice(0, 20_000);
+    if (!text.trim()) throw new RangeError("An episode needs text.");
+    const hash = input.contentHash ?? sha256(`episode\n${project}\n${sourceRef ?? ""}\n${text}`);
+    const at = Number.isFinite(input.createdAtEpoch) ? input.createdAtEpoch : Date.now();
+    this.db
+      .prepare(`INSERT OR IGNORE INTO episodes (project, tool, session_id, turn_index, role, kind, text, source_ref, content_hash, token_count, created_at_epoch, recorded_at_epoch)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(project, clean(input.tool, 60) || "unknown", clean(input.sessionId ?? input.session_id, 200), Number.isFinite(input.turnIndex) ? input.turnIndex : null,
+        clean(input.role, 20) || "user", clean(input.kind, 30) || "message", text, sourceRef, hash, Number.isFinite(input.tokenCount) ? input.tokenCount : null, at, at);
+    return this.db.prepare("SELECT * FROM episodes WHERE content_hash = ?").get(hash);
+  }
+
+  /** The episode for one `memories` row, created once. Capture does not write episodes (a hook stays cheap). */
+  ensureEpisodeForMemory(memory) {
+    const sourceRef = `memory:${memory.id}`;
+    const found = this.db.prepare("SELECT * FROM episodes WHERE source_ref = ?").get(sourceRef);
+    if (found) return found;
+    const kind = memory.kind ?? "message";
+    return this.addEpisode({
+      project: memory.project,
+      tool: memory.tool,
+      sessionId: memory.session_id,
+      role: kind === "prompt" ? "user" : kind === "summary" ? "assistant" : "tool",
+      kind,
+      text: memory.narrative || memory.title || "",
+      sourceRef,
+      contentHash: sha256(`memory-episode\n${memory.id}`),
+      createdAtEpoch: memory.created_at_epoch,
+    });
+  }
+
+  getEpisode(id) {
+    return this.db.prepare("SELECT * FROM episodes WHERE id = ?").get(Number(id)) ?? null;
+  }
+
+  /** Insert one derived observation. Idempotent on (project, type, title, narrative) unless a hash is given. */
+  addObservation(input = {}, { actor = "extract" } = {}) {
+    const project = clean(input.project, 200)?.trim() || "default";
+    const type = clean(input.type, 40) || "note";
+    const title = clean(input.title, 400) || "";
+    const narrative = clean(input.narrative, 20_000) || "";
+    if (!title.trim() && !narrative.trim()) throw new RangeError("An observation needs a title or narrative.");
+    const hash = input.contentHash ?? sha256(JSON.stringify([project, type, title, narrative]));
+    const existing = this.db.prepare("SELECT * FROM observations WHERE content_hash = ?").get(hash);
+    if (existing) return { id: existing.id, created: false, observation: existing };
+    const at = Number.isFinite(input.createdAtEpoch) ? input.createdAtEpoch : Date.now();
+    const episodeId = Number(input.episodeId ?? input.episode_id);
+    if (Number.isSafeInteger(episodeId) && episodeId > 0 && !this.getEpisode(episodeId)) throw new RangeError(`episode #${episodeId} does not exist.`);
+    const info = this.db
+      .prepare(`INSERT INTO observations (legacy_memory_id, project, session_id, episode_id, type, title, subtitle, narrative, importance, importance_components,
+                confidence, pinned, edited_at_epoch, status, origin, content_hash, created_at_epoch, updated_at_epoch)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(Number.isSafeInteger(input.legacyMemoryId) ? input.legacyMemoryId : null, project, clean(input.sessionId ?? input.session_id, 200),
+        Number.isSafeInteger(episodeId) && episodeId > 0 ? episodeId : null, type, title, clean(input.subtitle, 400), narrative,
+        Number.isFinite(input.importance) ? input.importance : 0.5, input.importanceComponents ? json(input.importanceComponents) : null,
+        Number.isFinite(input.confidence) ? input.confidence : 1, input.pinned ? 1 : 0, Number.isFinite(input.editedAtEpoch) ? input.editedAtEpoch : null,
+        clean(input.status, 20) || "active", clean(input.origin, 200), hash, at, at);
+    const id = Number(info.lastInsertRowid);
+    if (Number.isSafeInteger(episodeId) && episodeId > 0) this.link({ fromType: "observation", fromId: id, toType: "episode", toId: episodeId, relation: "derived_from" });
+    if (actor !== "import") this.audit(actor, "observation.add", { id, episodeId: episodeId || null });
+    return { id, created: true, observation: this.getObservation(id) };
+  }
+
+  getObservation(id) {
+    return this.db.prepare("SELECT * FROM observations WHERE id = ?").get(Number(id)) ?? null;
+  }
+
+  listObservations({ project, status, limit = 500, offset = 0 } = {}) {
+    const where = [];
+    const params = [];
+    if (project) { where.push("project = ?"); params.push(project); }
+    if (status) { where.push("status = ?"); params.push(status); }
+    const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    return this.db.prepare(`SELECT * FROM observations ${clause} ORDER BY created_at_epoch DESC, id DESC LIMIT ? OFFSET ?`).all(...params, Math.min(Number(limit) || 500, 5000), Math.max(Number(offset) || 0, 0));
+  }
+
+  updateObservation(id, patch = {}, { actor = "ui" } = {}) {
+    const cur = this.getObservation(id);
+    if (!cur) return null;
+    const next = {
+      title: patch.title !== undefined ? clean(patch.title, 400) : cur.title,
+      narrative: patch.narrative !== undefined ? clean(patch.narrative, 20_000) : cur.narrative,
+      importance: Number.isFinite(patch.importance) ? patch.importance : cur.importance,
+      importanceComponents: patch.importanceComponents !== undefined ? patch.importanceComponents : cur.importance_components,
+      pinned: patch.pinned !== undefined ? (patch.pinned ? 1 : 0) : cur.pinned,
+      status: patch.status !== undefined ? clean(patch.status, 20) : cur.status,
+      editedAtEpoch: patch.editedAtEpoch !== undefined ? patch.editedAtEpoch : cur.edited_at_epoch,
+    };
+    this.db.prepare("UPDATE observations SET title=?, narrative=?, importance=?, importance_components=?, pinned=?, status=?, edited_at_epoch=?, updated_at_epoch=? WHERE id=?")
+      .run(next.title, next.narrative, next.importance, next.importanceComponents ? json(next.importanceComponents) : null, next.pinned, next.status, next.editedAtEpoch, Date.now(), Number(id));
+    if (actor !== "import") this.audit(actor, "observation.update", { id: Number(id), fields: Object.keys(patch) });
+    return this.getObservation(id);
+  }
+
+  /** Refuse to delete an episode a fact still cites. Nothing in the extraction path deletes episodes. */
+  deleteEpisode(id) {
+    const key = Number(id);
+    const facts = this.db.prepare("SELECT COUNT(*) AS n FROM facts WHERE episode_id = ?").get(key).n;
+    if (facts) throw new RangeError(`Cannot delete episode #${key}: ${facts} fact(s) reference it.`);
+    const info = this.db.prepare("DELETE FROM episodes WHERE id = ?").run(key);
+    if (info.changes) this.audit("system", "episode.delete", { id: key });
+    return info.changes > 0;
+  }
+
+  link({ fromType, fromId, toType, toId, relation, confidence = 1 }) {
+    this.db
+      .prepare("INSERT OR IGNORE INTO memory_links (from_type, from_id, to_type, to_id, relation, confidence) VALUES (?,?,?,?,?,?)")
+      .run(fromType, Number(fromId), toType, Number(toId), relation, confidence);
+  }
+
+  addKey({ ownerType, ownerId, keyType, text, source = "extracted" }) {
+    const value = String(text ?? "").trim();
+    if (!value) return;
+    this.db
+      .prepare("INSERT OR IGNORE INTO memory_keys (owner_type, owner_id, key_type, text, source) VALUES (?,?,?,?,?)")
+      .run(ownerType, Number(ownerId), keyType, value.slice(0, 500), source);
+  }
+
+  /**
+   * Insert one atomic fact. `episode_id` is required: an orphan fact is rejected here, not only by the validator.
+   * A duplicate (project, subject, predicate, object) returns the existing row instead of writing a second one.
+   */
+  addFact(input = {}, { actor = "extract" } = {}) {
+    const project = clean(input.project, 200)?.trim() || "default";
+    const subject = clean(input.subject, 200)?.trim();
+    const predicate = clean(input.predicate, 120)?.trim();
+    const object = clean(input.object, 400)?.trim();
+    const text = clean(input.text, 600)?.trim();
+    if (!subject || !predicate || !object || !text) throw new RangeError("A fact needs subject, predicate, object and text.");
+    const episodeId = Number(input.episodeId ?? input.episode_id);
+    if (!Number.isSafeInteger(episodeId) || !this.getEpisode(episodeId)) throw new RangeError("A fact needs an existing episode_id.");
+    const hash = sha256(JSON.stringify([project, subject, predicate, object]));
+    const existing = this.db.prepare("SELECT * FROM facts WHERE content_hash = ?").get(hash);
+    if (existing) return { id: existing.id, created: false, fact: existing };
+    const observationId = Number(input.observationId ?? input.observation_id);
+    if (Number.isSafeInteger(observationId) && observationId > 0 && !this.db.prepare("SELECT 1 FROM observations WHERE id = ?").get(observationId)) {
+      throw new RangeError(`observation #${observationId} does not exist.`);
+    }
+    const episode = this.getEpisode(episodeId);
+    const recordedAt = Number.isFinite(input.recordedAtEpoch) ? input.recordedAtEpoch : Date.now();
+    const validFrom = Number.isFinite(input.validFromEpoch) ? input.validFromEpoch : episode.created_at_epoch;
+    const validTo = Number.isFinite(input.validToEpoch) ? input.validToEpoch : null;
+    const confidence = Number.isFinite(input.confidence) ? Math.max(0, Math.min(1, input.confidence)) : 0.8;
+    const info = this.db
+      .prepare(`INSERT INTO facts (observation_id, episode_id, project, subject, predicate, object, text, valid_from_epoch, valid_to_epoch,
+                recorded_at_epoch, expired_at_epoch, confidence, supersedes_id, status, extractor_mode, prompt_version, model, content_hash, created_at_epoch)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(Number.isSafeInteger(observationId) && observationId > 0 ? observationId : null, episodeId, project, subject, predicate, object, text,
+        validFrom, validTo, recordedAt, Number.isFinite(input.expiredAtEpoch) ? input.expiredAtEpoch : null, confidence,
+        Number.isSafeInteger(input.supersedesId) ? input.supersedesId : null, clean(input.status, 20) || "active",
+        clean(input.extractorMode, 20) || "rules", clean(input.promptVersion, 40), clean(input.model, 120), hash, recordedAt);
+    const id = Number(info.lastInsertRowid);
+    for (const other of Array.isArray(input.episodeIds) ? input.episodeIds : []) {
+      const otherId = Number(other);
+      if (Number.isSafeInteger(otherId) && this.getEpisode(otherId)) this.link({ fromType: "fact", fromId: id, toType: "episode", toId: otherId, relation: "mentions" });
+    }
+    if (actor !== "import") this.audit(actor, "fact.add", { id, episodeId, subject, predicate });
+    return { id, created: true, fact: this.getFact(id) };
+  }
+
+  getFact(id) {
+    return this.db.prepare("SELECT * FROM facts WHERE id = ?").get(Number(id)) ?? null;
+  }
+
+  /** Only update the closing side of a fact. recorded_at and created_at are never touched. */
+  closeFact(id, { validToEpoch, status = "superseded" } = {}) {
+    const fact = this.getFact(id);
+    if (!fact) return null;
+    this.db.prepare("UPDATE facts SET valid_to_epoch = ?, status = ? WHERE id = ?")
+      .run(Number.isFinite(validToEpoch) ? validToEpoch : fact.recorded_at_epoch, status, Number(id));
+    return this.getFact(id);
+  }
+
+  /** Current facts: no valid_to (or one in the future), not expired, status active. */
+  factsCurrent({ project, subject, predicate, limit = 100, now = Date.now() } = {}) {
+    const where = ["status = 'active'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)", "(expired_at_epoch IS NULL OR expired_at_epoch > ?)"];
+    const params = [now, now, now];
+    if (project) { where.push("project = ?"); params.push(project); }
+    if (subject) { where.push("subject = ?"); params.push(subject); }
+    if (predicate) { where.push("predicate = ?"); params.push(predicate); }
+    return this.db.prepare(`SELECT * FROM facts WHERE ${where.join(" AND ")} ORDER BY recorded_at_epoch DESC, id DESC LIMIT ?`).all(...params, Math.min(Number(limit) || 100, 1000));
+  }
+
+  /** Every row for a subject or predicate, including superseded ones, oldest first. */
+  factsHistory({ project, subject, predicate, limit = 200 } = {}) {
+    const where = [];
+    const params = [];
+    if (project) { where.push("project = ?"); params.push(project); }
+    if (subject) { where.push("subject = ?"); params.push(subject); }
+    if (predicate) { where.push("predicate = ?"); params.push(predicate); }
+    const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    return this.db.prepare(`SELECT * FROM facts ${clause} ORDER BY coalesce(valid_from_epoch, recorded_at_epoch), recorded_at_epoch, id LIMIT ?`).all(...params, Math.min(Number(limit) || 200, 1000));
+  }
+
+  /** The fact that was true at `atEpoch`, using valid time and refusing facts recorded later. */
+  factsAsOf(atEpoch, { project, subject, predicate, limit = 100 } = {}) {
+    const at = Number(atEpoch);
+    if (!Number.isFinite(at)) throw new RangeError("as-of needs an epoch or a date.");
+    const where = ["status != 'retracted'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)", "recorded_at_epoch <= ?"];
+    const params = [at, at, at];
+    if (project) { where.push("project = ?"); params.push(project); }
+    if (subject) { where.push("subject = ?"); params.push(subject); }
+    if (predicate) { where.push("predicate = ?"); params.push(predicate); }
+    return this.db.prepare(`SELECT * FROM facts WHERE ${where.join(" AND ")} ORDER BY recorded_at_epoch DESC, id DESC LIMIT ?`).all(...params, Math.min(Number(limit) || 100, 1000));
+  }
+
+  /**
+   * Where a fact, observation or memory came from: the episode text, the source ref, the links and the memory row.
+   * Returns { found: false } when the id is unknown.
+   */
+  provenance(type, id) {
+    const key = Number(id);
+    if (!Number.isSafeInteger(key)) return { found: false };
+    const out = { type, id: key, found: false, episode: null, episodes: [], observation: null, memory: null, links: [] };
+    const episodeByIds = (ids) => [...new Set(ids.filter(Number.isSafeInteger))].map((episodeId) => this.getEpisode(episodeId)).filter(Boolean);
+    if (type === "episode") {
+      const episode = this.getEpisode(key);
+      if (!episode) return out;
+      return { ...out, found: true, episode, episodes: [episode] };
+    }
+    if (type === "fact") {
+      const fact = this.getFact(key);
+      if (!fact) return out;
+      const linked = this.db.prepare("SELECT to_id FROM memory_links WHERE from_type = 'fact' AND from_id = ? AND to_type = 'episode'").all(key).map((r) => r.to_id);
+      const episodes = episodeByIds([fact.episode_id, ...linked]);
+      return { ...out, found: true, fact, episode: episodes[0] ?? null, episodes, observation: fact.observation_id ? this.db.prepare("SELECT * FROM observations WHERE id = ?").get(fact.observation_id) ?? null : null, links: this.db.prepare("SELECT * FROM memory_links WHERE (from_type = ? AND from_id = ?) OR (to_type = ? AND to_id = ?)").all("fact", key, "fact", key) };
+    }
+    if (type === "observation") {
+      const observation = this.db.prepare("SELECT * FROM observations WHERE id = ?").get(key);
+      if (!observation) return out;
+      const linked = this.db.prepare("SELECT to_id FROM memory_links WHERE from_type = 'observation' AND from_id = ? AND to_type = 'episode'").all(key).map((r) => r.to_id);
+      const episodes = episodeByIds([observation.episode_id, ...linked]);
+      return { ...out, found: true, observation, episode: episodes[0] ?? null, episodes };
+    }
+    if (type === "memory") {
+      const memory = this.get(key);
+      if (!memory) return out;
+      const episodes = episodeByIds([this.db.prepare("SELECT id FROM episodes WHERE source_ref = ?").get(`memory:${key}`)?.id]);
+      return { ...out, found: true, memory, episode: episodes[0] ?? null, episodes };
+    }
+    return out;
+  }
+
+  recordUsage(usage = {}) {
+    this.db
+      .prepare(`INSERT INTO fact_usage (at_epoch, batch_id, model, mode, input_tokens, output_tokens, estimated_usd, episodes, facts, status, error, raw_output)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(Number.isFinite(usage.atEpoch) ? usage.atEpoch : Date.now(), clean(usage.batchId, 80), clean(usage.model, 120), clean(usage.mode, 20) || "rules",
+        Number(usage.inputTokens) || 0, Number(usage.outputTokens) || 0, Number(usage.estimatedUsd) || 0, Number(usage.episodes) || 0, Number(usage.facts) || 0,
+        clean(usage.status, 20) || "ok", clean(usage.error, 400), clean(usage.rawOutput, 8000));
+  }
+
+  usageSummary({ sinceEpoch = 0 } = {}) {
+    return this.db.prepare(`SELECT COUNT(*) AS calls, coalesce(SUM(input_tokens),0) AS input_tokens, coalesce(SUM(output_tokens),0) AS output_tokens,
+      coalesce(SUM(estimated_usd),0) AS estimated_usd, coalesce(SUM(facts),0) AS facts, SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected,
+      MAX(at_epoch) AS last_at_epoch FROM fact_usage WHERE at_epoch >= ?`).get(Number(sinceEpoch) || 0);
+  }
+
   /** Newest first. Filters: project, kind, type, tool, pinned, q (full text), before (epoch), limit, offset. */
   list({ project, kind, type, tool, pinned, q, limit = 50, offset = 0 } = {}) {
     const where = [];
