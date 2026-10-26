@@ -206,3 +206,11 @@ html, body { min-height: 100%; }
 .ui-check { display: inline-flex !important; align-items: center; gap: var(--ui-space-2); margin: 0 !important; min-height: var(--ui-touch); color: var(--ui-text) !important; font-size: var(--ui-text-md) !important; cursor: pointer; }
 .ui-check input { width: 18px !important; height: 18px; min-height: 0 !important; margin: 0 !important; accent-color: var(--ui-accent); }
 .ui-sync-results { display: grid; gap: var(--ui-space-3); margin-top: var(--ui-space-4); }
+.ui-commands { display: grid; gap: var(--ui-space-2); margin-top: var(--ui-space-2); }
+.ui-command-row { display: grid; grid-template-columns: minmax(90px, 140px) 1fr; gap: var(--ui-space-3); align-items: center; }
+.ui-command-label { color: var(--ui-muted); font-size: var(--ui-text-sm); }
+.ui-term { border-bottom: 1px dotted var(--ui-muted); cursor: help; }
+.ui-audit-row { padding: var(--ui-space-3) var(--ui-space-4); }
+.ui-classic { margin-top: var(--ui-space-5); }
+.ui-pair-out { margin-top: var(--ui-space-3); }
+@media (max-width: 640px) { .ui-command-row { grid-template-columns: 1fr; gap: 2px; } }
