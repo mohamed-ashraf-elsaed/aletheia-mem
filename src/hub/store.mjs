@@ -906,6 +906,63 @@ export class HubStore {
     return this.db.prepare(`SELECT * FROM facts ${clause} ORDER BY coalesce(valid_from_epoch, recorded_at_epoch), recorded_at_epoch, id LIMIT ?`).all(...params, Math.min(Number(limit) || 200, 1000));
   }
 
+  /**
+   * The Hub facts table (T-135). Current by default; `history` keeps superseded and cold rows. Every row carries
+   * the episode it came from, its extractor mode and scope. Importance is the linked observation's importance, or
+   * the fact confidence when no observation owns it; both are returned so the UI can say which.
+   */
+  listFacts({ project, history = false, limit = 100, offset = 0, now = Date.now() } = {}) {
+    const where = [];
+    const params = [];
+    if (project) {
+      where.push(this.hasGlobal("facts") ? "(f.project = ? OR f.scope = 'global')" : "f.project = ?");
+      params.push(project);
+    }
+    if (this.hasDismissals("fact")) where.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = f.id)");
+    if (!history) {
+      where.push("f.status = 'active'", "coalesce(f.valid_from_epoch, f.recorded_at_epoch) <= ?", "(f.valid_to_epoch IS NULL OR f.valid_to_epoch > ?)", "(f.expired_at_epoch IS NULL OR f.expired_at_epoch > ?)");
+      params.push(now, now, now);
+    }
+    const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    const lim = Math.min(Math.max(Number(limit) || 100, 1), 500);
+    const off = Math.max(Number(offset) || 0, 0);
+    const total = this.db.prepare(`SELECT COUNT(*) AS n FROM facts f ${clause}`).get(...params).n;
+    const rows = this.db
+      .prepare(`SELECT f.*, o.importance AS observation_importance, e.text AS episode_text, e.source_ref AS episode_source_ref
+                FROM facts f LEFT JOIN observations o ON o.id = f.observation_id LEFT JOIN episodes e ON e.id = f.episode_id
+                ${clause} ORDER BY f.recorded_at_epoch DESC, f.id DESC LIMIT ? OFFSET ?`)
+      .all(...params, lim, off);
+    const iso = (value) => (Number.isFinite(value) ? new Date(value).toISOString() : null);
+    return {
+      total,
+      current: !history,
+      items: rows.map((row) => ({
+        id: row.id, text: row.text, subject: row.subject, predicate: row.predicate, object: row.object,
+        project: row.project, scope: row.scope, status: row.status, confidence: row.confidence,
+        importance: Number.isFinite(row.observation_importance) ? row.observation_importance : row.confidence,
+        importanceSource: Number.isFinite(row.observation_importance) ? "observation" : "confidence",
+        extractorMode: row.extractor_mode, model: row.model, promptVersion: row.prompt_version,
+        validAt: iso(row.valid_from_epoch), validFrom: iso(row.valid_from_epoch), validTo: iso(row.valid_to_epoch),
+        recordedAt: iso(row.recorded_at_epoch),
+        source: { episodeId: row.episode_id ?? null, episodeText: row.episode_text ? String(row.episode_text).slice(0, 1000) : null, sourceRef: row.episode_source_ref ?? null, observationId: row.observation_id ?? null },
+      })),
+    };
+  }
+
+  /** Resolve one review_queue row. The row is kept; only status and resolved_at change. */
+  resolveReview(id, { status = "accepted", actor = "ui", now = Date.now() } = {}) {
+    const key = Number(id);
+    const row = this.db.prepare("SELECT * FROM review_queue WHERE id = ?").get(key);
+    if (!row) return null;
+    this.db.prepare("UPDATE review_queue SET status = ?, resolved_at_epoch = ? WHERE id = ?").run(status, now, key);
+    this.audit(actor, "review.resolve", { id: key, status, itemType: row.item_type, itemId: row.item_id });
+    return this.db.prepare("SELECT * FROM review_queue WHERE id = ?").get(key);
+  }
+
+  getReview(id) {
+    return this.db.prepare("SELECT * FROM review_queue WHERE id = ?").get(Number(id)) ?? null;
+  }
+
   /** The fact that was true at `atEpoch`, using valid time and refusing facts recorded later. */
   factsAsOf(atEpoch, { project, subject, predicate, limit = 100 } = {}) {
     const at = typeof atEpoch === "string" ? Date.parse(atEpoch) : Number(atEpoch);
