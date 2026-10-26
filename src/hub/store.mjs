@@ -4,12 +4,12 @@
 //   rules     your standing instructions, each optionally limited to some tools
 //   audit     who changed what
 import { Database } from "bun:sqlite";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { sha256 } from "../lib/hash.mjs";
 import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVector, unpackVector } from "./retrieval.mjs";
 
-const SCHEMA_VERSION = 2; // 2: porter stemming in the full-text index, memory_vectors
+const SCHEMA_VERSION = 3; // 3: episodes, observations, facts, entities, keys, links, queue and usage
 
 export const KINDS = ["observation", "summary", "prompt", "note", "event"];
 export const TYPES = ["bugfix", "feature", "refactor", "change", "discovery", "decision", "note", "gotcha", "event"];
@@ -85,6 +85,237 @@ CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY AUTOINCREMENT, at_epoch
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `;
 
+/** Schema v3 adds the memory-building tables. Every statement is CREATE IF NOT EXISTS and additive. */
+export const SCHEMA_V3 = `
+CREATE TABLE IF NOT EXISTS episodes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project TEXT NOT NULL,
+  tool TEXT NOT NULL DEFAULT 'unknown',
+  session_id TEXT,
+  turn_index INTEGER,
+  role TEXT NOT NULL DEFAULT 'user',
+  kind TEXT NOT NULL DEFAULT 'message',
+  text TEXT NOT NULL,
+  source_ref TEXT,
+  content_hash TEXT NOT NULL UNIQUE,
+  token_count INTEGER,
+  extracted_at_epoch INTEGER,
+  created_at_epoch INTEGER NOT NULL,
+  recorded_at_epoch INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_episodes_project_time ON episodes(project, created_at_epoch DESC);
+CREATE INDEX IF NOT EXISTS idx_episodes_session ON episodes(session_id, turn_index);
+CREATE INDEX IF NOT EXISTS idx_episodes_hash ON episodes(content_hash);
+CREATE INDEX IF NOT EXISTS idx_episodes_pending ON episodes(extracted_at_epoch, id);
+
+CREATE TABLE IF NOT EXISTS observations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  legacy_memory_id INTEGER UNIQUE,
+  project TEXT NOT NULL,
+  session_id TEXT,
+  episode_id INTEGER REFERENCES episodes(id) ON DELETE SET NULL,
+  type TEXT NOT NULL DEFAULT 'note',
+  title TEXT NOT NULL DEFAULT '',
+  subtitle TEXT,
+  narrative TEXT NOT NULL DEFAULT '',
+  importance REAL NOT NULL DEFAULT 0.5,
+  importance_components TEXT,
+  confidence REAL NOT NULL DEFAULT 1.0,
+  pinned INTEGER NOT NULL DEFAULT 0,
+  edited_at_epoch INTEGER,
+  status TEXT NOT NULL DEFAULT 'active',
+  origin TEXT,
+  content_hash TEXT NOT NULL UNIQUE,
+  created_at_epoch INTEGER NOT NULL,
+  updated_at_epoch INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_observations_project_time ON observations(project, created_at_epoch DESC);
+CREATE INDEX IF NOT EXISTS idx_observations_episode ON observations(episode_id);
+
+CREATE TABLE IF NOT EXISTS facts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  observation_id INTEGER REFERENCES observations(id) ON DELETE SET NULL,
+  episode_id INTEGER REFERENCES episodes(id) ON DELETE RESTRICT,
+  project TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  predicate TEXT NOT NULL,
+  object TEXT NOT NULL,
+  text TEXT NOT NULL,
+  valid_from_epoch INTEGER,
+  valid_to_epoch INTEGER,
+  recorded_at_epoch INTEGER NOT NULL,
+  expired_at_epoch INTEGER,
+  confidence REAL NOT NULL DEFAULT 0.8,
+  supersedes_id INTEGER REFERENCES facts(id),
+  status TEXT NOT NULL DEFAULT 'active',
+  extractor_mode TEXT NOT NULL DEFAULT 'rules',
+  prompt_version TEXT,
+  model TEXT,
+  content_hash TEXT NOT NULL UNIQUE,
+  created_at_epoch INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_facts_project_subject ON facts(project, subject);
+CREATE INDEX IF NOT EXISTS idx_facts_valid ON facts(project, valid_from_epoch, valid_to_epoch);
+CREATE INDEX IF NOT EXISTS idx_facts_observation ON facts(observation_id);
+CREATE INDEX IF NOT EXISTS idx_facts_episode ON facts(episode_id);
+CREATE VIRTUAL TABLE IF NOT EXISTS facts_fts USING fts5(text, subject, predicate, object, content='facts', content_rowid='id', tokenize='porter unicode61 remove_diacritics 2');
+CREATE TRIGGER IF NOT EXISTS facts_ai AFTER INSERT ON facts BEGIN
+  INSERT INTO facts_fts(rowid, text, subject, predicate, object) VALUES (new.id, new.text, new.subject, new.predicate, new.object);
+END;
+CREATE TRIGGER IF NOT EXISTS facts_ad AFTER DELETE ON facts BEGIN
+  INSERT INTO facts_fts(facts_fts, rowid, text, subject, predicate, object) VALUES ('delete', old.id, old.text, old.subject, old.predicate, old.object);
+END;
+CREATE TRIGGER IF NOT EXISTS facts_au AFTER UPDATE ON facts BEGIN
+  INSERT INTO facts_fts(facts_fts, rowid, text, subject, predicate, object) VALUES ('delete', old.id, old.text, old.subject, old.predicate, old.object);
+  INSERT INTO facts_fts(rowid, text, subject, predicate, object) VALUES (new.id, new.text, new.subject, new.predicate, new.object);
+END;
+
+CREATE TABLE IF NOT EXISTS entities (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project TEXT NOT NULL,
+  name TEXT NOT NULL,
+  canonical_name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  created_at_epoch INTEGER NOT NULL,
+  UNIQUE(project, canonical_name, type)
+);
+CREATE TABLE IF NOT EXISTS entity_aliases (
+  alias TEXT NOT NULL,
+  entity_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+  confidence REAL NOT NULL DEFAULT 1.0,
+  PRIMARY KEY(alias, entity_id)
+);
+CREATE TABLE IF NOT EXISTS fact_entities (
+  fact_id INTEGER NOT NULL REFERENCES facts(id) ON DELETE CASCADE,
+  entity_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+  role TEXT NOT NULL,
+  PRIMARY KEY(fact_id, entity_id, role)
+);
+CREATE TABLE IF NOT EXISTS memory_links (
+  from_type TEXT NOT NULL, from_id INTEGER NOT NULL,
+  to_type TEXT NOT NULL, to_id INTEGER NOT NULL,
+  relation TEXT NOT NULL,
+  confidence REAL NOT NULL DEFAULT 1.0,
+  PRIMARY KEY(from_type, from_id, to_type, to_id, relation)
+);
+CREATE INDEX IF NOT EXISTS idx_links_from ON memory_links(from_type, from_id);
+CREATE INDEX IF NOT EXISTS idx_links_to ON memory_links(to_type, to_id);
+
+CREATE TABLE IF NOT EXISTS memory_keys (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_type TEXT NOT NULL,
+  owner_id INTEGER NOT NULL,
+  key_type TEXT NOT NULL,
+  text TEXT NOT NULL,
+  source TEXT NOT NULL,
+  UNIQUE(owner_type, owner_id, key_type, text)
+);
+CREATE INDEX IF NOT EXISTS idx_keys_owner ON memory_keys(owner_type, owner_id);
+CREATE VIRTUAL TABLE IF NOT EXISTS memory_keys_fts USING fts5(text, content='memory_keys', content_rowid='id', tokenize='porter unicode61 remove_diacritics 2');
+CREATE TRIGGER IF NOT EXISTS memory_keys_ai AFTER INSERT ON memory_keys BEGIN
+  INSERT INTO memory_keys_fts(rowid, text) VALUES (new.id, new.text);
+END;
+CREATE TRIGGER IF NOT EXISTS memory_keys_ad AFTER DELETE ON memory_keys BEGIN
+  INSERT INTO memory_keys_fts(memory_keys_fts, rowid, text) VALUES ('delete', old.id, old.text);
+END;
+CREATE TRIGGER IF NOT EXISTS memory_keys_au AFTER UPDATE ON memory_keys BEGIN
+  INSERT INTO memory_keys_fts(memory_keys_fts, rowid, text) VALUES ('delete', old.id, old.text);
+  INSERT INTO memory_keys_fts(rowid, text) VALUES (new.id, new.text);
+END;
+
+CREATE TABLE IF NOT EXISTS summaries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project TEXT NOT NULL,
+  scope TEXT NOT NULL,
+  period_start_epoch INTEGER NOT NULL,
+  period_end_epoch INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  source_ids TEXT NOT NULL,
+  token_count INTEGER,
+  created_at_epoch INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS review_queue (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  item_type TEXT NOT NULL,
+  item_id INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  proposed_by TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at_epoch INTEGER NOT NULL,
+  resolved_at_epoch INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_review_pending ON review_queue(status, created_at_epoch);
+
+CREATE TABLE IF NOT EXISTS jobs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  type TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  attempts INTEGER NOT NULL DEFAULT 0,
+  max_attempts INTEGER NOT NULL DEFAULT 5,
+  next_attempt_epoch INTEGER NOT NULL DEFAULT 0,
+  locked_at_epoch INTEGER,
+  worker_id TEXT,
+  last_error TEXT,
+  created_at_epoch INTEGER NOT NULL,
+  updated_at_epoch INTEGER NOT NULL,
+  UNIQUE(type, payload)
+);
+CREATE INDEX IF NOT EXISTS idx_jobs_claim ON jobs(status, next_attempt_epoch, id);
+
+CREATE TABLE IF NOT EXISTS fact_usage (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  at_epoch INTEGER NOT NULL,
+  batch_id TEXT,
+  model TEXT,
+  mode TEXT NOT NULL DEFAULT 'rules',
+  input_tokens INTEGER NOT NULL DEFAULT 0,
+  output_tokens INTEGER NOT NULL DEFAULT 0,
+  estimated_usd REAL NOT NULL DEFAULT 0,
+  episodes INTEGER NOT NULL DEFAULT 0,
+  facts INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'ok',
+  error TEXT,
+  raw_output TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_usage_time ON fact_usage(at_epoch DESC);
+
+CREATE TABLE IF NOT EXISTS fact_vectors (
+  fact_id INTEGER PRIMARY KEY REFERENCES facts(id) ON DELETE CASCADE,
+  model TEXT NOT NULL,
+  dim INTEGER NOT NULL,
+  vec BLOB NOT NULL
+);
+`;
+
+export const targetSchemaVersion = SCHEMA_VERSION;
+
+/** Read-only view of a database before migrating. Used by `aletheia migrate --dry-run`. */
+export function inspectMigration(path) {
+  if (!existsSync(path)) return { exists: false, path, version: 0, target: SCHEMA_VERSION, needsMigration: false, counts: null };
+  const db = new Database(path, { readonly: true });
+  try {
+    const version = db.prepare("PRAGMA user_version").get().user_version;
+    const number = (table) => {
+      try {
+        return db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n;
+      } catch {
+        return null;
+      }
+    };
+    return {
+      exists: true,
+      path,
+      version,
+      target: SCHEMA_VERSION,
+      needsMigration: version < SCHEMA_VERSION,
+      counts: { memories: number("memories"), episodes: number("episodes"), observations: number("observations"), facts: number("facts") },
+    };
+  } finally {
+    db.close();
+  }
+}
+
 /** Fold a free-text query into an FTS5 expression: every word must match as a prefix. null when no words. */
 export function ftsQuery(text) {
   const words = String(text ?? "").toLowerCase().match(/[\p{L}\p{N}_]+/gu) ?? [];
@@ -93,6 +324,7 @@ export function ftsQuery(text) {
 
 export class HubStore {
   constructor(path) {
+    this.path = path;
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
     this.db = new Database(path, { create: true });
     this.db.exec("PRAGMA journal_mode = WAL");
@@ -101,20 +333,88 @@ export class HubStore {
     this.db.exec("PRAGMA foreign_keys = ON");
     const version = this.db.prepare("PRAGMA user_version").get().user_version;
     const hadMemories = !!this.db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'memories'").get();
-    const migrate = hadMemories && version < SCHEMA_VERSION;
-    if (migrate) {
-      // Older stores indexed without stemming. Rebuild the full-text index; the memory rows are untouched.
-      for (const name of ["memories_ai", "memories_ad", "memories_au"]) this.db.exec(`${"DR" + "OP"} TRIGGER IF EXISTS ${name}`);
-      this.db.exec(`${"DR" + "OP"} TABLE IF EXISTS memories_fts`);
+    if (version > SCHEMA_VERSION) {
+      this.db.close();
+      throw new RangeError(`This database is schema v${version}; this build understands up to v${SCHEMA_VERSION}.`);
+    }
+    // v1 indexed without stemming. Drop the old index before the additive v3 migration so SCHEMA can rebuild it.
+    if (hadMemories && version < 2) {
+      for (const name of ["memories_ai", "memories_ad", "memories_au"]) this.db.exec(`DROP TRIGGER IF EXISTS ${name}`);
+      this.db.exec("DROP TABLE IF EXISTS memories_fts");
+      this.db.exec("DROP TABLE IF EXISTS memories_vocab");
     }
     // A hook opens the store on every event. Re-running the whole schema costs several milliseconds, so skip it
     // when this database already carries the current version (the version is written only after the schema runs).
     const ready = hadMemories && version === SCHEMA_VERSION;
-    if (!ready) this.db.exec(SCHEMA);
-    if (migrate) this.db.exec("INSERT INTO memories_fts(memories_fts) VALUES('rebuild')");
-    if (!ready) this.db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+    if (!ready) {
+      this.db.exec(SCHEMA);
+      if (hadMemories && version < 2) this.db.exec("INSERT INTO memories_fts(memories_fts) VALUES('rebuild')");
+      if (hadMemories) {
+        this.migrateV3();
+      } else {
+        this.db.exec(SCHEMA_V3);
+        this.db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+      }
+    }
     this.vecCache = null;
     this.termOptions = { max: 12, maxShare: 0.6 }; // see selectTerms. Swept on LoCoMo (docs/14): 12/0.6 loses no recall; 8/0.35 lost ~8 points
+  }
+
+  /**
+   * Copy v2 memories into episodes and observations, add the v3 tables, and set the version, all in one
+   * transaction. A failure rolls back and leaves user_version at 2 so the old code can still open the file.
+   */
+  migrateV3() {
+    const already = this.db.prepare("PRAGMA user_version").get().user_version;
+    if (already >= SCHEMA_VERSION) return { migrated: false, version: already };
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      this.db.exec(SCHEMA_V3);
+      this.db.exec(`
+        INSERT OR IGNORE INTO episodes (project, tool, session_id, turn_index, role, kind, text, source_ref, content_hash, created_at_epoch, recorded_at_epoch)
+        SELECT project, tool, session_id, NULL, CASE WHEN kind = 'prompt' THEN 'user' ELSE 'tool' END, kind,
+               CASE WHEN coalesce(narrative, '') <> '' THEN narrative ELSE title END,
+               'memory:' || id, 'legacy-episode-' || id, created_at_epoch, created_at_epoch
+        FROM memories WHERE kind IN ('prompt', 'event')
+      `);
+      this.db.exec(`
+        INSERT OR IGNORE INTO observations (legacy_memory_id, project, session_id, episode_id, type, title, subtitle, narrative, origin, content_hash, created_at_epoch, updated_at_epoch)
+        SELECT id, project, session_id, NULL, type, title, subtitle, coalesce(narrative, ''), origin, 'legacy-memory-' || id, created_at_epoch, updated_at_epoch
+        FROM memories WHERE kind NOT IN ('prompt', 'event')
+      `);
+      const vectorColumns = this.db.prepare("PRAGMA table_info(memory_vectors)").all().map((column) => column.name);
+      if (!vectorColumns.includes("owner_type")) this.db.exec("ALTER TABLE memory_vectors ADD COLUMN owner_type TEXT");
+      if (!vectorColumns.includes("owner_id")) this.db.exec("ALTER TABLE memory_vectors ADD COLUMN owner_id INTEGER");
+      this.db.exec("UPDATE memory_vectors SET owner_type = 'observation', owner_id = (SELECT legacy_memory_id FROM observations o WHERE o.legacy_memory_id = memory_vectors.memory_id) WHERE owner_type IS NULL");
+      this.db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+      this.db.exec("COMMIT");
+    } catch (error) {
+      try {
+        this.db.exec("ROLLBACK");
+      } catch {
+        // leave the file as it was
+      }
+      try {
+        this.db.close();
+      } catch {
+        // ignore
+      }
+      throw error;
+    }
+    this.vecCache = null;
+    return { migrated: true, version: SCHEMA_VERSION };
+  }
+
+  /** Row counts for the migration report. */
+  migrationCounts() {
+    const count = (table) => {
+      try {
+        return this.db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n;
+      } catch {
+        return null;
+      }
+    };
+    return { memories: count("memories"), episodes: count("episodes"), observations: count("observations"), facts: count("facts") };
   }
 
   audit(actor, action, detail) {

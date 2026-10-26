@@ -15,15 +15,15 @@
 //   aletheia hook <tool> <event>                          hook entry point: read one JSON payload on stdin
 //   aletheia doctor                                       check the server, hooks, spool and last capture
 //   aletheia compress [--project p]                       turn raw events into observations (needs ALETHEIA_PROVIDER)
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { normalizeHook, redact } from "../src/hub/capture.mjs";
 import { compressRecent } from "../src/hub/compress.mjs";
 import { importClaudeMem } from "../src/hub/importers.mjs";
 import { applyInstall, applyUninstall, doctor, formatPlan, formatUninstall, installerFor, installerIds, planUninstall } from "../src/hub/install.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "../src/hub/rules-sync.mjs";
-import { HubStore } from "../src/hub/store.mjs";
+import { HubStore, inspectMigration, targetSchemaVersion } from "../src/hub/store.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "../src/hub/tools.mjs";
 import { projectKeyForPath } from "../src/readmodel/project.mjs";
 import { makeProvider } from "../src/refresh/providers.mjs";
@@ -120,6 +120,21 @@ async function main() {
   }
 
   if (cmd === "install" || cmd === "uninstall") return handleInstall(cmd, flags, pos);
+
+  if (cmd === "migrate") {
+    const dbPath = typeof flags.db === "string" ? flags.db : config.hubDb;
+    const before = inspectMigration(dbPath);
+    if (!before.exists) return out(`No database at ${dbPath}; nothing to migrate.`);
+    if (flags["dry-run"]) return out(JSON.stringify({ ...before, dryRun: true }, null, 2));
+    if (!before.needsMigration) return out(`Schema v${before.version} is current; nothing to do.`);
+    const backup = typeof flags.backup === "string" ? flags.backup : `${dbPath}.aletheia-bak-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+    mkdirSync(dirname(backup), { recursive: true });
+    copyFileSync(dbPath, backup);
+    const hub = new HubStore(dbPath);
+    const after = hub.migrationCounts();
+    hub.close();
+    return out(`Backed up to ${backup}\nMigrated schema v${before.version} -> v${targetSchemaVersion}: ${JSON.stringify(after)}`);
+  }
 
   if (cmd === "doctor") {
     const checks = await doctor(installEnv(null));
