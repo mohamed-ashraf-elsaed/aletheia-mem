@@ -125,7 +125,8 @@ function buildFrame() {
     ctx.counts = (next) => {
       if (next.memories != null && !state.project) subnav.setCount?.("memories", next.memories);
     };
-    swap(content, h("div", { class: "ui-memory-page", role: "region", "aria-label": SUBVIEWS.memory.find((item) => item.id === route.sub)?.label ?? "Memories" }, currentView));
+    const pageLabel = SUBVIEWS.memory.find((item) => item.id === route.sub)?.label ?? "Memories";
+    swap(content, h("div", { class: "ui-memory-page", role: "region", "aria-label": pageLabel }, h("h2", { class: "ui-sr" }, pageLabel), currentView));
   }
   return { el, show, project: state.project, stats };
 }

@@ -22,7 +22,9 @@ export function tabFrame({ tab, title, lede, actions = [], extra = [], build }) 
       subnav.setActive(route.sub);
       view?.dispose?.();
       view = build(route.sub, route, frame);
-      swap(content, h("div", { class: `ui-${tab}-page`, role: "region", "aria-label": subs.find((item) => item.id === route.sub)?.label ?? title }, view));
+      const label = subs.find((item) => item.id === route.sub)?.label ?? title;
+      // A hidden h2 keeps the heading order whole (h1, h2, h3 for each row) on pages whose rows use h3.
+      swap(content, h("div", { class: `ui-${tab}-page`, role: "region", "aria-label": label }, h("h2", { class: "ui-sr" }, label), view));
       return view;
     },
     current: () => view,
