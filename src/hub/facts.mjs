@@ -284,6 +284,7 @@ export async function extractWithUsage(store, { window, project = "default", ask
  */
 export function storeFacts(store, { facts, project, mode = "rules", model = null, promptVersion = FACTS_PROMPT_VERSION, observationId = null, now = Date.now() }) {
   const added = [];
+  const deduped = [];
   const superseded = [];
   const reviews = [];
   for (const fact of facts) {
@@ -313,9 +314,13 @@ export function storeFacts(store, { facts, project, mode = "rules", model = null
       const resolved = resolveContradictions(store, { factId: result.id, explicitSupersedes: fact.supersedesId, now });
       superseded.push(...resolved.superseded);
       reviews.push(...resolved.reviews);
+    } else {
+      // The same fact seen again is not a new row, but the new session is a source of the current one.
+      deduped.push(result.id);
+      for (const episodeId of episodeIds) store.link({ fromType: "fact", fromId: result.id, toType: "episode", toId: episodeId, relation: "mentions" });
     }
   }
-  return { added: added.length, ids: added, superseded, reviews };
+  return { added: added.length, ids: added, deduped, superseded, reviews };
 }
 
 // ---- contradiction handling ------------------------------------------------------------------------------

@@ -2,6 +2,7 @@
 // retries provider errors with exponential backoff, and never runs inside a hook. Jobs are rows, so a kill -9
 // leaves the work claimable again. Progress is recorded on the episode, so a resumed job does not redo a window.
 import { chunkEpisodes, storeFacts, extractWithUsage, FACTS_PROMPT_VERSION, modeInstruction as modeInstructionFor } from "./facts.mjs";
+import { mergeNearDuplicates } from "./dedupe.mjs";
 import { modelFor } from "../refresh/providers.mjs";
 import { pricesFrom } from "./usage.mjs";
 
@@ -128,6 +129,7 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
   const instruction = modeInstruction || modeInstructionFor(config.mode ?? "code");
   const priceTable = prices ?? pricesFrom(config);
   let facts = 0;
+  let deduped = 0;
   let rejected = 0;
   const startedAt = now();
   const mode = ask ? "provider" : "rules";
@@ -151,12 +153,14 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
       markExtracted(store, window.map((episode) => episode.episodeId), now());
       store.db.exec("COMMIT");
       facts += stored.added;
+      deduped += stored.deduped?.length ?? 0;
     } catch (error) {
       try { store.db.exec("ROLLBACK"); } catch { /* ignore */ }
       throw error;
     }
   }
-  return { memories: memories.length, windows: windows.length, facts, rejected, mode, startedAt };
+  const observations = mergeNearDuplicates(store, { project: payload.project ?? "default", maxRows: 2000 });
+  return { memories: memories.length, windows: windows.length, facts, deduped, rejected, mode, startedAt, merged: observations.merged };
 }
 
 /**
