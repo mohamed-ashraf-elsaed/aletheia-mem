@@ -117,7 +117,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-073 | Add `aletheia doctor` | P3 | T-007 | todo | — | [T-073.md](T-073.md) |
 | T-074 | Generate folder context files | P3 | T-059 | todo | — | [T-074.md](T-074.md) |
 | T-075 | Add a connector verification registry | P3 | T-070 | todo | — | [T-075.md](T-075.md) |
-| T-076 | Document and test Claude Desktop MCP setup | P3 | T-058 | todo | — | [T-076.md](T-076.md) |
+| T-076 | Document and test Claude Desktop MCP setup | P3 | T-058 | validated | 2026-10-26 | [T-076.md](T-076.md) |
 | T-077 | Add live feed, session pages and context preview | P3 | T-017 | todo | — | [T-077.md](T-077.md) |
 | T-078 | Add a settings UI | P3 | T-016 | todo | — | [T-078.md](T-078.md) |
 | T-079 | Restructure the README and add real badges | P4 | T-001 | todo | — | [T-079.md](T-079.md) |
