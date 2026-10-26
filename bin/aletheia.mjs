@@ -22,6 +22,7 @@
 //   aletheia dismiss <id | type:id> [--reason r]        hide a memory, episode, observation or fact (reversible)
 //   aletheia restore <id | type:id>                     undo a dismissal
 //   aletheia dismissed [--limit n]                      list dismissed items
+//   aletheia language [set <tag> | list] [--project p]  output language for facts and summaries (empty clears)
 //   aletheia optimize                                   rebuild FTS segments after a large import
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -218,6 +219,14 @@ async function main() {
       case "dismissed": {
         const rows = hub.dismissedList({ limit: Number(flags.limit) || 100 });
         return out(rows.length ? rows.map((row) => `${row.item_type}:${row.item_id}  ${new Date(row.at_epoch).toISOString()}${row.reason ? `  ${row.reason}` : ""}`).join("\n") : "No dismissed items.");
+      }
+      case "language": {
+        if (pos[0] === "set") {
+          const result = hub.setOutputLanguage(flags.project ?? "default", pos[1] ?? "", { actor: "cli" });
+          return out(result.language ? `Output language for ${result.project}: ${result.language}` : `Cleared the output language for ${result.project}; it follows the extraction mode.`);
+        }
+        const map = hub.outputLanguageMap();
+        return out(Object.keys(map).length ? Object.entries(map).map(([project, language]) => `${project.padEnd(24)} ${language}`).join("\n") : "No per-project output language; the extraction mode decides.");
       }
       case "promote": {
         if (!pos[0] || !pos[1]) return die("Usage: aletheia promote <memory|episode|observation|fact> <id>");

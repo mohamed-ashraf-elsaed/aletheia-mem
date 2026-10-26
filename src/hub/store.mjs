@@ -7,6 +7,7 @@ import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { sha256 } from "../lib/hash.mjs";
+import { normalizeLanguage } from "./language.mjs";
 import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVector, unpackVector } from "./retrieval.mjs";
 
 const SCHEMA_VERSION = 3; // 3: episodes, observations, facts, entities, keys, links, queue and usage
@@ -493,6 +494,30 @@ export class HubStore {
   dismissedList({ limit = 100 } = {}) {
     return this.db.prepare("SELECT d.item_type, d.item_id, d.reason, d.at_epoch FROM dismissals d ORDER BY d.at_epoch DESC, d.item_id DESC LIMIT ?")
       .all(Math.min(Math.max(Number(limit) || 100, 1), 500));
+  }
+
+  // ---- output language (T-120) --------------------------------------------------------------------------
+  // Stored per project under one settings key, so a project can answer in a different language without a new
+  // table. The global config value is the fallback when neither the project nor "default" has one.
+
+  setOutputLanguage(project, language, { actor = "ui" } = {}) {
+    const tag = normalizeLanguage(language);
+    const key = String(project ?? "").trim() || "default";
+    const map = this.setting("output.language", {});
+    if (tag) map[key] = tag;
+    else delete map[key];
+    this.setSetting("output.language", map);
+    this.audit(actor, "language.set", { project: key, language: tag || null });
+    return { project: key, language: tag };
+  }
+
+  outputLanguage(project, fallback = "") {
+    const map = this.setting("output.language", {});
+    return normalizeLanguage(map[String(project ?? "").trim()] ?? map.default ?? fallback ?? "");
+  }
+
+  outputLanguageMap() {
+    return this.setting("output.language", {});
   }
 
   /**

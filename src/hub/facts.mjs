@@ -4,6 +4,7 @@
 import { readFileSync } from "node:fs";
 import { redact } from "./redact.mjs";
 import { attachFactEntities } from "./entities.mjs";
+import { languageInstruction } from "./language.mjs";
 import { parseTemporal } from "./temporal.mjs";
 import { estimateTokens, pricesFrom, recordCall } from "./usage.mjs";
 
@@ -218,7 +219,7 @@ export function chunkEpisodes(episodes = [], { maxEpisodes = DEFAULT_BUDGET.maxE
 const iso = (epoch) => (Number.isFinite(epoch) ? new Date(epoch).toISOString() : "unknown");
 
 /** Build the prompt from already-redacted text. Nothing else may be added to what leaves the machine. */
-export function factsPrompt({ window, project, modeInstruction = "", existing = [] }) {
+export function factsPrompt({ window, project, modeInstruction = "", existing = [], outputLanguage = "" }) {
   const log = window
     .map((episode) => `[#${episode.episodeId} ${iso(episode.createdAtEpoch)} ${episode.tool ?? "unknown"} ${episode.kind ?? "message"}] ${redact(String(episode.text ?? "")).slice(0, EPISODE_PROMPT_CHARS)}`)
     .join("\n---\n");
@@ -226,16 +227,17 @@ export function factsPrompt({ window, project, modeInstruction = "", existing = 
   const known = existing.length
     ? `\n\nEXISTING ACTIVE FACTS (cite one in "supersedes" only if the new fact contradicts it):\n${existing.map((fact) => `#${fact.id} ${fact.text}`).join("\n")}`
     : "";
-  return `${factsPromptText()}${modeInstruction ? `\n\n${modeInstruction}` : ""}\n\nPROJECT: ${project}\nEPISODE_IDS: [${ids.join(", ")}]${known}\n\nLOG:\n${log}`;
+  const language = languageInstruction(outputLanguage);
+  return `${factsPromptText()}${modeInstruction ? `\n\n${modeInstruction}` : ""}${language ? `\n\n${language}` : ""}\n\nPROJECT: ${project}\nEPISODE_IDS: [${ids.join(", ")}]${known}\n\nLOG:\n${log}`;
 }
 
 /**
  * Ask, validate, retry once with the refusal quoted. A second refusal is returned, not stored, so the caller can
  * record the bad output. Provider errors are re-thrown: the queue must retry those, not throw the work away.
  */
-export async function extractFactsWithProvider({ window, project, ask, modeInstruction = "", existing = [] }) {
+export async function extractFactsWithProvider({ window, project, ask, modeInstruction = "", existing = [], outputLanguage = "" }) {
   const allowed = window.map((episode) => Number(episode.episodeId));
-  const prompt = factsPrompt({ window, project, modeInstruction, existing });
+  const prompt = factsPrompt({ window, project, modeInstruction, existing, outputLanguage });
   let refusal = null;
   let answer = "";
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -250,19 +252,19 @@ export async function extractFactsWithProvider({ window, project, ask, modeInstr
 }
 
 /** One window in one call: the provider when there is one, the rule extractor otherwise. */
-export async function extractWindow({ window, project = "default", ask = null, modeInstruction = "", existing = [] }) {
+export async function extractWindow({ window, project = "default", ask = null, modeInstruction = "", existing = [], outputLanguage = "" }) {
   if (!ask) return extractFactsByRules(window);
-  return extractFactsWithProvider({ window, project, ask, modeInstruction, existing });
+  return extractFactsWithProvider({ window, project, ask, modeInstruction, existing, outputLanguage });
 }
 
 /**
  * Extract one window and record its cost. A provider error still writes an error row and is re-thrown, so the queue
  * can retry; the work is not lost and the cost is not hidden.
  */
-export async function extractWithUsage(store, { window, project = "default", ask = null, modeInstruction = "", existing = [], model = null, batchId = null, prices = null, now = Date.now() } = {}) {
+export async function extractWithUsage(store, { window, project = "default", ask = null, modeInstruction = "", existing = [], outputLanguage = "", model = null, batchId = null, prices = null, now = Date.now() } = {}) {
   let result;
   try {
-    result = await extractWindow({ window, project, ask, modeInstruction, existing });
+    result = await extractWindow({ window, project, ask, modeInstruction, existing, outputLanguage });
   } catch (error) {
     recordCall(store, { atEpoch: now, batchId, model: model ?? "none", mode: ask ? "provider" : "rules", episodes: window.length, status: "error", error: error instanceof Error ? error.message : String(error), prices });
     throw error;

@@ -130,6 +130,7 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
   const windows = chunkEpisodes(episodes.map((episode) => ({ episodeId: episode.id, text: episode.text, createdAtEpoch: episode.created_at_epoch, tool: episode.tool, kind: episode.kind })), budget);
   const model = ask ? ask.modelFor?.("extract") || modelFor(config, "extract") || "unknown" : "rules";
   const instruction = modeInstruction || modeInstructionFor(config.mode ?? "code");
+  const language = store.outputLanguage(payload.project ?? "default", config.outputLanguage ?? "");
   const priceTable = prices ?? pricesFrom(config);
   let facts = 0;
   let deduped = 0;
@@ -139,7 +140,7 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
 
   for (const [index, window] of windows.entries()) {
     const result = await extractWithUsage(store, {
-      window, project: payload.project ?? "default", ask, modeInstruction: instruction,
+      window, project: payload.project ?? "default", ask, modeInstruction: instruction, outputLanguage: language,
       model, batchId: `${job.id}:${index}`, prices: priceTable, now: now(),
     });
     if (result.rejected) {
@@ -178,7 +179,7 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
       store.audit("extract", "embed.error", { message: String(error instanceof Error ? error.message : error).slice(0, 300) });
     }
   }
-  return { memories: memories.length, windows: windows.length, facts, deduped, rejected, mode, startedAt, merged: observations.merged, summaries, embedded };
+  return { memories: memories.length, windows: windows.length, facts, deduped, rejected, mode, language, startedAt, merged: observations.merged, summaries, embedded };
 }
 
 /**
