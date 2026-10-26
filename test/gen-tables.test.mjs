@@ -45,7 +45,7 @@ describe("gen-tables", () => {
     writeFileSync(join(dir, "raw-turns.json"), JSON.stringify({ questions: n, results: { hybrid: { n, "R@5": 57.4, mrr: 49.7, ms: 400 } } }));
     writeFileSync(join(dir, "dataset-facts.json"), JSON.stringify({ questions: n, results: { "hybrid+facts": { n, "R@5": 64.8, mrr: 59.1, ms: 500 } } }));
     const markdown = renderBench("md", dir, root);
-    expect(markdown).toContain("| claude-mem 15.2.0 (as shipped), raw turns | 1,536 | 36.0% | 0.285 |");
+    expect(markdown).toContain("| claude-mem 15.2.0 (as shipped), raw turns — measured-by-us | 1,536 | 36.0% | 0.285 |");
     expect(markdown).toContain("| Raw turns, all 10 conversations | 100 | 57.4% | 0.497 | 4.00 |");
     expect(markdown).toContain("| Dataset facts, all 10 | 100 | 64.8% | 0.591 | 5.00 |");
     expect(markdown).toContain("not run");

@@ -121,7 +121,7 @@ export function baselineRow(root = DEFAULT_ROOT) {
   const latency = (cells[8] ?? "").replace(/\*/g, "").trim();
   if (!recall || !mrr || !latency) return null;
   return {
-    label: "claude-mem 15.2.0 (as shipped), raw turns",
+    label: "claude-mem 15.2.0 (as shipped), raw turns — measured-by-us",
     questions: questions ?? "UNVERIFIED",
     recall: `${recall}%`,
     mrr,
@@ -162,7 +162,7 @@ export function renderBench(format = "md", resultsDir = latestResultsDir(join(DE
   }
   const date = (resultsDir.match(/(\d{4}-\d{2}-\d{2})/) || [])[1] ?? "unknown date";
   const lines = [table(format, headers, rows)];
-  lines.push(note(format, `Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Generated from bench/results/${date}/ (${sources.join(", ")}); re-run with \`bun scripts/compare-bench.mjs\`.`));
+  lines.push(note(format, `Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/${date}/ (${sources.join(", ")}); re-run with \`bun scripts/compare-bench.mjs\`.`));
   return lines.join("\n\n");
 }
 

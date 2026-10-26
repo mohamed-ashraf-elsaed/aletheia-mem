@@ -65,7 +65,7 @@
 <table>
 <thead><tr><th>Run</th><th>Questions</th><th>Recall@5</th><th>MRR</th><th>ms/query</th></tr></thead>
 <tbody>
-<tr><td>claude-mem 15.2.0 (as shipped), raw turns</td><td>1,536</td><td>36.0%</td><td>0.285</td><td>p50 1,699 ms, p95 2,824 ms (idle, 40 queries)</td></tr>
+<tr><td>claude-mem 15.2.0 (as shipped), raw turns — measured-by-us</td><td>1,536</td><td>36.0%</td><td>0.285</td><td>p50 1,699 ms, p95 2,824 ms (idle, 40 queries)</td></tr>
 <tr><td>Raw turns, all 10 conversations</td><td>1,536</td><td>57.4%</td><td>0.497</td><td>3.72</td></tr>
 <tr><td>Dataset facts, all 10</td><td>1,536</td><td>64.8%</td><td>0.591</td><td>5.53</td></tr>
 <tr><td>Dataset facts, 3 conversations</td><td>383</td><td>67.4%</td><td>0.620</td><td>5.80</td></tr>
@@ -75,7 +75,7 @@
 </tbody>
 </table>
 
-<p class="note">Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Generated from bench/results/2026-10-26/ (docs/14 §14.6, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with <code>bun scripts/compare-bench.mjs</code>.</p>
+<p class="note">Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (docs/14 §14.6, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with <code>bun scripts/compare-bench.mjs</code>.</p>
 <!-- /gen:bench -->
   </div>
   <div class="note"><strong>Read this before comparing.</strong> Recall@5 is retrieval, not answer accuracy. The gap is real but not 2× when both sides see the same extracted facts. At 50,000 memories our keyword search takes 71 to 104 ms (median), which misses our own 50 ms target. Method, baselines and the mistakes we made and fixed are in <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/14-research-ai-memory.md">the research doc</a>.</div>
