@@ -14,7 +14,7 @@ change `src/`, `bin/`, `public/`, `public-hub/`, `test/` or `bench/`.
 | Tasks by phase | P0 16, P1 19, P2 22, P3 21, P4 12, P5 8 |
 | Unique URLs in the research log | 264 |
 | URLs in documents 20-24 not in the research log | **0** |
-| `UNVERIFIED` items listed | 36 |
+| `UNVERIFIED` items listed | 36 numbered items + 13 matrix cells |
 
 Feature status spread: parity 25, partial 40, missing 79, better 12, out-of-scope 6, unverified 1.
 
@@ -224,7 +224,7 @@ TASKS_DIR=/tmp/taskcheck-copy bun scripts/check-tasks.mjs
 | Requirement | Result |
 |---|---|
 | Every URL in documents 20-24 appears in the research log | 69/69 unique URLs present; the 11 that are endpoints or commands are listed in section H with why they were not fetched |
-| Every `UNVERIFIED` is listed in `unverified.md` with what would verify it | 36 rows, including the untested product claims |
+| Every `UNVERIFIED` is listed in `unverified.md` with what would verify it | 36 numbered rows plus the 13 matrix cells, including the untested product claims |
 | `bun test` output in this report | Yes, full output above |
 | `check-tasks` output in this report | Yes, full output above |
 | Competitor count (>=25) | 42 |

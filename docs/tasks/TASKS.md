@@ -13,6 +13,18 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | `validated` | The validation command ran and passed, and its real output is in the task's Evidence field. |
 | `failed` | The validation command ran and failed; the real output and a dated note are in the task. Never delete a failed task. |
 
+
+## Phases
+
+| Phase | Meaning |
+|---|---|
+| P0 | Correctness and honesty: fail loudly, test the API, protect the data. |
+| P1 | Memory building: episodes, facts, entities, time, dedupe, decay, summaries. |
+| P2 | Retrieval numbers: the experiments in [22](../22-improve-the-numbers.md). |
+| P3 | Per-tool installers and hooks, plus the Hub UI needed to operate them. |
+| P4 | Repository polish and i18n. |
+| P5 | Team and graph extensions. |
+
 ## Rules
 
 1. Pick the first `todo` task whose dependencies are all `validated`.

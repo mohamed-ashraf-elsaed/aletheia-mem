@@ -2,7 +2,7 @@
 
 Every `UNVERIFIED` in [20](../20-claude-mem-feature-matrix.md), [21](../21-competitor-landscape.md) and
 [24](../24-repo-parity-and-growth.md), with the check that would resolve it. Nothing here is a placeholder for a fact
-we know; each row is a fact we could not fetch on 2026-10-26.
+we know; each row is a fact we could not fetch on 2026-10-26. Section 21.5 also has 13 cells marked `?`; they are listed at the end.
 
 ## Product and competitor facts
 
@@ -75,3 +75,26 @@ evidence. They are listed so the research log is complete without pretending the
 | `https://img.shields.io/github/stars/mohamed-ashraf-elsaed/aletheia-mem` | Proposed star badge endpoint, not fetched |
 | `https://mohamed-ashraf-elsaed.github.io/aletheia-mem/` | Homepage from the repository metadata; the site files were read locally |
 | `https://raw.githubusercontent.com/snap-research/locomo/main/data/locomo10.json` | Dataset URL from the existing benchmark plan (`docs/18`); not fetched in this run |
+
+## Matrix cells marked `?` in D2 section 21.5
+
+The exhaustive matrix uses `?` for "the source fetched does not state this". Each cell below is that kind of gap; the
+verification is the same: read the project's source or its current documentation, then replace the cell with ✅/❌/partial.
+
+| Project | Capabilities not stated in the fetched source |
+|---|---|
+| OpenMemory | MCP, REST, vector search, graph, temporal |
+| Supermemory | graph/entity memory |
+| Memori | graph, temporal |
+| Memobase | local mode, MCP, vector |
+| agentmemory | team sharing |
+| Engram | vector search |
+| TencentDB Agent Memory | local mode, free tier, no-account use, graph, temporal |
+| claude-memory-compiler | vector search, temporal |
+| ChatGPT memory | vector search |
+| Cursor memories | vector search |
+| Gemini memory | free tier, cross-tool import, vector search, temporal |
+| Windsurf memories | vector search |
+| Copilot memory | every capability in the matrix |
+
+Rows 3, 4, 10, 15, 25, 27, 28, 30, 37, 39, 40 and 41 in section 21.2 carry the same caveat.
