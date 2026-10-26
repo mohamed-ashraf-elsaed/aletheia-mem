@@ -43,11 +43,28 @@ export function loadConfig(overrides = {}) {
     // The LLM refresh (grouping, reviews, goals, story) is off unless a provider is chosen.
     // ALETHEIA_PROVIDER = claude-cli | openai | none
     provider: overrides.provider ?? env.ALETHEIA_PROVIDER ?? "none",
+    // Extraction mode: code, chill, language-en or language-es. See src/hub/modes/*.json.
+    mode: overrides.mode ?? env.ALETHEIA_MODE ?? "code",
+    // Model routing. Extraction should use the small model; summaries the larger one.
+    extractModel: overrides.extractModel ?? env.ALETHEIA_EXTRACT_MODEL ?? "",
+    summaryModel: overrides.summaryModel ?? env.ALETHEIA_SUMMARY_MODEL ?? "",
+    localBaseUrl: overrides.localBaseUrl ?? env.ALETHEIA_LOCAL_BASE_URL ?? "http://127.0.0.1:11434/v1/chat/completions",
     autoRefresh: (overrides.autoRefresh ?? env.ALETHEIA_AUTO_REFRESH ?? "true") !== "false" && (overrides.autoRefresh ?? true) !== false,
+    // The extraction worker is started by the server binary or `aletheia compress --daemon`, never by a hook.
+    extractionWorker: overrides.extractionWorker ?? env.ALETHEIA_EXTRACTION_WORKER === "1",
     refreshCheckMs: Number(overrides.refreshCheckMs ?? env.ALETHEIA_REFRESH_CHECK_MS ?? 10 * 60_000),
+    // Fact extraction batching and cost. Prices default to 0: this project does not guess a vendor price.
+    factBudget: {
+      maxEpisodes: Number(overrides.factBudget?.maxEpisodes ?? env.ALETHEIA_FACT_MAX_EPISODES ?? 20),
+      maxChars: Number(overrides.factBudget?.maxChars ?? env.ALETHEIA_FACT_CHAR_BUDGET ?? 12_000),
+    },
+    prices: {
+      inputPer1k: Number(overrides.prices?.inputPer1k ?? env.ALETHEIA_PRICE_IN_PER_1K ?? 0),
+      outputPer1k: Number(overrides.prices?.outputPer1k ?? env.ALETHEIA_PRICE_OUT_PER_1K ?? 0),
+    },
     // Human copy (plain-language card text) needs an OpenAI-compatible endpoint.
     openai: {
-      baseUrl: env.ALETHEIA_OPENAI_BASE_URL ?? "https://openrouter.ai/api/v1/chat/completions",
+      baseUrl: env.ALETHEIA_OPENAI_BASE_URL ?? "https://api.openai.com/v1/chat/completions",
       apiKey: env.ALETHEIA_OPENAI_API_KEY ?? "",
       model: env.ALETHEIA_OPENAI_MODEL ?? "",
     },

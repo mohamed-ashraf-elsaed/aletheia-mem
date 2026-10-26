@@ -1,0 +1,7 @@
+{
+  "id": "language-es",
+  "language": "es",
+  "languageName": "Spanish",
+  "style": "code",
+  "instruction": "Escribe cada hecho en español. Mantén los identificadores, rutas, comandos y versiones tal cual."
+}

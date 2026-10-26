@@ -8,7 +8,9 @@ import { ValidationError, validateMarkFinished, validateReview, validateRuleActi
 import { EVIDENCE_KINDS } from "./readmodel/evidence.mjs";
 import { MIME_TYPES } from "./readmodel/work-product.mjs";
 import { BadRequest, createHubRoutes } from "./hub/routes.mjs";
+import { startBackgroundWorker } from "./hub/queue.mjs";
 import { HubStore } from "./hub/store.mjs";
+import { makeProvider } from "./refresh/providers.mjs";
 
 const STATIC_TYPES = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml",
@@ -29,6 +31,15 @@ const notFoundRoute = (method, path) =>
 export function startServer(config, { autoRefresh = null } = {}) {
   const service = new WorkViewService(config, { autoRefresh });
   const hub = new HubStore(config.hubDb);
+  // The extraction worker is a background task of the server, not part of any hook. A misconfigured provider
+  // must not stop the server from booting: extraction falls back to the rule extractor and doctor reports it.
+  let ask = null;
+  try {
+    ask = makeProvider(config);
+  } catch {
+    ask = null;
+  }
+  const worker = config.extractionWorker ? startBackgroundWorker({ store: hub, ask, config }) : null;
   const hubRoutes = createHubRoutes({ hub, config });
   const html = new Map();
   const indexHtml = () => {
@@ -170,6 +181,7 @@ export function startServer(config, { autoRefresh = null } = {}) {
     service,
     hub,
     stop() {
+      worker?.stop();
       server.stop(true);
       service.close();
       hub.close();
