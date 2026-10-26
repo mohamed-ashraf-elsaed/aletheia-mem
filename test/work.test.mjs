@@ -132,6 +132,7 @@ describe("T-142: the Work query layer", () => {
     expect(detail.summary.text).toContain("retry work");
     expect(detail.facts.some((fact) => fact.id === seeded.factId)).toBe(true);
     expect(detail.facts[0].source.episodeId).toBeGreaterThan(0);
+    expect(detail.facts[0].validAt).toContain("T");
     expect(sessionDetail(store, { sessionId: "missing" })).toBeNull();
     store.close();
   });

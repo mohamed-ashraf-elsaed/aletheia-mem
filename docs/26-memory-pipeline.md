@@ -189,10 +189,18 @@ One page at `/`, four hash routes, one shared header:
 
 | Route | What it shows | Main routes it calls |
 |---|---|---|
-| `#/work` | the existing Work page, mounted unchanged at `#root` | `/api/work-view`, `/api/work-view/events` |
+| `#/work` | Aletheia's own Work view: sessions, review items, current facts, owner goals; `#/work/session/<id>` is the read-only session page | `/v1/work`, `/v1/work/goals`, `/v1/work/session/:id` |
 | `#/memory` | stats, memories, facts (current/history), search, review queue, dismissed, import/export | `/api/hub/memories`, `/facts`, `/review`, `/dismissed`, `/v1/search` |
 | `#/rules` | rule editor, suggested rules, sync, import | `/api/hub/rules`, `/rule-suggestions` |
 | `#/tools` | read-only installer status from `doctor` | `/api/hub/doctor` |
+
+The Work view was added on 2026-10-26 (T-142 to T-147). `src/hub/work.mjs` merges the memory and episode views of a
+session, so a fresh hook capture is visible before extraction and a back-filled transcript is visible without
+memories. It returns the last typed prompt, the last summary with its source facts, current facts, review items,
+queue depth, pinned rows, recent dismissals and the last capture per tool. `src/hub/goals.mjs` derives goals from
+`memories.kind = 'prompt'` only (repeated imperative topics across sessions); pin and dismiss are settings, never
+deletes. The page refreshes every 10 s only while visible. The old viewer remains at `/work-view/work.html`; the
+Tools tab links to it only when the old database exists, and `NOTICE.md` records its Apache-2.0 origin.
 
 The header carries a project selector, a memory search box and a health dot from `/v1/health`. `/hub` redirects to
 `/#/memory` so old links keep working. `public/ui-core.js` holds the router and the view helpers with no DOM, which
@@ -208,5 +216,5 @@ restored. Permanent `DELETE /api/hub/memories/:id` stays in the API and CLI, not
 - [22-improve-the-numbers.md](22-improve-the-numbers.md) for the experiments and the fact-key claim.
 - The task files T-017, T-018, T-019, T-020, T-023, T-024, T-025, T-028, T-029, T-030 and T-034 for the acceptance
   criteria; T-119 to T-123 for the provider chain, output language, transcript back-fill, folder-pollution proof
-  and dismiss/restore; T-134 to T-139 for the one UI. [manual-test.md](manual-test.md) §6 records the browser run.
-  No external URL was fetched for this page.
+  and dismiss/restore; T-134 to T-139 for the one UI; T-142 to T-147 for the Work view, goals and session page.
+  [manual-test.md](manual-test.md) §6 records the browser runs. No external URL was fetched for this page.

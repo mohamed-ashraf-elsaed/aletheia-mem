@@ -36,6 +36,7 @@ const factRow = (row) => ({
   object: row.object,
   status: row.status,
   confidence: row.confidence,
+  validAt: iso(row.valid_from_epoch ?? row.recorded_at_epoch),
   recordedAt: iso(row.recorded_at_epoch),
   source: {
     episodeId: row.episode_id ?? null,

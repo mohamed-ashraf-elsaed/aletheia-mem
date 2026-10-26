@@ -1,4 +1,4 @@
-// The Work tab: this hub's own sessions, review items, facts and goals. It never reads claude-mem's database.
+// The Work tab: this hub's own sessions, review items, facts and goals. It never reads the legacy viewer's database.
 // The overview refreshes every 10 seconds only while the tab is visible and the Work route is active. The session
 // page is read-only. Every action (accept, reject, dismiss, restore, pin) calls an existing API route.
 import { parseRoute } from "../ui-core.js";
@@ -153,13 +153,13 @@ function goalCard(goal, { dismissed = false } = {}) {
 function goalsSection(data) {
   const view = goalsView(data);
   const dismissed = view.dismissedGoals.length
-    ? h("details", { class: "ui-card" }, h("summary", {}, `Dismissed goals (${view.dismissedGoals.length})`), ...view.dismissedGoals.map((goal) => goalCard(goal, { dismissed: true })))
+    ? h("details", { class: "ui-card" }, h("summary", {}, `Dismissed goals (${view.dismissedGoals.length})`), ...data.dismissedGoals.map((goal) => goalCard(goal, { dismissed: true })))
     : null;
   return h("section", { class: "ui-work-goals" },
     h("h2", {}, "Goals"),
     h("p", { class: "ui-meta" }, "From your own typed prompts only. A topic is a goal when it repeats in at least two sessions."),
     view.goals.length ? null : h("div", { class: "ui-empty" }, "No repeated imperative topics across sessions yet."),
-    ...view.goals.map((goal) => goalCard(goal)),
+    ...data.goals.map((goal) => goalCard(goal)),
     dismissed);
 }
 
@@ -182,7 +182,7 @@ function overviewDom(data, goals) {
       h("p", { class: "ui-meta" }, `Captured sessions, facts and review items from this hub · project: ${header.project}`)),
     data.empty ? emptyCard(data) : null,
     h("div", { class: "ui-work-strip" },
-      stat("health", header.health.label, header.health.state),
+      stat("health", header.health.label),
       stat("last capture", header.lastCapture),
       stat("queue", header.queue, header.queueDetail),
       stat("mode", header.mode),
