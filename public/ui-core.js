@@ -22,7 +22,7 @@ export const SUBVIEWS = {
   ],
   rules: [
     { id: "rules", label: "Rules" },
-    { id: "suggestions", label: "Suggested" },
+    { id: "suggestions", label: "Suggested", count: 0 },
     { id: "sync", label: "Write to tools" },
     { id: "import", label: "Import" },
   ],

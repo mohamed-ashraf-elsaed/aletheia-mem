@@ -32,7 +32,7 @@ export class FakeElement {
     this.hidden = false;
     this.disabled = false;
     this.dataset = {};
-    this.value = "";
+    this._value = "";
     this.style = { props: {}, setProperty(key, value) { this.props[key] = value; }, removeProperty(key) { delete this.props[key]; } };
     this.scrollHeight = 40;
     this.clientHeight = 40;
@@ -44,6 +44,18 @@ export class FakeElement {
       toggle: (name, force) => { const on = force ?? !this.classList.contains(name); this.classList[on ? "add" : "remove"](name); return on; },
       contains: (name) => this.className.split(/\s+/).includes(name),
     };
+  }
+  get value() {
+    if (this.tag === "select") {
+      const options = this.querySelectorAll("option");
+      const chosen = options.find((option) => option.selected) ?? options[0];
+      return chosen ? chosen.value : "";
+    }
+    return this._value;
+  }
+  set value(next) {
+    if (this.tag === "select") { for (const option of this.querySelectorAll("option")) option.selected = option.value === String(next); return; }
+    this._value = String(next ?? "");
   }
   get isConnected() { let node = this; while (node.parentNode) node = node.parentNode; return node === this.owner?.documentElement; }
   setAttribute(key, value) {

@@ -77,7 +77,7 @@ async function showRoute() {
   const section = byId(`tab-${route.tab}`);
   if (changedTab) enter(section, "rise");
   const page = SUBVIEWS[route.tab]?.find((item) => item.id === route.sub);
-  document.title = `${page && route.tab !== "work" ? `${page.label} · ` : ""}${LABEL[route.tab]} · Aletheia`;
+  document.title = `${page && route.tab !== "work" && page.label !== LABEL[route.tab] ? `${page.label} · ` : ""}${LABEL[route.tab]} · Aletheia`;
   announce(`${LABEL[route.tab]}${page ? `, ${page.label}` : ""}`);
   syncSearchField(route);
   const render = await tabRenderer(route.tab);

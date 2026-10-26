@@ -198,7 +198,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-207 | Add the Region wrapper, paged list controller and Pager | P6 | T-201, T-204, T-203 | validated | 2026-10-26 | [T-207.md](T-207.md) |
 | T-208 | Rebuild the Memory tab | P6 | T-207, T-202, T-203 | validated | 2026-10-26 | [T-208.md](T-208.md) |
 | T-209 | Rebuild the Review queue | P6 | T-208 | validated | 2026-10-26 | [T-209.md](T-209.md) |
-| T-210 | Rebuild the Rules tab | P6 | T-207 | todo | — | [T-210.md](T-210.md) |
+| T-210 | Rebuild the Rules tab | P6 | T-207 | validated | 2026-10-26 | [T-210.md](T-210.md) |
 | T-211 | Rebuild the Tools tab | P6 | T-207 | todo | — | [T-211.md](T-211.md) |
 | T-212 | Add the first-run guide | P6 | T-208 | todo | — | [T-212.md](T-212.md) |
 | T-213 | Add motion and reduced-motion support | P6 | T-204 | todo | — | [T-213.md](T-213.md) |

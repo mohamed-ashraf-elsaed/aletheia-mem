@@ -201,3 +201,8 @@ html, body { min-height: 100%; }
   .ui-filter { flex-wrap: wrap; }
   .ui-filter-grow { flex-basis: 100%; }
 }
+.ui-fieldset { border: 0; margin: var(--ui-space-3) 0 0; padding: 0; min-width: 0; }
+.ui-checks { display: flex; flex-wrap: wrap; gap: var(--ui-space-2) var(--ui-space-4); margin-top: 6px; }
+.ui-check { display: inline-flex !important; align-items: center; gap: var(--ui-space-2); margin: 0 !important; min-height: var(--ui-touch); color: var(--ui-text) !important; font-size: var(--ui-text-md) !important; cursor: pointer; }
+.ui-check input { width: 18px !important; height: 18px; min-height: 0 !important; margin: 0 !important; accent-color: var(--ui-accent); }
+.ui-sync-results { display: grid; gap: var(--ui-space-3); margin-top: var(--ui-space-4); }
