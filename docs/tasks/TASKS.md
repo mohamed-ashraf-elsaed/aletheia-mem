@@ -120,16 +120,16 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-076 | Document and test Claude Desktop MCP setup | P3 | T-058 | validated | 2026-10-26 | [T-076.md](T-076.md) |
 | T-077 | Add live feed, session pages and context preview | P3 | T-017 | todo | — | [T-077.md](T-077.md) |
 | T-078 | Add a settings UI | P3 | T-016 | todo | — | [T-078.md](T-078.md) |
-| T-079 | Restructure the README and add real badges | P4 | T-001 | todo | — | [T-079.md](T-079.md) |
+| T-079 | Restructure the README and add real badges | P4 | T-001 | validated | 2026-10-26 | [T-079.md](T-079.md) |
 | T-080 | Publish the npm package | P4 | T-014 | todo | — | [T-080.md](T-080.md) |
-| T-081 | Add a Docker image and compose file | P4 | T-073 | todo | — | [T-081.md](T-081.md) |
+| T-081 | Add a Docker image and compose file | P4 | T-073 | validated | 2026-10-26 | [T-081.md](T-081.md) |
 | T-082 | Submit to the MCP registry and two awesome lists | P4 | T-080 | todo | — | [T-082.md](T-082.md) |
-| T-083 | Add logo, social preview and demo GIF | P4 | none | todo | — | [T-083.md](T-083.md) |
-| T-084 | Add issue templates, PR template and Code of Conduct | P4 | none | todo | — | [T-084.md](T-084.md) |
-| T-085 | Add CHANGELOG, releases, Dependabot and funding | P4 | T-080 | todo | — | [T-085.md](T-085.md) |
-| T-086 | Build the docs site with one page per document | P4 | T-013 | todo | — | [T-086.md](T-086.md) |
-| T-087 | Add the i18n workflow and drift checker | P4 | none | todo | — | [T-087.md](T-087.md) |
-| T-088 | Translate the README into the first 10 languages | P4 | T-087 | todo | — | [T-088.md](T-088.md) |
+| T-083 | Add logo, social preview and demo GIF | P4 | none | validated | 2026-10-26 | [T-083.md](T-083.md) |
+| T-084 | Add issue templates, PR template and Code of Conduct | P4 | none | validated | 2026-10-26 | [T-084.md](T-084.md) |
+| T-085 | Add CHANGELOG, releases, Dependabot and funding | P4 | T-080 | validated | 2026-10-26 | [T-085.md](T-085.md) |
+| T-086 | Build the docs site with one page per document | P4 | T-013 | validated | 2026-10-26 | [T-086.md](T-086.md) |
+| T-087 | Add the i18n workflow and drift checker | P4 | none | validated | 2026-10-26 | [T-087.md](T-087.md) |
+| T-088 | Translate the README into the first 10 languages | P4 | T-087 | validated | 2026-10-26 | [T-088.md](T-088.md) |
 | T-089 | Translate the README into the remaining 22 languages | P4 | T-088 | todo | — | [T-089.md](T-089.md) |
 | T-090 | Run an accessibility and theme pass on the Hub | P4 | T-077 | todo | — | [T-090.md](T-090.md) |
 | T-091 | Add a free self-hosted team server | P5 | T-067 | todo | — | [T-091.md](T-091.md) |
@@ -158,7 +158,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-115 | Add OIDC, SCIM, RBAC and DLP rules | P6 | T-110, T-108, T-112 | todo | — | [T-115.md](T-115.md) |
 | T-116 | Run My Work setup extraction on the user's own server | P6 | T-106 | todo | — | [T-116.md](T-116.md) |
 | T-117 | Add optional end-to-end encryption for sync | P6 | T-102 | validated | 2026-10-26 | [T-117.md](T-117.md) |
-| T-118 | Generate the README and site comparison tables from docs/28 JSON | P6 | none | todo | — | [T-118.md](T-118.md) |
+| T-118 | Generate the README and site comparison tables from docs/28 JSON | P6 | none | validated | 2026-10-26 | [T-118.md](T-118.md) |
 | T-119 | Add provider presets and a fallback chain for extraction | P6 | T-034 | validated | 2026-10-26 | [T-119.md](T-119.md) |
 | T-120 | Add an output-language setting for extraction and summaries | P6 | T-018 | validated | 2026-10-26 | [T-120.md](T-120.md) |
 | T-121 | Back-fill memory from existing Claude Code and Command Code transcripts | P6 | T-018 | validated | 2026-10-26 | [T-121.md](T-121.md) |

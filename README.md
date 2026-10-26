@@ -1,46 +1,64 @@
+<p align="center"><img src="docs/assets/logo.svg" alt="Aletheia" width="220"></p>
+
 # Aletheia
 
-**Un-forgetting for AI tools.** Free, local, one memory and one set of rules for every tool you use.
+**A free, local memory and rules hub for AI coding tools.**
 
-Aletheia (Greek *a-lethe*, "not forgetting") is a memory and rules hub for AI coding tools. It began as a
-re-implementation of claude-mem's "My Work" view; today the Work tab is Aletheia's own view of captured sessions,
-facts and goals.
+[![Licence](https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem)](LICENSE)
+[![Tests](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml/badge.svg)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml)
+[![Last commit](https://img.shields.io/github/last-commit/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/commits/main)
+[![Stars](https://img.shields.io/github/stars/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/stargazers)
+[![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
+![Status](https://img.shields.io/badge/status-alpha-orange)
+![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
+![Platform](https://img.shields.io/badge/platform-linux%20%28tested%29-lightgrey)
 
-One app at `/` with four tabs:
+**Status: alpha.** The memory engine and the installers work in tests. No host has been opened with a generated
+config yet, and answer accuracy is not measured. CI runs on Linux only; macOS and Windows are untested.
 
-1. **Work** (`#/work`): captured sessions, review items, recent facts and owner goals from this hub. The optional
-   legacy claude-mem viewer is linked from Tools only when its database exists.
-2. **Memory** (`#/memory`): a store that **any** tool can read and write, with a UI to manage it. Search, filter,
-   pin, edit, delete, add notes. Observations, summaries, prompts, raw events. Export a versioned bundle or Markdown,
-   import a bundle or the old database. Idempotent.
-3. **Rules** (`#/rules`): write once, **sync into** `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursor/rules`,
-   `.windsurf/rules`, Copilot and Aider files. Preview, backup, never touches your own text. Import rules back.
-4. **Tools** (`#/tools`): read-only installer status from `aletheia doctor`; the classic viewer link when the old
-   database exists; the audit log.
+[English](README.md) · [中文](docs/i18n/README.zh.md) · [Español](docs/i18n/README.es.md) · [Português (Brasil)](docs/i18n/README.pt-br.md) · [日本語](docs/i18n/README.ja.md) · [Deutsch](docs/i18n/README.de.md) · [Français](docs/i18n/README.fr.md) · [한국어](docs/i18n/README.ko.md) · [हिन्दी](docs/i18n/README.hi.md) · [العربية](docs/i18n/README.ar.md) · [Русский](docs/i18n/README.ru.md).
+Machine translations live in `docs/i18n/`; English is canonical. No translation has had native review.
 
-Zero npm dependencies. Runtime: [Bun](https://bun.sh) >= 1.1. Loopback only. No account, no telemetry. Never writes
-to claude-mem's database.
+## What it is
 
-> claude-mem itself is free (Apache-2.0); only its hosted cloud and team features are paid.
-> What this project adds is covered in [docs/12](docs/12-universal-memory-product.md); what it does not have yet is in
-> [docs/11](docs/11-feature-inventory.md). Read both before comparing.
+Aletheia is a free, local memory and rules hub for AI coding tools. One SQLite store is read by any tool over MCP,
+REST or the CLI, and your rules are written into each tool's own instruction file.
 
-## How it compares (measured, not claimed)
+Every coding agent forgets between sessions, and each one remembers differently. Aletheia keeps the memory and the
+rules once, on your machine, and lets each tool read them in the format it already understands. There is no account,
+no telemetry and no network call unless you configure a model provider. It listens on loopback only.
 
-On LoCoMo (1,536 questions), claude-mem 15.2.0 as shipped vs this project, retrieval only ([full tables and caveats](docs/14-research-ai-memory.md#146-measured-results)):
+## Install in three commands
 
-| | claude-mem | this project |
-|---|---|---|
-| Recall@5, raw turns | 36.0% | 57.5% (1.6×) |
-| Recall@5, both given the same extracted facts (383 questions) | 57.7% | 67.6%, or 73.7% with reranking (1.17× to 1.28×) |
-| Search latency, idle | p50 1,699 ms | 2 to 6 ms (350 ms with reranking) |
+```bash
+git clone https://github.com/mohamed-ashraf-elsaed/aletheia-mem
+cd aletheia-mem
+bun bin/aletheia-server.mjs
+```
 
-So the retrieval gap is real but **not 2×** when inputs are equal; the speed gap is two to three orders of magnitude. Answer accuracy (LLM-judged) is not measured yet. The plan to close the rest is in [15](docs/15-product-spec.md), [16](docs/16-target-architecture.md), [17](docs/17-tech-tasks.md), [18](docs/18-benchmark-plan.md).
+Open <http://127.0.0.1:37790>. Needs [Bun](https://bun.sh) 1.1 or newer. There is no `npm install` step because
+there are no runtime dependencies.
+
+The first screen has four tabs: **Work** (Aletheia's own view of captured sessions, facts and goals), **Memory**
+(search, edit, pin, delete, export), **Rules** (write once and sync) and **Tools** (installer status and audit).
+
+## How capture works
+
+```bash
+aletheia install claude-code --write
+aletheia install cursor --write
+aletheia install --list          # capability level and verification per tool
+```
+
+Without `--write` the command is a dry run. It prints every file it would change and writes nothing. Each changed
+file gets a timestamped backup. Hooks call the installed `aletheia` command, redact secrets and `<private>` blocks
+before storing, spool to disk if the database is unavailable, and always exit 0 so they never block the host.
+Compression is queued, not run inside the hook. Details and the exact hook list per host: [docs/25](docs/25-installers.md).
 
 ## Which tools it connects to
 
-Aletheia does not depend on any one tool. It speaks the open MCP protocol (stdio), a plain REST API and a CLI, and it
-writes the instruction file each tool already reads. What has and has not been checked:
+Aletheia does not depend on any one tool. It speaks MCP (stdio and HTTP), a plain REST API and a CLI, and it writes
+the instruction file each tool already reads. What has and has not been checked:
 
 | Check | Result |
 |---|---|
@@ -51,87 +69,140 @@ writes the instruction file each tool already reads. What has and has not been c
 | Any of the above **on a real install of that tool** | **Not tested yet.** Reports welcome. |
 | Automatic capture through a tool's hooks | Built for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf. Each installed hook command is exercised end to end in a temp HOME with a recorded payload; none has been run inside the tool. OpenCode is MCP+rules. |
 
-## Quick start
+<!-- gen:tools -->
+| Tool | Level | Verification | Hook events installed |
+|---|---|---|---|
+| claude-code | full | config written from docs, not tested on a real install | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| command-code | full | config written from docs, not tested on a real install | SessionStart, PostToolUse, Stop |
+| cursor | full | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
+| codex | full | config written from docs, not tested on a real install | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| gemini-cli | full | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
+| windsurf | full | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
+| opencode | mcp+rules | config written from docs, not tested on a real install | none (MCP and rules only) |
 
-```bash
-cd aletheia-mem   # after: git clone https://github.com/mohamed-ashraf-elsaed/aletheia-mem
-bun test                              # the test suite
-bun bin/aletheia-server.mjs                 # http://localhost:37790  (Work, Memory, Rules, Tools)
-```
+_Generated from src/hub/install.mjs via `aletheia install --list`. A row says tested on a real install only when that column says so; today none do._
+<!-- /gen:tools -->
 
-Bring your claude-mem memory into the hub (read-only, repeatable):
+## Measured numbers
 
-```bash
-bun bin/aletheia.mjs import claude-mem
-bun bin/aletheia.mjs search "retry"
-```
+On LoCoMo, claude-mem 15.2.0 as shipped vs this project. **These are retrieval numbers, not answer accuracy.**
 
-Give any tool the same memory:
+<!-- gen:bench -->
+| Run | Questions | Recall@5 | MRR | ms/query |
+|---|---|---|---|---|
+| claude-mem 15.2.0 (as shipped), raw turns — measured-by-us | 1,536 | 36.0% | 0.285 | p50 1,699 ms, p95 2,824 ms (idle, 40 queries) |
+| Raw turns, all 10 conversations | 1,536 | 57.4% | 0.497 | 3.72 |
+| Dataset facts, all 10 | 1,536 | 64.8% | 0.591 | 5.53 |
+| Dataset facts, 3 conversations | 383 | 67.4% | 0.620 | 5.80 |
+| Dataset facts, 3 conversations, + rerank | 383 | 73.9% | 0.686 | 251.16 |
+| Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
+| Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
-```bash
-bun bin/aletheia.mjs tools                          # what is installed, and how each connects
-bun bin/aletheia.mjs install --list                 # capability level and verification per tool
-bun bin/aletheia.mjs connect cursor                 # preview the MCP config; add --write to apply (backup kept)
-bun bin/aletheia.mjs rules add "Run the tests before saying a task is done"
-bun bin/aletheia.mjs rules sync --tools codex,cursor,claude-code --dir /path/to/project          # preview
-bun bin/aletheia.mjs rules sync --tools codex,cursor,claude-code --dir /path/to/project --write
-```
+_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (docs/14 §14.6, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
+<!-- /gen:bench -->
 
-Capture from any tool's hook (secrets and `<private>` removed before storing):
+Read the table this way:
 
-```bash
-echo '{"hook_event_name":"UserPromptSubmit","prompt":"add a retry button","session_id":"s1"}' \
-  | bun bin/aletheia.mjs capture --tool my-tool --project shop
-bun bin/aletheia.mjs context --project shop         # text to inject at session start, in any tool
-```
+- **Recall@5 is retrieval.** It asks whether the gold evidence is in the top five results. It is not a judgment of
+  whether an answer was right.
+- **Answer accuracy is not measured.** There is no reader or judge harness yet (T-051).
+- **The gap is not 2×** when both systems receive the same extracted facts. The speed difference is larger than the
+  quality difference.
+- **The first local extraction run failed.** Ollama `llama3.2:1b` answered a trivial call, but the `facts-v1` prompt
+  over a two-turn window returned HTTP 500 after 4 min 41 s. No fact was extracted from that run.
+- **Our rule extractor does not reproduce the fact gain.** It added 1,672 facts and moved Recall@5 from 57.3% to
+  57.7%; the dataset's own facts added 7.3 points. Method, raw files and the negative result:
+  [docs/22](docs/22-improve-the-numbers.md).
 
-Optional LLM features (off by default; they send data to the model you choose):
+## How it compares
 
-```bash
-ALETHEIA_PROVIDER=claude-cli bun bin/aletheia-server.mjs      # legacy Work view refresh (grouping, reviews, goals, story)
-bun bin/aletheia.mjs compress                                  # raw events -> observations (needs a provider)
-# any OpenAI-compatible endpoint, including local models:
-ALETHEIA_PROVIDER=openai ALETHEIA_OPENAI_BASE_URL=http://localhost:11434/v1/chat/completions \
-  ALETHEIA_OPENAI_API_KEY=x ALETHEIA_OPENAI_MODEL=llama3 bun bin/aletheia-server.mjs
-```
+<!-- gen:capabilities -->
+| Capability | Aletheia (today) | claude-mem | Mem0 | Zep/Graphiti | Supermemory | Basic Memory |
+|---|---|---|---|---|---|---|
+| Local-first | yes | yes | yes OSS | partial (Graphiti only) | yes self-host | yes |
+| Free | yes | yes OSS | yes OSS | partial (Graphiti free) | yes OSS | yes OSS |
+| No account | yes | yes local | yes OSS | yes Graphiti | yes self-host | yes |
+| MCP | yes stdio + HTTP (T-067, T-107) | yes | yes | partial (reference servers) | yes | yes |
+| REST | yes `/v1` | yes worker API | yes | yes | yes | partial |
+| CLI | yes | yes `npx` | partial | no | partial | yes |
+| Rules sync to tool files | yes 9 targets | no | no | no | no | partial (AGENTS.md) |
+| Import/export between tools | partial (own bundle + claude-mem) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
+| Hook capture | yes six hosts, fixture-tested; no host opened (T-140) | yes | no | no | no | partial |
+| Vector search | partial (optional ONNX) | yes Chroma | yes | yes | yes | yes |
+| Graph / entity memory | partial (entity rows exist; graph retrieval T-048) | no | yes | yes | UNVERIFIED | yes wikilinks |
+| Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query T-026) | partial (dates) | yes | yes | yes | partial |
+| Team sharing | partial (self-hosted sync and devices; team mode T-112) | partial (paid) | yes paid | yes paid | yes paid | no |
+| Benchmark published and reproducible | partial (retrieval yes; answer no) | no | vendor only | vendor only | vendor only | no |
+| Languages supported | 11 (English + 10 machine translations; no native review) | 29 modes, 32 READMEs | SDK | SDK | SDK | SDK |
 
-## Interfaces for tools
+_Generated from docs/28-competitor-report.json (rows copied from docs/21-competitor-landscape.md, fetched 2026-10-26). Aletheia cells updated 2026-10-26 from validated tasks; see docs/20 and docs/25. Cells the source did not state read UNVERIFIED._
+<!-- /gen:capabilities -->
+
+## Sync and remote MCP
+
+Both are self-hosted and free; neither is tested across two real machines.
+
+- **Aletheia Sync** is an append-only operation log with one result per operation, device pairing, tombstones,
+  compaction, purge and scoped tokens. Optional end-to-end encryption encrypts payloads on the device before they
+  are sent; **it does not hide metadata** such as device id, operation kind, entity id, timing or ciphertext size.
+  Unencrypted accounts keep plaintext payloads on the hub. Tested on loopback only. [docs/29](docs/29-sync.md)
+- **Remote MCP** serves the read tools (and, with a `sync` or `admin` token, the write tools) over the MCP Streamable
+  HTTP transport. Each call needs a bearer token, is rate-limited and is written to an append-only audit row.
+  TLS is delegated to a reverse proxy or tunnel; OAuth is not built (T-111). [docs/30](docs/30-remote-mcp.md)
+
+## Interfaces
 
 | Interface | Where | Use |
 |---|---|---|
 | MCP (stdio) | `bun bin/mcp.mjs` | `search`, `timeline`, `get_observations`, `save_memory`, `session_start_context`, `list_rules`, `add_rule` |
-| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info` | scripts, CI, any language; optional `ALETHEIA_API_KEY` bearer key |
-| CLI | `bin/aletheia.mjs` | hooks, shell, cron |
+| MCP (HTTP) | sync hub `/mcp` | the same tools with a bearer token and per-token scope |
+| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, any language; optional `ALETHEIA_API_KEY` bearer key |
+| CLI | `bin/aletheia.mjs` | hooks, shell, cron, sync |
 | Files | rules sync | each tool's own instruction file |
 
 ## Configuration
 
-All settings are environment variables.
+All settings are environment variables. The defaults are safe for a single-user machine.
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `ALETHEIA_PORT` | `37790` | Listen port (host is always `127.0.0.1`). |
+| `ALETHEIA_PORT` | `37790` | Listen port. |
+| `ALETHEIA_HOST` | `127.0.0.1` | Bind address. A non-loopback bind turns on Hub login. |
 | `ALETHEIA_DATA_DIR` | `~/.aletheia` | Everything this project writes, including `hub.db`. |
 | `ALETHEIA_HUB_DB` | `<data dir>/hub.db` | The shared memory store. |
 | `ALETHEIA_API_KEY` | empty | Bearer key required on `/v1/*` when set. |
-| `CLAUDE_MEM_DB` | `~/.claude-mem/claude-mem.db` | claude-mem's database (read-only; the optional legacy viewer and the importer). |
-| `ALETHEIA_LEDGER_DIR` | `<data dir>/ledger` | Legacy Work view refresh output. Point at `~/.claude-mem/work-view` to share the original's. |
+| `CLAUDE_MEM_DB` | `~/.claude-mem/claude-mem.db` | claude-mem's database (read-only; importer and optional legacy viewer). |
 | `ALETHEIA_RULES_FILE` | `<data dir>/MY-RULES.md` | The legacy Work view's rules file. |
-| `ALETHEIA_CLAUDE_MD` | `~/.claude/CLAUDE.md` | Where "Load in Claude Code" appends an `@` line. |
-| `ALETHEIA_PROVIDER` | `none` | `none`, `claude-cli` or `openai`. |
-| `ALETHEIA_OPENAI_BASE_URL`, `_API_KEY`, `_MODEL` | OpenRouter URL, empty, empty | For `openai`, and for human copy. |
-| `ALETHEIA_AUTO_REFRESH`, `ALETHEIA_REFRESH_CHECK_MS` | `true`, `600000` | Legacy Work view refresh scheduling. |
+| `ALETHEIA_PROVIDER` | `none` | `none`, `claude-cli` or an OpenAI-compatible provider. |
+| `ALETHEIA_PROVIDERS` | empty | Ordered fallback chain, for example `ollama,openai`. |
+| `ALETHEIA_OPENAI_BASE_URL`, `_API_KEY`, `_MODEL` | OpenRouter URL, empty, empty | For `openai` and human copy. |
+| `ALETHEIA_OUTPUT_LANGUAGE` | empty | Language for extracted facts and summaries. |
 | `ALETHEIA_BUG_COMPAT` | off | `1` reproduces the original's empty observation half ([F1](docs/08-findings.md)). |
 | `ALETHEIA_TOOL`, `ALETHEIA_CWD` | | MCP server: names the calling tool and default project. |
+
+## Limits and unverified claims
+
+This list is the honest half of the README. Every item is tracked in
+[docs/tasks/unverified.md](docs/tasks/unverified.md).
+
+- No config has been run inside its host application. "Config written from docs, not tested on a real install."
+- CI and the benchmark run on Linux only. macOS and Windows are untested.
+- Answer accuracy is not measured. Recall@5 is retrieval, not whether an answer was correct.
+- The 1B-model extraction run failed; facts from our own extractor were measured with the rule extractor only.
+- Sync and E2EE are tested with temp data dirs and a loopback hub. No real tunnel or second host was used.
+- E2EE covers payloads, not metadata.
+- At 50,000 rows, keyword search p95 was 108.1 ms after an FTS fix; the 50 ms target is not met.
+- The 10 README translations are machine-translated. No native speaker has reviewed them.
+- "Works with <tool>" is not claimed for any tool. Only a real install test would justify it.
 
 ## Layout
 
 ```
-bin/            aletheia-server.mjs (server)  aletheia.mjs (CLI)  mcp.mjs (MCP server)  ledger.mjs (legacy Work ledger CLI)
+bin/            server, CLI, MCP server, sync hub, legacy Work ledger CLI
 src/
   server.mjs app.mjs source.mjs config.mjs humancopy.mjs      server and the legacy Work API
   readmodel/ ledger/ refresh/ store/ http/                     legacy Work internals
-  hub/            store (memories, FTS5, rules, bundles)  rules-sync  tools  importers  capture  compress  mcp  routes
+  hub/            store (memories, FTS5, rules, bundles)  rules-sync  tools  importers  capture  compress  mcp  routes  sync
 public/         the one UI (index.html, one-ui.*, tabs/, work-view.js);
                 work.html and assets/ are the optional legacy viewer
 public-hub/     the old Memory Hub assets, still served at /hub/app.js
@@ -147,11 +218,24 @@ docs/           the documents
    · 6. [Frontend](docs/06-frontend.md) · 7. [Operations](docs/07-operations.md)
    · 8. [Findings](docs/08-findings.md) · 9. [Verification](docs/09-verification.md)
    · 10. [Rebuild guide](docs/10-rebuild-guide.md)
-2. [**Feature inventory vs claude-mem**](docs/11-feature-inventory.md): everything the original has, and the gap.
-3. [**Product: free, any tool, easy to leave**](docs/12-universal-memory-product.md): positioning, migration, roadmap.
-5. [**Research: how to build a better AI memory**](docs/14-research-ai-memory.md): sources, and every measured result against claude-mem.
-6. [**Product specification**](docs/15-product-spec.md) · [**Target architecture**](docs/16-target-architecture.md) · [**Technical tasks**](docs/17-tech-tasks.md) · [**Benchmark plan**](docs/18-benchmark-plan.md)
+2. [Feature inventory vs claude-mem](docs/11-feature-inventory.md) · [Product](docs/12-universal-memory-product.md)
+3. [Research and measured results](docs/14-research-ai-memory.md) · [Product spec](docs/15-product-spec.md)
+   · [Target architecture](docs/16-target-architecture.md) · [Technical tasks](docs/17-tech-tasks.md)
+   · [Benchmark plan](docs/18-benchmark-plan.md)
+4. [Feature matrix](docs/20-claude-mem-feature-matrix.md) · [Competitor landscape](docs/21-competitor-landscape.md)
+   · [Improve the numbers](docs/22-improve-the-numbers.md) · [Memory building](docs/23-memory-building.md)
+5. [Repository parity](docs/24-repo-parity-and-growth.md) · [Installers](docs/25-installers.md)
+   · [Memory pipeline](docs/26-memory-pipeline.md) · [Free paid parity](docs/27-free-paid-parity.md)
+6. [Competitor report](docs/28-competitor-report.md) · [Sync](docs/29-sync.md) · [Remote MCP](docs/30-remote-mcp.md)
 
-## License
+## Contributing
 
-Apache-2.0. See [NOTICE.md](NOTICE.md) for what comes from claude-mem.
+The most useful contribution is a report from a real install: open an issue with the tool, its version, the command
+you ran and what the tool did. See [CONTRIBUTING.md](CONTRIBUTING.md) and the task system in
+[docs/tasks/TASKS.md](docs/tasks/TASKS.md). Run `bun test`, `bun scripts/check-tasks.mjs` and
+`bun scripts/gen-tables.mjs --check` before a pull request. A new runtime dependency needs a reason.
+
+## Licence
+
+Apache-2.0. See [NOTICE.md](NOTICE.md) for what comes from claude-mem. Not affiliated with or endorsed by the
+claude-mem authors or Anthropic.

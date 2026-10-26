@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude Desktop and the aletheia MCP server · Aletheia docs</title>
+<meta name="description" content="Claude Desktop speaks MCP over stdio. Aletheia's server is bin/mcp.mjs; one JSON entry under mcpServers is all it needs. No hook and no rules file exist for Claude Desktop, so t...">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/claude-desktop.html">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Claude Desktop and the aletheia MCP server","description":"Claude Desktop speaks MCP over stdio. Aletheia's server is bin/mcp.mjs; one JSON entry under mcpServers is all it needs. No hook and no rules file exist for Claude Desktop, so t...","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/claude-desktop.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/logo.svg" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="claude-desktop-and-the-aletheia-mcp-server">Claude Desktop and the aletheia MCP server</h1>
+<p>Claude Desktop speaks MCP over stdio. Aletheia's server is <code>bin/mcp.mjs</code>; one JSON entry under <code>mcpServers</code> is all it needs. No hook and no rules file exist for Claude Desktop, so this page is setup only.</p>
+<h2 id="config-file-location">Config file location</h2>
+<div class="tablewrap"><table><thead><tr><th>OS</th><th>Path</th><th>Source</th></tr></thead><tbody><tr><td>macOS</td><td><code>~/Library/Application Support/Claude/claude_desktop_config.json</code></td><td>MCP quickstart, fetched 2026-10-26</td></tr><tr><td>Windows</td><td><code>%APPDATA%\Claude\claude_desktop_config.json</code></td><td>MCP quickstart, fetched 2026-10-26</td></tr><tr><td>Linux</td><td><code>~/.config/Claude/claude_desktop_config.json</code></td><td><strong>UNVERIFIED</strong>: the file exists on this machine, but the MCP quickstart does not name a Linux path</td></tr></tbody></table></div>
+<p>Source: <a href="https://modelcontextprotocol.io/quickstart/user">https://modelcontextprotocol.io/quickstart/user</a> (fetched 2026-10-26).</p>
+<h2 id="the-entry">The entry</h2>
+<p>Use an absolute Bun path and an absolute path to <code>bin/mcp.mjs</code>:</p>
+<pre><code class="language-json">{
+  &quot;mcpServers&quot;: {
+    &quot;aletheia&quot;: {
+      &quot;command&quot;: &quot;/absolute/path/to/bun&quot;,
+      &quot;args&quot;: [&quot;/absolute/path/to/aletheia-mem/bin/mcp.mjs&quot;],
+      &quot;env&quot;: {}
+    }
+  }
+}</code></pre>
+<p><code>aletheia</code> is the server name. The store path comes from <code>ALETHEIA_HUB_DB</code>; set it in <code>env</code> if the default <code>&lt;data dir&gt;/hub.db</code> is not what you want.</p>
+<h2 id="merge-never-replace">Merge, never replace</h2>
+<p>The config file already holds Claude Desktop preferences and other MCP servers. Aletheia only adds or removes <code>mcpServers.aletheia</code>; everything else is kept byte-for-byte apart from JSON formatting. Running the merge twice is a no-op, and a changed file gets a <code>.aletheia-bak-&lt;timestamp&gt;</code> copy first. An unparsable file is refused.</p>
+<h2 id="what-was-and-was-not-tested">What was and was not tested</h2>
+<ul><li>The merge and the generated JSON are tested against fixtures (<code>test/claude-desktop.test.mjs</code>).</li><li>Claude Desktop was <strong>not</strong> opened with this config here. <code>docs/manual-test.md</code> records the manual step.</li></ul>
+<h2 id="restart">Restart</h2>
+<p>Quit Claude Desktop completely and reopen it. The server appears under the hammer/tools icon. If it does not, run the command from the entry by hand and read its stderr.</p>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>

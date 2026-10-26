@@ -17,10 +17,11 @@ Current public state, fetched 2026-10-26 (`api.github.com/repos/mohamed-ashraf-e
 | Last push | 2026-10-26T09:24:31Z |
 | npm package `aletheia-mem` | **404 — not published** (verified `registry.npmjs.org/aletheia-mem`) |
 
-Current repository files: `README.md` (no logo, no badges), `SECURITY.md`, `CONTRIBUTING.md`, `NOTICE.md`, `LICENSE`,
-`.github/workflows/test.yml`, `.github/workflows/pages.yml`, `site/` with Open Graph tags and JSON-LD, `site/sitemap.xml`
-with one URL. Missing: issue templates, PR template, Code of Conduct, CHANGELOG, releases, Dependabot, FUNDING,
-Discussions, logo, demo GIF, translations.
+Current repository files, updated 2026-10-26: `README.md` (logo, real badges, ten machine translations, generated
+tables), `SECURITY.md`, `CONTRIBUTING.md`, `NOTICE.md`, `LICENSE`, `CODE_OF_CONDUCT.md`, `CHANGELOG.md`, the issue
+forms and PR template under `.github/`, `.github/workflows/{ci,test,pages}.yml`, `.github/dependabot.yml`,
+`docs/i18n/`, `Dockerfile`, `compose.yaml`, and `site/` with Open Graph tags and JSON-LD. Still missing: releases,
+FUNDING (owner decision), Discussions, a demo GIF, a published npm package, and a generated docs site (T-086).
 
 ## 24.1 README structure we will adopt
 
@@ -138,39 +139,40 @@ A benchmark badge is *allowed* once the result has a dated command and raw outpu
 | npm version | `npm view aletheia-mem version` returns a version | Package is 404 (verified 2026-10-26) |
 | npm downloads | The same, plus 30 days of data | No package |
 | Coverage | A real coverage run in CI with an uploaded report | No coverage tool or report |
-| Test count | A script that reads `bun test` output and updates the number | README hardcodes 115; not generated |
-| Docker pulls | A published image on a registry | No Dockerfile (T-081) |
+| Test count | A script that reads `bun test` output and updates the number | README no longer types a count; `scripts/check-claims.mjs` runs the suite |
+| Docker pulls | A published image on a registry | No published image; `Dockerfile` and `compose.yaml` exist, `docker build` NOT RUN BY AUTHOR |
 | Latest release | A tagged GitHub release | No releases |
 | OpenSSF Scorecard | A real scorecard run | None |
 | "Works with <tool>" | A test on a real install of that tool | None for any tool (`README.md` says so). 2026-10-26: six tools have fixture-tested hook configs and end-to-end runs through their installed hook commands; that is still not a real install test. |
 | Awesome-list mention | The list accepted the entry | No entry |
 | Trendshift / Vercel OSS / sponsor badges | Actual acceptance into the programme | Not a member; do not copy claude-mem's |
 
-Rule: a badge is a data read or an honest status. A static number that a human typed is neither. The README's current
-"115 tests" is a static number; it must become generated (T-001) or say "the test suite" without a count.
+Rule: a badge is a data read or an honest status. A static number that a human typed is neither. The README now says
+"the test suite" without a count, and `scripts/check-claims.mjs` fails if a test, star or download count is typed by hand.
 
 ## 24.4 Repository polish checklist
 
 | Item | Current | Task | Notes |
 |---|---|---|---|
-| Logo and wordmark | Missing | T-083 | Original artwork, light and dark variants, SVG + PNG. |
-| Social preview | UNVERIFIED (repository setting not readable from code) | T-083 | 1280×640, same wordmark. |
-| Demo GIF | Missing | T-083 | 15-25 s: capture, search, rules sync, export. No fake data. |
-| Issue templates | Missing | T-084 | Bug report asks for tool, version, install method, `aletheia doctor` output. |
-| PR template | Missing | T-084 | Tests, docs, measurement command, no new dependency without a reason. |
-| CODE_OF_CONDUCT | Missing | T-084 | Contributor Covenant 2.1, with a contact. |
-| SECURITY.md | Present | — | Keep. Add a response expectation only if true. |
+| Logo and wordmark | **Done 2026-10-26**: `docs/assets/logo.svg` and `logo-dark.svg`, original geometric mark, no text | T-083 | SVG only; no PNG because no renderer was installed. |
+| Social preview | **SVG card 2026-10-26**: `docs/assets/social.svg`, 1280×640 | T-083 | The repository setting is the owner's action; no PNG was rendered. |
+| Demo GIF | **NOT RUN BY AUTHOR** | T-083 | Needs a real recorded session; no GIF is shipped. |
+| Issue templates | **Done 2026-10-26**: bug, feature and new-host forms | T-084 | The new-host form requires the vendor's hook payload docs URL. |
+| PR template | **Done 2026-10-26** | T-084 | Tests, docs, measurement command, no new dependency without a reason. |
+| CODE_OF_CONDUCT | **Done 2026-10-26**: Contributor Covenant 2.1 | T-084 | Contact is a GitHub handle; no email is published. |
+| SECURITY.md | Present; names GitHub private vulnerability reporting | — | No response-time promise. |
 | CONTRIBUTING.md | Present | — | Keep; link the task system. |
-| CHANGELOG.md | Missing | T-085 | Keep a Changelog format, one entry per release. |
-| Releases | None | T-085 | Tag `v0.1.0` only when the claims in it are true. |
-| Dependabot | Missing | T-085 | Bun/npm and GitHub Actions, weekly. |
-| FUNDING.yml | Missing | T-085 | Only if there is a real funding destination; otherwise omit. |
+| CHANGELOG.md | **Done 2026-10-26**: Keep a Changelog, 0.1.0 marked not released | T-085 | No tag or release was created. |
+| Releases | None | T-085 | Tag `v0.1.0` only when the claims in it are true; owner action. |
+| Dependabot | **Done 2026-10-26**: GitHub Actions weekly | T-085 | No npm entry because there are no npm dependencies. |
+| FUNDING.yml | **Not added: owner decision** | T-085 | No funding destination was supplied. |
+| Docker | **Files 2026-10-26**: `Dockerfile`, `compose.yaml` | T-081 | `docker build` NOT RUN BY AUTHOR. |
 | GitHub topics | Present (12) | T-085 | Add `memory`, `agent-memory`, `rules`, `sqlite`, `bun`, `mcp-server`. |
 | GitHub Discussions | Disabled | T-085 | Enable when there is a maintainer to answer; otherwise it is an empty room. |
-| Docs site structure | Landing page only | T-086 | Generate one page per numbered doc; keep the Markdown canonical. |
-| Sitemap | One URL | T-086 | One URL per docs page, `lastmod` from git. |
-| Structured data | JSON-LD present for `SoftwareApplication` | T-086 | Add `FAQPage` and `TechArticle` for docs pages. |
-| robots.txt | Present | T-086 | Keep; add the docs sitemap. |
+| Docs site structure | **Done 2026-10-26**: 30 top-level docs plus an index, generated by `scripts/build-site.mjs` | T-086 | Markdown remains canonical; no framework or CDN. |
+| Sitemap | **Done 2026-10-26**: 32 URLs, `lastmod` from git | T-086 | The count equals the pages. |
+| Structured data | **Done 2026-10-26**: `TechArticle` per page, `CollectionPage` on the index, `FAQPage` on the landing page | T-086 | All inline JSON-LD; no external script. |
+| robots.txt | Present; points at the generated sitemap | T-086 | Regenerated by the build. |
 | Accessibility | Not audited | T-090 | axe pass, keyboard navigation, contrast, focus states. |
 | Theme | Hub UI unaudited | T-090 | Light/dark, no flash of wrong theme. |
 | Windows support | Not tested | T-014 | CI matrix; do not claim until green. |

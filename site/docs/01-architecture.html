@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>1. Architecture · Aletheia docs</title>
+<meta name="description" content="claude-mem is a memory plugin for coding agents. Its worker (scripts/worker-service.cjs, a 4.2 MB Bun bundle) records every prompt, tool call, observation and session summary in...">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/01-architecture.html">
+<link rel="icon" type="image/svg+xml" href="../favicon.svg">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"1. Architecture","description":"claude-mem is a memory plugin for coding agents. Its worker (scripts/worker-service.cjs, a 4.2 MB Bun bundle) records every prompt, tool call, observation and session summary in...","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/01-architecture.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/logo.svg" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="1-architecture">1. Architecture</h1>
+<h2 id="what-the-original-is">What the original is</h2>
+<p>claude-mem is a memory plugin for coding agents. Its worker (<code>scripts/worker-service.cjs</code>, a 4.2 MB Bun bundle) records every prompt, tool call, observation and session summary into <code>~/.claude-mem/claude-mem.db</code>, and serves several web pages. &quot;My Work&quot; is the page at <code>/</code>: a React single-page app (Vite build in <code>ui/work-view/</code>) over a small JSON and server-sent-events API.</p>
+<p>The worker listens on <code>37700 + (uid % 100)</code>. That is why this machine's instance is on <code>37700</code> (uid 1000). The default <code>37777</code> appears only in help text.</p>
+<p>Everything the page shows comes from three places:</p>
+<div class="tablewrap"><table><thead><tr><th>Source</th><th>Written by</th><th>Read by the page through</th></tr></thead><tbody><tr><td><code>claude-mem.db</code> tables <code>sdk_sessions</code>, <code>user_prompts</code>, <code>observations</code>, <code>session_summaries</code>, <code>tool_uses</code>, <code>work_state_entries</code></td><td>claude-mem's hooks and the model it runs</td><td><code>GET /api/work-view</code></td></tr><tr><td>The <strong>ledger</strong>, files in <code>~/.claude-mem/work-view/</code></td><td>an LLM &quot;refresh&quot; that runs inside the worker</td><td><code>GET /api/work-view</code></td></tr><tr><td>Small stores the page itself writes: review marks, saved rules, &quot;agent finished&quot; marks</td><td>the worker, on POSTs from the page</td><td><code>GET /api/work-view</code></td></tr></tbody></table></div>
+<p>The page never calls anything else for its main view. It downloads one JSON document, the <strong>snapshot</strong>, and then keeps it fresh over one event stream.</p>
+<h2 id="components-of-the-clone">Components of the clone</h2>
+<pre><code>                      browser (public/ = original SPA)
+                         |  GET /  GET /work-view/assets/*
+                         |  GET /api/work-view     POST review | rules | mark-finished
+                         |  GET /api/work-view/events   (SSE: work-view, heartbeat)
+                         v
+ +--------------------------- Bun process: bin/aletheia-server.mjs ------------------------------+
+ |  server.mjs   routing, static files, guards (localhost only, same-origin JSON POSTs)    |
+ |      |                                                                                  |
+ |  app.mjs  WorkViewService --- snapshot() ---------------------------------------------+ |
+ |      |        |  actions: review, saveRule, markAgentFinished, loadRulesInClaudeCode   | |
+ |      |        |  SSE clients, 1 s change poll, 15 s heartbeat                          | |
+ |      |        v                                                                        | |
+ |      |   source.mjs SourceReader                                                       | |
+ |      |        |  change detection -&gt; rebuild only when something changed               | |
+ |      |        |-- foldWorkState (readmodel/work-state.mjs)                             | |
+ |      |        |-- readActivityRows + buildAgentView (readmodel/agent-view.mjs)         | |
+ |      |        |-- buildRequests (readmodel/projection.mjs)  &lt;- ledger (ledger/read.mjs)| |
+ |      |        '-- hash of cited evidence rows                                          | |
+ |      |-- humancopy.mjs   optional card text from an OpenAI-compatible model           | |
+ |      '-- store/  overlay.db (own work-state log)   reviews.db (checked marks)         | |
+ |                                                                                       | |
+ |  refresh/auto-refresh.mjs  every 10 min: refreshNeeds() -&gt; run job -&gt; refresh.json    | |
+ |      '-- orchestrator.mjs  goals -&gt; grouping -&gt; reviews -&gt; alignment -&gt; story          | |
+ |            |-- providers.mjs  claude CLI | OpenAI-compatible HTTP                      | |
+ |            |-- ledger/commands.mjs  validators + file writers (the original's CLI)     | |
+ |            '-- vendor/owner-goals/*.py  export prompts, save goals                      | |
+ +---------------------------------------------------------------------------------------+
+        |                                  |                          |
+ claude-mem.db (read-only)       &lt;ledgerDir&gt;/ (read + write)    &lt;dataDir&gt;/ (read + write)</code></pre>
+<h2 id="one-snapshot-step-by-step">One snapshot, step by step</h2>
+<p><code>WorkViewService.snapshot()</code> (called per request and per poll):</p>
+<ol><li><code>SourceReader.read()</code> computes cheap signatures: work-state head (count, max id, overlay head), activity head (max id and count of five tables, <code>PRAGMA data_version</code>), ledger file mtimes. If none changed, it returns the cached view.</li><li>If they changed, inside one read transaction it re-folds work state (when that changed), runs <code>readActivityRows</code> (bounded SQL, section 4 of <a href="04-read-model.html">04-read-model.md</a>), builds the agent view, and hashes every raw row each request cites.</li><li><code>goalLinks()</code> attaches, to each request, the goals the alignment step linked it to.</li><li>The service adds, per request, a content fingerprint and the review state (checked or not).</li><li><code>HumanCopy.observe()</code> annotates each request with <code>humanCopy</code> and queues generation if a provider is configured.</li><li>It adds <code>rulesFile</code> (path, approved count, loaded flag), <code>setup</code>, and the composite <code>revision</code> <code>&quot;&lt;agentRevision&gt;:&lt;digest of reviews&gt;:&lt;humanCopy revision&gt;&quot;</code>.</li></ol>
+<p>The event stream sends a full snapshot on connect and again whenever <code>revision</code>, <code>source.connected</code>, <code>source.error</code> or <code>setup</code> change. A heartbeat every 15 s carries <code>{at, source}</code>.</p>
+<h2 id="why-a-clone-and-not-the-original">Why a clone and not the original</h2>
+<p>The original is wired into the worker: its routes, its database manager, its cloud sync and its onboarding. The clone keeps the <strong>contract</strong> and replaces the wiring:</p>
+<ul><li>It never writes to <code>claude-mem.db</code>. Entries the original appends there (rules, &quot;agent finished&quot;, saved goals) go to the clone's own <code>overlay.db</code>, folded in with the source entries.</li><li>It has no account, cloud sync, or onboarding. <code>/api/setup/state</code> always reports <code>complete</code>.</li><li>The refresh gives the model its evidence inline and needs no tools, so any chat model works.</li></ul>
+<h2 id="process-model">Process model</h2>
+<p>One Bun process. Timers: change poll (only while a page is open), heartbeat (same), human-copy pump (1 s), refresh check (10 min). The refresh runs inside the same process and shells out to <code>python3</code> (goal export and save) and to the <code>claude</code> CLI when that provider is chosen. A refresh is single-flight: <code>refresh.json</code> records <code>state: running</code> and the pid, and another process refuses to start while that pid lives.</p>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>

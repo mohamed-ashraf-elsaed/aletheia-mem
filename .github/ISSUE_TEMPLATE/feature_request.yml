@@ -1,0 +1,42 @@
+name: Feature request
+description: Propose a behaviour, a tool integration or a measurement.
+title: "[feature] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What are you unable to do today? Name the tool and the command if it applies.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behaviour
+      description: What should happen, and where (CLI, MCP, REST, the Hub UI, rules sync).
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Does it need the network?
+      options:
+        - No, it can run on loopback
+        - Only if the user configures a model provider
+        - Yes, it needs a remote service
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I read the task list in docs/tasks/TASKS.md; this is not already planned or rejected.
+          required: true
+        - label: I did not include secrets, private text or a vendor number without a source URL and date.
+          required: true

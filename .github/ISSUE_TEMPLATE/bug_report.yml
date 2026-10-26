@@ -1,0 +1,68 @@
+name: Bug report
+description: Something failed, stored the wrong thing, or did not connect.
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not paste secrets. Redact API keys, tokens and private text. If the report needs a private
+        channel, use GitHub's private vulnerability reporting (Security tab) instead.
+  - type: input
+    id: tool
+    attributes:
+      label: Tool and version
+      description: The AI coding tool, its version, and this project's commit or version.
+      placeholder: "Cursor 0.45.0; aletheia-mem 0.1.0 at commit abc1234"
+    validations:
+      required: true
+  - type: dropdown
+    id: install
+    attributes:
+      label: Install method
+      options:
+        - git clone and bun
+        - aletheia install <tool> --write
+        - Docker image or compose file
+        - another method
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Exact commands and payloads, with secrets removed.
+      placeholder: |
+        1. run ...
+        2. open ...
+        3. see ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened
+      description: Error text, exit code and the relevant log line.
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `aletheia doctor`
+      description: If your build has the command (T-073 is not built yet), paste the output. Otherwise paste `aletheia install --list`.
+      render: text
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I removed secrets and `<private>` content.
+          required: true
+        - label: I searched the existing issues.
+          required: true

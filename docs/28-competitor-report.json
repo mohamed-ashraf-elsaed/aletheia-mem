@@ -1,6 +1,6 @@
 {
  "generated": "2026-10-26",
- "note": "Rows copied from the cited markdown files; every cell's source is in that file. Regenerate with T-118.",
+ "note": "Rows copied from the cited markdown files; every cell's source is in that file. The Aletheia cells in the capability table were corrected 2026-10-26 from validated tasks (T-021, T-024, T-025, T-027, T-067, T-102 to T-108, T-140). Generated into README/docs by scripts/gen-tables.mjs (T-118).",
  "rows": [
   {
    "file": "docs/21-competitor-landscape.md",
@@ -1415,7 +1415,7 @@
    ],
    "cells": {
     "Capability": "MCP",
-    "Aletheia (today)": "✅ stdio",
+    "Aletheia (today)": "✅ stdio + HTTP (T-067, T-107)",
     "claude-mem": "✅",
     "Mem0": "✅",
     "Zep/Graphiti": "partial (reference servers)",
@@ -1570,7 +1570,7 @@
    ],
    "cells": {
     "Capability": "Hook capture",
-    "Aletheia (today)": "❌",
+    "Aletheia (today)": "✅ six hosts, fixture-tested; no host opened (T-140)",
     "claude-mem": "✅",
     "Mem0": "❌",
     "Zep/Graphiti": "❌",
@@ -1632,7 +1632,7 @@
    ],
    "cells": {
     "Capability": "Graph / entity memory",
-    "Aletheia (today)": "❌",
+    "Aletheia (today)": "partial (entity rows exist; graph retrieval T-048)",
     "claude-mem": "❌",
     "Mem0": "✅",
     "Zep/Graphiti": "✅",
@@ -1663,7 +1663,7 @@
    ],
    "cells": {
     "Capability": "Temporal reasoning",
-    "Aletheia (today)": "❌",
+    "Aletheia (today)": "partial (bi-temporal facts, invalidation; as-of query T-026)",
     "claude-mem": "partial (dates)",
     "Mem0": "✅",
     "Zep/Graphiti": "✅",
@@ -1694,7 +1694,7 @@
    ],
    "cells": {
     "Capability": "Team sharing",
-    "Aletheia (today)": "❌",
+    "Aletheia (today)": "partial (self-hosted sync and devices; team mode T-112)",
     "claude-mem": "partial (paid)",
     "Mem0": "✅ paid",
     "Zep/Graphiti": "✅ paid",
@@ -1756,7 +1756,7 @@
    ],
    "cells": {
     "Capability": "Languages supported",
-    "Aletheia (today)": "1 (English)",
+    "Aletheia (today)": "11 (English + 10 machine translations; no native review)",
     "claude-mem": "29 modes, 32 READMEs",
     "Mem0": "SDK",
     "Zep/Graphiti": "SDK",

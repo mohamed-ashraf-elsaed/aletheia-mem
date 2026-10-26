@@ -17,13 +17,22 @@
 <meta name="twitter:description" content="Free, local memory and rules for every AI coding tool. MCP, REST and CLI.">
 <link rel="stylesheet" href="style.css">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Aletheia","applicationCategory":"DeveloperApplication","operatingSystem":"Linux, macOS (Bun >= 1.1)","description":"A free, local memory and rules hub for AI coding tools, with MCP, REST and CLI interfaces.","license":"https://www.apache.org/licenses/LICENSE-2.0","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/","codeRepository":"https://github.com/mohamed-ashraf-elsaed/aletheia-mem","author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"}}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Aletheia","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (tested); macOS and Windows untested","description":"A free, local memory and rules hub for AI coding tools, with MCP, REST and CLI interfaces.","license":"https://www.apache.org/licenses/LICENSE-2.0","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/","codeRepository":"https://github.com/mohamed-ashraf-elsaed/aletheia-mem","author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"}}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+{"@type":"Question","name":"Is it really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Apache-2.0, no account, no hosted tier, no telemetry. Optional LLM features call the model you configure, and only then."}},
+{"@type":"Question","name":"How is it different from claude-mem?","acceptedAnswer":{"@type":"Answer","text":"Both are open source. claude-mem has more features, including per-tool installers, a live viewer and a smart file reader. Aletheia is smaller and tool-neutral: one store for any tool, rules sync, and migration both ways."}},
+{"@type":"Question","name":"Does it replace claude-mem?","acceptedAnswer":{"@type":"Answer","text":"No. It runs beside it on its own port and never writes to claude-mem's database."}},
+{"@type":"Question","name":"Where is my data?","acceptedAnswer":{"@type":"Answer","text":"In ~/.aletheia/hub.db on your machine. Nothing leaves it unless you turn on an LLM provider or share an export."}},
+{"@type":"Question","name":"Does it work with my tool?","acceptedAnswer":{"@type":"Answer","text":"If your tool speaks MCP or reads an instruction file, probably. Configs are written from documentation and fixture-tested; none has been tested on a real install."}}
+]}
 </script>
 </head>
 <body>
 <header class="top"><div class="wrap">
-  <a class="brand" href="./"><img src="favicon.svg" alt="" width="26" height="26">Aletheia</a>
-  <nav aria-label="Main"><a href="#features">Features</a><a href="#numbers">Numbers</a><a href="#tools">Tools</a><a href="#start">Quick start</a><a href="#faq">FAQ</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+  <a class="brand" href="./"><img src="assets/logo.svg" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="#features">Features</a><a href="#numbers">Numbers</a><a href="#tools">Tools</a><a href="docs/">Docs</a><a href="#start">Quick start</a><a href="#faq">FAQ</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
 </div></header>
 
 <main>
@@ -51,30 +60,48 @@
 <section id="numbers">
   <h2>Measured, not claimed</h2>
   <p class="sub">Retrieval on LoCoMo (1,536 questions with gold evidence) against claude-mem 15.2.0 as shipped. Retrieval only: answer accuracy is not measured yet.</p>
-  <div class="tablewrap"><table>
-    <thead><tr><th></th><th>claude-mem</th><th>Aletheia</th></tr></thead>
-    <tbody>
-      <tr><td>Recall@5, raw turns</td><td>36.0%</td><td>57.5% (1.6×)</td></tr>
-      <tr><td>Recall@5, both given the same extracted facts (383 questions)</td><td>57.7%</td><td>67.6%, or 73.7% with reranking (1.17× to 1.28×)</td></tr>
-      <tr><td>Search latency, idle machine</td><td>p50 1,699 ms</td><td>2 to 6 ms (about 350 ms with reranking)</td></tr>
-    </tbody>
-  </table></div>
-  <div class="note"><strong>Read this before comparing.</strong> The retrieval gap is real but not 2× when both sides see the same input. The speed gap is two to three orders of magnitude. At 50,000 memories our keyword search takes 71 to 104 ms (median), which misses our own 50 ms target. Method, baselines and the mistakes we made and fixed are in <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/14-research-ai-memory.md">the research doc</a>.</div>
+  <div class="tablewrap">
+<!-- gen:bench -->
+<table>
+<thead><tr><th>Run</th><th>Questions</th><th>Recall@5</th><th>MRR</th><th>ms/query</th></tr></thead>
+<tbody>
+<tr><td>claude-mem 15.2.0 (as shipped), raw turns — measured-by-us</td><td>1,536</td><td>36.0%</td><td>0.285</td><td>p50 1,699 ms, p95 2,824 ms (idle, 40 queries)</td></tr>
+<tr><td>Raw turns, all 10 conversations</td><td>1,536</td><td>57.4%</td><td>0.497</td><td>3.72</td></tr>
+<tr><td>Dataset facts, all 10</td><td>1,536</td><td>64.8%</td><td>0.591</td><td>5.53</td></tr>
+<tr><td>Dataset facts, 3 conversations</td><td>383</td><td>67.4%</td><td>0.620</td><td>5.80</td></tr>
+<tr><td>Dataset facts, 3 conversations, + rerank</td><td>383</td><td>73.9%</td><td>0.686</td><td>251.16</td></tr>
+<tr><td>Dataset facts, all 10, + rerank</td><td>1,536</td><td>72.3%</td><td>0.680</td><td>646.19</td></tr>
+<tr><td>Our rule-extracted facts, all 10</td><td>1,536</td><td>57.7%</td><td>0.492</td><td>4.94</td></tr>
+</tbody>
+</table>
+
+<p class="note">Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (docs/14 §14.6, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with <code>bun scripts/compare-bench.mjs</code>.</p>
+<!-- /gen:bench -->
+  </div>
+  <div class="note"><strong>Read this before comparing.</strong> Recall@5 is retrieval, not answer accuracy. The gap is real but not 2× when both sides see the same extracted facts. At 50,000 memories our keyword search takes 71 to 104 ms (median), which misses our own 50 ms target. Method, baselines and the mistakes we made and fixed are in <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/14-research-ai-memory.md">the research doc</a>.</div>
 </section>
 
 <section id="tools">
-  <h2>Which tools it works with</h2>
+  <h2>Which tools it connects to</h2>
   <p class="sub">Aletheia is tool-neutral by design: open MCP protocol, a plain REST API, a CLI, and each tool's own instruction file. This is what has actually been checked.</p>
-  <div class="tablewrap"><table>
-    <thead><tr><th>Check</th><th>Result</th></tr></thead>
-    <tbody>
-      <tr><td>MCP server against the official MCP SDK client</td><td>Passes (protocol versions 2025-11-25 to 2024-11-05)</td></tr>
-      <tr><td>MCP config formats: Cursor, Gemini CLI, Codex CLI, Windsurf, OpenCode, Claude Code</td><td>Written from each tool's documentation</td></tr>
-      <tr><td>Rules files: <code>CLAUDE.md</code>, <code>AGENTS.md</code>, <code>GEMINI.md</code>, Cursor, Windsurf, Copilot, Aider</td><td>Written and tested in temporary folders</td></tr>
-      <tr><td>Any of the above on a real install of that tool</td><td><strong>Not tested yet.</strong> Reports welcome.</td></tr>
-      <tr><td>Automatic capture through a tool's hooks</td><td>Not built. <code>aletheia capture</code> takes one hook payload.</td></tr>
-    </tbody>
-  </table></div>
+  <div class="tablewrap">
+<!-- gen:tools -->
+<table>
+<thead><tr><th>Tool</th><th>Level</th><th>Verification</th><th>Hook events installed</th></tr></thead>
+<tbody>
+<tr><td>claude-code</td><td>full</td><td>config written from docs, not tested on a real install</td><td>SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd</td></tr>
+<tr><td>command-code</td><td>full</td><td>config written from docs, not tested on a real install</td><td>SessionStart, PostToolUse, Stop</td></tr>
+<tr><td>cursor</td><td>full</td><td>config written from docs, not tested on a real install</td><td>sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd</td></tr>
+<tr><td>codex</td><td>full</td><td>config written from docs, not tested on a real install</td><td>SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd</td></tr>
+<tr><td>gemini-cli</td><td>full</td><td>config written from docs, not tested on a real install</td><td>SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd</td></tr>
+<tr><td>windsurf</td><td>full</td><td>config written from docs, not tested on a real install</td><td>pre_user_prompt, post_run_command, post_write_code, post_cascade_response</td></tr>
+<tr><td>opencode</td><td>mcp+rules</td><td>config written from docs, not tested on a real install</td><td>none (MCP and rules only)</td></tr>
+</tbody>
+</table>
+
+<p class="note">Generated from src/hub/install.mjs via <code>aletheia install --list</code>. A row says tested on a real install only when that column says so; today none do.</p>
+<!-- /gen:tools -->
+  </div>
 </section>
 
 <section id="start">
