@@ -174,3 +174,4 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-136 | Add the review queue to the Memory tab | P6 | T-135 | validated | 2026-10-26 | [T-136.md](T-136.md) |
 | T-137 | Add a Rules tab with the editor and suggested rules | P6 | T-134 | validated | 2026-10-26 | [T-137.md](T-137.md) |
 | T-138 | Add a read-only Tools tab from doctor data | P6 | T-134 | validated | 2026-10-26 | [T-138.md](T-138.md) |
+| T-139 | Add UI tests for the one page | P6 | T-134, T-135, T-136, T-137, T-138 | validated | 2026-10-26 | [T-139.md](T-139.md) |
