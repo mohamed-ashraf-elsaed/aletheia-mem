@@ -6,10 +6,11 @@ import { HubStore } from "../store.mjs";
 import { isProjectExcluded } from "../capture.mjs";
 import claudeCode from "./claude-code.mjs";
 import commandCode from "./command-code.mjs";
+import codex from "./codex.mjs";
 import cursor from "./cursor.mjs";
 import { enqueueCompression, flushSpool, projectOf, readPayload, spoolAppend } from "./shared.mjs";
 
-export const ADAPTERS = { "claude-code": claudeCode, "command-code": commandCode, cursor };
+export const ADAPTERS = { "claude-code": claudeCode, "command-code": commandCode, codex, cursor };
 
 export function adapterFor(tool) {
   const adapter = ADAPTERS[tool];

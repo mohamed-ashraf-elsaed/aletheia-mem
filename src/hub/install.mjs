@@ -312,6 +312,36 @@ export const INSTALLERS = [
       return { file: join(env.home, ".cursor", "hooks.json"), commands: Object.fromEntries(events.map((event) => [event, hookCommand({ bun: env.bun, hookScript: runnerFor(env), tool: "cursor", event })])) };
     },
   }),
+  defineInstaller({
+    id: "codex",
+    name: "Codex CLI",
+    capabilities: "full",
+    verification: "from-docs-only",
+    evidence: "https://developers.openai.com/codex/hooks and /codex/config-reference fetched 2026-10-26; Codex 0.130.0 present, no hook run by Codex",
+    detection: [".codex"],
+    notes: [
+      "Codex requires non-managed hooks to be reviewed once with /hooks before they run.",
+      "No global Codex rules file was verified; use `aletheia rules sync --tools codex --dir <project> --write` for AGENTS.md.",
+      "The MCP block is written to ~/.codex/config.toml; hooks go to ~/.codex/hooks.json.",
+    ],
+    events: ["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop", "SessionEnd"],
+    plan(env) {
+      const events = { SessionStart: "startup|clear|compact|fork", UserPromptSubmit: null, PostToolUse: null, Stop: null, SessionEnd: null };
+      const steps = [
+        planMcpToml({ file: join(env.home, ".codex", "config.toml"), entry: { command: env.bun, args: [env.mcpScript] } }),
+        planHooks({ file: join(env.home, ".codex", "hooks.json"), events, env, tool: "codex" }),
+      ];
+      return { tool: "codex", name: "Codex CLI", env, steps, notes: [
+        "Codex requires non-managed hooks to be reviewed once with /hooks before they run.",
+        "No global Codex rules file was verified; use `aletheia rules sync --tools codex --dir <project> --write` for AGENTS.md.",
+        "The MCP block is written to ~/.codex/config.toml; hooks go to ~/.codex/hooks.json.",
+      ] };
+    },
+    expectedHooks(env) {
+      const events = { SessionStart: "startup|clear|compact|fork", UserPromptSubmit: null, PostToolUse: null, Stop: null, SessionEnd: null };
+      return { file: join(env.home, ".codex", "hooks.json"), commands: Object.fromEntries(Object.keys(events).map((event) => [event, hookCommand({ bun: env.bun, hookScript: runnerFor(env), tool: "codex", event })])) };
+    },
+  }),
 ];
 
 export const installerIds = () => INSTALLERS.map((installer) => installer.id);
