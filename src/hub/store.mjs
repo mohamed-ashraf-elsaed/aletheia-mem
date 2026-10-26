@@ -653,18 +653,19 @@ export class HubStore {
     const sourceRef = clean(input.sourceRef ?? input.source_ref, 300);
     if (sourceRef) {
       const existing = this.db.prepare("SELECT * FROM episodes WHERE source_ref = ?").get(sourceRef);
-      if (existing) return existing;
+      if (existing) return { ...existing, created: false };
     }
     const text = String(input.text ?? "").slice(0, 20_000);
     if (!text.trim()) throw new RangeError("An episode needs text.");
     const hash = input.contentHash ?? sha256(`episode\n${project}\n${sourceRef ?? ""}\n${text}`);
     const at = Number.isFinite(input.createdAtEpoch) ? input.createdAtEpoch : Date.now();
-    this.db
+    const info = this.db
       .prepare(`INSERT OR IGNORE INTO episodes (project, scope, tool, session_id, turn_index, role, kind, text, source_ref, content_hash, token_count, created_at_epoch, recorded_at_epoch)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
       .run(project, input.scope === "global" ? "global" : "project", clean(input.tool, 60) || "unknown", clean(input.sessionId ?? input.session_id, 200), Number.isFinite(input.turnIndex) ? input.turnIndex : null,
         clean(input.role, 20) || "user", clean(input.kind, 30) || "message", text, sourceRef, hash, Number.isFinite(input.tokenCount) ? input.tokenCount : null, at, at);
-    return this.db.prepare("SELECT * FROM episodes WHERE content_hash = ?").get(hash);
+    const row = this.db.prepare("SELECT * FROM episodes WHERE content_hash = ?").get(hash);
+    return row ? { ...row, created: info.changes > 0 } : null;
   }
 
   /** The episode for one `memories` row, created once. Capture does not write episodes (a hook stays cheap). */

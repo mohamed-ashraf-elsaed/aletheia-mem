@@ -7,6 +7,8 @@
 //   aletheia save <text> [--project p] [--type t] [--pin] save a memory
 //   aletheia import claude-mem [--path db] [--no-prompts] bring memory in from claude-mem
 //   aletheia import bundle <file.jsonl>                   restore an export
+//   aletheia import transcripts <tool> [--since DATE] [--dry-run] [--limit n]
+//                                                          back-fill from local session files (read-only)
 //   aletheia export [--format jsonl|markdown] [--project p] [--events] [--out file]
 //   aletheia rules list | add <text> [--when w] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
 //   aletheia tools                                        detected tools and how to connect each
@@ -240,9 +242,18 @@ async function main() {
         return out(r.created ? `Saved as #${r.id}.` : `Already saved as #${r.id}.`);
       }
       case "import": {
+        if (pos[0] === "transcripts") {
+          const tool = pos[1];
+          const since = typeof flags.since === "string" ? Date.parse(flags.since) : null;
+          if (flags.since && !Number.isFinite(since)) return die("--since needs a date, for example 2026-01-31.");
+          const { importTranscripts } = await import("../src/hub/transcripts.mjs");
+          const result = importTranscripts(hub, { tool, home: config.home, since, dryRun: !!flags["dry-run"], limit: Number(flags.limit) || 20_000 });
+          const verb = result.dryRun ? "Would import" : "Imported";
+          return out(`${verb} ${result.added} episode(s) from ${result.files} file(s) for ${result.tool} (${result.skipped} already there, ${result.malformed} malformed line(s)); ${result.queued} extraction job(s) ${result.dryRun ? "would be queued" : "queued"}.`);
+        }
         if (pos[0] === "claude-mem") return out(importClaudeMem(hub, flags.path ?? config.sourceDb, { includePrompts: !flags["no-prompts"], project: flags.project || null }));
         if (pos[0] === "bundle") return out(hub.importBundle(readFileSync(pos[1] ?? die("Usage: aletheia import bundle <file>"), "utf8")));
-        return die("Usage: aletheia import claude-mem | bundle <file>");
+        return die("Usage: aletheia import claude-mem | bundle <file> | transcripts <claude-code|command-code> [--since DATE] [--dry-run]");
       }
       case "export": {
         const body = flags.format === "markdown" ? hub.exportMarkdown({ project: flags.project }) : hub.exportBundle({ project: flags.project, includeEvents: !!flags.events });
