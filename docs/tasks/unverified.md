@@ -77,7 +77,7 @@ These are claims this run deliberately does not make. Each was measured only on 
 | 42 | The `anthropic-compatible` provider endpoint | the preset has no default URL; no OpenAI-shaped Anthropic endpoint was verified and no gateway was tested (T-119) | Read a gateway's docs and complete one extraction call through `ALETHEIA_ANTHROPIC_BASE_URL` |
 | 43 | Session transcript layouts for tools other than Claude Code and Command Code | only the two layouts on this machine were read; other tools are not supported by `import transcripts` (T-121) | Read one real session file per tool and add its parser |
 | 44 | One-UI pixel layout at 375 px and its keyboard-only path | the page was loaded in Chromium on 2026-10-26 with the four tabs and no console errors; pixel layout and a keyboard-only pass are not asserted (T-134 to T-139) | Load the page at 375 px and Tab through the header, tabs, details blocks and a dismiss/restore |
-| 45 | Two real machines syncing over a tunnel | Aletheia Sync is tested only against two temp data dirs and a loopback hub (T-102 to T-108); no real tunnel or second host was used | Run manual-test §8 on two machines through a real TLS tunnel |
+| 45 | Two real machines syncing over a tunnel, and E2EE on two machines | Aletheia Sync (plain and E2EE, T-102 to T-108 and T-117) is tested only against temp data dirs and a loopback hub; no real tunnel or second host was used | Run manual-test §8 (plain and E2EE) on two machines through a real TLS tunnel |
 
 ## URLs referenced in the documents but not fetched as sources
 

@@ -29,6 +29,8 @@
 //   aletheia optimize                                   rebuild FTS segments after a large import
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
 //   aletheia sync pair | join <url> <code> | status | devices | revoke <device> | push | pull | run | compact | purge <entity_id> | export <dir> | import <dir>
+//   aletheia sync enable-e2ee | unlock-e2ee | rotate-key | change-passphrase | export-recovery-key --out <file> | purge-plaintext [--apply]
+//                                                          optional end-to-end encryption (passphrase via --passphrase or ALETHEIA_SYNC_PASSPHRASE)
 //   aletheia mcp-link create [--projects a,b] [--url https://hub.example] | list | revoke <id>
 //                                                          manage the private remote MCP endpoint
 //   aletheia audit [--limit n]                          read the sync audit log

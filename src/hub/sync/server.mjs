@@ -122,6 +122,14 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
       return json(store.status(accountForToken));
     }
 
+    // The account's wrapped E2EE keys (T-117): a newly joined device fetches these and unwraps them
+    // locally with the passphrase. Only wrapped keys ever leave the server.
+    if (pathname === "/v1/sync/e2ee" && method === "GET") {
+      const e2eeDenied = authDenied(token, ["sync", "read", "mcp", "admin"]);
+      if (e2eeDenied) return json({ error: "A valid token is required." }, e2eeDenied);
+      return json(store.e2eeStatus(accountForToken));
+    }
+
     if (pathname === "/v1/sync/snapshot" && method === "GET") {
       const snapshotDenied = authDenied(token, ["sync", "read", "mcp", "admin"]);
       if (snapshotDenied) return json({ error: "A valid token is required." }, snapshotDenied);

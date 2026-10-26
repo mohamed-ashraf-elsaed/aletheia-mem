@@ -8,8 +8,12 @@ T-134 to T-139. The rest of the table is still planned. See [tasks/TASKS.md](tas
 
 Status update, 2026-10-26 (sync): T-102 (replicated log with per-operation results), T-103 (tombstones, compaction
 and purge), T-104 (device pairing, tokens and revoke) and T-108 (scoped tokens, quotas and audit log) are
-`validated`. The design and behaviour are recorded in [29-sync.md](29-sync.md). End-to-end encryption (T-117) is
-not built, so this page does not claim "end-to-end encrypted".
+`validated`. The design and behaviour are recorded in [29-sync.md](29-sync.md).
+
+Status update, 2026-10-26 (E2EE): T-117 is `validated`. The optional end-to-end encryption mode for sync is
+built and the scheme, key hierarchy, rotation, recovery and the exact list of what the server can still see are
+in [29-sync.md](29-sync.md) §29.6. E2EE is off by default and per account; unencrypted accounts keep their old
+behaviour, so "end-to-end encrypted" is only claimed for accounts that enable it.
 
 Status update, 2026-10-26 (remote MCP): T-067 (MCP Streamable HTTP transport) and T-107 (the private remote MCP
 endpoint) are `validated`. F8 is built: bearer tokens with an `mcp`/`read` scope get the read tools only, project

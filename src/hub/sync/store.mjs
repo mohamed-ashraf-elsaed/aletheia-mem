@@ -1,10 +1,13 @@
 // SyncStore: the hub's side of Aletheia Sync. One SQLite file (sync.db) that holds the append-only
-// operation log, device registry, token hashes, one-time pairing codes, quotas and an append-only audit
-// table. Tokens are 256-bit random values; only their sha256 is stored.
+// operation log, device registry, token hashes, one-time pairing codes, quotas, an append-only audit
+// table, and (T-117) the account's wrapped E2EE data keys. Tokens are 256-bit random values; only their
+// sha256 is stored.
 import { Database } from "bun:sqlite";
-import { existsSync, mkdirSync } from "node:fs";
+import { copyFileSync, existsSync, mkdirSync } from "node:fs";
+import { randomBytes } from "node:crypto";
 import { dirname } from "node:path";
-import { computeContentHash, compareOps, hashSync, stableStringify, validateOp } from "./engine.mjs";
+import { canonicalOp, computeContentHash, compareOps, hashSync, stableStringify, validateOp } from "./engine.mjs";
+import { deriveKek, encryptPayload, isEnvelope, KDF, randomKey, unwrapKey, wrapKey } from "./e2ee.mjs";
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS sync_account (
@@ -98,6 +101,16 @@ CREATE TABLE IF NOT EXISTS sync_usage (
   bytes INTEGER NOT NULL DEFAULT 0,
   PRIMARY KEY (token_id, day)
 );
+CREATE TABLE IF NOT EXISTS sync_e2ee_key (
+  account_id INTEGER NOT NULL,
+  kid INTEGER NOT NULL,
+  salt TEXT NOT NULL,
+  wrapped_key TEXT NOT NULL,
+  kdf TEXT NOT NULL,
+  params TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  PRIMARY KEY (account_id, kid)
+);
 `;
 
 const parse = (value, fallback) => {
@@ -138,11 +151,26 @@ export class SyncStore {
     this.ensureSyncColumns();
   }
 
-  /** Additive columns for databases created before they existed. */
+  /** Additive columns for databases created before they existed. A backup copy is kept before any ALTER. */
   ensureSyncColumns() {
     const accountColumns = this.db.prepare("PRAGMA table_info(sync_account)").all().map((column) => column.name);
-    if (!accountColumns.includes("min_seq")) this.db.exec("ALTER TABLE sync_account ADD COLUMN min_seq INTEGER NOT NULL DEFAULT 0");
     const headColumns = this.db.prepare("PRAGMA table_info(sync_head)").all().map((column) => column.name);
+    const missing = [];
+    if (!accountColumns.includes("min_seq")) missing.push("sync_account.min_seq");
+    if (!accountColumns.includes("e2ee")) missing.push("sync_account.e2ee");
+    if (!accountColumns.includes("current_kid")) missing.push("sync_account.current_kid");
+    if (!headColumns.includes("payload")) missing.push("sync_head.payload");
+    if (!headColumns.includes("device_seq")) missing.push("sync_head.device_seq");
+    if (missing.length && this.path !== ":memory:" && existsSync(this.path)) {
+      try {
+        copyFileSync(this.path, `${this.path}.aletheia-bak-${new Date().toISOString().replace(/[:.]/g, "-")}`);
+      } catch {
+        // a missing backup must not stop the additive migration; the columns are defaults only
+      }
+    }
+    if (!accountColumns.includes("min_seq")) this.db.exec("ALTER TABLE sync_account ADD COLUMN min_seq INTEGER NOT NULL DEFAULT 0");
+    if (!accountColumns.includes("e2ee")) this.db.exec("ALTER TABLE sync_account ADD COLUMN e2ee INTEGER NOT NULL DEFAULT 0");
+    if (!accountColumns.includes("current_kid")) this.db.exec("ALTER TABLE sync_account ADD COLUMN current_kid INTEGER NOT NULL DEFAULT 0");
     if (!headColumns.includes("payload")) this.db.exec("ALTER TABLE sync_head ADD COLUMN payload TEXT");
     if (!headColumns.includes("device_seq")) this.db.exec("ALTER TABLE sync_head ADD COLUMN device_seq INTEGER NOT NULL DEFAULT 0");
   }
@@ -323,7 +351,7 @@ export class SyncStore {
     const hasMore = rows.length === lim;
     // A cursor older than the oldest body we still serve must re-bootstrap from the snapshot.
     const snapshotRequired = sinceSeq < account.min_seq;
-    return { epoch: account.epoch, head_seq: account.head_seq, ops, has_more: hasMore, snapshot_required: snapshotRequired };
+    return { epoch: account.epoch, head_seq: account.head_seq, ops, has_more: hasMore, snapshot_required: snapshotRequired, e2ee: !!account.e2ee };
   }
 
   status(accountId) {
@@ -333,6 +361,8 @@ export class SyncStore {
       headSeq: account.head_seq,
       devices: this.listDevices(accountId),
       deviceCount: this.db.prepare("SELECT COUNT(*) AS n FROM sync_device WHERE account_id = ? AND revoked_at IS NULL").get(Number(accountId)).n,
+      e2ee: !!account.e2ee,
+      currentKid: account.current_kid,
     };
   }
 
@@ -409,6 +439,150 @@ export class SyncStore {
     }
     this.audit(accountId, { tokenId: actor.tokenId ?? null, deviceId: actor.deviceId ?? null, action: "sync.purge", result: "ok", detail: { entityId } });
     return { purged: true, head_seq: headSeq, epoch: account.epoch };
+  }
+
+  // ---- end-to-end encryption (T-117) -------------------------------------------------------------
+
+  /** The account's E2EE state and every wrapped key. Never contains an unwrapped key. */
+  e2eeStatus(accountId) {
+    const account = this.accountById(accountId);
+    const keys = this.db.prepare("SELECT kid, salt, wrapped_key, kdf, params FROM sync_e2ee_key WHERE account_id = ? ORDER BY kid").all(Number(accountId))
+      .map((row) => ({ kid: row.kid, salt: row.salt, wrappedKey: parse(row.wrapped_key, null), kdf: row.kdf, params: parse(row.params, null) }));
+    return { enabled: !!account.e2ee, currentKid: account.current_kid, keys };
+  }
+
+  /** Generate the account's data key, wrap it with a passphrase-derived KEK, store only the wrapped form. */
+  enableE2ee(accountId, { passphrase } = {}) {
+    const account = this.accountById(accountId);
+    if (account.e2ee) throw new Error("E2EE is already enabled. Use rotate-key or change-passphrase.");
+    if (!passphrase) throw new Error("A passphrase is required (--passphrase).");
+    const kid = 1;
+    const dataKey = randomKey(32);
+    const salt = randomBytes(16).toString("base64");
+    const wrapped = wrapKey(dataKey, deriveKek(passphrase, salt));
+    this.db.prepare("INSERT INTO sync_e2ee_key (account_id, kid, salt, wrapped_key, kdf, params, created_at) VALUES (?,?,?,?,?,?,?)")
+      .run(Number(accountId), kid, salt, stableStringify(wrapped), KDF.name, stableStringify(KDF), Date.now());
+    this.db.prepare("UPDATE sync_account SET e2ee = 1, current_kid = ? WHERE id = ?").run(kid, Number(accountId));
+    this.audit(accountId, { action: "e2ee.enable", result: "ok", detail: { kid } });
+    return { enabled: true, kid };
+  }
+
+  /** New data key under a new kid. The old passphrase is proven against the current key first. */
+  rotateE2eeKey(accountId, { passphrase } = {}) {
+    const account = this.accountById(accountId);
+    if (!account.e2ee) throw new Error("E2EE is not enabled. Run: aletheia sync enable-e2ee");
+    if (!passphrase) throw new Error("A passphrase is required (--passphrase).");
+    const current = this.db.prepare("SELECT * FROM sync_e2ee_key WHERE account_id = ? AND kid = ?").get(Number(accountId), account.current_kid);
+    try {
+      unwrapKey(parse(current.wrapped_key, null), deriveKek(passphrase, current.salt));
+    } catch {
+      throw new Error("Wrong passphrase.");
+    }
+    const kid = account.current_kid + 1;
+    const dataKey = randomKey(32);
+    const salt = randomBytes(16).toString("base64");
+    const wrapped = wrapKey(dataKey, deriveKek(passphrase, salt));
+    this.db.prepare("INSERT INTO sync_e2ee_key (account_id, kid, salt, wrapped_key, kdf, params, created_at) VALUES (?,?,?,?,?,?,?)")
+      .run(Number(accountId), kid, salt, stableStringify(wrapped), KDF.name, stableStringify(KDF), Date.now());
+    this.db.prepare("UPDATE sync_account SET current_kid = ? WHERE id = ?").run(kid, Number(accountId));
+    this.audit(accountId, { action: "e2ee.rotate", result: "ok", detail: { kid } });
+    return { kid };
+  }
+
+  /** Re-wrap every data key under a new passphrase. The old passphrase is verified against the current key first. */
+  changePassphrase(accountId, { oldPassphrase, newPassphrase } = {}) {
+    const account = this.accountById(accountId);
+    if (!account.e2ee) throw new Error("E2EE is not enabled. Run: aletheia sync enable-e2ee");
+    if (!oldPassphrase || !newPassphrase) throw new Error("--old and --new are required.");
+    const keys = this.db.prepare("SELECT * FROM sync_e2ee_key WHERE account_id = ? ORDER BY kid").all(Number(accountId));
+    const current = keys.find((row) => row.kid === account.current_kid);
+    try {
+      unwrapKey(parse(current.wrapped_key, null), deriveKek(oldPassphrase, current.salt));
+    } catch {
+      throw new Error("Wrong passphrase.");
+    }
+    const update = this.db.prepare("UPDATE sync_e2ee_key SET salt = ?, wrapped_key = ? WHERE account_id = ? AND kid = ?");
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      for (const row of keys) {
+        const dataKey = unwrapKey(parse(row.wrapped_key, null), deriveKek(oldPassphrase, row.salt));
+        const salt = randomBytes(16).toString("base64");
+        update.run(salt, stableStringify(wrapKey(dataKey, deriveKek(newPassphrase, salt))), Number(accountId), row.kid);
+      }
+      this.db.exec("COMMIT");
+    } catch (error) {
+      try { this.db.exec("ROLLBACK"); } catch { /* ignore */ }
+      throw error;
+    }
+    this.audit(accountId, { action: "e2ee.change_passphrase", result: "ok", detail: { keys: keys.map((row) => row.kid) } });
+    return { keys: keys.map((row) => row.kid) };
+  }
+
+  /** Count the plaintext bodies still on the server. */
+  plaintextStats(accountId) {
+    const opRows = this.db.prepare("SELECT body FROM sync_op WHERE account_id = ? AND body != ''").all(Number(accountId));
+    const ops = opRows.filter((row) => {
+      const op = JSON.parse(row.body);
+      return op.op === "put" && op.payload != null && !isEnvelope(op.payload);
+    }).length;
+    const headRows = this.db.prepare("SELECT payload FROM sync_head WHERE account_id = ? AND payload IS NOT NULL").all(Number(accountId));
+    const heads = headRows.filter((row) => {
+      const payload = parse(row.payload, null);
+      return payload != null && !isEnvelope(payload);
+    }).length;
+    return { ops, heads };
+  }
+
+  /**
+   * Re-encrypt old plaintext op bodies in place. Without `apply` it only reports what it would do; with
+   * `apply` it needs the passphrase to unwrap the current data key. Heads are updated from their winning op.
+   */
+  purgePlaintext(accountId, { apply = false, passphrase = null } = {}) {
+    const stats = this.plaintextStats(accountId);
+    if (!apply) return { ...stats, applied: false, note: "Add --apply to re-encrypt these bodies in place. Old plaintext stays readable either way." };
+    const account = this.accountById(accountId);
+    if (!account.e2ee) throw new Error("E2EE is not enabled.");
+    if (!passphrase) throw new Error("--apply needs the passphrase (--passphrase).");
+    const current = this.db.prepare("SELECT * FROM sync_e2ee_key WHERE account_id = ? AND kid = ?").get(Number(accountId), account.current_kid);
+    let dataKey;
+    try {
+      dataKey = unwrapKey(parse(current.wrapped_key, null), deriveKek(passphrase, current.salt));
+    } catch {
+      throw new Error("Wrong passphrase.");
+    }
+    const kid = account.current_kid;
+    const rows = this.db.prepare("SELECT * FROM sync_op WHERE account_id = ? AND body != ''").all(Number(accountId));
+    let ops = 0;
+    let heads = 0;
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const updateOp = this.db.prepare("UPDATE sync_op SET body = ?, content_hash = ? WHERE account_id = ? AND seq = ?");
+      for (const row of rows) {
+        const op = JSON.parse(row.body);
+        if (op.op !== "put" || op.payload == null || isEnvelope(op.payload)) continue;
+        const base = { device_id: op.device_id, seq: op.seq, hlc: op.hlc, entity_type: op.entity_type, entity_id: op.entity_id, op: op.op, supersedes: op.supersedes ?? null };
+        op.payload = encryptPayload(Buffer.from(stableStringify(op.payload), "utf8"), dataKey, canonicalOp(base), kid);
+        op.content_hash = computeContentHash(op);
+        updateOp.run(stableStringify(op), op.content_hash, Number(accountId), row.seq);
+        ops += 1;
+      }
+      const updateHead = this.db.prepare("UPDATE sync_head SET payload = ?, content_hash = ? WHERE account_id = ? AND entity_id = ?");
+      const headRows = this.db.prepare("SELECT * FROM sync_head WHERE account_id = ? AND payload IS NOT NULL").all(Number(accountId));
+      for (const head of headRows) {
+        if (isEnvelope(parse(head.payload, null))) continue;
+        const winner = this.db.prepare("SELECT body, content_hash FROM sync_op WHERE account_id = ? AND seq = ? AND body != ''").get(Number(accountId), head.seq);
+        if (!winner) continue;
+        const winOp = JSON.parse(winner.body);
+        updateHead.run(stableStringify(winOp.payload), winner.content_hash, Number(accountId), head.entity_id);
+        heads += 1;
+      }
+      this.db.exec("COMMIT");
+    } catch (error) {
+      try { this.db.exec("ROLLBACK"); } catch { /* ignore */ }
+      throw error;
+    }
+    this.audit(accountId, { action: "e2ee.purge_plaintext", result: "ok", detail: { ops, heads } });
+    return { ops, heads, applied: true };
   }
 
   // ---- quotas and audit -------------------------------------------------------------------------

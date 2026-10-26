@@ -56,13 +56,15 @@ function toolCard(tool) {
     h("div", { class: "ui-acts" }, h("button", { onclick: () => copy([tool.commands.install, tool.commands.uninstall, tool.commands.doctor, `mcp: ${tool.commands.mcp}`].join("\n")) }, "Copy commands")));
 }
 
-/** The Sync section (T-102, T-104): devices, last sync, pending ops, revoke, and a pairing code. */
+/** The Sync section (T-102, T-104, T-117): devices, last sync, pending ops, revoke, a pairing code and
+ *  the E2EE status line. */
 function syncPanel(sync, result, refresh) {
   if (!sync) return errorCard(errorText(result, "Sync"));
   const devices = sync.devices ?? [];
+  const e2ee = sync.e2ee?.enabled ? `end-to-end encryption: on (key #${sync.e2ee.currentKid})` : "end-to-end encryption: off";
   return h("section", { class: "ui-card" },
     h("h2", {}, "Sync"),
-    h("p", { class: "ui-meta" }, `Epoch ${sync.epoch} · head seq ${sync.headSeq} · ${devices.length} paired device(s)`),
+    h("p", { class: "ui-meta" }, `Epoch ${sync.epoch} · head seq ${sync.headSeq} · ${devices.length} paired device(s) · ${e2ee}`),
     devices.length ? h("div", {}, ...devices.map((device) => deviceCard(device, refresh))) : h("div", { class: "ui-empty" }, "No paired devices. Pair a device below."),
     pairControls(refresh));
 }

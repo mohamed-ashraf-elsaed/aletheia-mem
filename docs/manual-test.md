@@ -264,6 +264,33 @@ Expected: the device lists on the hub (`aletheia sync devices`), pushes and pull
 the hub makes the device's next call fail. A non-loopback bind must print the TLS warning unless
 `--behind-tls` is set.
 
+### E2EE on two machines (NOT RUN BY AUTHOR)
+
+The E2EE paths are covered by `test/sync-e2ee.test.mjs` against temp dirs and a loopback hub; no real
+two-machine E2EE run has been done.
+
+**NOT RUN BY AUTHOR.** On the hub machine:
+
+```bash
+aletheia sync enable-e2ee --passphrase '<passphrase>'
+aletheia sync pair
+aletheia sync export-recovery-key --out ~/aletheia-recovery.key
+ls -l ~/aletheia-recovery.key   # expect -rw------- (0600)
+```
+
+On each device machine:
+
+```bash
+aletheia sync join <url> <code>
+aletheia sync unlock-e2ee --passphrase '<passphrase>'
+aletheia sync run
+```
+
+Expected: `aletheia sync status` shows E2EE on; the server's `sync.db` has no plaintext titles (the ops show
+an `@e2ee` envelope); a wrong passphrase fails cleanly; `aletheia sync rotate-key` and
+`aletheia sync change-passphrase` work; and without the passphrase or the recovery file the data is
+unreadable.
+
 ## 9. A real client against the remote MCP endpoint (NOT RUN BY AUTHOR)
 
 The endpoint is tested with raw `fetch` in `test/remote-mcp.test.mjs`; no real MCP client has connected to it.

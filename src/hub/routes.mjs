@@ -528,10 +528,12 @@ export function createHubRoutes({ hub, config }) {
       const store = getSyncStore();
       const account = store.ensureAccount();
       const status = store.status(account.id);
+      const e2ee = store.e2eeStatus(account.id);
       return h.json({
         epoch: status.epoch,
         headSeq: status.headSeq,
         deviceCount: status.deviceCount,
+        e2ee: { enabled: e2ee.enabled, currentKid: e2ee.currentKid },
         devices: status.devices.map((device) => ({
           ...device,
           pendingOps: Math.max(0, status.headSeq - device.lastAckSeq),

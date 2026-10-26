@@ -157,7 +157,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-114 | Add alert rules and webhooks | P6 | T-108 | todo | — | [T-114.md](T-114.md) |
 | T-115 | Add OIDC, SCIM, RBAC and DLP rules | P6 | T-110, T-108, T-112 | todo | — | [T-115.md](T-115.md) |
 | T-116 | Run My Work setup extraction on the user's own server | P6 | T-106 | todo | — | [T-116.md](T-116.md) |
-| T-117 | Add optional end-to-end encryption for sync | P6 | T-102 | todo | — | [T-117.md](T-117.md) |
+| T-117 | Add optional end-to-end encryption for sync | P6 | T-102 | validated | 2026-10-26 | [T-117.md](T-117.md) |
 | T-118 | Generate the README and site comparison tables from docs/28 JSON | P6 | none | todo | — | [T-118.md](T-118.md) |
 | T-119 | Add provider presets and a fallback chain for extraction | P6 | T-034 | validated | 2026-10-26 | [T-119.md](T-119.md) |
 | T-120 | Add an output-language setting for extraction and summaries | P6 | T-018 | validated | 2026-10-26 | [T-120.md](T-120.md) |
