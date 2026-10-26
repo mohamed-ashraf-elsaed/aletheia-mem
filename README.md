@@ -127,10 +127,10 @@ All settings are environment variables.
 ## Layout
 
 ```
-bin/            aletheia-server.mjs (server)  aletheia.mjs (CLI)  mcp.mjs (MCP server)  ledger.mjs (My Work ledger CLI)
+bin/            aletheia-server.mjs (server)  aletheia.mjs (CLI)  mcp.mjs (MCP server)  ledger.mjs (legacy Work ledger CLI)
 src/
-  server.mjs app.mjs source.mjs config.mjs humancopy.mjs      My Work server
-  readmodel/ ledger/ refresh/ store/ http/                     My Work internals
+  server.mjs app.mjs source.mjs config.mjs humancopy.mjs      server and the legacy Work API
+  readmodel/ ledger/ refresh/ store/ http/                     legacy Work internals
   hub/            store (memories, FTS5, rules, bundles)  rules-sync  tools  importers  capture  compress  mcp  routes
 public/         the one UI (index.html, one-ui.*, tabs/, work-view.js);
                 work.html and assets/ are the optional legacy viewer
