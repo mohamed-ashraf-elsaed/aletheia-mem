@@ -1,9 +1,9 @@
 // T-204: the component system, driven through a small fake DOM. Covers structure, roles, keyboard, focus handling
 // and states. Real rendering is checked in a browser (docs/manual-test.md).
-import { beforeEach, describe, expect, test } from "bun:test";
+import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { installFakeDom, serialize } from "./support/fake-dom.mjs";
+import { installFakeDom, restoreGlobals, serialize } from "./support/fake-dom.mjs";
 
 let dom;
 let C;
@@ -484,3 +484,5 @@ describe("T-204: text components", () => {
     expect(d.classList.contains("is-error")).toBe(true);
   });
 });
+
+afterAll(() => restoreGlobals());

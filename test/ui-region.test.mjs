@@ -1,6 +1,6 @@
 // T-207: Region states, the paged list and its URL state, and optimistic actions. Fake DOM, fake location.
-import { beforeEach, describe, expect, test } from "bun:test";
-import { installFakeDom } from "./support/fake-dom.mjs";
+import { afterAll, beforeEach, describe, expect, test } from "bun:test";
+import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 
 let dom;
 let R;
@@ -206,11 +206,12 @@ describe("T-207: paged list", () => {
     expect(list.state().page).toBe(3);
     expect(list.textContent).toContain("row 51");
   });
-  test("a small list shows no pager", async () => {
+  test("a small list shows no pager, only the count", async () => {
     const env = fakeEnv();
     const { list } = makeList(env, 7);
     await flush();
     expect(list.querySelector(".ui-pager")).toBeNull();
+    expect(list.textContent).toContain("7 results");
   });
   test("an empty store shows the plain empty state", async () => {
     const env = fakeEnv();
@@ -292,3 +293,5 @@ describe("T-207: optimistic actions", () => {
     expect(holder.textContent).toContain("Failed: disk full");
   });
 });
+
+afterAll(() => restoreGlobals());

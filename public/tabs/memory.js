@@ -1,213 +1,155 @@
-// T-135 and the facts part of the Memory tab. Memories, facts (current/history), search channels, dismissed
-// rows and import/export. The review queue lives in ./review.js so T-136 is its own change.
-import { channelLines, factView, formatWhen, searchReasonText } from "../ui-core.js";
-import { activityDetails, api, chip, errorCard, errorText, h, qs, run, settledValue, state, swap, toast } from "../ui-dom.js";
-import { reviewPanel } from "./review.js";
+// T-135, T-136, T-208: the Memory tab. One frame (title, counts, page links, New note, Import and export) and the
+// pages inside it: memories, facts, review, dismissed and search. The review queue is in ./review.js. The import
+// panel keeps the form that imports from the older claude-mem database (opened read-only).
+import { badge, button, drawer, emptyState, errorState, field, modal, progressBar, skeleton, statTile, tabs, toast } from "../ui-components.js";
+import { SUBVIEWS } from "../ui-core.js";
+import { api, byId, h, state, swap } from "../ui-dom.js";
+import { withProgress } from "../ui-actions.js";
+import { region } from "../ui-region.js";
+import { openFactDetail, openMemoryDetail } from "../ui-detail.js";
+import { TYPE_OPTIONS } from "../ui-views.js";
+import { dismissedView, factsView, memoriesView, queryString, searchView } from "./memory-views.js";
+import { reviewView } from "./review.js";
 
-async function dismiss(type, id, what) {
-  if (!confirm(`Hide this ${what} from search and context? It is not deleted, and Dismissed below can restore it.`)) return;
-  const result = await run(() => api("/api/hub/dismiss", { method: "POST", body: { type, id } }), "Hidden");
-  if (result) await renderMemory();
-}
+let frame = null;
 
-export async function renderMemory() {
-  const root = document.getElementById("ui-memory");
-  const project = state.project;
-  const query = state.query;
-  const p = qs(project);
-  const memoryUrl = `/api/hub/memories?limit=30&offset=0${p ? `&${p}` : ""}${query ? `&q=${encodeURIComponent(query)}` : ""}`;
-  const results = await Promise.allSettled([
-    api("/api/hub/overview"),
-    api(memoryUrl),
-    api(`/api/hub/facts?limit=100&history=${state.factsHistory ? 1 : 0}${p ? `&${p}` : ""}`),
-    api(`/api/hub/review?status=pending${p ? `&${p}` : ""}`),
-    api("/api/hub/dismissed"),
-    query ? api("/v1/search", { method: "POST", body: { query, project: project || undefined, limit: 5 } }) : Promise.resolve(null),
-  ]);
-  const overview = settledValue(results[0], null);
-  const memories = settledValue(results[1], null);
-  const facts = settledValue(results[2], null);
-  const review = settledValue(results[3], null);
-  const dismissed = settledValue(results[4], null);
-  const search = settledValue(results[5], null);
+/** Build the frame once per project; later route changes only swap the page inside it. */
+function buildFrame() {
+  const el = h("div", { class: "ui-memory-frame" });
+  const content = h("div", { class: "ui-memory-content" });
+  let currentView = null;
+  const data = { overview: null, counts: {} };
 
-  const memoryList = memories
-    ? h("div", {}, ...(memories.items.length ? memories.items.map(memoryCard) : [h("div", { class: "ui-empty" }, "No memories match.")]),
-      h("div", { class: "ui-meta" }, `${memories.items.length} of ${memories.total}`))
-    : errorCard(errorText(results[1], "Memories"));
-
-  const factList = facts
-    ? h("div", {}, ...(facts.items.length ? facts.items.map(factCard) : [h("div", { class: "ui-empty" }, state.factsHistory ? "No fact history." : "No current fact.")]),
-      h("div", { class: "ui-meta" }, `${facts.items.length} of ${facts.total}`))
-    : errorCard(errorText(results[2], "Facts"));
-
-  swap(root,
-    h("h1", {}, "Memory"),
-    h("p", { class: "ui-meta" }, "One store every tool reads. Facts first, raw memories after."),
-    overview ? statsCard({ ...overview.stats, facts: facts?.total ?? overview.stats.facts }) : errorCard(errorText(results[0], "Overview")),
-    search ? searchPanel(search) : null,
-    h("h2", {}, "Memories"),
-    newNoteForm(),
-    memoryList,
-    h("h2", {}, "Facts"),
-    h("div", { class: "ui-row" },
-      h("button", { class: "primary", "aria-pressed": String(!state.factsHistory), onclick: () => { state.factsHistory = false; renderMemory(); } }, "Current"),
-      h("button", { "aria-pressed": String(state.factsHistory), onclick: () => { state.factsHistory = true; renderMemory(); } }, "History")),
-    factList,
-    h("h2", {}, "Review queue"),
-    reviewPanel(review, results[3], renderMemory),
-    h("h2", {}, "Dismissed"),
-    dismissedPanel(dismissed, results[4]),
-    importExport(overview),
-    activityDetails());
-}
-
-function statsCard(stats) {
-  const rows = [
-    ["Memories", stats.total],
-    ["Pinned", stats.pinned],
-    ["Facts", stats.facts ?? "—"],
-    ["Rules on", stats.rules],
-    ["Projects", stats.projects],
-  ];
-  return h("div", { class: "ui-grid" }, ...rows.map(([label, value]) => h("div", { class: "ui-card ui-stat" }, h("b", {}, value ?? "—"), h("span", {}, label))));
-}
-
-function searchPanel(data) {
-  const lines = channelLines(data.channels);
-  const facts = (data.facts ?? []).map((fact) => {
-    const view = factView({ ...fact, source: fact.source });
-    return h("div", { class: "ui-card" }, h("b", {}, view.text), h("div", { class: "ui-meta" }, chip("fact"), h("span", {}, `episode #${view.sourceEpisode ?? "—"}`), h("span", {}, `status ${view.status}`)));
-  });
-  const memories = (data.results ?? []).map((memory) =>
-    h("div", { class: "ui-card" }, h("b", {}, memory.title || "(untitled)"), h("div", { class: "ui-meta" }, chip(memory.kind), chip(memory.type), h("span", {}, memory.project), h("span", {}, memory.tool), h("span", {}, `#${memory.id}`))));
-  const empty = !facts.length && !memories.length ? h("div", { class: "ui-empty" }, searchReasonText(data.reason) || "No matches.") : null;
-  return h("section", { class: "ui-card" },
-    h("b", {}, `Search: ${state.query}`),
-    h("div", { class: "ui-meta" }, lines.length ? lines.map((line) => chip(line)) : chip("no channel reported")),
-    data.channels?.note ? h("p", { class: "ui-meta" }, data.channels.note) : null,
-    empty,
-    facts.length ? h("h2", {}, "Facts") : null,
-    ...facts,
-    memories.length ? h("h2", {}, "Memories") : null,
-    ...memories);
-}
-
-function memoryCard(memory) {
-  const el = h("div", { class: "ui-card" });
-  const view = () => swap(el,
-    h("div", { class: "ui-row" }, h("b", {}, memory.title || "(untitled)"), memory.pinned ? chip("pinned", "ok") : null),
-    h("div", { class: "ui-meta" }, chip(memory.kind), chip(memory.type), h("span", {}, memory.project), h("span", {}, memory.tool), h("span", {}, formatWhen(memory.created_at_epoch)), h("span", {}, `#${memory.id}`)),
-    memory.narrative ? h("p", { class: "ui-fact-text" }, memory.narrative.length > 800 ? `${memory.narrative.slice(0, 800)}…` : memory.narrative) : null,
-    memory.files?.length ? h("div", { class: "ui-meta" }, "Files: ", memory.files.slice(0, 6).join(", ")) : null,
-    h("div", { class: "ui-acts" },
-      h("button", {
-        onclick: () => run(async () => {
-          Object.assign(memory, await api(`/api/hub/memories/${memory.id}`, { method: "PATCH", body: { pinned: !memory.pinned } }));
-          view();
-        }),
-      }, memory.pinned ? "Unpin" : "Pin"),
-      h("button", { onclick: edit }, "Edit"),
-      h("button", { onclick: () => dismiss("memory", memory.id, "memory") }, "Dismiss")));
-  const edit = () => {
-    const title = h("input", { type: "text", value: memory.title, "aria-label": "Title" });
-    const text = h("textarea", { "aria-label": "Text" });
-    text.value = memory.narrative ?? "";
-    const type = h("select", { "aria-label": "Type" }, ...["bugfix", "feature", "refactor", "change", "discovery", "decision", "gotcha", "note"].map((value) => h("option", { value, selected: memory.type === value }, value)));
-    const project = h("input", { type: "text", value: memory.project, "aria-label": "Project" });
-    swap(el,
-      h("label", {}, "Title", title),
-      h("label", {}, "Text", text),
-      h("div", { class: "ui-inline" }, h("label", {}, "Type", type), h("label", {}, "Project", project)),
-      h("div", { class: "ui-acts" },
-        h("button", { class: "primary", onclick: () => run(async () => {
-          Object.assign(memory, await api(`/api/hub/memories/${memory.id}`, { method: "PATCH", body: { title: title.value, narrative: text.value, type: type.value, project: project.value } }));
-          toast("Saved");
-          view();
-        }) }, "Save"),
-        h("button", { onclick: view }, "Cancel")));
+  const loadStats = async () => {
+    const p = state.project ? { project: state.project } : {};
+    const [overview, review, dismissed, memories, facts] = await Promise.all([
+      api("/api/hub/overview"),
+      api(`/api/hub/review?${queryString({ status: "pending", limit: 1, ...p })}`),
+      api(`/api/hub/dismissed?${queryString({ limit: 1, ...p })}`),
+      state.project ? api(`/api/hub/memories?${queryString({ limit: 1, ...p })}`) : Promise.resolve(null),
+      api(`/api/hub/facts?${queryString({ limit: 1, ...p })}`),
+    ]);
+    return { overview, review, dismissed, memories: memories?.total ?? overview.stats.total, facts: facts.total, pinned: overview.stats.pinned };
   };
-  view();
-  return el;
+
+  const stats = region({
+    className: "ui-stats-region",
+    load: loadStats,
+    skeleton: () => skeleton({ kind: "stat", count: 5 }),
+    isEmpty: () => false,
+    errorTitle: "Could not load the counts",
+    render: (d) => {
+      data.overview = d.overview;
+      data.counts = { memories: d.memories, facts: d.facts, review: d.review.total, dismissed: d.dismissed.total };
+      subnav.setCount("review", d.review.total);
+      subnav.setCount("dismissed", d.dismissed.total);
+      return h("div", { class: "ui-grid ui-stat-grid" },
+        statTile({ label: "Memories", value: d.memories, href: "#/memory/memories" }),
+        statTile({ label: "Facts", value: d.facts, href: "#/memory/facts" }),
+        statTile({ label: "Pinned", value: d.pinned, href: "#/memory/memories?pinned=1" }),
+        statTile({ label: "To review", value: d.review.total, href: "#/memory/review", tone: d.review.total ? "warning" : null }),
+        statTile({ label: "Hidden", value: d.dismissed.total, href: "#/memory/dismissed" }));
+    },
+  });
+
+  const subnav = tabs({
+    label: "Memory pages", className: "ui-subnav-tabs",
+    items: SUBVIEWS.memory.map((item) => ({ id: item.id, label: item.label, href: `#/memory/${item.id}`, count: item.id === "review" || item.id === "dismissed" ? 0 : undefined })),
+    active: "memories",
+  });
+
+  const ctx = {
+    changed: (list, options) => { list?.reload?.({ soft: true, ...options }); stats.reload({ soft: true }); },
+    counts: () => {},
+    openMemory: (memory) => openMemoryDetail({ id: memory.id, title: memory.title }),
+    openFact: (fact) => openFactDetail(fact),
+    newNote: () => newNote(),
+    importExport: () => importExport(data),
+  };
+
+  function newNote() {
+    const title = h("input", { type: "text", class: "ui-input", dir: "auto", "aria-label": "Title", placeholder: "A short title (optional)" });
+    const text = h("textarea", { class: "ui-input", dir: "auto", "aria-label": "Text", rows: "8", placeholder: "What should every tool remember? Markdown works." });
+    const project = h("input", { type: "text", class: "ui-input", value: state.project || "default", "aria-label": "Project" });
+    const type = h("select", { class: "ui-select", "aria-label": "Type" }, ...TYPE_OPTIONS.map((value) => h("option", { value, selected: value === "note" }, value)));
+    const layer = modal({
+      title: "New note", size: "md",
+      body: h("div", {}, field({ label: "Title", control: title }), field({ label: "Text", control: text }), h("div", { class: "ui-inline" }, field({ label: "Project", control: project }), field({ label: "Type", control: type }))),
+      actions: [
+        button({ label: "Cancel", onClick: () => layer.close(false) }),
+        button({ label: "Save note", variant: "primary", onClick: async () => {
+          if (!title.value.trim() && !text.value.trim()) throw new Error("Write a title or some text first.");
+          await api("/api/hub/memories", { method: "POST", body: { title: title.value, text: text.value, project: project.value || "default", type: type.value } });
+          toast("Note saved", { tone: "success", duration: 2000 });
+          layer.close(true);
+          ctx.changed(currentView?.list ?? currentView);
+        } }),
+      ],
+    });
+  }
+
+  el.append(
+    h("div", { class: "ui-page-head" },
+      h("div", {}, h("h1", { id: "ui-memory-title", tabindex: "-1" }, "Memory"), h("p", { class: "ui-page-lede" }, "One store every tool reads. Facts first, raw memories after.")),
+      h("div", { class: "ui-row" }, button({ label: "Import and export", icon: "download", onClick: () => importExport(data) }), button({ label: "New note", variant: "primary", icon: "plus", onClick: () => newNote() }))),
+    stats,
+    h("div", { class: "ui-subnav" }, subnav),
+    content);
+
+  function show(route) {
+    subnav.setActive(route.sub);
+    currentView?.dispose?.();
+    const make = { memories: memoriesView, facts: factsView, review: reviewView, dismissed: dismissedView, search: searchView }[route.sub] ?? memoriesView;
+    currentView = make(ctx, route);
+    ctx.counts = (next) => {
+      if (next.memories != null && !state.project) subnav.setCount?.("memories", next.memories);
+    };
+    swap(content, h("div", { class: "ui-memory-page", role: "region", "aria-label": SUBVIEWS.memory.find((item) => item.id === route.sub)?.label ?? "Memories" }, currentView));
+  }
+  return { el, show, project: state.project, stats };
 }
 
-function newNoteForm() {
-  const title = h("input", { type: "text", placeholder: "Title (optional)", "aria-label": "Title" });
-  const text = h("textarea", { placeholder: "What should every tool remember?", "aria-label": "Text" });
-  const project = h("input", { type: "text", placeholder: "project", value: state.project, "aria-label": "Project" });
-  const type = h("select", { "aria-label": "Type" }, ...["note", "decision", "gotcha", "bugfix", "feature", "discovery"].map((value) => h("option", { value }, value)));
-  return h("details", { class: "ui-card" },
-    h("summary", {}, "New note"),
-    h("label", {}, "Title", title),
-    h("label", {}, "Text", text),
-    h("div", { class: "ui-inline" }, h("label", {}, "Project", project), h("label", {}, "Type", type)),
-    h("div", { class: "ui-acts" }, h("button", { class: "primary", onclick: () => run(async () => {
-      await api("/api/hub/memories", { method: "POST", body: { title: title.value, text: text.value, project: project.value || "default", type: type.value } });
-      title.value = "";
-      text.value = "";
-      toast("Saved");
-      await renderMemory();
-    }) }, "Save")));
+/** The import and export panel. Long calls show a progress bar and never block the page. */
+function importExport(data) {
+  const overview = data.overview;
+  const out = h("div", { class: "ui-longtask-slot" });
+  const file = h("input", { type: "file", accept: ".jsonl,.ndjson", class: "ui-input", "aria-label": "Bundle file" });
+  const oldPath = h("input", { type: "text", class: "ui-input", value: overview?.claudeMem?.path ?? "", "aria-label": "Path of the older database", dir: "ltr" });
+  const claudeMemExists = overview?.claudeMem?.exists === true;
+  const canCompress = overview && overview.provider !== "none";
+  const body = h("div", { class: "ui-io" },
+    h("section", {}, h("h3", { class: "ui-detail-h" }, "Export"), h("p", { class: "ui-meta" }, "A bundle moves your memories and rules to another machine or tool. Secrets are already redacted."),
+      h("div", { class: "ui-row" }, button({ label: "Export bundle (.jsonl)", icon: "download", href: "/api/hub/export?format=jsonl" }), button({ label: "Export Markdown", icon: "download", href: "/api/hub/export?format=markdown" }))),
+    h("section", {}, h("h3", { class: "ui-detail-h" }, "Import a bundle"), field({ label: "A .jsonl file made by Export", control: file }),
+      h("div", { class: "ui-acts" }, button({ label: "Import bundle", icon: "upload", variant: "primary", onClick: async () => {
+        const chosen = file.files?.[0];
+        if (!chosen) throw new Error("Choose a file first.");
+        const result = await withProgress(out, { label: `Importing ${chosen.name}`, task: async () => api("/api/hub/import/bundle", { method: "POST", body: { bundle: await chosen.text() } }), summarize: (r) => `${r.memories.added} memories added, ${r.memories.skipped} skipped; ${r.rules.added} rules added` });
+        toast("Import finished", { tone: "success" });
+        frame?.stats.reload({ soft: true });
+        return result;
+      } }))),
+    claudeMemExists ? h("section", {}, h("h3", { class: "ui-detail-h" }, "Import from claude-mem"), h("p", { class: "ui-meta" }, "Reads the older memory database. It is opened read-only and never changed."), field({ label: "Database path", control: oldPath }),
+      h("div", { class: "ui-acts" }, button({ label: "Import from claude-mem", icon: "upload", onClick: async () => {
+        await withProgress(out, { label: "Importing from claude-mem", task: () => api("/api/hub/import/claude-mem", { method: "POST", body: { path: oldPath.value } }), summarize: (r) => Object.entries(r).filter(([, v]) => typeof v === "number").map(([k, v]) => `${k} ${v}`).join(", ") || "Done" });
+        toast("Import finished", { tone: "success" });
+        frame?.stats.reload({ soft: true });
+      } }))) : null,
+    h("section", {}, h("h3", { class: "ui-detail-h" }, "Turn raw events into observations"),
+      h("p", { class: "ui-meta" }, canCompress ? `Runs the extractor with the ${overview.provider} provider.` : "This needs a model provider. Set ALETHEIA_PROVIDER, then restart the server. Captured events are still searchable without it."),
+      h("div", { class: "ui-acts" }, button({ label: "Compress now", icon: "bolt", disabled: !canCompress, onClick: async () => {
+        await withProgress(out, { label: "Compressing events", task: () => api("/api/hub/compress", { method: "POST", body: {} }), summarize: (r) => JSON.stringify(r).slice(0, 160) });
+        frame?.stats.reload({ soft: true });
+      } }))),
+    out);
+  return drawer({ title: "Import and export", body, actions: [], size: "lg" });
 }
 
-function factCard(fact) {
-  const view = factView(fact);
-  return h("div", { class: "ui-card" },
-    h("div", { class: "ui-row" }, h("b", { class: "ui-fact-text" }, view.text), chip(view.status, view.status === "active" ? "ok" : "warn")),
-    h("div", { class: "ui-meta" },
-      chip(`scope: ${view.scope}`),
-      chip(`extractor: ${view.extractorMode}`),
-      h("span", {}, `importance ${view.importanceLabel}`),
-      h("span", {}, `valid_at ${view.validAt}`),
-      h("span", {}, `#${view.id}`)),
-    h("div", { class: "ui-fact-source" }, view.sourceEpisode ? `source: episode #${view.sourceEpisode}${view.sourceRef ? ` (${view.sourceRef})` : ""}` : "source: no episode"),
-    view.sourceText ? h("details", { class: "ui-details" }, h("summary", {}, "Show source text"), h("div", { class: "ui-fact-source" }, view.sourceText)) : null,
-    h("div", { class: "ui-acts" }, h("button", { onclick: () => dismiss("fact", view.id, "fact") }, "Dismiss")));
-}
-
-function dismissedPanel(dismissed, result) {
-  if (!dismissed) return errorCard(errorText(result, "Dismissed items"));
-  if (!dismissed.items.length) return h("div", { class: "ui-empty" }, "Nothing is dismissed.");
-  return h("div", {}, ...dismissed.items.map((item) => h("div", { class: "ui-card" },
-    h("div", { class: "ui-row" }, chip(item.item_type), h("b", {}, `#${item.item_id}`), h("span", { class: "ui-meta" }, formatWhen(item.at_epoch))),
-    item.reason ? h("div", { class: "ui-meta" }, item.reason) : null,
-    h("div", { class: "ui-acts" }, h("button", { onclick: () => run(async () => {
-      await api("/api/hub/restore", { method: "POST", body: { type: item.item_type, id: item.item_id } });
-      toast("Restored");
-      await renderMemory();
-    }) }, "Restore")))));
-}
-
-function importExport(overview) {
-  const file = h("input", { type: "file", accept: ".jsonl,.ndjson", "aria-label": "Bundle file" });
-  const bundleOut = h("div", { class: "ui-meta" });
-  const claudePath = h("input", { type: "text", value: overview?.claudeMem?.path ?? "", "aria-label": "claude-mem database path" });
-  const compressButton = h("button", { disabled: !overview || overview.provider === "none", onclick: () => run(async () => {
-    const result = await api("/api/hub/compress", { method: "POST", body: {} });
-    bundleOut.textContent = JSON.stringify(result);
-  }) }, "Compress now");
-  return h("details", { class: "ui-card" },
-    h("summary", {}, "Import and export"),
-    h("div", { class: "ui-row" },
-      h("a", { href: "/api/hub/export?format=jsonl" }, "Export bundle (.jsonl)"),
-      h("a", { href: "/api/hub/export?format=markdown" }, "Export Markdown")),
-    h("label", {}, "Import a bundle", file),
-    h("div", { class: "ui-acts" }, h("button", { onclick: () => run(async () => {
-      const chosen = file.files?.[0];
-      if (!chosen) return toast("Choose a file first");
-      const result = await api("/api/hub/import/bundle", { method: "POST", body: { bundle: await chosen.text() } });
-      bundleOut.textContent = `memories: ${result.memories.added} added, ${result.memories.skipped} skipped; rules: ${result.rules.added} added`;
-      toast("Imported");
-      await renderMemory();
-    }) }, "Import bundle")),
-    h("label", {}, "Import from claude-mem (read-only on that database)", claudePath),
-    h("div", { class: "ui-acts" }, h("button", { onclick: () => run(async () => {
-      const result = await api("/api/hub/import/claude-mem", { method: "POST", body: { path: claudePath.value } });
-      bundleOut.textContent = JSON.stringify(result);
-      toast("Imported");
-      await renderMemory();
-    }) }, "Import claude-mem")),
-    h("label", {}, overview?.provider === "none" ? "Turn raw events into observations (needs a provider)" : `Turn raw events into observations (${overview?.provider})`),
-    h("div", { class: "ui-acts" }, compressButton),
-    bundleOut);
+export async function renderMemory(route = { sub: "memories", params: {} }) {
+  const root = byId("ui-memory");
+  if (!frame || frame.project !== state.project || !root.contains(frame.el)) {
+    frame = buildFrame();
+    swap(root, frame.el);
+  }
+  frame.show(route);
 }

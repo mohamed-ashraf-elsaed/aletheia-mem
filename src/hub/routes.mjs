@@ -443,13 +443,14 @@ export function createHubRoutes({ hub, config, liveHub = null }) {
       const q = qs(url);
       const status = q.status || "pending";
       const paging = pagingOf(q);
-      const page = reviewRows(hub, { status, ...paging, type: q.type || null, project: q.project || null });
+      // items=0 skips the queue rows and dupes=0 skips the near-duplicate scan, so a page asks only for what it shows.
+      const page = q.items === "0" ? { rows: [], total: 0 } : reviewRows(hub, { status, ...paging, type: q.type || null, project: q.project || null });
       const items = page.rows.map(reviewItemView);
       const dismissed = dismissedPairs();
       const scanProject = q.project || hub.projects()[0]?.name || null;
       const duplicates = [];
       const dismissedDuplicates = [];
-      if (scanProject) {
+      if (scanProject && q.dupes !== "0") {
         const scan = nearDuplicates(hub, { project: scanProject, maxRows: Math.min(Number(q.scan) || 500, 2000) });
         for (const pair of scan.pairs) {
           const a = hub.getObservation(pair.a);

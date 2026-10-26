@@ -10,7 +10,7 @@ import { DEFAULT_PAGE_SIZE, PAGE_SIZES, REGION_INITIAL, buildHash, clampLimit, p
 /**
  * region({ load, render, isEmpty, empty, skeleton })
  *   load(signal)  returns the data, or throws.
- *   render(data)  returns a node.
+ *   render(data, { soft })  returns a node; soft is true for a background reload that keeps the screen.
  *   isEmpty(data) true when there is nothing to show (default: an empty array or an empty `items` array).
  *   empty(data)   returns a node for the empty state.
  *   skeleton()    returns a node shaped like the final layout.
@@ -25,6 +25,7 @@ export function region({ load, render, isEmpty = defaultEmpty, empty = () => emp
   let controller = null;
   let shown = null;
   let rendered = false;
+  let lastKind = "load";
 
   const lockHeight = () => {
     const height = body.getBoundingClientRect?.().height;
@@ -49,7 +50,7 @@ export function region({ load, render, isEmpty = defaultEmpty, empty = () => emp
     }
     const first = shown !== state.status;
     shown = state.status;
-    const content = state.status === "empty" ? empty(state.data) : render(state.data);
+    const content = state.status === "empty" ? empty(state.data) : render(state.data, { soft: lastKind === "reload" });
     const softError = state.error
       ? h("div", { class: "ui-inline-error", role: "alert" }, h("span", {}, `Could not refresh: ${state.error}`), button({ label: "Retry", size: "sm", onClick: () => api.reload({ soft: true }) }))
       : null;
@@ -63,6 +64,7 @@ export function region({ load, render, isEmpty = defaultEmpty, empty = () => emp
     const mine = (sequence += 1);
     controller?.abort?.();
     controller = typeof AbortController === "function" ? new AbortController() : null;
+    lastKind = kind;
     if (kind === "load") lockHeight();
     state = regionReduce(state, { type: kind });
     paint();
@@ -154,9 +156,9 @@ export function pagedList({ defaults = { limit: DEFAULT_PAGE_SIZE }, prefix = ""
     load: (signal) => fetchPage({ ...state, offset: (state.page - 1) * state.limit }, signal),
     isEmpty: (data) => !data || data.items.length === 0,
     empty: () => (filtered() && emptyFiltered ? emptyFiltered(state) : empty(state)),
-    render: (data) => {
+    render: (data, { soft = false } = {}) => {
       lastTotal = data.total ?? data.items.length;
-      enterList(rows, data.items.map((item) => renderItem(item, { query: state.q ?? "", state })));
+      enterList(rows, data.items.map((item) => renderItem(item, { query: state.q ?? "", state })), { animate: !soft });
       return rows;
     },
     onData: (data) => {
@@ -164,9 +166,10 @@ export function pagedList({ defaults = { limit: DEFAULT_PAGE_SIZE }, prefix = ""
       // A page past the end (rows were deleted, or the URL was edited): go to the last page.
       const maxPage = Math.max(1, Math.ceil(total / state.limit));
       if (state.page > maxPage && total > 0) { go({ page: maxPage }, { replace: true }); return; }
+      // One page of results needs no pager, only the count, so a filter always says how many rows it found.
       swap(pagerSlot, total > Math.min(...PAGE_SIZES) || state.page > 1
         ? pager({ total, limit: state.limit, offset: (state.page - 1) * state.limit, onChange: ({ offset, limit }) => go({ limit, page: Math.floor(offset / limit) + 1 }), label: `${label} pages` })
-        : null);
+        : total > 0 ? h("div", { class: "ui-meta ui-results-line", role: "status" }, `${total} ${total === 1 ? "result" : "results"}`) : null);
       onData?.(data, state);
     },
   });
@@ -185,10 +188,13 @@ export function pagedList({ defaults = { limit: DEFAULT_PAGE_SIZE }, prefix = ""
   }
   const set = (patch, options = {}) => go(patch, { resetPage: true, ...options });
 
-  const el = h("div", { class: "ui-paged" }, toolbar ? h("div", { class: "ui-paged-toolbar" }, toolbar({ state, set })) : null, reg, pagerSlot);
+  // A toolbar may return a node, or { node, sync(state) } so its controls follow Back and Forward.
+  const bar = toolbar ? toolbar({ state, set }) : null;
+  const barNode = bar && bar.node ? bar.node : bar;
+  const el = h("div", { class: "ui-paged" }, barNode ? h("div", { class: "ui-paged-toolbar" }, barNode) : null, reg, pagerSlot);
   const stop = env.onPop(() => {
     const next = readListState(env.getHash(), base, prefix);
-    if (JSON.stringify(next) !== JSON.stringify(state)) { state = next; reg.reload(); }
+    if (JSON.stringify(next) !== JSON.stringify(state)) { state = next; bar?.sync?.(state); reg.reload(); }
   });
   Object.assign(el, { reload: (options) => reg.reload(options), state: () => state, set, go, region: reg, dispose: stop });
   return el;

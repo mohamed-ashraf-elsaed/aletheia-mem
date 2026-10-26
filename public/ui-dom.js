@@ -3,6 +3,9 @@
 
 export const state = { project: "", query: "", health: "checking", factsHistory: false, loaded: {} };
 
+/** setTimeout that does nothing once the document is gone (a finished test, a torn-down window). */
+export const later = (fn, ms) => setTimeout(() => { if (globalThis.document) fn(); }, ms);
+
 export const byId = (id) => document.getElementById(id);
 
 export const h = (tag, attrs = {}, ...kids) => {

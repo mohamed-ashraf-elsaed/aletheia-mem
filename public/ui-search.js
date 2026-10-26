@@ -1,7 +1,7 @@
 // The header search (T-205): type to see the best matches, Enter for the full results page. Requests are debounced
 // and the older one is dropped when a newer one starts. Arrow keys move through the list; Esc closes it.
 import { highlight, icon, spinner } from "./ui-components.js";
-import { api, h, state, swap } from "./ui-dom.js";
+import { api, h, later, state, swap } from "./ui-dom.js";
 import { buildHash } from "./ui-pure.js";
 import { openFactDetail, openMemoryDetail } from "./ui-detail.js";
 
@@ -75,7 +75,7 @@ export function mountSearch({ input, form, list, navigate = (hash) => { globalTh
     clearTimeout(timer);
     const query = input.value.trim();
     if (query.length < MIN_CHARS) { seq += 1; controller?.abort?.(); close(); return; }
-    timer = setTimeout(() => run(query), SEARCH_DEBOUNCE_MS);
+    timer = later(() => run(query), SEARCH_DEBOUNCE_MS);
   });
   input.addEventListener("keydown", (event) => {
     if (event.key === "Escape") { if (!list.hidden) { event.preventDefault(); event.stopPropagation(); close(); } else input.blur?.(); return; }
@@ -85,7 +85,7 @@ export function mountSearch({ input, form, list, navigate = (hash) => { globalTh
       paint();
     }
   });
-  input.addEventListener("blur", () => setTimeout(close, 120));
+  input.addEventListener("blur", () => later(close, 120));
   form.addEventListener("submit", (event) => {
     event.preventDefault();
     const query = input.value.trim();

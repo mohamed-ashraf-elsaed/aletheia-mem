@@ -170,3 +170,34 @@ html, body { min-height: 100%; }
 .ui-banner-slot { position: relative; z-index: 120; }
 @media (prefers-reduced-motion: reduce) { .ui-status-refresh.is-spinning .ui-icon { animation: none; opacity: 0.6; } }
 .ui-status-list.is-stale .ui-status-item:not([data-status="server"]) { opacity: 0.55; }
+
+/* ---- list rows, filters and detail used by Memory, Review, Rules and Tools (T-208) ---- */
+.ui-item { display: grid; gap: var(--ui-space-2); }
+.ui-item.is-leaving { overflow: hidden; }
+.ui-item-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ui-space-3); flex-wrap: wrap; }
+.ui-item-title { font-size: var(--ui-text-md); font-weight: 650; margin: 0; min-width: 0; flex: 1 1 18ch; overflow-wrap: anywhere; }
+.ui-item .ui-acts { margin-top: 2px; }
+.ui-item-files { gap: var(--ui-space-1) var(--ui-space-3); }
+.ui-meta-item + .ui-meta-item::before, .ui-meta-item + .ui-time::before { content: "·"; margin-inline-end: var(--ui-space-2); color: var(--ui-border-strong); }
+.ui-stat-grid { margin-bottom: var(--ui-space-4); }
+.ui-filterbar { display: grid; gap: var(--ui-space-3); width: 100%; }
+.ui-filterrow { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-3); }
+.ui-filter { display: inline-flex; align-items: center; gap: var(--ui-space-2); min-width: 0; }
+.ui-filter-grow { flex: 1 1 220px; }
+.ui-filter-grow .ui-input { width: 100%; }
+.ui-filter-label { color: var(--ui-muted); font-size: var(--ui-text-sm); white-space: nowrap; }
+.ui-date { width: auto; min-width: 140px; }
+.ui-daterange { flex-wrap: wrap; }
+.ui-results-line, .ui-search-summary { margin-bottom: var(--ui-space-3); }
+.ui-search-summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-2); }
+.ui-pair { display: grid; grid-template-columns: 1fr 1fr; gap: var(--ui-space-3); }
+.ui-pair-side { padding: var(--ui-space-3); background: var(--ui-s2); border-radius: var(--ui-radius); min-width: 0; }
+.ui-pair-side p { margin: 4px 0 0; }
+.ui-io section { margin-bottom: var(--ui-space-5); }
+.ui-memory-page { min-width: 0; }
+.ui-review .ui-section { margin-bottom: var(--ui-space-5); }
+@media (max-width: 640px) {
+  .ui-pair { grid-template-columns: 1fr; }
+  .ui-filter { flex-wrap: wrap; }
+  .ui-filter-grow { flex-basis: 100%; }
+}

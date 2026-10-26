@@ -6,7 +6,7 @@ import { icon } from "./ui-icons.js";
 import { renderMarkdown } from "./ui-markdown.js";
 import { animate, collapse, countUp, enter, expand, leave, reducedMotion, shake } from "./ui-motion.js";
 import { PAGE_SIZES, errorDetails, formatDateTime, formatNumber, highlightParts, pagerModel, relativeTime, rovingIndex, trapTarget } from "./ui-pure.js";
-import { h, setToastHandler, swap } from "./ui-dom.js";
+import { h, later, setToastHandler, swap } from "./ui-dom.js";
 
 const doc = () => globalThis.document;
 
@@ -93,7 +93,7 @@ export function button({ label, variant = "secondary", icon: iconName = null, on
     } else {
       setIcon(iconName ? icon(iconName, { size: 16 }) : null);
     }
-    if (state === "ok" || state === "err") timer = setTimeout(() => set("idle"), state === "ok" ? 1100 : 1600);
+    if (state === "ok" || state === "err") timer = later(() => set("idle"), state === "ok" ? 1100 : 1600);
     if (state !== "loading") busy = false;
   };
   el.setLoading = (on) => set(on ? "loading" : "idle");
@@ -165,7 +165,7 @@ function showToast(entry) {
   toasts.visible.push(entry);
   toastRegion().append(entry.el);
   enter(entry.el, "slide-right");
-  const start = () => { clearTimeout(entry.timer); if (duration > 0) entry.timer = setTimeout(() => entry.dismiss(), duration); };
+  const start = () => { clearTimeout(entry.timer); if (duration > 0) entry.timer = later(() => entry.dismiss(), duration); };
   entry.el.addEventListener("mouseenter", () => { clearTimeout(entry.timer); entry.el.classList.add("is-paused"); });
   entry.el.addEventListener("mouseleave", () => { entry.el.classList.remove("is-paused"); start(); });
   start();
@@ -581,11 +581,13 @@ export function banner({ tone = "warning", text, action = null, id } = {}) {
 // ---- lists, pager ----------------------------------------------------------------------------------------
 
 /** Children that rise into place one after another (capped at 12 steps, so a long page is not slow). */
-export function enterList(container, items) {
-  items.forEach((item, index) => {
-    item.classList.add("ui-rise");
-    item.style.setProperty("--i", String(Math.min(index, 12)));
-  });
+export function enterList(container, items, { animate: animated = true } = {}) {
+  if (animated) {
+    items.forEach((item, index) => {
+      item.classList.add("ui-rise");
+      item.style.setProperty("--i", String(Math.min(index, 12)));
+    });
+  }
   container.replaceChildren(...items);
   return container;
 }
@@ -623,7 +625,38 @@ export function highlight(text, query) {
   return h("span", { class: "ui-hl-text", dir: "auto" }, ...highlightParts(text, query).map((part) => (part.hit ? h("mark", { class: "ui-hl" }, part.text) : part.text)));
 }
 
-export const markdownView = (text) => renderMarkdown(text, { onCopy: (value) => copyText(value) });
+/**
+ * Wrap the words of `query` in <mark> inside the text nodes under `root`. Text nodes are split into plain text and
+ * <mark> elements, so nothing is ever parsed as markup. Returns the number of matches.
+ */
+export function highlightNodes(root, query) {
+  if (!query || !String(query).trim()) return 0;
+  let count = 0;
+  const walk = (el) => {
+    const next = [];
+    let changed = false;
+    for (const node of [...(el.childNodes ?? el.children)]) {
+      if (node.nodeType === 3) {
+        const parts = highlightParts(node.textContent, query);
+        if (parts.some((part) => part.hit)) {
+          changed = true;
+          for (const part of parts) { next.push(part.hit ? h("mark", { class: "ui-hl" }, part.text) : doc().createTextNode(part.text)); if (part.hit) count += 1; }
+          continue;
+        }
+      } else if (node.nodeType === 1) walk(node);
+      next.push(node);
+    }
+    if (changed) el.replaceChildren(...next);
+  };
+  walk(root);
+  return count;
+}
+
+export function markdownView(text, { query = "" } = {}) {
+  const root = renderMarkdown(text, { onCopy: (value) => copyText(value) });
+  highlightNodes(root, query);
+  return root;
+}
 
 /** A code block with a language label and a Copy button. Whitespace is kept. */
 export function codeBlock({ code, lang = "" } = {}) {
@@ -657,7 +690,7 @@ export function startClock() {
 
 /** Long text cut to `lines` with Show more / Show less. The button appears only when the text is actually cut. */
 export function clampText({ text = "", lines = 4, markdown = false, query = "", mono: monoFace = false } = {}) {
-  const body = h("div", { class: `ui-clamp-body${monoFace ? " ui-mono-block" : ""}`, dir: "auto", "data-lines": lines }, markdown ? markdownView(text) : query ? highlight(text, query) : text);
+  const body = h("div", { class: `ui-clamp-body${monoFace ? " ui-mono-block" : ""}`, dir: "auto", "data-lines": lines }, markdown ? markdownView(text, { query }) : query ? highlight(text, query) : text);
   const more = button({ label: "Show more", variant: "ghost", size: "sm", icon: "chevron-down" });
   more.hidden = true;
   more.setAttribute("aria-expanded", "false");
@@ -685,14 +718,19 @@ export function clampText({ text = "", lines = 4, markdown = false, query = "", 
   return el;
 }
 
-/** A section that opens and closes with an animated height. */
-export function disclosure({ summary, content, open = false, onToggle } = {}) {
+/**
+ * A section that opens and closes with an animated height. `content` is a node, or `lazy` is a function that builds
+ * the node the first time the section opens, so a folded list makes no request until it is wanted.
+ */
+export function disclosure({ summary, content = null, lazy = null, open = false, onToggle } = {}) {
   const panelId = nextId("ui-disc");
-  const body = h("div", { class: "ui-disc-body", id: panelId, hidden: !open }, content);
+  let built = !lazy || open;
+  const body = h("div", { class: "ui-disc-body", id: panelId, hidden: !open }, built ? (content ?? lazy?.()) : null);
   const head = h("button", { class: "ui-disc-head", type: "button", "aria-expanded": String(open), "aria-controls": panelId }, icon("chevron-right", { size: 16 }), h("span", {}, summary));
   head.addEventListener("click", async () => {
     const next = head.getAttribute("aria-expanded") !== "true";
     head.setAttribute("aria-expanded", String(next));
+    if (next && !built) { built = true; body.append(lazy()); }
     if (next) await expand(body); else await collapse(body);
     onToggle?.(next);
   });

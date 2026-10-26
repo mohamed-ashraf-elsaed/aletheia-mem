@@ -116,12 +116,25 @@ export class FakeDocument {
   press(key, extra = {}) { return (this.activeElement ?? this.body).dispatch("keydown", { key, shiftKey: false, ...extra }); }
 }
 
-/** Install a fresh fake document as the global one and return it. */
+const KEYS = ["document", "navigator", "fetch", "location", "history", "addEventListener", "removeEventListener", "requestAnimationFrame", "matchMedia"];
+let saved = null;
+
+/** Install a fresh fake document as the global one and return it. Call restoreGlobals() when the file is done. */
 export function installFakeDom() {
+  if (!saved) saved = Object.fromEntries(KEYS.map((key) => [key, { had: key in globalThis, value: globalThis[key] }]));
   const fake = new FakeDocument();
   globalThis.document = fake;
   globalThis.navigator = { clipboard: { written: [], async writeText(text) { this.written.push(text); } } };
   return fake;
+}
+
+/** Put the real globals back, so a test file never changes what later files see (they share one process). */
+export function restoreGlobals() {
+  if (!saved) return;
+  for (const key of KEYS) {
+    if (saved[key].had) globalThis[key] = saved[key].value; else delete globalThis[key];
+  }
+  saved = null;
 }
 
 export const fakeDoc = new FakeDocument();

@@ -273,7 +273,7 @@ function copyButton(doc, text, onCopy) {
     } catch {
       button.textContent = "Copy failed";
     }
-    setTimeout(() => { button.textContent = "Copy"; }, 1600);
+    setTimeout(() => { if (globalThis.document) button.textContent = "Copy"; }, 1600);
   });
   return button;
 }

@@ -2,7 +2,7 @@
 // reacts while the user types in a field, except for Ctrl+K and Esc, and it leaves the browser's own shortcuts alone.
 import { badge, icon, modal, spinner } from "./ui-components.js";
 import { SUBVIEWS, TABS } from "./ui-core.js";
-import { api, h, state, swap } from "./ui-dom.js";
+import { api, h, later, state, swap } from "./ui-dom.js";
 import { buildHash, chordStep, isTypingTarget, rankCommands, trapTarget } from "./ui-pure.js";
 import { openFactDetail, openMemoryDetail } from "./ui-detail.js";
 import { searchHash } from "./ui-search.js";
@@ -65,7 +65,7 @@ export function openPalette(ctx) {
   let seq = 0;
   let layer = null;
 
-  const run = (command) => { layer.close(null); setTimeout(() => command.run(), 0); };
+  const run = (command) => { layer.close(null); later(() => command.run(), 0); };
   const paint = () => {
     rows.forEach((row, index) => { row.el.classList.toggle("is-active", index === active); row.el.setAttribute("aria-selected", String(index === active)); });
     if (rows[active]) input.setAttribute("aria-activedescendant", rows[active].el.getAttribute("id")); else input.removeAttribute("aria-activedescendant");
@@ -124,7 +124,7 @@ export function openPalette(ctx) {
     clearTimeout(timer);
     active = 0;
     render();
-    timer = setTimeout(() => fetchDynamic(input.value.trim()), 200);
+    timer = later(() => fetchDynamic(input.value.trim()), 200);
   });
   input.addEventListener("keydown", (event) => {
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {

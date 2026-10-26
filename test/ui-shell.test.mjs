@@ -1,10 +1,10 @@
 // T-205: the shell's logic without a browser: routes, theme, search, shortcuts and the palette's commands.
-import { beforeEach, describe, expect, test } from "bun:test";
+import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { SUBVIEWS, TABS, routeOf } from "../public/ui-core.js";
 import { THEMES, THEME_KEY, applyTheme, readTheme, themeAttribute } from "../public/ui-theme.js";
-import { installFakeDom } from "./support/fake-dom.mjs";
+import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 
 let dom;
 const tick = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -314,3 +314,5 @@ describe("T-205: the palette", () => {
     expect(went).toEqual(["#/rules"]);
   });
 });
+
+afterAll(() => restoreGlobals());
