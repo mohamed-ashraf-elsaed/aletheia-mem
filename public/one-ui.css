@@ -214,3 +214,17 @@ html, body { min-height: 100%; }
 .ui-classic { margin-top: var(--ui-space-5); }
 .ui-pair-out { margin-top: var(--ui-space-3); }
 @media (max-width: 640px) { .ui-command-row { grid-template-columns: 1fr; gap: 2px; } }
+
+/* ---- first-run guide (T-212) ---- */
+.ui-guide { padding: var(--ui-space-5); background: linear-gradient(180deg, var(--ui-accent-soft), transparent 60%), var(--ui-s1); border-color: color-mix(in srgb, var(--ui-accent) 40%, var(--ui-border)); }
+.ui-guide-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ui-space-3); flex-wrap: wrap; margin-bottom: var(--ui-space-4); }
+.ui-guide-h { font-size: var(--ui-text-xl); margin: 0 0 4px; }
+.ui-guide-steps { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--ui-space-4); }
+.ui-guide-step { display: grid; grid-template-columns: 32px 1fr; gap: var(--ui-space-3); }
+.ui-guide-num { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--ui-border-strong); color: var(--ui-muted); font-weight: 700; transition: background-color var(--ui-dur) var(--ui-ease), border-color var(--ui-dur) var(--ui-ease), transform var(--ui-dur) var(--ui-ease-spring); }
+.ui-guide-step.is-done .ui-guide-num { background: var(--ui-success); border-color: var(--ui-success); color: var(--ui-s0); animation: ui-pop var(--ui-dur-slow) var(--ui-ease-spring) both; }
+.ui-guide-title { font-size: var(--ui-text-md); display: flex; align-items: center; gap: var(--ui-space-2); margin-bottom: 4px; }
+.ui-guide-body .ui-command { margin-top: var(--ui-space-2); }
+.ui-guide-wait { display: inline-flex; align-items: center; gap: var(--ui-space-3); color: var(--ui-muted); }
+.ui-guide-wait .ui-loader { padding: 0; }
+@keyframes ui-pop { 0% { transform: scale(0.6); } 100% { transform: scale(1); } }

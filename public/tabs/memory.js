@@ -7,6 +7,7 @@ import { api, byId, h, state, swap } from "../ui-dom.js";
 import { withProgress } from "../ui-actions.js";
 import { region } from "../ui-region.js";
 import { openFactDetail, openMemoryDetail } from "../ui-detail.js";
+import { GUIDE_HIDDEN_KEY, firstRunGuide, guideHidden, storeIsEmpty } from "../ui-guide.js";
 import { TYPE_OPTIONS } from "../ui-views.js";
 import { dismissedView, factsView, memoriesView, queryString, searchView } from "./memory-views.js";
 import { reviewView } from "./review.js";
@@ -32,6 +33,24 @@ function buildFrame() {
     return { overview, review, dismissed, memories: memories?.total ?? overview.stats.total, facts: facts.total, pinned: overview.stats.pinned };
   };
 
+  // The first-run guide shows while nothing has been captured, and goes away by itself once something arrives.
+  const guideSlot = h("div", { class: "ui-guide-slot" });
+  let guide = null;
+  const syncGuide = async (d) => {
+    const empty = storeIsEmpty({ stats: d.overview.stats, facts: d.facts });
+    if (!empty || guideHidden()) { guide?.dispose(); guide = null; swap(guideSlot); return; }
+    if (guide) return;
+    let tools = [];
+    try { tools = (await api("/api/hub/doctor")).tools; } catch { /* the guide still shows its commands */ }
+    if (guide) return;
+    guide = firstRunGuide({
+      tools,
+      onHide: () => { try { globalThis.localStorage.setItem(GUIDE_HIDDEN_KEY, "1"); } catch { /* storage blocked */ } guide?.dispose(); guide = null; swap(guideSlot); },
+      onArrived: () => { guide?.dispose(); guide = null; swap(guideSlot); stats.reload({ soft: true }); currentView?.reload?.() ?? currentView?.list?.reload?.(); },
+    });
+    swap(guideSlot, guide);
+  };
+
   const stats = region({
     className: "ui-stats-region",
     load: loadStats,
@@ -40,6 +59,7 @@ function buildFrame() {
     errorTitle: "Could not load the counts",
     render: (d) => {
       data.overview = d.overview;
+      syncGuide(d);
       data.counts = { memories: d.memories, facts: d.facts, review: d.review.total, dismissed: d.dismissed.total };
       subnav.setCount("review", d.review.total);
       subnav.setCount("dismissed", d.dismissed.total);
@@ -92,6 +112,7 @@ function buildFrame() {
     h("div", { class: "ui-page-head" },
       h("div", {}, h("h1", { id: "ui-memory-title", tabindex: "-1" }, "Memory"), h("p", { class: "ui-page-lede" }, "One store every tool reads. Facts first, raw memories after.")),
       h("div", { class: "ui-row" }, button({ label: "Import and export", icon: "download", onClick: () => importExport(data) }), button({ label: "New note", variant: "primary", icon: "plus", onClick: () => newNote() }))),
+    guideSlot,
     stats,
     h("div", { class: "ui-subnav" }, subnav),
     content);
