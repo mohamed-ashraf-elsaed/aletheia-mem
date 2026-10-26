@@ -3,7 +3,7 @@
 // Merging rows is the one action that asks first, because it cannot be undone from here.
 import { badge, button, confirmDialog, disclosure, emptyState, promptDialog, segmented, skeleton, timeEl, toast } from "../ui-components.js";
 import { duplicateView, reviewView as reviewRowView } from "../ui-core.js";
-import { api, h, state } from "../ui-dom.js";
+import { api, h, state, swap } from "../ui-dom.js";
 import { optimistic } from "../ui-actions.js";
 import { pagedList } from "../ui-region.js";
 import { hideCard } from "../ui-views.js";
@@ -24,7 +24,7 @@ function queueCard(item, ctx) {
       failure,
     }).then((ok) => { if (ok) ctx.changed({ soft: true }); return ok; });
   };
-  card.append(
+  swap(card,
     h("div", { class: "ui-item-head" },
       h("p", { class: "ui-item-title ui-fact-text", dir: "auto" }, view.title),
       h("div", { class: "ui-row" }, badge(view.type, "warning"), badge(view.reason), view.confidence != null ? badge(`confidence ${view.confidence.toFixed(2)}`) : null)),
@@ -52,7 +52,7 @@ function pairCard(pair, ctx, { dismissed = false } = {}) {
   const card = h("article", { class: "ui-card ui-item", "data-kind": "pair", "data-id": view.key });
   const side = (id, text) => h("div", { class: "ui-pair-side" }, h("div", { class: "ui-meta" }, `#${id}`), h("p", { dir: "auto" }, text));
   const post = (action) => api("/api/hub/review/pairs", { method: "POST", body: { a: view.a, b: view.b, action } });
-  card.append(
+  swap(card,
     h("div", { class: "ui-item-head" }, h("div", { class: "ui-row" }, badge(dismissed ? "kept apart" : "near-duplicate", "warning"), badge(`similarity ${view.scoreLabel}`), view.auto ? badge("auto-merge candidate") : null)),
     h("div", { class: "ui-pair" }, side(view.a, view.aText), side(view.b, view.bText)),
     h("div", { class: "ui-acts" }, dismissed
@@ -78,7 +78,7 @@ function pairCard(pair, ctx, { dismissed = false } = {}) {
 
 function resolvedCard(item, ctx) {
   const card = h("article", { class: "ui-card ui-item", "data-kind": "review", "data-id": item.id });
-  card.append(
+  swap(card,
     h("div", { class: "ui-item-head" }, h("p", { class: "ui-item-title", dir: "auto" }, item.text ?? item.name ?? `${item.type} #${item.itemId}`), h("div", { class: "ui-row" }, badge(item.type), badge(item.status, item.status === "accepted" ? "success" : "warning"))),
     h("div", { class: "ui-meta" }, h("span", {}, item.reason), item.createdAt ? timeEl(item.createdAt) : null),
     h("div", { class: "ui-acts" }, button({ label: "Reopen", size: "sm", icon: "undo", onClick: () => {

@@ -337,3 +337,26 @@ describe("T-206: controller", () => {
     expect(h.sockets.at(-1).project).toBe("shop");
   });
 });
+
+describe("T-206: frames reach other views", () => {
+  test("each known frame is passed on, once, before the refresh pause", async () => {
+    const frames = [];
+    const h = harness({ responses: GOOD });
+    // rebuild with an onFrame hook through the same harness shape
+    const controller = createStatusController({
+      fetchJson: async (path) => { const key = Object.keys(GOOD).find((p) => path.startsWith(p)); return GOOD[key]; },
+      now: () => NOW, isHidden: () => false, project: () => "",
+      openSocket: () => { const socket = { close() {} }; h.sockets.push(socket); return socket; },
+      timers: { set: () => 1, clear: () => {} },
+      onChange() {}, onConnection() {}, onFrame: (kind) => frames.push(kind),
+    });
+    await controller.start();
+    const socket = h.sockets.at(-1);
+    socket.onmessage({ data: '{"kind":"fact","id":1}' });
+    socket.onmessage({ data: '{"kind":"nope"}' });
+    socket.onmessage({ data: "garbage" });
+    socket.onmessage({ data: '{"kind":"review","id":2}' });
+    expect(frames).toEqual(["fact", "review"]);
+    controller.stop();
+  });
+});

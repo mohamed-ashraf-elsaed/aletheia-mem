@@ -228,3 +228,16 @@ html, body { min-height: 100%; }
 .ui-guide-wait { display: inline-flex; align-items: center; gap: var(--ui-space-3); color: var(--ui-muted); }
 .ui-guide-wait .ui-loader { padding: 0; }
 @keyframes ui-pop { 0% { transform: scale(0.6); } 100% { transform: scale(1); } }
+
+/* ---- Work tab on the shared components (T-215) ---- */
+.ui-work-strip-region { margin: var(--ui-space-3) 0 var(--ui-space-5); }
+.ui-work-strip { margin: 0; }
+.ui-stat-small { font-size: var(--ui-text-md) !important; line-height: 1.35 !important; }
+.ui-stat .ui-row { gap: 8px; flex-wrap: nowrap; }
+.ui-session-prompt { display: grid; gap: 2px; }
+.ui-work-link.ui-item-title { text-decoration: none; }
+.ui-work-link.ui-item-title:hover { text-decoration: underline; }
+.ui-work-memory, .ui-work-goals { margin-top: var(--ui-space-5); }
+.ui-quotes { display: grid; gap: var(--ui-space-2); }
+.ui-dismissed-goals { margin-top: var(--ui-space-3); }
+a.ui-btn { text-decoration: none; }

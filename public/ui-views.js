@@ -171,7 +171,7 @@ export function factCard(fact, ctx = {}) {
   const dismissed = ctx.dismissed === true;
   const card = h("article", { class: "ui-card ui-item", "data-kind": "fact", "data-id": view.id });
   const tone = view.status === "active" ? "success" : "warning";
-  card.append(
+  swap(card,
     h("div", { class: "ui-item-head" },
       h("p", { class: "ui-item-title ui-fact-text", dir: "auto" }, ctx.query ? highlight(view.text, ctx.query) : view.text),
       h("div", { class: "ui-row" }, badge(view.status, tone), badge(`scope: ${view.scope}`), badge(`extractor: ${view.extractorMode}`))),
@@ -215,7 +215,7 @@ const TYPE_LABEL = { memory: "Memory", fact: "Fact", observation: "Observation",
 /** One dismissed row, with what was hidden (when the server could look it up) and a Restore button. */
 export function dismissedCard(item, ctx = {}) {
   const card = h("article", { class: "ui-card ui-item", "data-kind": item.item_type, "data-id": item.item_id });
-  card.append(
+  swap(card,
     h("div", { class: "ui-item-head" },
       h("p", { class: "ui-item-title", dir: "auto" }, item.label || `${TYPE_LABEL[item.item_type] ?? item.item_type} #${item.item_id}`),
       h("div", { class: "ui-row" }, badge(TYPE_LABEL[item.item_type] ?? item.item_type), item.project ? badge(item.project) : null)),

@@ -57,7 +57,7 @@ export function toolsView(ctx) {
 
 function deviceCard(device, ctx) {
   const card = h("article", { class: "ui-card ui-item", "data-kind": "device", "data-id": device.deviceId });
-  card.append(
+  swap(card,
     h("div", { class: "ui-item-head" }, h("h3", { class: "ui-item-title", dir: "auto" }, device.name ?? device.deviceId), h("div", { class: "ui-row" }, device.revoked ? badge("revoked", "danger") : badge("paired", "success"))),
     h("div", { class: "ui-meta" }, h("span", {}, "device"), mono(device.deviceId), h("span", {}, "last sync"), device.lastSync ? timeEl(device.lastSync) : h("span", {}, "never"), tip("Pending", "Changes this device has not received yet."), h("span", {}, `${device.pendingOps} pending`)),
     h("div", { class: "ui-acts" }, button({ label: "Revoke", variant: "danger", size: "sm", icon: "x", disabled: device.revoked, onClick: async () => {

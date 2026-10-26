@@ -32,7 +32,7 @@ export async function rawJson(path, fetchImpl = globalThis.fetch) {
  * onChange(snapshot), onConnection(info) }. Returns { start, stop, refresh, snapshot, setProject, visibilityChanged }.
  */
 export function createStatusController(deps) {
-  const { fetchJson, now, isHidden, project, openSocket, timers, onChange, onConnection } = deps;
+  const { fetchJson, now, isHidden, project, openSocket, timers, onChange, onConnection, onFrame = () => {} } = deps;
   const data = { health: null, work: null, sync: null, overview: null };
   let live = "off";
   let offline = false;
@@ -153,7 +153,9 @@ export function createStatusController(deps) {
     }
     socket.onopen = () => { live = "on"; socketFailures = 0; emit(); schedule(); };
     socket.onmessage = (event) => {
-      if (!frameKind(event.data)) return;
+      const kind = frameKind(event.data);
+      if (!kind) return;
+      onFrame(kind);
       timers.clear(frameTimer);
       frameTimer = timers.set(() => refresh({ light: true }), 400);
     };
@@ -264,6 +266,8 @@ export function mountStatus({ el, healthEl, bannerSlot = globalThis.document?.ge
     openSocket: typeof win.WebSocket === "function" ? (project) => new win.WebSocket(`${win.location.protocol === "https:" ? "wss" : "ws"}://${win.location.host}/v1/live${project ? `?project=${encodeURIComponent(project)}` : ""}`) : null,
     timers: { set: (fn, ms) => win.setTimeout(fn, ms), clear: (id) => win.clearTimeout(id) },
     onConnection: showBanner,
+    // Views that want to refresh when something changes listen for this event instead of opening their own socket.
+    onFrame: (kind) => { try { win.dispatchEvent(new win.CustomEvent("aletheia:frame", { detail: { kind } })); } catch { /* no CustomEvent here */ } },
     onChange(snap) {
       latest = snap;
       for (const entry of snap.indicators) {

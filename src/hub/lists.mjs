@@ -127,10 +127,15 @@ export function sessionsPage(hub, { limit, offset, project = null, state = null,
         ?? one("SELECT coalesce(nullif(narrative, ''), title) AS text FROM memories WHERE project = ? AND session_id = ? AND kind = 'prompt' ORDER BY created_at_epoch DESC, id DESC LIMIT 1", row.project, row.sid);
       const tool = one("SELECT tool FROM memories WHERE project = ? AND session_id = ? ORDER BY created_at_epoch DESC, id DESC LIMIT 1", row.project, row.sid)
         ?? one("SELECT tool FROM episodes WHERE project = ? AND session_id = ? ORDER BY created_at_epoch DESC, id DESC LIMIT 1", row.project, row.sid);
+      const summary = one("SELECT coalesce(nullif(narrative, ''), title) AS text, created_at_epoch AS at FROM memories WHERE project = ? AND session_id = ? AND kind = 'summary' ORDER BY created_at_epoch DESC, id DESC LIMIT 1", row.project, row.sid);
+      const facts = one(`SELECT COUNT(*) AS n FROM facts f JOIN episodes e ON e.id = f.episode_id WHERE f.project = ? AND e.session_id = ?
+        AND NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = f.id)`, row.project, row.sid);
       return {
         id: row.sid,
         project: row.project,
         tool: tool?.tool ?? null,
+        summary: summary ? { text: oneLine(summary.text).slice(0, 400), at: iso(summary.at) } : null,
+        factCount: facts?.n ?? 0,
         firstAt: iso(row.firstAt),
         lastAt: iso(row.lastAt),
         promptCount: row.prompts ?? 0,

@@ -1,54 +1,37 @@
-// The Work tab: this hub's own sessions, review items, facts and goals. It never reads the legacy viewer's database.
-// The overview refreshes every 10 seconds only while the tab is visible and the Work route is active. The session
-// page is read-only. Every action (accept, reject, dismiss, restore, pin) calls an existing API route.
-import { parseRoute } from "../ui-core.js";
-import { api, byId, chip, errorCard, errorText, h, run, settledValue, state, swap, toast } from "../ui-dom.js";
-import {
-  factLineView,
-  goalView,
-  goalsView,
-  sessionCardView,
-  sessionDetailView,
-  workEmptyView,
-  workHeaderView,
-  workNeedsView,
-} from "../work-view.js";
+// The Work tab (T-143, T-150, T-215): this hub's own sessions, review items, facts and goals. It never reads the legacy
+// viewer's database. Sessions and goals are server-paged lists; the counts, the "needs you" items and the recent
+// facts come from one small overview request that refreshes every 10 seconds while the tab is visible, and at once
+// when the status bar's WebSocket reports a change. Actions change the screen first and can be undone for 8 seconds.
+import { routeOf } from "../ui-core.js";
+import { badge, button, clampText, disclosure, emptyState, markdownView, mono, skeleton, statTile, statusDot, timeEl, timeline } from "../ui-components.js";
+import { api, byId, h, state, swap } from "../ui-dom.js";
+import { optimistic } from "../ui-actions.js";
+import { firstRunGuide, guideHidden } from "../ui-guide.js";
+import { pagedList, region } from "../ui-region.js";
+import { filterBar, hideCard, segmentFilter, textFilter } from "../ui-views.js";
+import { factLineView, goalView, sessionDetailView, workHeaderView, workNeedsView } from "../work-view.js";
+import { queryString } from "./memory-views.js";
 
 const REFRESH_MS = 10_000;
+const NEEDS_SHOWN = 6;
 let timer = null;
-let busy = false;
-let visibilityBound = false;
-let liveSocket = null;
-
-function disconnectLive() {
-  if (!liveSocket) return;
-  liveSocket.onmessage = liveSocket.onerror = liveSocket.onclose = null;
-  try { liveSocket.close(); } catch { /* ignore */ }
-  liveSocket = null;
-}
-
-function connectLive() {
-  disconnectLive();
-  try {
-    const scheme = location.protocol === "https:" ? "wss:" : "ws:";
-    const query = state.project ? `?project=${encodeURIComponent(state.project)}` : "";
-    liveSocket = new WebSocket(`${scheme}//${location.host}/v1/live${query}`);
-    liveSocket.onmessage = () => renderOverview(true);
-    liveSocket.onerror = () => disconnectLive();
-    liveSocket.onclose = () => disconnectLive();
-  } catch {
-    liveSocket = null;
-  }
-}
+let frameHandler = null;
+let visibilityHandler = null;
+let frameTimer = null;
+let overview = null;
 
 export function stopWorkRefresh() {
   if (timer) clearInterval(timer);
   timer = null;
-  disconnectLive();
+  clearTimeout(frameTimer);
+  if (frameHandler) globalThis.removeEventListener("aletheia:frame", frameHandler);
+  frameHandler = null;
+  if (visibilityHandler) globalThis.document.removeEventListener("visibilitychange", visibilityHandler);
+  visibilityHandler = null;
 }
 
 function sessionRoute() {
-  const match = /^#\/work\/session\/([^?]+)(?:\?(.*))?$/.exec(String(location.hash ?? ""));
+  const match = /^#\/work\/session\/([^?]+)(?:\?(.*))?$/.exec(String(globalThis.location.hash ?? ""));
   if (!match) return null;
   let id = match[1];
   try { id = decodeURIComponent(id); } catch { /* keep the raw id */ }
@@ -56,263 +39,241 @@ function sessionRoute() {
   return { id, project: params.get("project") ?? "" };
 }
 
-function startRefresh() {
+const onWorkOverview = () => routeOf(globalThis.location.hash).tab === "work" && !sessionRoute();
+
+function startRefresh(refresh) {
   stopWorkRefresh();
   timer = setInterval(() => {
-    const onWork = parseRoute(location.hash) === "work" && !sessionRoute();
-    if (!onWork) {
-      stopWorkRefresh();
-      return;
-    }
-    if (document.visibilityState !== "visible") return;
-    renderOverview(true);
+    if (!onWorkOverview()) { stopWorkRefresh(); return; }
+    if (globalThis.document.visibilityState === "visible") refresh();
   }, REFRESH_MS);
-  if (!visibilityBound) {
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && parseRoute(location.hash) === "work" && !sessionRoute()) renderOverview(true);
-    });
-    visibilityBound = true;
-  }
+  // The status bar owns the one WebSocket. It announces each change frame as an event; a short pause groups a burst.
+  frameHandler = () => { clearTimeout(frameTimer); frameTimer = setTimeout(() => { if (onWorkOverview() && globalThis.document.visibilityState === "visible") refresh(); }, 500); };
+  globalThis.addEventListener("aletheia:frame", frameHandler);
+  visibilityHandler = () => { if (globalThis.document.visibilityState === "visible" && onWorkOverview()) refresh(); };
+  globalThis.document.addEventListener("visibilitychange", visibilityHandler);
 }
 
-function stat(label, value, detail) {
-  return h("div", { class: "ui-card ui-stat" },
-    h("b", {}, value),
-    h("span", {}, label),
-    detail ? h("div", { class: "ui-meta" }, detail) : null);
+// ---- cards -----------------------------------------------------------------------------------------------
+
+function sessionCard(session) {
+  const live = session.state === "in_progress";
+  return h("article", { class: "ui-card ui-item ui-session", "data-kind": "session", "data-id": session.id },
+    h("div", { class: "ui-item-head" },
+      h("a", { class: "ui-work-link ui-item-title", href: session.href, dir: "auto" }, `${session.project} · ${session.id}`),
+      h("div", { class: "ui-row" }, h("span", { class: "ui-row" }, statusDot(live ? "working" : "idle"), badge(live ? "In progress" : "Finished", live ? "success" : "neutral")), session.tool ? badge(session.tool) : null)),
+    h("div", { class: "ui-meta" }, h("span", {}, "last event"), timeEl(session.lastAt), h("span", {}, `${session.promptCount} prompt${session.promptCount === 1 ? "" : "s"}`), h("span", {}, `${session.toolCount} tool event${session.toolCount === 1 ? "" : "s"}`), session.factCount ? h("span", {}, `${session.factCount} fact${session.factCount === 1 ? "" : "s"}`) : null),
+    session.lastPrompt ? h("div", { class: "ui-session-prompt" }, h("div", { class: "ui-meta" }, "last typed prompt"), clampText({ text: session.lastPrompt, lines: 3, mono: true })) : h("div", { class: "ui-meta" }, "No typed prompt captured."),
+    session.summary ? h("div", {}, h("div", { class: "ui-meta" }, "summary", session.summary.at ? timeEl(session.summary.at) : null), clampText({ text: session.summary.text, lines: 3 })) : null,
+    h("div", { class: "ui-acts" }, h("a", { class: "ui-btn ui-btn-secondary ui-btn-sm", href: session.href }, "Open session")));
 }
 
 function factLine(fact) {
   const view = factLineView(fact);
-  return h("div", { class: "ui-card" },
-    h("p", { class: "ui-fact-text" }, view.text),
-    h("div", { class: "ui-meta" }, view.sourceLabel, `importance ${view.importanceLabel}`, view.validAt, chip(view.scope)),
-    view.sourceText ? h("details", { class: "ui-details" }, h("summary", {}, "Show source text"), h("div", { class: "ui-fact-source" }, view.sourceText)) : null);
+  return h("article", { class: "ui-card ui-item", "data-kind": "fact" },
+    h("p", { class: "ui-item-title ui-fact-text", dir: "auto" }, view.text),
+    h("div", { class: "ui-meta" }, h("span", {}, view.sourceLabel), h("span", {}, `importance ${view.importanceLabel}`), h("span", {}, view.validAt), badge(view.scope)),
+    view.sourceText ? disclosure({ summary: "Show source text", content: clampText({ text: view.sourceText, lines: 6, mono: true }) }) : null);
 }
 
-function promptParagraph(view) {
-  if (!view.lastPromptTruncated) return h("p", { class: "ui-fact-text" }, view.lastPrompt);
-  const p = h("p", { class: "ui-fact-text" });
-  p.textContent = view.lastPrompt;
-  p.dataset.expanded = "0";
-  const btn = h("button", { class: "ui-more", onclick: () => {
-    const expanded = p.dataset.expanded === "1";
-    p.textContent = expanded ? view.lastPrompt : view.lastPromptFull;
-    p.dataset.expanded = expanded ? "0" : "1";
-    btn.textContent = expanded ? "Show more" : "Show less";
-  } }, "Show more");
-  return h("div", { class: "ui-prompt" }, p, btn);
-}
-
-function sessionCard(session) {
-  const view = sessionCardView(session);
-  return h("article", { class: "ui-card ui-session" },
-    h("div", { class: "ui-row" },
-      h("a", { class: "ui-work-link", href: view.href }, h("b", {}, `${view.project} · ${view.id}`)),
-      chip(view.stateLabel, view.state === "in_progress" ? "ok" : ""),
-      chip(view.tool)),
-    h("div", { class: "ui-meta" }, `last event ${view.lastAt}`, view.stateDetail ? `ended by ${view.stateDetail}` : null, view.promptLabel, view.toolLabel),
-    h("div", { class: "ui-meta" }, "last typed prompt", view.lastPromptAt ? `· ${view.lastPromptAt}` : ""),
-    promptParagraph(view),
-    h("div", { class: "ui-meta" }, "summary", view.summaryAt ? `· ${view.summaryAt}` : ""),
-    h("p", { class: "ui-fact-text" }, view.summary),
-    view.sourceFacts.length
-      ? h("details", { class: "ui-details" },
-        h("summary", {}, `Source facts (${view.sourceFacts.length})`),
-        ...view.sourceFacts.map((fact) => h("div", { class: "ui-fact-source" }, `${fact.text} · ${fact.sourceLabel} · importance ${fact.importanceLabel}`)))
-      : null,
-    h("div", { class: "ui-acts" }, h("a", { class: "ui-button", href: view.href }, "Open session")));
-}
-
-async function reviewAction(item, action) {
-  await run(async () => {
-    await api(`/api/hub/review/${item.id}`, { method: "POST", body: { action } });
-    toast(`Review ${action}ed`);
-    await renderOverview(true);
-  });
-}
-
-async function ruleAction(item, action) {
-  await run(async () => {
-    await api(`/api/hub/rule-suggestions/${item.id}`, { method: "POST", body: { action } });
-    toast(`Rule suggestion ${action}ed`);
-    await renderOverview(true);
-  });
-}
-
-async function restoreDismissed(item) {
-  await run(async () => {
-    await api("/api/hub/restore", { method: "POST", body: { type: item.type, id: item.id } });
-    toast("Restored");
-    await renderOverview(true);
-  });
-}
-
-function needsCard(item) {
-  const buttons = item.actions.map((action) => h("button", {
-    onclick: () => {
-      if (item.kind === "review") return reviewAction(item, action.id);
-      if (item.kind === "rule") return ruleAction(item, action.id);
-      return restoreDismissed(item);
-    },
-  }, action.label));
-  return h("div", { class: "ui-card" },
-    h("div", { class: "ui-row" }, chip(item.kind === "review" ? "review" : item.kind === "rule" ? "rule suggestion" : "dismissed"), h("b", {}, item.title)),
+/** One thing that needs a decision. Accept, Reject, Dismiss and Restore are optimistic and undoable. */
+function needsCard(item, refresh) {
+  const card = h("article", { class: "ui-card ui-item", "data-kind": item.kind, "data-id": item.id });
+  const send = (action) => {
+    if (item.kind === "review") return api(`/api/hub/review/${item.id}`, { method: "POST", body: { action } });
+    if (item.kind === "rule") return api(`/api/hub/rule-suggestions/${item.id}`, { method: "POST", body: { action } });
+    return api(action === "restore" ? "/api/hub/restore" : "/api/hub/dismiss", { method: "POST", body: { type: item.type, id: item.id } });
+  };
+  const act = (action) => {
+    let back = () => {};
+    let result = null;
+    const undo = async () => {
+      if (item.kind === "review") return api(`/api/hub/review/${item.id}`, { method: "POST", body: { action: "reopen" } });
+      if (item.kind === "rule") {
+        await api(`/api/hub/rule-suggestions/${item.id}`, { method: "POST", body: { action: "restore" } });
+        if (action === "accept" && result?.ruleId) await api(`/api/hub/rules/${result.ruleId}`, { method: "PATCH", body: { enabled: false } });
+        return null;
+      }
+      return api(action === "restore" ? "/api/hub/dismiss" : "/api/hub/restore", { method: "POST", body: { type: item.type, id: item.id } });
+    };
+    return optimistic({
+      apply: () => { back = hideCard(card); },
+      rollback: () => back(),
+      request: async () => { result = await send(action); },
+      done: { accept: "Accepted.", reject: "Rejected.", dismiss: "Dismissed. Nothing was deleted.", restore: "Restored." }[action],
+      undo,
+      reapply: () => { back(); refresh(); },
+      failure: "Could not do that.",
+    }).then((ok) => { if (ok) refresh({ soft: true }); return ok; });
+  };
+  swap(card,
+    h("div", { class: "ui-item-head" }, h("p", { class: "ui-item-title ui-fact-text", dir: "auto" }, item.title), badge(item.kind === "review" ? "review" : item.kind === "rule" ? "rule suggestion" : "dismissed", "warning")),
     h("div", { class: "ui-meta" }, item.detail),
-    h("div", { class: "ui-acts" }, ...buttons));
+    h("div", { class: "ui-acts" }, ...item.actions.map((action) => button({ label: action.label, size: "sm", variant: action.id === "accept" ? "primary" : "secondary", onClick: () => act(action.id) }))));
+  return card;
 }
 
-async function goalAction(goal, action) {
-  await run(async () => {
-    await api(`/api/hub/goals/${goal.id}`, { method: "POST", body: { action } });
-    toast(`Goal ${action === "unpin" ? "unpinned" : action === "pin" ? "pinned" : action === "dismiss" ? "dismissed" : "restored"}`);
-    await renderOverview(true);
-  });
-}
-
-function goalCard(goal, { dismissed = false } = {}) {
+function goalCard(goal, { dismissed = false, refresh }) {
   const view = goalView(goal);
-  return h("div", { class: "ui-card ui-goal" },
-    h("div", { class: "ui-row" }, h("b", {}, view.label), view.pinned ? chip("pinned", "ok") : null),
-    h("div", { class: "ui-meta" }, view.countLabel, view.sessionLabel, `last seen ${view.lastSeen}`, view.projects.length ? `projects: ${view.projects.join(", ")}` : ""),
-    view.quotes.length
-      ? h("details", { class: "ui-details" },
-        h("summary", {}, `Dated quotes (${view.quotes.length})`),
-        ...view.quotes.map((quote) => h("div", { class: "ui-fact-source" }, `#${quote.id} · ${quote.at} · ${quote.project} · ${quote.text}`)))
-      : null,
-    h("div", { class: "ui-acts" },
-      dismissed
-        ? h("button", { onclick: () => goalAction(goal, "restore") }, "Restore")
-        : h("button", { onclick: () => goalAction(goal, view.pinned ? "unpin" : "pin") }, view.pinned ? "Unpin" : "Pin"),
-      dismissed ? null : h("button", { onclick: () => goalAction(goal, "dismiss") }, "Dismiss")));
+  const card = h("article", { class: "ui-card ui-item ui-goal", "data-kind": "goal", "data-id": view.id });
+  const post = (action) => api(`/api/hub/goals/${view.id}`, { method: "POST", body: { action } });
+  const act = (action, undoAction, done) => {
+    let back = () => {};
+    return optimistic({ apply: () => { back = hideCard(card); }, rollback: () => back(), request: () => post(action), done, undo: () => post(undoAction), reapply: () => { back(); refresh(); }, failure: "Could not change this goal." }).then((ok) => { if (ok) refresh({ soft: true }); return ok; });
+  };
+  swap(card,
+    h("div", { class: "ui-item-head" }, h("p", { class: "ui-item-title", dir: "auto" }, view.label), view.pinned ? badge("pinned", "success") : null),
+    h("div", { class: "ui-meta" }, h("span", {}, view.countLabel), h("span", {}, view.sessionLabel), h("span", {}, `last seen ${view.lastSeen}`), view.projects.length ? h("span", {}, `projects: ${view.projects.join(", ")}`) : null),
+    view.quotes.length ? disclosure({ summary: `Dated quotes (${view.quotes.length})`, content: h("div", { class: "ui-quotes" }, ...view.quotes.map((quote) => h("div", { class: "ui-fact-source", dir: "auto" }, `#${quote.id} · ${quote.at} · ${quote.project} · ${quote.text}`))) }) : null,
+    h("div", { class: "ui-acts" }, dismissed
+      ? button({ label: "Restore", size: "sm", icon: "undo", onClick: () => act("restore", "dismiss", "Goal restored.") })
+      : [
+        button({ label: view.pinned ? "Unpin" : "Pin", size: "sm", icon: "pin", onClick: () => act(view.pinned ? "unpin" : "pin", view.pinned ? "pin" : "unpin", view.pinned ? "Unpinned." : "Pinned.") }),
+        button({ label: "Dismiss", size: "sm", icon: "eye-off", onClick: () => act("dismiss", "restore", "Goal dismissed.") }),
+      ]));
+  return card;
 }
 
-function goalsSection(data) {
-  const view = goalsView(data);
-  const dismissed = view.dismissedGoals.length
-    ? h("details", { class: "ui-card" }, h("summary", {}, `Dismissed goals (${view.dismissedGoals.length})`), ...data.dismissedGoals.map((goal) => goalCard(goal, { dismissed: true })))
-    : null;
-  return h("section", { class: "ui-work-goals" },
-    h("h2", {}, "Goals"),
-    h("p", { class: "ui-meta" }, "From your own typed prompts only. A topic is a goal when it repeats in at least two sessions."),
-    view.goals.length ? null : h("div", { class: "ui-empty" }, "No repeated imperative topics across sessions yet."),
-    ...data.goals.map((goal) => goalCard(goal)),
-    dismissed);
+// ---- the overview ------------------------------------------------------------------------------------------
+
+function buildOverview() {
+  const guideSlot = h("div", { class: "ui-guide-slot" });
+  const needsSlot = h("div", { class: "ui-needs-slot" }, skeleton({ kind: "card", count: 2 }));
+  const recentSlot = h("div", { class: "ui-recent-slot" }, skeleton({ kind: "card", count: 2 }));
+  const dismissedGoals = h("div", { class: "ui-dismissed-goals" });
+  let guide = null;
+  let sessions = null;
+  let goals = null;
+
+  const refresh = ({ soft = true } = {}) => { strip.reload({ soft }); sessions?.reload({ soft: true }); goals?.reload({ soft: true }); };
+
+  const syncGuide = async (data) => {
+    // The overview says `empty` only when there is nothing at all: no sessions, facts, review items or captures.
+    if (!data.empty || guideHidden()) { if (guide) { guide.dispose(); guide = null; swap(guideSlot); } return; }
+    if (guide) return;
+    let tools = [];
+    try { tools = (await api("/api/hub/doctor")).tools; } catch { /* the commands still show */ }
+    if (guide) return;
+    guide = firstRunGuide({ tools, onArrived: () => { guide?.dispose(); guide = null; swap(guideSlot); refresh({ soft: false }); } });
+    swap(guideSlot, guide);
+  };
+
+  const strip = region({
+    className: "ui-work-strip-region",
+    load: () => api(`/v1/work?${queryString({ sessions: 1, facts: 8, review: 6, project: state.project })}`),
+    skeleton: () => skeleton({ kind: "stat", count: 6 }),
+    isEmpty: () => false,
+    errorTitle: "Could not load the Work overview",
+    onData: (data) => {
+      syncGuide(data);
+      const needs = workNeedsView(data);
+      // The overview can carry many items; show the first few and link to the paged pages for the rest.
+      const shown = needs.slice(0, NEEDS_SHOWN);
+      swap(needsSlot, shown.length ? shown.map((item) => needsCard(item, refresh)) : emptyState({ title: "Nothing needs you right now", text: "Review items, rule suggestions and recently hidden rows show up here.", art: "review", compact: true }),
+        h("p", { class: "ui-meta" }, needs.length > shown.length ? `Showing ${shown.length} of ${needs.length}. ` : "", h("a", { href: "#/memory/review" }, "Open the review queue"), " · ", h("a", { href: "#/rules/suggestions" }, "Suggested rules"), " · ", h("a", { href: "#/memory/dismissed" }, "Hidden items")));
+      swap(recentSlot, data.recentFacts.length ? data.recentFacts.map(factLine) : emptyState({ title: "No current facts yet", text: "They appear after extraction runs.", compact: true }),
+        h("p", { class: "ui-meta" }, h("a", { href: "#/memory/facts" }, "See all facts")));
+    },
+    render: (data) => {
+      const header = workHeaderView(data);
+      const needsTotal = header.review + (data.ruleSuggestions?.length ?? 0) + (data.dismissed?.length ?? 0);
+      const health = header.health.state === "ok";
+      return h("div", { class: "ui-work-strip" },
+        h("div", { class: "ui-card ui-stat" }, h("b", { class: "ui-stat-value" }, h("span", { class: "ui-row" }, statusDot(health ? "ok" : "error"), header.health.label)), h("span", { class: "ui-stat-label" }, "health")),
+        h("div", { class: "ui-card ui-stat" }, h("b", { class: "ui-stat-value ui-stat-small" }, header.lastCapture), h("span", { class: "ui-stat-label" }, "last capture")),
+        statTile({ label: "queued", value: data.queue?.depth ?? 0, detail: header.queueDetail }),
+        h("div", { class: "ui-card ui-stat" }, h("b", { class: "ui-stat-value" }, header.mode), h("span", { class: "ui-stat-label" }, "mode")),
+        statTile({ label: "sessions in this window", value: header.sessions, detail: `${header.facts} recent facts` }),
+        statTile({ label: "needs you", value: needsTotal, tone: needsTotal ? "warning" : null, detail: `${header.review} review · ${data.ruleSuggestions?.length ?? 0} rules · ${data.dismissed?.length ?? 0} dismissed` }));
+    },
+  });
+
+  const sessionDefaults = { limit: 10, state: "", q: "", since: "", until: "" };
+  sessions = pagedList({
+    defaults: sessionDefaults, label: "Sessions",
+    fetchPage: (p) => api(`/v1/work/sessions?${queryString({ limit: p.limit, offset: p.offset, project: state.project, state: p.state, q: p.q, since: p.since, until: p.until })}`),
+    renderItem: (session) => sessionCard(session),
+    skeleton: () => skeleton({ kind: "card", count: 3 }),
+    empty: () => emptyState({ title: "No sessions yet", text: "A session appears here when a connected tool sends its first prompt.", art: "memory", compact: true }),
+    emptyFiltered: () => emptyState({ title: "No session matches", text: "Try another state or a wider date range.", art: "search", compact: true }),
+    toolbar: ({ state: s, set }) => filterBar([[
+      segmentFilter({ key: "state", label: "Show", value: s.state, options: [{ value: "", label: "All" }, { value: "in_progress", label: "In progress" }, { value: "finished", label: "Finished" }], onChange: (value) => set({ state: value }) }),
+      textFilter({ key: "q", value: s.q, label: "Find a session by id", placeholder: "Session id…", onChange: (q) => set({ q }, { replace: true }) }),
+    ]]),
+  });
+
+  goals = pagedList({
+    defaults: { limit: 5 }, prefix: "g", label: "Goals",
+    fetchPage: async (p) => { const data = await api(`/v1/work/goals?${queryString({ limit: p.limit, offset: p.offset, project: state.project })}`); return { items: data.goals, total: data.total ?? data.goals.length, data }; },
+    renderItem: (goal) => goalCard(goal, { refresh }),
+    skeleton: () => skeleton({ kind: "card", count: 2 }),
+    empty: () => emptyState({ title: "No repeated topics yet", text: "A topic becomes a goal when you type it in at least two sessions.", art: "memory", compact: true }),
+    onData: (data) => {
+      const hidden = data.data?.dismissedGoals ?? [];
+      swap(dismissedGoals, hidden.length ? disclosure({ summary: `Dismissed goals (${hidden.length})`, content: h("div", {}, ...hidden.map((goal) => goalCard(goal, { dismissed: true, refresh }))) }) : null);
+    },
+  });
+
+  const root = h("div", { class: "ui-work" },
+    h("div", { class: "ui-work-head" }, h("h1", { id: "ui-work-title", tabindex: "-1" }, "Work"), h("p", { class: "ui-meta" }, `Captured sessions, facts and review items from this hub · project: ${state.project || "all"}`)),
+    guideSlot,
+    strip,
+    h("div", { class: "ui-work-grid" },
+      h("section", { class: "ui-work-col", "aria-labelledby": "ui-work-now" }, h("h2", { id: "ui-work-now" }, "Now"), h("p", { class: "ui-meta" }, "Sessions in progress and recently finished, newest first."), sessions),
+      h("section", { class: "ui-work-col", "aria-labelledby": "ui-work-needs" }, h("h2", { id: "ui-work-needs" }, "Needs you"), needsSlot)),
+    h("section", { class: "ui-work-memory", "aria-labelledby": "ui-work-recent" }, h("h2", { id: "ui-work-recent" }, "Recent memory"), h("p", { class: "ui-meta" }, "Current facts with their source episode and importance."), recentSlot),
+    h("section", { class: "ui-work-goals", "aria-labelledby": "ui-work-goals" }, h("h2", { id: "ui-work-goals" }, "Goals"), h("p", { class: "ui-meta" }, "From your own typed prompts only. A topic is a goal when it repeats in at least two sessions."), goals, dismissedGoals),
+    h("p", { class: "ui-meta ui-work-updated" }, "Refreshes every 10 s while this tab is visible, and at once when something changes."));
+  return { el: root, refresh, project: state.project, dispose: () => { guide?.dispose(); sessions?.dispose?.(); goals?.dispose?.(); } };
 }
 
-function emptyCard(data) {
-  const view = workEmptyView(data);
-  return h("div", { class: "ui-card ui-work-empty" },
-    h("h2", {}, view.title),
-    h("p", {}, view.body),
-    h("pre", { class: "ui-pre" }, view.command),
-    h("p", { class: "ui-meta" }, view.hint));
-}
+// ---- one session -------------------------------------------------------------------------------------------
 
-function overviewDom(data, goals) {
-  const header = workHeaderView(data);
-  const sessions = data.sessions.map(sessionCard);
-  const needs = workNeedsView(data);
-  return h("div", { class: "ui-work" },
-    h("div", { class: "ui-work-head" },
-      h("h1", {}, "Work"),
-      h("p", { class: "ui-meta" }, `Captured sessions, facts and review items from this hub · project: ${header.project}`)),
-    data.empty ? emptyCard(data) : null,
-    h("div", { class: "ui-work-strip" },
-      stat("health", header.health.label),
-      stat("last capture", header.lastCapture),
-      stat("queue", header.queue, header.queueDetail),
-      stat("mode", header.mode),
-      stat("sessions", String(header.sessions), `${header.facts} recent facts`),
-      stat("needs you", String(header.review + (data.ruleSuggestions?.length ?? 0) + (data.dismissed?.length ?? 0)), `${header.review} review · ${data.ruleSuggestions?.length ?? 0} rules · ${data.dismissed?.length ?? 0} dismissed`)),
-    data.empty ? null : h("div", { class: "ui-work-grid" },
-      h("section", { class: "ui-work-col" },
-        h("h2", {}, "Now"),
-        h("p", { class: "ui-meta" }, "Sessions in progress and recently finished, newest first."),
-        sessions.length ? null : h("div", { class: "ui-empty" }, "No sessions in this window."),
-        ...sessions),
-      h("section", { class: "ui-work-col" },
-        h("h2", {}, "Needs you"),
-        needs.length ? null : h("div", { class: "ui-empty" }, "Nothing needs you right now."),
-        ...needs.map(needsCard))),
-    data.empty ? null : h("section", { class: "ui-work-memory" },
-      h("h2", {}, "Recent memory"),
-      h("p", { class: "ui-meta" }, "Current facts with their source episode and importance."),
-      data.recentFacts.length ? null : h("div", { class: "ui-empty" }, "No current facts yet. They appear after extraction runs."),
-      ...data.recentFacts.map(factLine)),
-    data.empty ? null : goalsSection(goals),
-    h("p", { class: "ui-meta ui-work-updated" }, `Updated ${header.generatedAt} · refreshes every 10 s while this tab is visible.`));
-}
-
-async function renderOverview(silent = false) {
-  if (silent && busy) return;
-  const root = byId("ui-work");
-  if (!root) return;
-  busy = true;
-  if (!silent) swap(root, h("div", { class: "ui-empty" }, "Loading Work…"));
-  try {
-    const project = state.project;
-    const query = project ? `?project=${encodeURIComponent(project)}` : "";
-    const [workResult, goalResult] = await Promise.allSettled([api(`/v1/work${query}`), api(`/v1/work/goals${query}`)]);
-    const data = settledValue(workResult, null);
-    if (!data) {
-      swap(root, h("h1", {}, "Work"), errorCard(errorText(workResult, "Work")));
-      return;
-    }
-    const goals = settledValue(goalResult, { goals: [], dismissedGoals: [] });
-    document.title = "Work · Aletheia";
-    swap(root, overviewDom(data, goals));
-  } catch (error) {
-    swap(root, h("h1", {}, "Work"), errorCard(`Work: ${error.message}`));
-  } finally {
-    busy = false;
-  }
-}
-
-async function renderSession(route) {
-  const root = byId("ui-work");
-  if (!root) return;
-  swap(root, h("div", { class: "ui-empty" }, "Loading session…"));
-  const query = route.project ? `?project=${encodeURIComponent(route.project)}` : "";
-  let payload;
-  try {
-    payload = await api(`/v1/work/session/${encodeURIComponent(route.id)}${query}`);
-  } catch (error) {
-    swap(root, h("div", { class: "ui-work" },
-      h("div", { class: "ui-row" }, h("a", { href: "#/work" }, "← Work")),
-      h("div", { class: "ui-card ui-work-empty" }, h("h2", {}, "Session not found"), h("p", { class: "ui-meta" }, error.message))));
-    return;
-  }
-  const view = sessionDetailView(payload.session);
-  document.title = `Session ${view.id} · Aletheia`;
-  const timeline = view.timeline.length
-    ? h("ol", { class: "ui-timeline" }, ...view.timeline.map((item) => h("li", { class: `ui-timeline-${item.kind}` },
-      h("div", { class: "ui-meta" }, chip(item.kindLabel), item.at, item.tool ?? ""),
-      h("div", { class: "ui-fact-text" }, item.text),
-      item.source ? h("div", { class: "ui-fact-source" }, item.source) : null)))
-    : h("div", { class: "ui-empty" }, "No timeline rows for this session.");
-  swap(root, h("div", { class: "ui-work" },
-    h("div", { class: "ui-row" }, h("a", { href: "#/work" }, "← Work"), h("h1", {}, view.title)),
-    h("div", { class: "ui-meta" }, view.project, view.tool, `first ${view.firstAt}`, `last ${view.lastAt}`, view.promptLabel, view.toolLabel),
-    h("h2", {}, "Summary"),
-    h("div", { class: "ui-card" }, h("p", { class: "ui-fact-text" }, view.summary), view.summaryAt ? h("div", { class: "ui-meta" }, view.summaryAt) : null),
-    h("h2", {}, "Timeline"),
-    timeline,
-    h("h2", {}, `Extracted facts (${view.facts.length})`),
-    view.facts.length ? null : h("div", { class: "ui-empty" }, "No facts extracted for this session yet."),
-    ...view.facts.map((fact) => h("div", { class: "ui-card" },
-      h("p", { class: "ui-fact-text" }, fact.text),
-      h("div", { class: "ui-meta" }, fact.sourceLabel, `importance ${fact.importanceLabel}`, fact.validAt, chip(fact.status))))));
+function sessionPage(route) {
+  const back = h("a", { class: "ui-btn ui-btn-ghost ui-btn-sm", href: "#/work" }, "← Work");
+  const reg = region({
+    load: () => api(`/v1/work/session/${encodeURIComponent(route.id)}${route.project ? `?project=${encodeURIComponent(route.project)}` : ""}`),
+    skeleton: () => skeleton({ kind: "card", count: 3 }),
+    isEmpty: () => false,
+    errorTitle: "Session not found",
+    render: (payload) => {
+      const view = sessionDetailView(payload.session);
+      globalThis.document.title = `Session ${view.id} · Aletheia`;
+      const tone = { prompt: "info", tool: "neutral", summary: "success" };
+      return h("div", {},
+        h("div", { class: "ui-page-head" }, h("div", {}, h("h1", { dir: "auto" }, view.title), h("div", { class: "ui-meta" }, badge(view.project), badge(view.tool), h("span", {}, `first ${view.firstAt}`), h("span", {}, `last ${view.lastAt}`), h("span", {}, view.promptLabel), h("span", {}, view.toolLabel))), back),
+        h("h2", {}, "Summary"),
+        h("div", { class: "ui-card" }, view.summary === "No summary yet." ? h("p", { class: "ui-meta" }, "No summary yet.") : markdownView(view.summary), view.summaryAt ? h("div", { class: "ui-meta" }, view.summaryAt) : null),
+        h("h2", {}, "Timeline"),
+        view.timeline.length
+          ? timeline(view.timeline.map((item, index) => ({ title: item.kindLabel, at: payload.session.timeline[index]?.at ?? null, tone: tone[item.kind] ?? "neutral", meta: [item.tool, item.source].filter(Boolean).join(" · "), text: item.text })))
+          : emptyState({ title: "No timeline rows", text: "This session has no captured prompts or tool events yet.", compact: true }),
+        h("h2", {}, `Extracted facts (${view.facts.length})`),
+        view.facts.length ? h("div", { class: "ui-list-rows" }, ...view.facts.map((fact) => h("article", { class: "ui-card ui-item" }, h("p", { class: "ui-item-title ui-fact-text", dir: "auto" }, fact.text), h("div", { class: "ui-meta" }, h("span", {}, fact.sourceLabel), h("span", {}, `importance ${fact.importanceLabel}`), h("span", {}, fact.validAt), badge(fact.status)))))
+          : emptyState({ title: "No facts extracted for this session yet", compact: true }),
+        h("p", { class: "ui-meta" }, "Session id ", mono(String(view.id))));
+    },
+  });
+  return h("div", { class: "ui-work" }, h("div", { class: "ui-row" }, back), reg);
 }
 
 export async function renderWork() {
   stopWorkRefresh();
+  const root = byId("ui-work");
+  if (!root) return;
   const route = sessionRoute();
   if (route) {
-    await renderSession(route);
+    overview?.dispose();
+    overview = null;
+    swap(root, sessionPage(route));
     return;
   }
-  await renderOverview(false);
-  startRefresh();
-  connectLive();
+  globalThis.document.title = "Work · Aletheia";
+  if (!overview || overview.project !== state.project || !root.contains(overview.el)) {
+    overview?.dispose();
+    overview = buildOverview();
+    swap(root, overview.el);
+  } else overview.refresh({ soft: true });
+  startRefresh(() => overview?.refresh({ soft: true }));
 }
+

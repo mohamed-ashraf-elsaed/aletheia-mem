@@ -256,6 +256,8 @@ describe("T-203: sessions", () => {
     expect(total).toBeGreaterThanOrEqual(12);
     const one = (await get("/v1/work/sessions?limit=1")).items[0];
     expect(one).toHaveProperty("href");
+    expect(one).toHaveProperty("summary");
+    expect(typeof one.factCount).toBe("number");
     expect(["in_progress", "finished"]).toContain(one.state);
   });
   test("state, project and date filters", async () => {
