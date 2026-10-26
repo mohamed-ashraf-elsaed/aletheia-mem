@@ -146,10 +146,10 @@ export function sessionsPage(hub, { limit, offset, project = null, state = null,
 const SEARCH_CAP = 300;
 
 /**
- * Search as one ordered list (facts first, then memories) with a window. `totals` counts each kind; `capped` says the
+ * Search as one ordered list (facts first, then memories; `mix` alternates them) with a window. `totals` counts each kind; `capped` says the
  * ranking pool was full, so more may exist than the total shows.
  */
-export function searchPage(hub, { query, project, kind, type, tool, scope = "current", includeHistory = false, asOf = null, since = null, until = null, limit, offset } = {}) {
+export function searchPage(hub, { query, project, kind, type, tool, scope = "current", includeHistory = false, asOf = null, since = null, until = null, limit, offset, mix = false } = {}) {
   const inRange = (item) => {
     const at = Date.parse(item.at);
     return (!Number.isFinite(since) || at >= since) && (!Number.isFinite(until) || at < until);
@@ -158,7 +158,10 @@ export function searchPage(hub, { query, project, kind, type, tool, scope = "cur
   const memories = hub.ranked({ query, project, kind, type, tool, limit: SEARCH_CAP, pool: SEARCH_CAP, scope, includeHistory, cap: SEARCH_CAP })
     .map((m) => ({ id: m.id, kind: m.kind, type: m.type, title: m.title, project: m.project, tool: m.tool, pinned: m.pinned, at: new Date(m.created_at_epoch).toISOString() }))
     .filter(inRange);
-  const combined = [...facts, ...memories];
+  // mix alternates the two kinds so a short window (the header dropdown) shows both; the default lists facts first.
+  const combined = mix
+    ? Array.from({ length: Math.max(facts.length, memories.length) }, (_, i) => [facts[i], memories[i]]).flat().filter(Boolean)
+    : [...facts, ...memories];
   const window = slicePage(combined, { limit, offset });
   return {
     total: combined.length,

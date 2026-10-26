@@ -255,7 +255,7 @@ export function createHubRoutes({ hub, config, liveHub = null }) {
         const scope = b.scope === "all" ? "all" : "current";
         if (b.offset != null || b.paged === true) {
           const paging = pagingOf(b);
-          const page = searchPage(hub, { query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, scope, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, since: whenOf(b.since), until: whenOf(b.until, { end: true }), ...paging });
+          const page = searchPage(hub, { query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, scope, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, since: whenOf(b.since), until: whenOf(b.until, { end: true }), mix: b.mix === true, ...paging });
           const detail = page.total === 0 ? hub.searchDetailed({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: 1, scope }) : { reason: null };
           return h.json({
             ...page,

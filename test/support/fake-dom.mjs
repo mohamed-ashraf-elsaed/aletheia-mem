@@ -108,6 +108,7 @@ export class FakeDocument {
   createTextNode(text) { return new FakeText(text); }
   getElementById(id) { return this.documentElement.all().find((el) => el.getAttribute("id") === id) ?? null; }
   querySelectorAll(selector) { return this.documentElement.querySelectorAll(selector); }
+  querySelector(selector) { return this.documentElement.querySelector(selector); }
   addEventListener(type, fn) { (this.listeners[type] ??= []).push(fn); }
   removeEventListener(type, fn) { this.listeners[type] = (this.listeners[type] ?? []).filter((entry) => entry !== fn); }
   dispatchOnDocument(type, event) { for (const fn of [...(this.listeners[type] ?? [])]) fn(event); }

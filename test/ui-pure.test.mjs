@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
-  REGION_INITIAL, buildHash, chordStep, isTypingTarget, rovingIndex, trapTarget, clampLimit, countUpValue, errorDetails, formatBytes, formatNumber, highlightParts, nextPollDelay,
+  REGION_INITIAL, matchScore, rankCommands, buildHash, chordStep, isTypingTarget, rovingIndex, trapTarget, clampLimit, countUpValue, errorDetails, formatBytes, formatNumber, highlightParts, nextPollDelay,
   offsetForPage, pagerModel, parseHash, queryTerms, regionReduce, relativeTime, updatedAgo,
 } from "../public/ui-pure.js";
 
@@ -208,5 +208,23 @@ describe("T-201: keyboard helpers", () => {
     expect(chordStep(1000, "w", 5000)).toEqual({ pending: 0, letter: null });
     expect(chordStep(1000, "1", 1100)).toEqual({ pending: 0, letter: null });
     expect(chordStep(1000, "g", 1100).pending).toBe(1100);
+  });
+});
+
+describe("T-205: command ranking", () => {
+  test("exact, prefix, word start, substring and subsequence rank in that order", () => {
+    expect(matchScore("Memory", "memory")).toBe(100);
+    expect(matchScore("Memory facts", "mem")).toBe(80);
+    expect(matchScore("Go to Memory", "mem")).toBe(60);
+    expect(matchScore("Command", "cmd")).toBe(10);
+    expect(matchScore("Rules", "xyz")).toBe(0);
+    expect(matchScore("anything", "")).toBe(1);
+  });
+  test("rankCommands filters, sorts and keeps order on ties", () => {
+    const items = [{ label: "Go to Tools" }, { label: "Go to Memory" }, { label: "Memory: Facts", keywords: "facts history" }, { label: "Toggle theme" }];
+    expect(rankCommands(items, "mem").map((i) => i.label)).toEqual(["Memory: Facts", "Go to Memory"]);
+    expect(rankCommands(items, "").map((i) => i.label)).toEqual(items.map((i) => i.label));
+    expect(rankCommands(items, "history").map((i) => i.label)).toEqual(["Memory: Facts"]);
+    expect(rankCommands(items, "qqq")).toEqual([]);
   });
 });

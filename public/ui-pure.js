@@ -261,3 +261,29 @@ export function chordStep(pending, key, now, windowMs = 1200) {
   if (pending && now - pending <= windowMs && /^[a-z]$/.test(key)) return { pending: 0, letter: key };
   return { pending: 0, letter: null };
 }
+
+// ---- command palette ranking -----------------------------------------------------------------------------
+
+/** How well `query` matches `text`: higher is better, 0 is no match. Prefix beats word start beats substring beats letters in order. */
+export function matchScore(text, query) {
+  const t = String(text ?? "").toLowerCase();
+  const q = String(query ?? "").toLowerCase().trim();
+  if (!q) return 1;
+  if (t === q) return 100;
+  if (t.startsWith(q)) return 80;
+  if (t.split(/[\s/:>-]+/).some((word) => word.startsWith(q))) return 60;
+  if (t.includes(q)) return 40;
+  let at = 0;
+  for (const ch of q) {
+    at = t.indexOf(ch, at);
+    if (at < 0) return 0;
+    at += 1;
+  }
+  return 10;
+}
+
+/** Items ({ label, keywords }) that match, best first; ties keep their order. With no query everything stays in order. */
+export function rankCommands(items, query) {
+  const scored = items.map((item, index) => ({ item, index, score: Math.max(matchScore(item.label, query), matchScore(item.keywords ?? "", query) * 0.8) }));
+  return scored.filter((entry) => entry.score > 0).sort((a, b) => b.score - a.score || a.index - b.index).map((entry) => entry.item);
+}

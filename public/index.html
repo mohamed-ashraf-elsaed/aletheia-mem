@@ -2,45 +2,61 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/work-view/favicon.png" />
+    <link rel="icon" id="ui-favicon" type="image/png" href="/work-view/favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
     <title>Aletheia</title>
-    <link rel="stylesheet" href="/hub/style.css" />
+    <script src="/work-view/ui-theme-init.js"></script>
+    <link rel="stylesheet" href="/work-view/ui-theme.css" />
+    <link rel="stylesheet" href="/work-view/ui-components.css" />
     <link rel="stylesheet" href="/work-view/one-ui.css" />
     <script type="module" src="/work-view/one-ui.js"></script>
   </head>
   <body>
-    <header class="ui-top">
-      <a class="ui-brand" href="#/work">Aletheia</a>
-      <nav id="ui-tabs" class="ui-tabs" role="tablist" aria-label="Sections"></nav>
-      <span class="ui-spacer"></span>
-      <label class="ui-sr" for="ui-project">Project</label>
-      <select id="ui-project" class="ui-select" aria-label="Project">
-        <option value="">All projects</option>
-      </select>
-      <form id="ui-search-form" class="ui-search" role="search">
-        <label class="ui-sr" for="ui-search">Search memory</label>
-        <input id="ui-search" type="search" placeholder="Search memory…" aria-label="Search memory" autocomplete="off" />
-        <button type="submit">Search</button>
-      </form>
-      <span id="ui-health" class="ui-health checking" role="status" aria-live="polite" aria-label="Checking server health">○</span>
-    </header>
+    <a class="ui-skip" href="#ui-main">Skip to the page</a>
+    <div id="ui-app" class="ui-app">
+      <div id="ui-banner-slot" class="ui-banner-slot"></div>
+      <header class="ui-top">
+        <a class="ui-brand" href="#/work" aria-label="Aletheia, home">
+          <span id="ui-brand-mark" class="ui-brand-mark" aria-hidden="true"></span>
+          <span class="ui-brand-word">Aletheia</span>
+        </a>
+        <nav id="ui-tabs" class="ui-nav" aria-label="Sections"></nav>
+        <span class="ui-spacer"></span>
+        <label class="ui-sr" for="ui-project">Project</label>
+        <select id="ui-project" class="ui-select ui-project" aria-label="Project">
+          <option value="">All projects</option>
+        </select>
+        <form id="ui-search-form" class="ui-search" role="search">
+          <label class="ui-sr" for="ui-search">Search memory</label>
+          <div class="ui-search-box">
+            <input id="ui-search" type="search" placeholder="Search memory…" aria-label="Search memory" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ui-search-list" aria-autocomplete="list" />
+            <kbd class="ui-search-key" aria-hidden="true">/</kbd>
+            <div id="ui-search-list" class="ui-search-list" role="listbox" aria-label="Search results" hidden></div>
+          </div>
+        </form>
+        <div id="ui-theme" class="ui-theme-slot"></div>
+        <span id="ui-health" class="ui-health checking ui-sr" role="status" aria-live="polite" aria-label="Checking server health">○</span>
+      </header>
+      <div id="ui-status" class="ui-statusbar" role="region" aria-label="System status"></div>
 
-    <main class="ui-main">
-      <section id="tab-work" class="ui-tab ui-tab-work" data-tab="work" role="tabpanel" aria-label="Work">
-        <div id="ui-work"></div>
-      </section>
-      <section id="tab-memory" class="ui-tab" data-tab="memory" role="tabpanel" aria-label="Memory" hidden>
-        <div id="ui-memory"></div>
-      </section>
-      <section id="tab-rules" class="ui-tab" data-tab="rules" role="tabpanel" aria-label="Rules" hidden>
-        <div id="ui-rules"></div>
-      </section>
-      <section id="tab-tools" class="ui-tab" data-tab="tools" role="tabpanel" aria-label="Tools" hidden>
-        <div id="ui-tools"></div>
-      </section>
-    </main>
+      <main id="ui-main" class="ui-main" tabindex="-1">
+        <section id="tab-work" class="ui-page ui-page-work" data-tab="work" role="tabpanel" aria-label="Work">
+          <div id="ui-work"></div>
+        </section>
+        <section id="tab-memory" class="ui-page" data-tab="memory" role="tabpanel" aria-label="Memory" hidden>
+          <div id="ui-memory"></div>
+        </section>
+        <section id="tab-rules" class="ui-page" data-tab="rules" role="tabpanel" aria-label="Rules" hidden>
+          <div id="ui-rules"></div>
+        </section>
+        <section id="tab-tools" class="ui-page" data-tab="tools" role="tabpanel" aria-label="Tools" hidden>
+          <div id="ui-tools"></div>
+        </section>
+      </main>
+    </div>
 
-    <div id="ui-toast" class="ui-toast" role="status"></div>
+    <div id="ui-toast" class="ui-sr" role="status"></div>
+    <div id="ui-announcer" class="ui-sr" role="status" aria-live="polite"></div>
   </body>
 </html>

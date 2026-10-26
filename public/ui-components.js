@@ -248,8 +248,9 @@ function openLayer({ title, body, actions = [], side = null, size = "md", onClos
   doc().getElementById?.("ui-app")?.setAttribute("inert", "");
   animate(overlay, [{ opacity: 0 }, { opacity: 1 }], { duration: 160 });
   enter(panel, side ? "slide-right" : "scale");
-  const first = initialFocus?.() ?? focusables().find((node) => node !== closeButton) ?? closeButton;
-  (first ?? panel).focus?.();
+  // A dialog with a text field starts in the field; any other starts on the panel itself, so no stray ring shows.
+  const field = focusables().find((node) => ["input", "textarea", "select"].includes(String(node.tagName).toLowerCase()));
+  (initialFocus?.() ?? field ?? panel).focus?.();
   return api;
 }
 
@@ -367,7 +368,7 @@ export function segmented({ options, value, onChange, label }) {
     if (notify) onChange?.(next);
   };
   options.forEach((option, index) => {
-    const node = h("button", { class: "ui-seg", type: "button", role: "radio", "data-value": option.value }, option.icon ? icon(option.icon, { size: 14 }) : null, h("span", {}, option.label), option.count != null ? h("span", { class: "ui-seg-count" }, formatNumber(option.count)) : null);
+    const node = h("button", { class: "ui-seg", type: "button", role: "radio", "data-value": option.value, title: option.title }, option.icon ? icon(option.icon, { size: 14 }) : null, h("span", { class: option.iconOnly ? "ui-sr" : null }, option.label), option.count != null ? h("span", { class: "ui-seg-count" }, formatNumber(option.count)) : null);
     node.addEventListener("click", () => set(option.value));
     node.addEventListener("keydown", (event) => {
       const next = rovingIndex(index, options.length, event.key);

@@ -193,7 +193,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-202 | Add a safe Markdown renderer | P6 | T-200 | validated | 2026-10-26 | [T-202.md](T-202.md) |
 | T-203 | Add limit, offset and total to every list route | P6 | none | validated | 2026-10-26 | [T-203.md](T-203.md) |
 | T-204 | Build the component system | P6 | T-200, T-201 | validated | 2026-10-26 | [T-204.md](T-204.md) |
-| T-205 | Build the app shell, theme toggle, search, shortcuts and palette | P6 | T-204, T-202 | todo | — | [T-205.md](T-205.md) |
+| T-205 | Build the app shell, theme toggle, search, shortcuts and palette | P6 | T-204, T-202 | validated | 2026-10-26 | [T-205.md](T-205.md) |
 | T-206 | Add the live status bar and connection banner | P6 | T-205 | todo | — | [T-206.md](T-206.md) |
 | T-207 | Add the Region wrapper, paged list controller and Pager | P6 | T-201, T-204, T-203 | validated | 2026-10-26 | [T-207.md](T-207.md) |
 | T-208 | Rebuild the Memory tab | P6 | T-207, T-202, T-203 | todo | — | [T-208.md](T-208.md) |

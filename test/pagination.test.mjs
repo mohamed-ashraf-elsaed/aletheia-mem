@@ -306,6 +306,11 @@ describe("T-203: search", () => {
     expect(data.totals.facts).toBeGreaterThan(0);
     expect(data.facts.length).toBeGreaterThan(0);
   });
+  test("mix alternates facts and memories so a short window shows both", async () => {
+    const data = await post("/v1/search", { query: "warm retry", limit: 4, offset: 0, mix: true });
+    expect(data.facts.length).toBe(2);
+    expect(data.results.length).toBe(2);
+  });
   test("an empty result explains itself", async () => {
     const data = await post("/v1/search", { query: "zzzzqqqq", limit: 10, offset: 0 });
     expect(data.total).toBe(0);
