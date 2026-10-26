@@ -16,6 +16,7 @@ import { parseRulesFromText, syncTool, targetPath } from "./rules-sync.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "./tools.mjs";
 import { sessionDetail, workOverview } from "./work.mjs";
 import { goalAction, proposeGoals } from "./goals.mjs";
+import { proposeRequests, requestAction, requestDetail } from "./requests.mjs";
 import { SyncStore } from "./sync/store.mjs";
 import { AlertStore, deliverDue, extractionFailures, queueDepth } from "./alerts.mjs";
 import { applyErase, erasePlan, loadEraseKey, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } from "./erasure.mjs";
@@ -343,6 +344,19 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
         const q = qs(url);
         return h.json(proposeGoals(hub, { project: q.project || null, minSessions: q.minSessions, limit: q.limit }));
       }
+      if (pathname === "/v1/work/requests" && method === "GET") {
+        const q = qs(url);
+        return h.json(proposeRequests(hub, {
+          project: q.project || null,
+          maxGapHours: q.maxGapHours,
+          activeMinutes: q.activeMinutes,
+          limit: q.limit,
+        }));
+      }
+      if ((m = /^\/v1\/work\/requests\/([a-f0-9]{16})$/.exec(pathname)) && method === "GET") {
+        const detail = requestDetail(hub, { requestId: m[1], project: qs(url).project || null });
+        return detail ? h.json({ request: detail }) : h.json({ error: "No request has that id." }, 404);
+      }
       if ((m = /^\/v1\/work\/session\/(.+)$/.exec(pathname)) && method === "GET") {
         let id;
         try { id = decodeURIComponent(m[1]); } catch { throw new BadRequest("The session id is not valid URL text."); }
@@ -634,6 +648,16 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       const b = await readJson(request);
       try {
         return h.json(goalAction(hub, m[1], { action: b.action, actor: "ui" }));
+      } catch (error) {
+        throw new BadRequest(error instanceof Error ? error.message : String(error));
+      }
+    }
+
+    // T-152: requests are computed, so the only write is a reversible dismiss/restore of a request id.
+    if ((m = /^\/api\/hub\/requests\/([a-f0-9]{16})$/.exec(pathname)) && method === "POST") {
+      const b = await readJson(request);
+      try {
+        return h.json(requestAction(hub, m[1], { action: b.action, actor: "ui" }));
       } catch (error) {
         throw new BadRequest(error instanceof Error ? error.message : String(error));
       }
