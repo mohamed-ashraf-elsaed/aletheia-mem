@@ -190,3 +190,4 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-152 | Group sessions into requests with status, stage and detail | P6 | T-142, T-143, T-150 | validated | 2026-10-26 | [T-152.md](T-152.md) |
 | T-165 | Add a temp-dir test helper and fix the migration test leak | P0 | none | validated | 2026-10-26 | [T-165.md](T-165.md) |
 | T-166 | Add progress and ETA per request from stored rows | P6 | T-152 | validated | 2026-10-26 | [T-166.md](T-166.md) |
+| T-167 | Detect commit, PR and branch references in tool events | P6 | T-152 | validated | 2026-10-26 | [T-167.md](T-167.md) |

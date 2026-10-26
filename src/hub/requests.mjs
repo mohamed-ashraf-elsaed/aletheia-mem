@@ -5,6 +5,7 @@
 // This module is read-only except for pin/dismiss settings, which are keyed by a stable request id.
 import { sha256 } from "../lib/hash.mjs";
 import { imperativeTopic } from "./goals.mjs";
+import { cameOutOfIt } from "./artifacts.mjs";
 
 const MINUTE = 60_000;
 const HOUR = 3_600_000;
@@ -102,7 +103,7 @@ function requestStatus(sessions, { now, activeMs }) {
   return "Idle";
 }
 
-function buildRequest(sessions, { now, activeMs, project }) {
+function buildRequest(store, sessions, { now, activeMs, project }) {
   const sorted = sessions.slice().sort((a, b) => (a.firstAt ?? 0) - (b.firstAt ?? 0) || String(a.sessionId).localeCompare(String(b.sessionId)));
   const first = sorted[0];
   const last = sorted[sorted.length - 1];
@@ -118,6 +119,12 @@ function buildRequest(sessions, { now, activeMs, project }) {
   const factIds = [...new Set(sorted.flatMap((session) => session.factIds))];
   const summaryIds = sorted.flatMap((session) => session.summaries.map((summary) => summary.id));
   const sessionCount = sorted.length;
+  const artifacts = cameOutOfIt(store, { project: first.project, sessionIds: sorted.map((session) => session.sessionId) });
+  const outcome = {
+    commits: artifacts.filter((artifact) => artifact.kind === "commit").length,
+    pulls: artifacts.filter((artifact) => artifact.kind === "pull").length,
+    branches: [...new Set(artifacts.filter((artifact) => artifact.kind === "branch").map((artifact) => artifact.name))].length,
+  };
   const progress = status === "Shipped" ? 100 : sessionCount ? Math.min(99, Math.round((100 * completedSessions.length) / sessionCount)) : 0;
 
   // ETA is only reported when there is a measured pace: at least two sessions with distinct starts and at least one
@@ -156,6 +163,8 @@ function buildRequest(sessions, { now, activeMs, project }) {
     promptCount: sorted.reduce((sum, session) => sum + session.prompts.length, 0),
     toolCount: sorted.reduce((sum, session) => sum + session.tools.length, 0),
     ended,
+    cameOutOfIt: artifacts,
+    outcome,
     progress,
     progressEvidence: {
       sessionCount,
@@ -210,7 +219,7 @@ export function proposeRequests(store, { project = null, now = Date.now(), maxGa
 
   const dismissed = settingSet(store, "work.requests.dismissed");
   const all = clusters
-    .map((cluster) => buildRequest(cluster, { now, activeMs, project: scope }))
+    .map((cluster) => buildRequest(store, cluster, { now, activeMs, project: scope }))
     .sort((a, b) => (b.lastAtEpoch ?? 0) - (a.lastAtEpoch ?? 0) || b.startedAtEpoch - a.startedAtEpoch || String(b.id).localeCompare(String(a.id)));
   const max = clamp(limit, 1, 100, 20);
   return {
