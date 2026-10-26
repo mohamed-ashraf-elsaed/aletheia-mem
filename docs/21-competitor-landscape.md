@@ -164,7 +164,7 @@ section 21.5.
 | Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query T-026) | partial (dates) | ✅ | ✅ | ✅ | partial | ✅ | partial | partial | partial | ❌ |
 | Team sharing | partial (self-hosted sync and devices; team mode T-112) | partial (paid) | ✅ paid | ✅ paid | ✅ paid | ❌ | ✅ paid | partial (cloud) | UNVERIFIED | partial | partial |
 | Benchmark published and reproducible | partial (retrieval yes; answer no) | ❌ | vendor only | vendor only | vendor only | ❌ | vendor paper | ❌ | vendor claim | ❌ | ❌ |
-| Languages supported | 1 (English) | 29 modes, 32 READMEs | SDK | SDK | SDK | SDK | SDK | SDK | SDK | many (product) | many (product) |
+| Languages supported | 11 (English + 10 machine translations; no native review) | 29 modes, 32 READMEs | SDK | SDK | SDK | SDK | SDK | SDK | SDK | many (product) | many (product) |
 
 Aletheia column corrected 2026-10-26 after later tasks were validated: MCP over HTTP (T-067, T-107),
 hook capture for six hosts (T-140), entity rows (T-021), bi-temporal facts and invalidation (T-024, T-025,

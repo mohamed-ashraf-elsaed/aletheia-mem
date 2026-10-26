@@ -63,6 +63,18 @@ describe("i18n-check", () => {
     expect(check({ root }).ok).toBe(true);
   });
 
+  test("--update syncs a state entry whose header already matches", () => {
+    const root = makeRoot();
+    const current = hashSource(readFileSync(join(root, "README.md"), "utf8"));
+    const statePath = join(root, "docs", "i18n", ".translation-state.json");
+    const state = JSON.parse(readFileSync(statePath, "utf8"));
+    state.languages.xx.sourceHash = "0".repeat(64);
+    writeFileSync(statePath, JSON.stringify(state, null, 2));
+    expect(check({ root }).ok).toBe(false);
+    expect(check({ root, update: true }).ok).toBe(true);
+    expect(JSON.parse(readFileSync(statePath, "utf8")).languages.xx.sourceHash).toBe(current);
+  });
+
   test("a translation without a source hash is an error", () => {
     const root = makeRoot();
     writeFileSync(join(root, "docs", "i18n", "README.xx.md"), "# No header\n");

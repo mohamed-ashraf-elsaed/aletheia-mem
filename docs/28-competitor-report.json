@@ -1756,7 +1756,7 @@
    ],
    "cells": {
     "Capability": "Languages supported",
-    "Aletheia (today)": "1 (English)",
+    "Aletheia (today)": "11 (English + 10 machine translations; no native review)",
     "claude-mem": "29 modes, 32 READMEs",
     "Mem0": "SDK",
     "Zep/Graphiti": "SDK",

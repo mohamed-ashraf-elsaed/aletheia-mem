@@ -99,7 +99,7 @@ export function check({ root = DEFAULT_ROOT, warn = false, update = false, date 
         writeFileSync(path, text);
         state.languages[code] = { sourceHash: current, translatedAt: date };
       }
-    } else if (update && !entry) {
+    } else if (update && (!entry || entry.sourceHash !== current)) {
       state.languages[code] = { sourceHash: current, translatedAt: date };
     }
   }

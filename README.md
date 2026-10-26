@@ -16,7 +16,7 @@
 **Status: alpha.** The memory engine and the installers work in tests. No host has been opened with a generated
 config yet, and answer accuracy is not measured. CI runs on Linux only; macOS and Windows are untested.
 
-Translations: 中文 · Español · Português (Brasil) · 日本語 · Deutsch · Français · 한국어 · हिन्दी · العربية · Русский.
+[English](README.md) · [中文](docs/i18n/README.zh.md) · [Español](docs/i18n/README.es.md) · [Português (Brasil)](docs/i18n/README.pt-br.md) · [日本語](docs/i18n/README.ja.md) · [Deutsch](docs/i18n/README.de.md) · [Français](docs/i18n/README.fr.md) · [한국어](docs/i18n/README.ko.md) · [हिन्दी](docs/i18n/README.hi.md) · [العربية](docs/i18n/README.ar.md) · [Русский](docs/i18n/README.ru.md).
 Machine translations live in `docs/i18n/`; English is canonical. No translation has had native review.
 
 ## What it is
@@ -133,7 +133,7 @@ Read the table this way:
 | Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query T-026) | partial (dates) | yes | yes | yes | partial |
 | Team sharing | partial (self-hosted sync and devices; team mode T-112) | partial (paid) | yes paid | yes paid | yes paid | no |
 | Benchmark published and reproducible | partial (retrieval yes; answer no) | no | vendor only | vendor only | vendor only | no |
-| Languages supported | 1 (English) | 29 modes, 32 READMEs | SDK | SDK | SDK | SDK |
+| Languages supported | 11 (English + 10 machine translations; no native review) | 29 modes, 32 READMEs | SDK | SDK | SDK | SDK |
 
 _Generated from docs/28-competitor-report.json (rows copied from docs/21-competitor-landscape.md, fetched 2026-10-26). Aletheia cells updated 2026-10-26 from validated tasks; see docs/20 and docs/25. Cells the source did not state read UNVERIFIED._
 <!-- /gen:capabilities -->
