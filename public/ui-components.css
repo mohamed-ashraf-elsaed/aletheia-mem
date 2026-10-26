@@ -131,9 +131,9 @@ a.ui-card { display: block; color: inherit; text-decoration: none; }
 .ui-tab.on, .ui-tab[aria-selected="true"] { color: var(--ui-text); }
 .ui-tab-count { padding: 0 7px; border-radius: var(--ui-radius-pill); background: var(--ui-s3); color: var(--ui-muted); font-size: var(--ui-text-xs); }
 .ui-tab-indicator {
-  position: absolute; left: 0; bottom: 0; height: 3px; width: 0; border-radius: 3px 3px 0 0; background: linear-gradient(90deg, var(--ui-accent), var(--ui-accent-2));
-  box-shadow: 0 0 12px var(--ui-glow-color); opacity: 0; transform: translateX(0);
-  transition: transform var(--ui-dur-slow) var(--ui-ease-out), width var(--ui-dur-slow) var(--ui-ease-out), opacity var(--ui-dur) var(--ui-ease);
+  position: absolute; left: 0; bottom: 0; height: 3px; width: 1px; transform-origin: 0 0; border-radius: 1px; background: linear-gradient(90deg, var(--ui-accent), var(--ui-accent-2));
+  box-shadow: 0 0 12px var(--ui-glow-color); opacity: 0; transform: translateX(0) scaleX(0);
+  transition: transform var(--ui-dur-slow) var(--ui-ease-out), opacity var(--ui-dur) var(--ui-ease);
 }
 .ui-tab-indicator.is-ready { opacity: 1; }
 .ui-segmented { display: inline-flex; padding: 3px; gap: 2px; background: var(--ui-s2); border: 1px solid var(--ui-border); border-radius: var(--ui-radius); max-width: 100%; overflow-x: auto; }
@@ -355,3 +355,6 @@ a.ui-card { display: block; color: inherit; text-decoration: none; }
 }
 .ui-item .ui-clamp-body { color: var(--ui-text); }
 .ui-clamp .ui-btn { margin-top: 2px; }
+
+.ui-item { transition: transform var(--ui-dur) var(--ui-ease), border-color var(--ui-dur) var(--ui-ease), box-shadow var(--ui-dur) var(--ui-ease); }
+.ui-item:hover { transform: translateY(-1px); border-color: var(--ui-border-strong); box-shadow: var(--ui-shadow-2); }

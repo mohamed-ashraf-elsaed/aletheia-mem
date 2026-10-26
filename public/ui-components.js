@@ -295,14 +295,13 @@ export function promptDialog({ title, label, value = "", confirmLabel = "Save", 
 
 // ---- tabs, segmented control, toggle ---------------------------------------------------------------------
 
-/** Move a sliding indicator under the active item. Uses transform and width, so it stays on the GPU. */
+/** Move a sliding indicator under the active item. It is a 1 px bar moved and stretched with transform only, so it stays on the GPU. */
 export function moveIndicator(container, indicator, active) {
   if (!container || !indicator || !active) return;
   const box = container.getBoundingClientRect?.();
   const rect = active.getBoundingClientRect?.();
   if (!box || !rect || !rect.width) return;
-  indicator.style.width = `${rect.width}px`;
-  indicator.style.transform = `translateX(${rect.left - box.left + (container.scrollLeft ?? 0)}px)`;
+  indicator.style.transform = `translateX(${rect.left - box.left + (container.scrollLeft ?? 0)}px) scaleX(${rect.width})`;
   indicator.classList.add("is-ready");
 }
 

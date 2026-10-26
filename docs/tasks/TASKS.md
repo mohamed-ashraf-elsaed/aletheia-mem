@@ -201,7 +201,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-210 | Rebuild the Rules tab | P6 | T-207 | validated | 2026-10-26 | [T-210.md](T-210.md) |
 | T-211 | Rebuild the Tools tab | P6 | T-207 | validated | 2026-10-26 | [T-211.md](T-211.md) |
 | T-212 | Add the first-run guide | P6 | T-208 | validated | 2026-10-26 | [T-212.md](T-212.md) |
-| T-213 | Add motion and reduced-motion support | P6 | T-204 | todo | — | [T-213.md](T-213.md) |
+| T-213 | Add motion and reduced-motion support | P6 | T-204 | validated | 2026-10-26 | [T-213.md](T-213.md) |
 | T-214 | Accessibility and responsive pass | P6 | T-208, T-209, T-210, T-211, T-213 | todo | — | [T-214.md](T-214.md) |
 | T-215 | Restyle the Work tab | P6 | T-214 | todo | — | [T-215.md](T-215.md) |
 | T-216 | Seed demo data, measure performance, update docs and screenshots | P6 | T-215 | todo | — | [T-216.md](T-216.md) |
