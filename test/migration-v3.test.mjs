@@ -2,17 +2,17 @@
 // the old routes still answer, and the CLI backs up before it writes.
 import { afterAll, describe, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
-import { existsSync, mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
+import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
 import { HubStore, inspectMigration } from "../src/hub/store.mjs";
 import { startServer } from "../src/server.mjs";
 import { makeFixture } from "./fixture.mjs";
 import { makeBrokenV2Store, makeV2Store } from "./v2-fixture.mjs";
 
 const root = join(import.meta.dir, "..");
-const temp = () => mkdtempSync(join(tmpdir(), "aletheia-migrate-"));
+const temp = () => tempDir("aletheia-migrate-");
 
 const cli = async (args, env) => {
   const proc = Bun.spawn([process.execPath, join(root, "bin", "aletheia.mjs"), ...args], { stdin: "ignore", stdout: "pipe", stderr: "pipe", cwd: root, env: { ...process.env, ...env } });
@@ -118,6 +118,4 @@ describe("schema v3 migration", () => {
   });
 });
 
-afterAll(() => {
-  // Every database in this file lives under a fresh mkdtemp directory; nothing is written to HOME.
-});
+afterAll(() => cleanupTempDirs());

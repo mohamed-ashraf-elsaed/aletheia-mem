@@ -188,3 +188,4 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-150 | Work tab polish (prompts, session-end, goals, 375px) | P6 | T-143, T-144 | validated | 2026-10-26 | [T-150.md](T-150.md) |
 | T-151 | Add an auto-start service (systemd user unit and launchd plist) | P3 | none | validated | 2026-10-26 | [T-151.md](T-151.md) |
 | T-152 | Add the build story (group sessions into requests with progress) | P6 | T-142, T-143, T-150 | todo | — | [T-152.md](T-152.md) |
+| T-165 | Add a temp-dir test helper and fix the migration test leak | P0 | none | validated | 2026-10-26 | [T-165.md](T-165.md) |
