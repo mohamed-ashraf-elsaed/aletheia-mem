@@ -25,6 +25,26 @@ login exchanges the sync account's admin token for the session cookie (no separa
 Sessions are HttpOnly, SameSite=Strict, Secure-when-HTTPS, expire, and state-changing requests need the CSRF
 header; failed logins lock out with back-off. Loopback-only servers keep today's behaviour.
 
+Status update, 2026-10-26 (team mode): T-112 is `validated`. F12 is built as a self-hosted layer on Aletheia Sync:
+named projects, members that are device tokens with `owner`/`editor`/`viewer` roles, opt-in per-project shares,
+shared memory, a board of pins and decisions, a rule-based brief with source ids and ACL-scoped shared search.
+Every ACL check is in the store, and a viewer, a cross-project read, a revoked member and a revoked token are each
+tested. Not built: SSO, SCIM, compliance claims and server-readable team memory under E2EE. See
+[31-team.md](31-team.md) and `test/team-mode.test.mjs`.
+
+Status update, 2026-10-26 (erasure): T-113 is `validated`. F14 is built for the local store, the device
+replica/outbox and the sync hub: a report first, `--apply` exports a bundle, deletes the rows (with FTS, vectors,
+keys, links, dismissals and review rows), asks the hub for a T-103 purge and writes an HMAC-SHA256 receipt that
+lists counts and ids but never content. `aletheia erase verify` checks a receipt. An offline device's copy and
+a compromised server are not covered; see [03-http-api.md](03-http-api.md#35-erasure-t-113).
+
+Status update, 2026-10-26 (alerts): T-114 is `validated`. F15 is built as local rules over named events
+(device pairing, token revoke, quota, sync error, extraction failure, queue depth). Delivery goes to a local
+file or a webhook signed with HMAC-SHA256, with per-rule count/value thresholds, a rate limit, timeouts and
+exponential retries. A webhook that resolves to a private, loopback or link-local address is refused unless the
+rule opts in. The security-page "alerts" product remains UNVERIFIED; this is our own rule engine, not a claim
+about theirs. See [03-http-api.md](03-http-api.md#36-alerts-t-114).
+
 ## Decision
 
 The owner decided on 2026-10-26 that every feature claude-mem, and any rival, sells in a paid tier is built into Aletheia

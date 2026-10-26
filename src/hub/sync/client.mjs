@@ -215,6 +215,49 @@ export class SyncClient {
     this.db.prepare("UPDATE sync_op SET acked = 1 WHERE device_id = ? AND seq = ?").run(this.deviceId, Number(deviceSeq));
   }
 
+  /**
+   * Erasure (T-113): remove local replica and outbox rows for a project or a set of entity ids. This is a delete,
+   * not a tombstone; the server writes the tombstone through T-103 purge, and a later pull brings the empty head.
+   * Encrypted payloads cannot be matched by project or content id, so callers pass explicit entity ids for E2EE.
+   */
+  erase({ project = null, ids = [], entityIds = [] } = {}) {
+    const wanted = new Set(entityIds.map(String));
+    const wantedIds = new Set(ids.map(String));
+    const rows = this.db.prepare("SELECT device_id, seq, entity_id, payload FROM sync_op").all();
+    const hits = [];
+    for (const row of rows) {
+      if (wanted.has(String(row.entity_id))) {
+        hits.push(row);
+        continue;
+      }
+      if (!row.payload) continue;
+      let payload;
+      try {
+        payload = JSON.parse(row.payload);
+      } catch {
+        continue;
+      }
+      if (!payload || typeof payload !== "object" || payload["@e2ee"]) continue;
+      if (project != null && payload.project === project) {
+        hits.push(row);
+        continue;
+      }
+      if (!wantedIds.size) continue;
+      const candidates = [payload.id, payload.memoryId, payload.memory_id, payload.factId, payload.fact_id, payload.observationId];
+      if (candidates.some((value) => value != null && wantedIds.has(String(value)))) hits.push(row);
+    }
+    const remove = this.db.prepare("DELETE FROM sync_op WHERE device_id = ? AND seq = ?");
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      for (const row of hits) remove.run(row.device_id, row.seq);
+      this.db.exec("COMMIT");
+    } catch (error) {
+      try { this.db.exec("ROLLBACK"); } catch { /* ignore */ }
+      throw error;
+    }
+    return { rows: hits.length };
+  }
+
   cursor() {
     return this.meta("cursor", 0);
   }

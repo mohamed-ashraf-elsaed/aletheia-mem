@@ -206,7 +206,7 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
  * Drain due jobs oldest-first. One failing job is rescheduled, not lost; the loop stops when no job is due.
  * Recovering stale rows first is what makes a restart after kill -9 safe.
  */
-export async function runWorker({ store, ask = null, config = {}, now = () => Date.now(), maxJobs = Infinity, workerId = `pid-${process.pid}`, leaseMs = LEASE_MS, batchSize = null, charBudget = null, modeInstruction = "", prices = null, onError = null, embedder = null } = {}) {
+export async function runWorker({ store, ask = null, config = {}, now = () => Date.now(), maxJobs = Infinity, workerId = `pid-${process.pid}`, leaseMs = LEASE_MS, batchSize = null, charBudget = null, modeInstruction = "", prices = null, onError = null, embedder = null, alerts = null } = {}) {
   const at = now();
   const recovered = recoverStale(store, { now: at, leaseMs });
   const fromSettings = enqueueFromSettings(store, { now: at });
@@ -223,24 +223,35 @@ export async function runWorker({ store, ask = null, config = {}, now = () => Da
       failed++;
       failJob(store, job, error, { now: now() });
       onError?.(error, job);
+      try {
+        alerts?.emit?.("extraction.failed", { value: 1, detail: { jobId: job.id, error: String(error instanceof Error ? error.message : error).slice(0, 300) }, now: now() });
+      } catch {
+        // an alert store failure must not stop the queue
+      }
     }
     processed++;
   }
-  return { processed, failed, recovered, enqueued: fromSettings.enqueued, last: lastResult, counts: jobCounts(store) };
+  const counts = jobCounts(store);
+  try {
+    alerts?.emit?.("queue.depth", { value: (counts.pending ?? 0) + (counts.running ?? 0), detail: counts, now: now() });
+  } catch {
+    // an alert store failure must not stop the queue
+  }
+  return { processed, failed, recovered, enqueued: fromSettings.enqueued, last: lastResult, counts };
 }
 
 /**
  * A lazy background task: the server (or `aletheia compress --daemon`) owns one. The timer is unref'd so it never
  * holds the process open, and a tick that is still running is not started twice.
  */
-export function startBackgroundWorker({ store, ask = null, config = {}, intervalMs = 2000, maxJobs = 5, onError = null, onTick = null, embedder = null } = {}) {
+export function startBackgroundWorker({ store, ask = null, config = {}, intervalMs = 2000, maxJobs = 5, onError = null, onTick = null, embedder = null, alerts = null } = {}) {
   let stopped = false;
   let running = false;
   const tick = async () => {
     if (stopped || running) return null;
     running = true;
     try {
-      const result = await runWorker({ store, ask, config, maxJobs, onError, embedder });
+      const result = await runWorker({ store, ask, config, maxJobs, onError, embedder, alerts });
       onTick?.(result);
       return result;
     } catch (error) {

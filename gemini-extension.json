@@ -1,0 +1,13 @@
+{
+  "name": "aletheia-mem",
+  "version": "0.1.0",
+  "description": "Local memory and rules hub for AI coding tools, exposed over MCP.",
+  "x-aletheia-verification": "from-docs-only",
+  "mcpServers": {
+    "aletheia": {
+      "command": "bun",
+      "args": ["${extensionPath}/bin/mcp.mjs"],
+      "cwd": "${extensionPath}"
+    }
+  }
+}

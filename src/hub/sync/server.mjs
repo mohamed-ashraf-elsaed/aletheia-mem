@@ -2,8 +2,12 @@
 // cursor-based pull, pairing, device management, scoped tokens and an append-only audit log.
 // Binds to loopback by default; a non-loopback bind requires `behindTls` and prints a warning.
 // Also serves the private remote MCP endpoint at /mcp when `hubDb` is given (T-107).
+import { dirname, join } from "node:path";
+import { AlertStore, startAlertDelivery } from "../alerts.mjs";
 import { createMcpHttpHandler, loopbackOriginsOnly, WRITE_TOOLS } from "../mcp-http.mjs";
 import { HubStore } from "../store.mjs";
+import { teamRequest } from "../team-api.mjs";
+import { TeamStore } from "../team.mjs";
 import { SyncStore } from "./store.mjs";
 
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
@@ -23,7 +27,7 @@ function authDenied(token, allowed) {
   return null;
 }
 
-export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls = false, warn = (message) => console.warn(message) }) {
+export function createSyncRoutes({ store, team = null, alerts = null, getPeer = () => "loopback", behindTls = false, warn = (message) => console.warn(message) }) {
   const joinFailures = new Map();
 
   async function readJson(request) {
@@ -72,11 +76,34 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
         return json({ error: result.reason }, result.status);
       }
       clearFailures(accountId);
+      try { alerts?.emit("device.paired", { detail: { deviceId: result.deviceId, name: body.name ?? null } }); } catch { /* alerts never block pairing */ }
       return json({ token: result.token, device_id: result.deviceId });
     }
 
     const token = bearer(request);
     const accountForToken = token ? token.account_id : null;
+
+    // ---- T-112: team mode (shared memory, board, brief, search) ---------------------------------
+    if (team && (pathname === "/v1/team" || pathname.startsWith("/v1/team/"))) {
+      const read = method === "GET" || method === "HEAD";
+      const teamDenied = authDenied(token, read ? ["sync", "read", "mcp", "admin"] : ["sync", "admin"]);
+      if (teamDenied) return json({ error: read ? "A valid token is required." : "A sync or admin token is required." }, teamDenied);
+      const body = read ? null : await readJson(request);
+      const result = teamRequest({
+        path: pathname.slice("/v1/team".length) || "/",
+        method,
+        url,
+        body,
+        team,
+        sync: store,
+        accountId: accountForToken,
+        tokenId: token?.id ?? null,
+        operator: false,
+      });
+      if (!result) return json({ error: "Not found." }, 404);
+      store.touchToken(token.id);
+      return json(result.body, result.status);
+    }
 
     if (pathname === "/v1/sync/push" && method === "POST") {
       const pushDenied = authDenied(token, ["sync", "admin"]);
@@ -84,7 +111,10 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
       const body = await readJson(request);
       if (!body || !Array.isArray(body.ops)) return json({ error: "ops must be an array." }, 400);
       const quota = store.quotaExceeded(token.id);
-      if (quota) return json({ error: `This token's ${quota} quota is exhausted.` }, 402);
+      if (quota) {
+        try { alerts?.emit("quota.hit", { detail: { tokenId: token.id, quota } }); } catch { /* alerts never block a refusal */ }
+        return json({ error: `This token's ${quota} quota is exhausted.` }, 402);
+      }
       const deviceId = request.headers.get("x-device-id") ?? token.device_id ?? null;
       if (!deviceId) return json({ error: "X-Device-Id is required." }, 400);
       const projectDenied = (op) => token.projects?.length && op?.payload?.project && !token.projects.includes(op.payload.project);
@@ -149,6 +179,7 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
       if (!body || typeof body.device_id !== "string") return json({ error: "device_id is required." }, 400);
       const revoked = store.revokeDevice(accountForToken, body.device_id);
       store.audit(accountForToken, { tokenId: token.id, deviceId: body.device_id, action: "device.revoke", result: revoked ? "ok" : "missing" });
+      try { alerts?.emit("token.revoked", { detail: { deviceId: body.device_id, revoked } }); } catch { /* alerts never block a revoke */ }
       return json({ revoked });
     }
 
@@ -199,13 +230,21 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
  * With `hubDb`, the private remote MCP endpoint is served at /mcp (T-107): bearer tokens with an
  * `mcp`/`read`/`sync`/`admin` scope, project scope, per-token rate limit and an audit row per call.
  */
-export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "default", behindTls = false, hubDb = null, mcpOrigins = null, mcpRateLimitPerMinute = 60 } = {}) {
+export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "default", behindTls = false, hubDb = null, teamDb = null, alertsDb = null, alertDeliveryMs = 0, mcpOrigins = null, mcpRateLimitPerMinute = 60 } = {}) {
   const store = new SyncStore(syncDb);
   const account = store.ensureAccount(name);
   if (requiresTlsProxy(host, behindTls)) {
     console.warn(`Warning: binding sync to ${host} without TLS. Put it behind a reverse proxy or tunnel that terminates TLS.`);
   }
-  const routes = createSyncRoutes({ store, behindTls, getPeer: () => "peer" });
+  const team = new TeamStore(teamDb ?? (syncDb === ":memory:" ? ":memory:" : join(dirname(syncDb), "team.db")), {
+    tokenActive: (tokenId) => {
+      const row = store.db.prepare("SELECT revoked_at, expires_at FROM sync_token WHERE id = ?").get(Number(tokenId));
+      return !!row && !row.revoked_at && !(row.expires_at && row.expires_at < Date.now());
+    },
+  });
+  const alerts = new AlertStore(alertsDb ?? (syncDb === ":memory:" ? ":memory:" : join(dirname(syncDb), "alerts.db")));
+  const routes = createSyncRoutes({ store, team, alerts, behindTls, getPeer: () => "peer" });
+  const delivery = Number(alertDeliveryMs) > 0 ? startAlertDelivery(alerts, { intervalMs: Number(alertDeliveryMs) }) : null;
 
   // ---- the private remote MCP endpoint (T-107) -----------------------------------------------
   const hub = hubDb ? new HubStore(hubDb) : null;
@@ -254,6 +293,7 @@ export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "
         return await routes.handle(request);
       } catch (error) {
         console.error("[sync] request failed:", request.method, request.url, error);
+        try { alerts.emit("sync.error", { detail: { method: request.method, path: new URL(request.url).pathname, error: String(error instanceof Error ? error.message : error).slice(0, 300) } }); } catch { /* ignore */ }
         return routes.json({ error: "Internal error." }, 500);
       }
     },
@@ -262,10 +302,15 @@ export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "
     server,
     store,
     routes,
+    team,
+    alerts,
     hub,
     stop: () => {
+      delivery?.stop();
       server.stop(true);
       store.close();
+      team.close();
+      alerts.close();
       hub?.close();
     },
     port: server.port,

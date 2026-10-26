@@ -24,7 +24,7 @@ const behindTls = !!flag("behind-tls", false);
 const hubDb = String(flag("hub-db", config.hubDb));
 const mcpOrigins = String(flag("mcp-origins", "")).split(",").map((origin) => origin.trim()).filter(Boolean);
 
-const { server, stop } = startSyncServer({ syncDb, host, port, name, behindTls, hubDb, mcpOrigins });
+const { server, stop } = startSyncServer({ syncDb, host, port, name, behindTls, hubDb, mcpOrigins, alertsDb: config.alertsDb, alertDeliveryMs: 2000 });
 const bound = `http://${host === "0.0.0.0" || host === "::" ? "127.0.0.1" : host}:${server.port}`;
 
 console.log(`aletheia-sync listening on ${bound}`);
