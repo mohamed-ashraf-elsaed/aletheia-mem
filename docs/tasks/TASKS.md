@@ -98,8 +98,8 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-055 | Add a CI regression gate for recall and latency | P2 | T-051 | todo | — | [T-055.md](T-055.md) |
 | T-056 | Build CodeMemBench from real coding sessions | P2 | T-051 | todo | — | [T-056.md](T-056.md) |
 | T-057 | Add bootstrap confidence intervals and a clean hold-out | P2 | T-051 | todo | — | [T-057.md](T-057.md) |
-| T-058 | Build the installer core and Claude Code installer | P3 | none | todo | — | [T-058.md](T-058.md) |
-| T-059 | Add Claude Code hooks and automatic context | P3 | T-058 | todo | — | [T-059.md](T-059.md) |
+| T-058 | Build the installer core and Claude Code installer | P3 | none | validated | 2026-10-26 | [T-058.md](T-058.md) |
+| T-059 | Add Claude Code hooks and automatic context | P3 | T-058 | validated | 2026-10-26 | [T-059.md](T-059.md) |
 | T-060 | Add the file-read gate and smart outline | P3 | T-059 | todo | — | [T-060.md](T-060.md) |
 | T-061 | Add the Cursor installer and hooks | P3 | T-058 | todo | — | [T-061.md](T-061.md) |
 | T-062 | Add the Codex CLI installer | P3 | T-058 | todo | — | [T-062.md](T-062.md) |
@@ -139,3 +139,5 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-096 | Add a shared bundle workflow | P5 | T-091 | todo | — | [T-096.md](T-096.md) |
 | T-097 | Make graph retrieval a production channel | P5 | T-048 | todo | — | [T-097.md](T-097.md) |
 | T-098 | Add entity summaries and belief tracking | P5 | T-021, T-032 | todo | — | [T-098.md](T-098.md) |
+| T-100 | Add the Command Code installer and hooks | P3 | T-058 | validated | 2026-10-26 | [T-100.md](T-100.md) |
+| T-101 | Prove automatic capture end to end | P3 | T-058, T-059, T-100 | validated | 2026-10-26 | [T-101.md](T-101.md) |

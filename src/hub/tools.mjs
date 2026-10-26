@@ -14,10 +14,11 @@ export const MARK_END = "<!-- aletheia:rules:end -->";
  * rules: { project: relative path inside a project, global: path under $HOME or null, style }
  *   style "block"  = managed block between markers inside a file the user also edits
  *   style "owned"  = a file this tool owns entirely (Cursor .mdc)
- * mcp:   { path under $HOME, format }  formats: json-mcpServers | json-opencode | toml-codex | command
+ * mcp:   { path under $HOME, format }  formats: json-mcpServers | json-mcpServers-commandcode | json-opencode | toml-codex | command
  */
 export const TOOLS = [
   { id: "claude-code", name: "Claude Code", detect: [".claude"], rules: { project: "CLAUDE.md", global: ".claude/CLAUDE.md", style: "block" }, mcp: { format: "command", command: (cmd) => `claude mcp add --scope user aletheia -- ${cmd.join(" ")}` } },
+  { id: "command-code", name: "Command Code", detect: [".commandcode"], rules: { project: "AGENTS.md", global: ".commandcode/AGENTS.md", style: "block" }, mcp: { path: ".commandcode/mcp.json", format: "json-mcpServers-commandcode" } },
   { id: "codex", name: "Codex CLI", detect: [".codex"], rules: { project: "AGENTS.md", global: ".codex/AGENTS.md", style: "block" }, mcp: { path: ".codex/config.toml", format: "toml-codex" } },
   { id: "gemini-cli", name: "Gemini CLI", detect: [".gemini"], rules: { project: "GEMINI.md", global: ".gemini/GEMINI.md", style: "block" }, mcp: { path: ".gemini/settings.json", format: "json-mcpServers" } },
   { id: "cursor", name: "Cursor", detect: [".cursor"], rules: { project: ".cursor/rules/aletheia.mdc", global: null, style: "owned" }, mcp: { path: ".cursor/mcp.json", format: "json-mcpServers" } },
@@ -62,7 +63,7 @@ export function mcpPlan(tool, home, argv) {
     const block = `[mcp_servers.${SERVER_NAME}]\ncommand = ${JSON.stringify(argv[0])}\nargs = ${JSON.stringify(argv.slice(1))}\n`;
     return { supported: true, kind: "file", path: file, format: mcp.format, snippet: block, connected: text.includes(`[mcp_servers.${SERVER_NAME}]`) };
   }
-  const entry = mcp.format === "json-opencode" ? { type: "local", command: argv, enabled: true } : { command: argv[0], args: argv.slice(1) };
+  const entry = mcp.format === "json-opencode" ? { type: "local", command: argv, enabled: true } : mcp.format === "json-mcpServers-commandcode" ? { transport: "stdio", command: argv[0], args: argv.slice(1) } : { command: argv[0], args: argv.slice(1) };
   const key = mcp.format === "json-opencode" ? "mcp" : "mcpServers";
   let doc = {};
   try { doc = text.trim() ? JSON.parse(text) : {}; } catch { return { supported: true, kind: "file", path: file, format: mcp.format, error: "The existing file is not valid JSON; fix it by hand first.", connected: null }; }

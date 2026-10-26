@@ -1,13 +1,12 @@
 // Small helpers shared by every module.
-import { createHash } from "node:crypto";
 import { mkdirSync, readFileSync, renameSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+
+export { sha256 } from "./hash.mjs";
 
 export const lower = (value) => String(value ?? "").replace(/[A-Z]/g, (ch) => ch.toLowerCase());
 
 export const isoFromEpoch = (epoch) => (Number.isFinite(Number(epoch)) && Number(epoch) > 0 ? new Date(Number(epoch)).toISOString() : null);
-
-export const sha256 = (value) => createHash("sha256").update(value).digest("hex");
 
 /** Collapse whitespace, trim, and cut to `max` characters with an ellipsis. Non-scalars give null. */
 export function clip(value, max = 260) {
