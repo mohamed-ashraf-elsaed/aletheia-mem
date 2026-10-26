@@ -4,7 +4,8 @@ import { existsSync, readFileSync, statSync } from "node:fs";
 import { isAbsolute, join, resolve } from "node:path";
 import { extname } from "node:path";
 import { makeProvider } from "../refresh/providers.mjs";
-import { normalizeHook } from "./capture.mjs";
+import { isProjectExcluded, normalizeHook } from "./capture.mjs";
+import { projectKeyForPath } from "../readmodel/project.mjs";
 import { compressRecent } from "./compress.mjs";
 import { importClaudeMem } from "./importers.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "./rules-sync.mjs";
@@ -92,8 +93,8 @@ export function createHubRoutes({ hub, config }) {
         const b = await readJson(request);
         need(typeof b.query === "string" && b.query.trim(), "query is required.");
         return h.json({
-          results: hub.search({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20 }),
-          facts: hub.searchFacts({ query: b.query, project: b.project, limit: b.limit ?? 20, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null }),
+          results: hub.search({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope: b.scope === "all" ? "all" : "current" }),
+          facts: hub.searchFacts({ query: b.query, project: b.project, limit: b.limit ?? 20, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, scope: b.scope === "all" ? "all" : "current" }),
         });
       }
       if (pathname === "/v1/timeline" && method === "POST") {
@@ -107,11 +108,13 @@ export function createHubRoutes({ hub, config }) {
       }
       if (pathname === "/v1/context" && method === "POST") {
         const b = await readJson(request);
-        return h.json({ context: hub.context({ project: b.project, limit: b.limit ?? 20, maxChars: b.maxChars ?? 6000, tool: b.tool ?? tool }) });
+        return h.json({ context: hub.context({ project: b.project, limit: b.limit ?? 20, maxChars: b.maxChars ?? 6000, tool: b.tool ?? tool, scope: b.scope === "all" ? "all" : "current" }) });
       }
       if (pathname === "/v1/events" && method === "POST") {
         const b = await readJson(request);
-        const memory = normalizeHook(b.payload ?? b, { tool: b.tool ?? tool ?? "api", project: b.project });
+        const proj = b.project ?? (b.payload?.cwd ? projectKeyForPath(b.payload.cwd) : b.cwd ? projectKeyForPath(b.cwd) : "default");
+        if (isProjectExcluded(proj, config.excludedProjects ?? [])) return h.json({ stored: false, reason: "excluded_project", project: proj });
+        const memory = normalizeHook(b.payload ?? b, { tool: b.tool ?? tool ?? "api", project: b.project, excluded: config.excludedProjects });
         if (!memory) return h.json({ stored: false, reason: "Nothing to store for this event." });
         const r = hub.add(memory, { actor: memory.tool });
         return h.json({ stored: r.created, id: r.id }, r.created ? 201 : 200);

@@ -73,7 +73,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-030 | Score importance with a transparent formula | P1 | T-017 | validated | 2026-10-26 | [T-030.md](T-030.md) |
 | T-031 | Add decay and pruning that never deletes silently | P1 | T-030 | validated | 2026-10-26 | [T-031.md](T-031.md) |
 | T-032 | Generate session, project and entity summaries | P1 | T-018, T-028 | validated | 2026-10-26 | [T-032.md](T-032.md) |
-| T-033 | Enforce project and global scopes | P1 | T-017 | todo | — | [T-033.md](T-033.md) |
+| T-033 | Enforce project and global scopes | P1 | T-017 | validated | 2026-10-26 | [T-033.md](T-033.md) |
 | T-034 | Route providers and add modes for extraction | P1 | T-020 | validated | 2026-10-26 | [T-034.md](T-034.md) |
 | T-035 | Suggest rules from captured corrections | P1 | T-018 | todo | — | [T-035.md](T-035.md) |
 | T-036 | Index the files field and add search-by-file | P2 | T-017 | todo | — | [T-036.md](T-036.md) |

@@ -17,6 +17,7 @@
 //   aletheia compress [--project p] [--daemon]         drain the extraction queue (provider or rule-based)
 //   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
 //   aletheia prune [--apply]                            report cold facts and old episodes; --apply changes them
+//   aletheia promote <type> <id>                        make a memory, episode, observation or fact global
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -154,18 +155,22 @@ async function main() {
       case "capture": {
         let payload;
         try { payload = JSON.parse(readFileSync(0, "utf8")); } catch { return void process.exit(0); } // a hook must never break the tool
-        const memory = normalizeHook(payload, { tool: flags.tool ?? "unknown", project: flags.project });
+        const memory = normalizeHook(payload, { tool: flags.tool ?? "unknown", project: flags.project, excluded: config.excludedProjects });
         if (memory) hub.add(memory, { actor: memory.tool });
         return;
       }
-      case "context": return out(hub.context({ project: flags.project ?? projectKeyForPath(process.cwd()), tool: flags.tool, limit: Number(flags.limit) || 20 }));
+      case "context": return out(hub.context({ project: flags.project ?? projectKeyForPath(process.cwd()), tool: flags.tool, limit: Number(flags.limit) || 20, scope: flags.scope === "all" ? "all" : "current" }));
       case "search": {
         const asOf = typeof flags["as-of"] === "string" ? Date.parse(flags["as-of"]) : null;
         if (flags["as-of"] && !Number.isFinite(asOf)) return die("--as-of needs a date, for example 2026-01-31.");
-        const rows = hub.searchAll({ query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20, includeHistory: !!flags.history, asOf });
+        const rows = hub.searchAll({ query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20, includeHistory: !!flags.history, asOf, scope: flags.scope === "all" ? "all" : "current" });
         return out(rows.length ? rows.map((r) => (r.kind === "fact"
           ? `fact #${r.id} ${r.at.slice(0, 10)} [${r.status}] ${r.text} (source episode #${r.source?.episodeId ?? "-"})`
           : `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title} (${r.project}, ${r.tool})`)).join("\n") : "No matches.");
+      }
+      case "promote": {
+        if (!pos[0] || !pos[1]) return die("Usage: aletheia promote <memory|episode|observation|fact> <id>");
+        return out(hub.promote(pos[0], Number(pos[1]), { actor: "cli" }));
       }
       case "save": {
         const text = pos.join(" ");

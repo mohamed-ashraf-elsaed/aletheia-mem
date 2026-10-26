@@ -30,6 +30,7 @@ const SCHEMA = `
 CREATE TABLE IF NOT EXISTS memories (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   project TEXT NOT NULL DEFAULT 'default',
+  scope TEXT NOT NULL DEFAULT 'project',
   kind TEXT NOT NULL DEFAULT 'observation',
   type TEXT NOT NULL DEFAULT 'note',
   title TEXT NOT NULL DEFAULT '',
@@ -90,6 +91,7 @@ export const SCHEMA_V3 = `
 CREATE TABLE IF NOT EXISTS episodes (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   project TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT 'project',
   tool TEXT NOT NULL DEFAULT 'unknown',
   session_id TEXT,
   turn_index INTEGER,
@@ -112,6 +114,7 @@ CREATE TABLE IF NOT EXISTS observations (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   legacy_memory_id INTEGER UNIQUE,
   project TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT 'project',
   session_id TEXT,
   episode_id INTEGER REFERENCES episodes(id) ON DELETE SET NULL,
   type TEXT NOT NULL DEFAULT 'note',
@@ -137,6 +140,7 @@ CREATE TABLE IF NOT EXISTS facts (
   observation_id INTEGER REFERENCES observations(id) ON DELETE SET NULL,
   episode_id INTEGER REFERENCES episodes(id) ON DELETE RESTRICT,
   project TEXT NOT NULL,
+  scope TEXT NOT NULL DEFAULT 'project',
   subject TEXT NOT NULL,
   predicate TEXT NOT NULL,
   object TEXT NOT NULL,
@@ -358,6 +362,38 @@ export class HubStore {
     }
     this.vecCache = null;
     this.termOptions = { max: 12, maxShare: 0.6 }; // see selectTerms. Swept on LoCoMo (docs/14): 12/0.6 loses no recall; 8/0.35 lost ~8 points
+    this.ensureScopeColumns();
+  }
+
+  /**
+   * Add the T-033 `scope` column to databases created before it existed. Idempotent and recorded in settings, so a
+   * hot hook path pays for the PRAGMA check once. Existing rows are project-scoped, which is the old behaviour.
+   */
+  ensureScopeColumns() {
+    if (this.setting("schema.scope", false)) return { added: [] };
+    const added = [];
+    for (const table of ["memories", "episodes", "observations", "facts"]) {
+      const columns = this.db.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name);
+      if (!columns.includes("scope")) {
+        this.db.exec(`ALTER TABLE ${table} ADD COLUMN scope TEXT NOT NULL DEFAULT 'project'`);
+        added.push(table);
+      }
+    }
+    this.setSetting("schema.scope", true);
+    return { added };
+  }
+
+  /** Promote one row to global scope. Project reads include global rows; nothing moves between projects. */
+  promote(type, id, { actor = "ui" } = {}) {
+    const table = { memory: "memories", episode: "episodes", observation: "observations", fact: "facts" }[String(type)];
+    if (!table) throw new RangeError("Promote a memory, episode, observation or fact.");
+    const key = Number(id);
+    if (!Number.isSafeInteger(key)) throw new RangeError("A promotion needs a numeric id.");
+    const row = this.db.prepare(`SELECT * FROM ${table} WHERE id = ?`).get(key);
+    if (!row) throw new RangeError(`No ${type} #${key}.`);
+    this.db.prepare(`UPDATE ${table} SET scope = 'global' WHERE id = ?`).run(key);
+    this.audit(actor, "scope.promote", { type, id: key, project: row.project });
+    return { type, id: key, scope: "global", project: row.project };
   }
 
   /**
@@ -439,9 +475,9 @@ export class HubStore {
     if (existing) return { id: existing.id, created: false };
     const at = Number.isFinite(input.createdAtEpoch) ? input.createdAtEpoch : Date.now();
     const info = this.db
-      .prepare(`INSERT INTO memories (project, kind, type, title, subtitle, narrative, facts, concepts, files, tool, session_id, pinned, origin, content_hash, created_at_epoch, updated_at_epoch)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(project, kind, clean(input.type, 40) || (kind === "event" ? "event" : "note"), title, clean(input.subtitle, 400), narrative, json(input.facts), json(input.concepts), json(input.files),
+      .prepare(`INSERT INTO memories (project, scope, kind, type, title, subtitle, narrative, facts, concepts, files, tool, session_id, pinned, origin, content_hash, created_at_epoch, updated_at_epoch)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(project, input.scope === "global" ? "global" : "project", kind, clean(input.type, 40) || (kind === "event" ? "event" : "note"), title, clean(input.subtitle, 400), narrative, json(input.facts), json(input.concepts), json(input.files),
         clean(input.tool, 60) || "unknown", clean(input.sessionId ?? input.session_id, 200), input.pinned ? 1 : 0, clean(input.origin, 200), hash, at, at);
     this.statsCache = null;
     if (actor !== "import" && audit) this.audit(actor, "memory.add", { id: Number(info.lastInsertRowid), kind, tool: input.tool ?? "unknown" });
@@ -500,9 +536,9 @@ export class HubStore {
     const hash = input.contentHash ?? sha256(`episode\n${project}\n${sourceRef ?? ""}\n${text}`);
     const at = Number.isFinite(input.createdAtEpoch) ? input.createdAtEpoch : Date.now();
     this.db
-      .prepare(`INSERT OR IGNORE INTO episodes (project, tool, session_id, turn_index, role, kind, text, source_ref, content_hash, token_count, created_at_epoch, recorded_at_epoch)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(project, clean(input.tool, 60) || "unknown", clean(input.sessionId ?? input.session_id, 200), Number.isFinite(input.turnIndex) ? input.turnIndex : null,
+      .prepare(`INSERT OR IGNORE INTO episodes (project, scope, tool, session_id, turn_index, role, kind, text, source_ref, content_hash, token_count, created_at_epoch, recorded_at_epoch)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(project, input.scope === "global" ? "global" : "project", clean(input.tool, 60) || "unknown", clean(input.sessionId ?? input.session_id, 200), Number.isFinite(input.turnIndex) ? input.turnIndex : null,
         clean(input.role, 20) || "user", clean(input.kind, 30) || "message", text, sourceRef, hash, Number.isFinite(input.tokenCount) ? input.tokenCount : null, at, at);
     return this.db.prepare("SELECT * FROM episodes WHERE content_hash = ?").get(hash);
   }
@@ -544,10 +580,10 @@ export class HubStore {
     const episodeId = Number(input.episodeId ?? input.episode_id);
     if (Number.isSafeInteger(episodeId) && episodeId > 0 && !this.getEpisode(episodeId)) throw new RangeError(`episode #${episodeId} does not exist.`);
     const info = this.db
-      .prepare(`INSERT INTO observations (legacy_memory_id, project, session_id, episode_id, type, title, subtitle, narrative, importance, importance_components,
+      .prepare(`INSERT INTO observations (legacy_memory_id, project, scope, session_id, episode_id, type, title, subtitle, narrative, importance, importance_components,
                 confidence, pinned, edited_at_epoch, status, origin, content_hash, created_at_epoch, updated_at_epoch)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(Number.isSafeInteger(input.legacyMemoryId) ? input.legacyMemoryId : null, project, clean(input.sessionId ?? input.session_id, 200),
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(Number.isSafeInteger(input.legacyMemoryId) ? input.legacyMemoryId : null, project, input.scope === "global" ? "global" : "project", clean(input.sessionId ?? input.session_id, 200),
         Number.isSafeInteger(episodeId) && episodeId > 0 ? episodeId : null, type, title, clean(input.subtitle, 400), narrative,
         Number.isFinite(input.importance) ? input.importance : 0.5, input.importanceComponents ? json(input.importanceComponents) : null,
         Number.isFinite(input.confidence) ? input.confidence : 1, input.pinned ? 1 : 0, Number.isFinite(input.editedAtEpoch) ? input.editedAtEpoch : null,
@@ -673,10 +709,10 @@ export class HubStore {
     const validTo = Number.isFinite(input.validToEpoch) ? input.validToEpoch : null;
     const confidence = Number.isFinite(input.confidence) ? Math.max(0, Math.min(1, input.confidence)) : 0.8;
     const info = this.db
-      .prepare(`INSERT INTO facts (observation_id, episode_id, project, subject, predicate, object, text, valid_from_epoch, valid_to_epoch,
+      .prepare(`INSERT INTO facts (observation_id, episode_id, project, scope, subject, predicate, object, text, valid_from_epoch, valid_to_epoch,
                 recorded_at_epoch, expired_at_epoch, confidence, supersedes_id, status, extractor_mode, prompt_version, model, content_hash, created_at_epoch)
-                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(Number.isSafeInteger(observationId) && observationId > 0 ? observationId : null, episodeId, project, subject, predicate, object, text,
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(Number.isSafeInteger(observationId) && observationId > 0 ? observationId : null, episodeId, project, input.scope === "global" ? "global" : "project", subject, predicate, object, text,
         validFrom, validTo, recordedAt, Number.isFinite(input.expiredAtEpoch) ? input.expiredAtEpoch : null, confidence,
         Number.isSafeInteger(input.supersedesId) ? input.supersedesId : null, clean(input.status, 20) || "active",
         clean(input.extractorMode, 20) || "rules", clean(input.promptVersion, 40), clean(input.model, 120), hash, recordedAt);
@@ -760,7 +796,7 @@ export class HubStore {
    * Fact search over the FTS index and the extracted keys. Current facts are the default; `includeHistory` and
    * `asOf` expose the older rows. Every hit carries the episode that produced it.
    */
-  searchFacts({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null, pool = 100 } = {}) {
+  searchFacts({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null, pool = 100, scope = "current" } = {}) {
     const expr = ftsAnyQuery(query);
     if (!expr) return [];
     const now = Date.now();
@@ -768,7 +804,7 @@ export class HubStore {
     const at = Number.isFinite(asOfEpoch) ? asOfEpoch : null;
     const where = [];
     const params = [];
-    if (project) { where.push("f.project = ?"); params.push(project); }
+    if (project && scope !== "all") { where.push("(f.project = ? OR f.scope = 'global')"); params.push(project); }
     if (at != null) {
       where.push("f.status != 'retracted'", "coalesce(f.valid_from_epoch, f.recorded_at_epoch) <= ?", "(f.valid_to_epoch IS NULL OR f.valid_to_epoch > ?)", "f.recorded_at_epoch <= ?");
       params.push(at, at, at);
@@ -791,7 +827,7 @@ export class HubStore {
       if (vecRows.length) ids = rrf([ids, topKByVector(queryVec, vecRows, pool).map((row) => row.id)]).map((row) => row.id);
     }
     const facts = this.getFactsByIds(ids).filter((fact) => {
-      if (project && fact.project !== project) return false;
+      if (project && scope !== "all" && fact.project !== project && fact.scope !== "global") return false;
       if (at != null) {
         return fact.status !== "retracted" && (fact.valid_from_epoch ?? fact.recorded_at_epoch) <= at && fact.recorded_at_epoch <= at && (fact.valid_to_epoch == null || fact.valid_to_epoch > at);
       }
@@ -832,9 +868,9 @@ export class HubStore {
   }
 
   /** Memory hits first? No: a fact can carry a word the raw turn does not, so fact hits come first and cite it. */
-  searchAll({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null } = {}) {
-    const facts = this.searchFacts({ query, project, limit, includeHistory, asOf, queryVec });
-    const memories = this.ranked({ query, project, limit, queryVec, includeHistory }).map((memory) => ({ ...memory, kind: "memory", at: new Date(memory.created_at_epoch).toISOString(), source: { type: "memory", id: memory.id } }));
+  searchAll({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null, scope = "current" } = {}) {
+    const facts = this.searchFacts({ query, project, limit, includeHistory, asOf, queryVec, scope });
+    const memories = this.ranked({ query, project, limit, queryVec, includeHistory, scope }).map((memory) => ({ ...memory, kind: "memory", at: new Date(memory.created_at_epoch).toISOString(), source: { type: "memory", id: memory.id } }));
     return [...facts, ...memories];
   }
 
@@ -906,14 +942,15 @@ export class HubStore {
   }
 
   /** Newest first. Filters: project, kind, type, tool, pinned, q (full text), before (epoch), limit, offset. */
-  list({ project, kind, type, tool, pinned, q, limit = 50, offset = 0 } = {}) {
+  list({ project, kind, type, tool, pinned, q, limit = 50, offset = 0, scope = "current" } = {}) {
     const where = [];
     const params = [];
     const match = ftsQuery(q);
     if (q && !match) return { total: 0, items: [] };
     const from = match ? "memories_fts f CROSS JOIN memories m ON f.rowid = m.id" : "memories m"; // CROSS JOIN: see ranked()
     if (match) { where.push("memories_fts MATCH ?"); params.push(match); }
-    for (const [col, val] of [["project", project], ["kind", kind], ["type", type], ["tool", tool]]) if (val) { where.push(`m.${col} = ?`); params.push(val); }
+    if (project && scope !== "all") { where.push("(m.project = ? OR m.scope = 'global')"); params.push(project); }
+    for (const [col, val] of [["kind", kind], ["type", type], ["tool", tool]]) if (val) { where.push(`m.${col} = ?`); params.push(val); }
     if (pinned) where.push("m.pinned = 1");
     const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
     const lim = Math.min(Math.max(Number(limit) || 50, 1), 500);
@@ -929,8 +966,8 @@ export class HubStore {
    * Natural-language queries work: ANY content word may match and BM25 ranks (see retrieval.mjs). When `queryVec` is
    * given and memories have vectors, keyword and semantic rankings are fused with reciprocal rank fusion.
    */
-  search({ query, project, kind, type, tool, limit = 20, queryVec = null } = {}) {
-    return this.ranked({ query, project, kind, type, tool, limit, queryVec }).map((m) => ({ id: m.id, kind: m.kind, type: m.type, title: m.title, project: m.project, tool: m.tool, pinned: m.pinned, at: new Date(m.created_at_epoch).toISOString() }));
+  search({ query, project, kind, type, tool, limit = 20, queryVec = null, scope = "current" } = {}) {
+    return this.ranked({ query, project, kind, type, tool, limit, queryVec, scope }).map((m) => ({ id: m.id, kind: m.kind, type: m.type, title: m.title, project: m.project, tool: m.tool, pinned: m.pinned, at: new Date(m.created_at_epoch).toISOString() }));
   }
 
   /** The index's own (stemmed) form of a word, via SQLite's tokenizer so it matches what is stored. Cached. */
@@ -969,10 +1006,11 @@ export class HubStore {
   }
 
   /** Full rows, best first. Same ranking as search(). */
-  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false } = {}) {
+  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false, scope = "current" } = {}) {
     const filters = [];
     const params = [];
-    for (const [col, val] of [["project", project], ["kind", kind], ["type", type], ["tool", tool]]) if (val) { filters.push(`m.${col} = ?`); params.push(val); }
+    if (project && scope !== "all") { filters.push("(m.project = ? OR m.scope = 'global')"); params.push(project); }
+    for (const [col, val] of [["kind", kind], ["type", type], ["tool", tool]]) if (val) { filters.push(`m.${col} = ?`); params.push(val); }
     const where = filters.length ? `AND ${filters.join(" AND ")}` : "";
     const expr = orExpr(this.selectTerms(query));
     const lexical = expr
@@ -982,7 +1020,7 @@ export class HubStore {
       : [];
     let ids = lexical;
     if (queryVec) {
-      const dense = topKByVector(queryVec, this.vectorRows({ project, kind, type, tool }), pool).map((r) => r.id);
+      const dense = topKByVector(queryVec, this.vectorRows({ project, kind, type, tool, scope }), pool).map((r) => r.id);
       ids = rrf([lexical, dense]).map((r) => r.id);
     }
     const top = ids.slice(0, Math.min(Math.max(limit, 1), 200));
@@ -999,11 +1037,11 @@ export class HubStore {
   }
 
   /** [{id, vec}] for memories that have vectors, optionally filtered. Cached until a vector or memory changes. */
-  vectorRows({ project, kind, type, tool } = {}) {
+  vectorRows({ project, kind, type, tool, scope = "current" } = {}) {
     if (!this.vecCache) {
-      this.vecCache = this.db.prepare("SELECT v.memory_id AS id, v.vec, m.project, m.kind, m.type, m.tool FROM memory_vectors v JOIN memories m ON m.id = v.memory_id").all().map((r) => ({ id: r.id, vec: unpackVector(r.vec), project: r.project, kind: r.kind, type: r.type, tool: r.tool }));
+      this.vecCache = this.db.prepare("SELECT v.memory_id AS id, v.vec, m.project, m.scope, m.kind, m.type, m.tool FROM memory_vectors v JOIN memories m ON m.id = v.memory_id").all().map((r) => ({ id: r.id, vec: unpackVector(r.vec), project: r.project, scope: r.scope, kind: r.kind, type: r.type, tool: r.tool }));
     }
-    return this.vecCache.filter((r) => (!project || r.project === project) && (!kind || r.kind === kind) && (!type || r.type === type) && (!tool || r.tool === tool));
+    return this.vecCache.filter((r) => (!project || scope === "all" || r.project === project || r.scope === "global") && (!kind || r.kind === kind) && (!type || r.type === type) && (!tool || r.tool === tool));
   }
 
   /** Embed every memory that has no vector yet. `embedder` = {model, embedDocs(texts)}. Returns how many were embedded. */
@@ -1081,14 +1119,15 @@ export class HubStore {
   }
 
   /** Markdown a session-start hook can inject into ANY tool: pinned and recent memories, then the rules. */
-  context({ project, limit = 20, maxChars = 6000, tool } = {}) {
-    const pinned = this.list({ project, pinned: true, limit: 50 }).items;
+  context({ project, limit = 20, maxChars = 6000, tool, scope = "current" } = {}) {
+    const pinned = this.list({ project, pinned: true, limit: 50, scope }).items;
+    const scopeClause = scope === "all" ? "" : project ? "AND (project = ? OR scope = 'global')" : "";
     const recent = this.db
-      .prepare(`SELECT * FROM memories WHERE kind IN ('observation','summary','note') AND pinned = 0 ${project ? "AND project = ?" : ""} ORDER BY created_at_epoch DESC LIMIT ?`)
-      .all(...(project ? [project] : []), Math.min(limit, 100))
+      .prepare(`SELECT * FROM memories WHERE kind IN ('observation','summary','note') AND pinned = 0 ${scopeClause} ORDER BY created_at_epoch DESC LIMIT ?`)
+      .all(...(scopeClause ? [project] : []), Math.min(limit, 100))
       .map((r) => this.row(r));
     const line = (m) => `- #${m.id} ${new Date(m.created_at_epoch).toISOString().slice(0, 10)} [${m.type}] ${m.title}${m.narrative ? ` — ${m.narrative.replace(/\s+/g, " ").slice(0, 160)}` : ""}`;
-    const parts = [`# Memory${project ? ` for ${project}` : ""}`];
+    const parts = [`# Memory${scope === "all" ? " (all projects)" : project ? ` for ${project}` : ""}`];
     if (pinned.length) parts.push("", "## Pinned", ...pinned.map(line));
     if (recent.length) parts.push("", "## Recent", ...recent.map(line));
     const rules = this.rules.list().filter((r) => r.enabled && (!r.tools || !tool || r.tools.includes(tool)));
