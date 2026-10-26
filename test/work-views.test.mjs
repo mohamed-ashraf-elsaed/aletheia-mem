@@ -1,0 +1,96 @@
+import { describe, expect, test } from "bun:test";
+import { parseRoute } from "../public/ui-core.js";
+import { factLineView, sessionCardView, workEmptyView, workHeaderView, workNeedsView, WORK_EMPTY } from "../public/work-view.js";
+
+const fact = {
+  id: 7,
+  text: "The checkout uses Postgres 16",
+  confidence: 0.83,
+  scope: "project",
+  status: "active",
+  extractorMode: "provider",
+  validAt: "2026-10-20T09:00:00.000Z",
+  source: { episodeId: 12, sourceRef: "memory:4", episodeText: "raw source text" },
+};
+
+const session = {
+  id: "s1",
+  project: "shop",
+  state: "in_progress",
+  lastAt: "2026-10-26T10:00:00.000Z",
+  promptCount: 2,
+  toolCount: 1,
+  tool: "claude-code",
+  href: "#/work/session/s1?project=shop",
+  lastPrompt: { text: "fix the retry button state", at: "2026-10-26T09:55:00.000Z" },
+  summary: { id: 4, text: "Session summary: retry work", at: "2026-10-26T09:58:00.000Z" },
+  sourceFacts: [fact],
+};
+
+const data = {
+  project: "shop",
+  generatedAt: "2026-10-26T10:00:00.000Z",
+  health: { status: "ok" },
+  mode: "code",
+  lastCapture: [{ tool: "claude-code", at: "2026-10-26T09:58:00.000Z", count: 6 }],
+  queue: { pending: 2, running: 1, failed: 0, depth: 3 },
+  sessions: [session],
+  recentFacts: [fact],
+  pinned: [{ id: 2 }],
+  review: { pending: 1, items: [{ id: 3, type: "fact", itemId: 7, reason: "contradiction", label: "The checkout uses Postgres 16", project: "shop" }] },
+  ruleSuggestions: [{ id: 5, project: "shop", text: "Use pnpm, not npm", when: "editing checkout" }],
+  dismissed: [{ type: "memory", itemId: 8, reason: "stale", at: "2026-10-26T08:00:00.000Z", label: "Old note", project: "shop" }],
+  empty: false,
+};
+
+describe("T-143: the Work overview view", () => {
+  test("the header strip derives every value from the response", () => {
+    const header = workHeaderView(data);
+    expect(header).toMatchObject({ project: "shop", mode: "code", sessions: 1, facts: 1, review: 1, pinned: 1, empty: false });
+    expect(header.health).toMatchObject({ state: "ok" });
+    expect(header.lastCapture).toContain("claude-code");
+    expect(header.queue).toBe("3 queued");
+    expect(header.queueDetail).toContain("2 pending");
+  });
+
+  test("a session card has state, counts, prompt, summary, source facts and a session link", () => {
+    const view = sessionCardView(session);
+    expect(view).toMatchObject({ id: "s1", state: "in_progress", stateLabel: "In progress", promptLabel: "2 prompts", toolLabel: "1 tool event" });
+    expect(view.href).toBe("#/work/session/s1?project=shop");
+    expect(view.lastPrompt).toContain("retry button");
+    expect(view.summary).toContain("retry work");
+    expect(view.sourceFacts[0]).toMatchObject({ id: 7, sourceLabel: "episode #12 · memory:4", importanceLabel: "0.83 (confidence)" });
+  });
+
+  test("needs-you has review, rule and dismissed items with actions", () => {
+    const needs = workNeedsView(data);
+    expect(needs.map((item) => item.kind)).toEqual(["review", "rule", "dismissed"]);
+    expect(needs[0].actions.map((action) => action.id)).toEqual(["accept", "reject"]);
+    expect(needs[1].actions.map((action) => action.id)).toEqual(["accept", "dismiss"]);
+    expect(needs[2].actions.map((action) => action.id)).toEqual(["restore"]);
+    expect(needs[2].type).toBe("memory");
+  });
+
+  test("an empty response gives an instruction, not a fake session", () => {
+    const empty = { project: "shop", health: { status: "ok" }, mode: "code", sessions: [], recentFacts: [], pinned: [], review: { pending: 0, items: [] }, ruleSuggestions: [], dismissed: [], lastCapture: [], queue: { pending: 0, running: 0, failed: 0, depth: 0 }, empty: true };
+    const header = workHeaderView(empty);
+    expect(header.empty).toBe(true);
+    expect(header.sessions).toBe(0);
+    expect(header.lastCapture).toBe("never");
+    const view = workEmptyView(empty);
+    expect(view).toMatchObject({ title: "No captures yet", command: WORK_EMPTY.command, project: "shop" });
+    expect(view.command).toBe("aletheia install claude-code --write");
+    expect(workNeedsView(empty)).toEqual([]);
+  });
+
+  test("fact lines carry the source and the importance label", () => {
+    const view = factLineView(fact);
+    expect(view).toMatchObject({ id: 7, sourceLabel: "episode #12 · memory:4", importanceLabel: "0.83 (confidence)", scope: "project" });
+    expect(view.sourceText).toContain("raw source");
+  });
+
+  test("the session hash still routes to Work", () => {
+    expect(parseRoute("#/work/session/s1?project=shop")).toBe("work");
+    expect(parseRoute("#/work")).toBe("work");
+  });
+});

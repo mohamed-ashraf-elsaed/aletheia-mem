@@ -1,10 +1,10 @@
 // The one UI shell (T-134): one page at /, four hash routes, a shared header (project, memory search, health)
-// and the tab bar. The Work tab shows the existing Work page in an iframe (work.html). The other three tabs
-// are loaded on first visit from ./tabs/ so the shell stays small.
+// and the tab bar. The Work tab is Aletheia's own view (T-143); the other tabs are loaded on first visit from
+// ./tabs/ so the shell stays small. The legacy viewer is an optional page, not the default Work tab.
 import { TABS, healthView, parseRoute, routeHash } from "./ui-core.js";
 import { byId, h, state, swap } from "./ui-dom.js";
 
-const RENDERERS = { memory: "renderMemory", rules: "renderRules", tools: "renderTools" };
+const RENDERERS = { work: "renderWork", memory: "renderMemory", rules: "renderRules", tools: "renderTools" };
 const LABEL = Object.fromEntries(TABS.map((tab) => [tab.id, tab.label]));
 
 function renderTabs(active) {
@@ -71,7 +71,6 @@ async function showRoute() {
   for (const tab of TABS) byId(`tab-${tab.id}`).hidden = tab.id !== active;
   renderTabs(active);
   document.title = `${LABEL[active]} · Aletheia`;
-  if (active === "work") return;
   const render = await tabRenderer(active);
   if (!render) return;
   try {
@@ -95,7 +94,7 @@ function boot() {
   byId("ui-project").addEventListener("change", (event) => {
     state.project = event.target.value;
     markStale();
-    if (parseRoute(location.hash) !== "work") showRoute();
+    showRoute();
   });
   byId("ui-search-form").addEventListener("submit", (event) => {
     event.preventDefault();
