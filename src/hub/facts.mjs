@@ -3,11 +3,14 @@
 // each stored fact records which mode and prompt version produced it.
 import { readFileSync } from "node:fs";
 import { redact } from "./redact.mjs";
+import { estimateTokens, pricesFrom, recordCall } from "./usage.mjs";
 
 export const FACTS_PROMPT_VERSION = "facts-v1";
 export const MAX_FACTS = 5;
 export const MAX_FACT_EPISODES = 20;
 export const MAX_ENTITIES = 8;
+export const EPISODE_PROMPT_CHARS = 2000;
+export const DEFAULT_BUDGET = { maxEpisodes: 20, maxChars: 12_000 };
 export const LIMITS = { subject: 120, predicate: 80, object: 300, text: 400, entityName: 100, confidence: 1 };
 
 const FACT_PROMPT = readFileSync(new URL("./prompts/facts.txt", import.meta.url), "utf8").trim();
@@ -145,6 +148,37 @@ export function extractFactsByRules(window = []) {
   return { facts, mode: "rules", raw: null, rejected: false };
 }
 
+// ---- batching ---------------------------------------------------------------------------------------------
+
+/**
+ * Split episodes into windows bounded by episode count and characters. One oversized episode is truncated to the
+ * character budget, so a window never exceeds it. The count is clamped to the 20-40 range D4 asks for.
+ */
+export function chunkEpisodes(episodes = [], { maxEpisodes = DEFAULT_BUDGET.maxEpisodes, maxChars = DEFAULT_BUDGET.maxChars } = {}) {
+  const countCap = Math.max(1, Math.min(40, Number(maxEpisodes) || DEFAULT_BUDGET.maxEpisodes));
+  const charCap = Math.max(32, Number(maxChars) || DEFAULT_BUDGET.maxChars);
+  const chunks = [];
+  let current = [];
+  let chars = 0;
+  for (const episode of episodes) {
+    const text = String(episode.text ?? "").slice(0, Math.min(EPISODE_PROMPT_CHARS, charCap));
+    if (current.length && (current.length >= countCap || chars + text.length > charCap)) {
+      chunks.push(current);
+      current = [];
+      chars = 0;
+    }
+    current.push({ ...episode, text });
+    chars += text.length;
+    if (current.length >= countCap) {
+      chunks.push(current);
+      current = [];
+      chars = 0;
+    }
+  }
+  if (current.length) chunks.push(current);
+  return chunks;
+}
+
 // ---- provider path ---------------------------------------------------------------------------------------
 
 const iso = (epoch) => (Number.isFinite(epoch) ? new Date(epoch).toISOString() : "unknown");
@@ -152,7 +186,7 @@ const iso = (epoch) => (Number.isFinite(epoch) ? new Date(epoch).toISOString() :
 /** Build the prompt from already-redacted text. Nothing else may be added to what leaves the machine. */
 export function factsPrompt({ window, project, modeInstruction = "", existing = [] }) {
   const log = window
-    .map((episode) => `[#${episode.episodeId} ${iso(episode.createdAtEpoch)} ${episode.tool ?? "unknown"} ${episode.kind ?? "message"}] ${redact(String(episode.text ?? "")).slice(0, 2000)}`)
+    .map((episode) => `[#${episode.episodeId} ${iso(episode.createdAtEpoch)} ${episode.tool ?? "unknown"} ${episode.kind ?? "message"}] ${redact(String(episode.text ?? "")).slice(0, EPISODE_PROMPT_CHARS)}`)
     .join("\n---\n");
   const ids = window.map((episode) => Number(episode.episodeId)).filter(Number.isSafeInteger);
   const known = existing.length
@@ -173,18 +207,41 @@ export async function extractFactsWithProvider({ window, project, ask, modeInstr
   for (let attempt = 0; attempt < 2; attempt++) {
     answer = await ask(refusal ? `${prompt}\n\nYour previous answer was refused: ${refusal}\nFix it and answer again.` : prompt, { stage: "extract" });
     try {
-      return { facts: validateFacts(parseJsonObject(answer), { episodeIds: allowed }), mode: "provider", raw: answer, rejected: false };
+      return { facts: validateFacts(parseJsonObject(answer), { episodeIds: allowed }), mode: "provider", raw: answer, prompt, rejected: false };
     } catch (error) {
       refusal = error instanceof Error ? error.message : String(error);
     }
   }
-  return { facts: [], mode: "provider", raw: answer, rejected: true, error: refusal };
+  return { facts: [], mode: "provider", raw: answer, prompt, rejected: true, error: refusal };
 }
 
 /** One window in one call: the provider when there is one, the rule extractor otherwise. */
 export async function extractWindow({ window, project = "default", ask = null, modeInstruction = "", existing = [] }) {
   if (!ask) return extractFactsByRules(window);
   return extractFactsWithProvider({ window, project, ask, modeInstruction, existing });
+}
+
+/**
+ * Extract one window and record its cost. A provider error still writes an error row and is re-thrown, so the queue
+ * can retry; the work is not lost and the cost is not hidden.
+ */
+export async function extractWithUsage(store, { window, project = "default", ask = null, modeInstruction = "", existing = [], model = null, batchId = null, prices = null, now = Date.now() } = {}) {
+  let result;
+  try {
+    result = await extractWindow({ window, project, ask, modeInstruction, existing });
+  } catch (error) {
+    recordCall(store, { atEpoch: now, batchId, model: model ?? "none", mode: ask ? "provider" : "rules", episodes: window.length, status: "error", error: error instanceof Error ? error.message : String(error), prices });
+    throw error;
+  }
+  const inputTokens = result.mode === "provider" ? estimateTokens(result.prompt) : 0;
+  const outputTokens = result.raw ? estimateTokens(result.raw) : 0;
+  recordCall(store, {
+    atEpoch: now, batchId, model: result.mode === "provider" ? model ?? "unknown" : "rules", mode: result.mode,
+    inputTokens, outputTokens, episodes: window.length, facts: result.facts.length,
+    status: result.rejected ? "rejected" : "ok", error: result.error ?? null, rawOutput: result.rejected ? result.raw : null,
+    prices: prices ?? pricesFrom({}),
+  });
+  return result;
 }
 
 // ---- storage ---------------------------------------------------------------------------------------------

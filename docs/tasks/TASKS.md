@@ -59,7 +59,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-016 | Add excluded projects and context scope | P0 | none | todo | — | [T-016.md](T-016.md) |
 | T-017 | Add schema v3 with an additive migration | P1 | T-003 | validated | 2026-10-26 | [T-017.md](T-017.md) |
 | T-018 | Add fact extraction with a strict validator | P1 | T-017 | validated | 2026-10-26 | [T-018.md](T-018.md) |
-| T-019 | Batch extraction and record its cost | P1 | T-018 | todo | — | [T-019.md](T-019.md) |
+| T-019 | Batch extraction and record its cost | P1 | T-018 | validated | 2026-10-26 | [T-019.md](T-019.md) |
 | T-020 | Run compression in a resumable background queue | P1 | T-017 | todo | — | [T-020.md](T-020.md) |
 | T-021 | Extract entities from facts | P1 | T-017 | todo | — | [T-021.md](T-021.md) |
 | T-022 | Resolve entity aliases | P1 | T-021 | todo | — | [T-022.md](T-022.md) |

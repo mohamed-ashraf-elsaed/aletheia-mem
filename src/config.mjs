@@ -45,6 +45,15 @@ export function loadConfig(overrides = {}) {
     provider: overrides.provider ?? env.ALETHEIA_PROVIDER ?? "none",
     autoRefresh: (overrides.autoRefresh ?? env.ALETHEIA_AUTO_REFRESH ?? "true") !== "false" && (overrides.autoRefresh ?? true) !== false,
     refreshCheckMs: Number(overrides.refreshCheckMs ?? env.ALETHEIA_REFRESH_CHECK_MS ?? 10 * 60_000),
+    // Fact extraction batching and cost. Prices default to 0: this project does not guess a vendor price.
+    factBudget: {
+      maxEpisodes: Number(overrides.factBudget?.maxEpisodes ?? env.ALETHEIA_FACT_MAX_EPISODES ?? 20),
+      maxChars: Number(overrides.factBudget?.maxChars ?? env.ALETHEIA_FACT_CHAR_BUDGET ?? 12_000),
+    },
+    prices: {
+      inputPer1k: Number(overrides.prices?.inputPer1k ?? env.ALETHEIA_PRICE_IN_PER_1K ?? 0),
+      outputPer1k: Number(overrides.prices?.outputPer1k ?? env.ALETHEIA_PRICE_OUT_PER_1K ?? 0),
+    },
     // Human copy (plain-language card text) needs an OpenAI-compatible endpoint.
     openai: {
       baseUrl: env.ALETHEIA_OPENAI_BASE_URL ?? "https://openrouter.ai/api/v1/chat/completions",
