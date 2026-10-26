@@ -242,6 +242,7 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | https://www.pulsemcp.com | HTTP 403; submission steps UNVERIFIED |
 | 2026-10-26 | https://registry.modelcontextprotocol.io | official registry landing page (HTTP 200) |
 | 2026-10-26 | https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html | scrypt minimum N=2^17, r=8, p=1 for the E2EE KEK upgrade (T-149) |
+| 2026-10-26 | https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html | launchd plist structure (Label, ProgramArguments, KeepAlive, StandardOut/ErrorPath) for the macOS auto-start service (T-151) |
 
 ## D. Fetch failures and how they were handled
 

@@ -336,6 +336,26 @@ Open the tunnel URL in a browser. Expected: the login page appears; the admin to
 a dismiss or pair action works (the UI sends the CSRF header); a server restart ends the session; five wrong
 tokens lock the login page with a wait message.
 
+## 11. Auto-start service (NOT RUN BY AUTHOR)
+
+The generated text is checked by `test/service.test.mjs` against a temporary HOME. The unit is never enabled and
+the server is never started by the author.
+
+Linux default unit (`~/.config/systemd/user/aletheia.service`): `Restart=on-failure`, `Nice=10`, loopback only,
+with `CPUQuota`/`MemoryMax` defaults 50% and 1G documented in comments and overridable via
+`aletheia service install --cpu-quota X --memory-max Y --write`.
+
+**NOT RUN BY AUTHOR.** To run it by hand on Linux:
+
+```bash
+aletheia service install --write
+systemctl --user daemon-reload
+systemctl --user enable --now aletheia.service
+```
+
+The macOS plist is `from-docs-only` (Apple launchd docs, fetched 2026-10-26) and is not tested on a real Mac.
+Windows is not supported.
+
 ## What the automated tests already cover
 
 `test/install-claude.test.mjs`, `test/claude-hooks.test.mjs` and `test/e2e-capture.test.mjs` cover: the dry run,

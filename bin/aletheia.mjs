@@ -33,6 +33,8 @@
 //                                                          optional end-to-end encryption (passphrase via --passphrase or ALETHEIA_SYNC_PASSPHRASE)
 //   aletheia mcp-link create [--projects a,b] [--url https://hub.example] | list | revoke <id>
 //                                                          manage the private remote MCP endpoint
+//   aletheia service install|uninstall|status [--write] [--cpu-quota X] [--memory-max Y]
+//                                                          auto-start unit/plist (dry-run by default; Linux/macOS only)
 //   aletheia audit [--limit n]                          read the sync audit log
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -193,6 +195,14 @@ async function main() {
         const { runMcpLinkCommand } = await import("../src/hub/sync/cli.mjs");
         try {
           return out(await runMcpLinkCommand({ config, flags, pos }));
+        } catch (error) {
+          return die(error.message);
+        }
+      }
+      case "service": {
+        const { runServiceCommand } = await import("../src/service.mjs");
+        try {
+          return out(runServiceCommand({ config, flags, pos }));
         } catch (error) {
           return die(error.message);
         }
