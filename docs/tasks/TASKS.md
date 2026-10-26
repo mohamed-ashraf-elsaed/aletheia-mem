@@ -128,7 +128,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-084 | Add issue templates, PR template and Code of Conduct | P4 | none | validated | 2026-10-26 | [T-084.md](T-084.md) |
 | T-085 | Add CHANGELOG, releases, Dependabot and funding | P4 | T-080 | validated | 2026-10-26 | [T-085.md](T-085.md) |
 | T-086 | Build the docs site with one page per document | P4 | T-013 | todo | — | [T-086.md](T-086.md) |
-| T-087 | Add the i18n workflow and drift checker | P4 | none | todo | — | [T-087.md](T-087.md) |
+| T-087 | Add the i18n workflow and drift checker | P4 | none | validated | 2026-10-26 | [T-087.md](T-087.md) |
 | T-088 | Translate the README into the first 10 languages | P4 | T-087 | todo | — | [T-088.md](T-088.md) |
 | T-089 | Translate the README into the remaining 22 languages | P4 | T-088 | todo | — | [T-089.md](T-089.md) |
 | T-090 | Run an accessibility and theme pass on the Hub | P4 | T-077 | todo | — | [T-090.md](T-090.md) |

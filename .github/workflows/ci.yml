@@ -21,3 +21,5 @@ jobs:
         run: bun scripts/gen-tables.mjs --check
       - name: Relative documentation links resolve
         run: bun scripts/check-docs-links.mjs
+      - name: Translations match the English README
+        run: bun scripts/i18n-check.mjs

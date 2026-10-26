@@ -44,6 +44,7 @@
     "check:claims": "bun scripts/check-claims.mjs",
     "check:links": "bun scripts/check-docs-links.mjs",
     "check:tables": "bun scripts/gen-tables.mjs --check",
+    "check:i18n": "bun scripts/i18n-check.mjs",
     "check:live": "bun scripts/diff-against-live.mjs",
     "bench:locomo": "bun bench/locomo-retrieval.mjs",
     "bench:claude-mem": "bun bench/claude-mem-baseline.mjs",
