@@ -120,3 +120,13 @@ verification is the same: read the project's source or its current documentation
 | Copilot memory | every capability in the matrix |
 
 Rows 3, 4, 10, 15, 25, 27, 28, 30, 37, 39, 40 and 41 in section 21.2 carry the same caveat.
+
+## UI study (2026-10-27)
+
+| Item | Why UNVERIFIED | What would verify it |
+|---|---|---|
+| How the claude-mem viewer refreshes after load | The page requested `/api/work-view/events` once. Whether that is a stream, and how often it pushes, was not inspected. | Read its network panel over several minutes, or its source. |
+| Its keyboard shortcuts | None were tried. No shortcut hint was visible. | Press keys in the viewer and read its help. |
+| Its error and offline states | The server stayed up, so no failure was produced. | Stop the worker and reload. |
+| Its behaviour at 768 px and 1920 px | Only the default window (about 920 px) and 375 px were captured. | Resize and capture. |
+| Its long-list handling | The Work page showed five cards, so pagination or virtualization never triggered. | Seed a large store and scroll. |

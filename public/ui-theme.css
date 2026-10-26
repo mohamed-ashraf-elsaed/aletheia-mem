@@ -1,0 +1,126 @@
+/* Aletheia design tokens. Colours are sampled from docs/assets/logo.png (see docs/ui-design.md and
+   scripts/palette.py). Dark is the default; light follows prefers-color-scheme unless data-theme is set. */
+:root {
+  color-scheme: dark;
+  --ui-s0: #0a1017;
+  --ui-s1: #101923;
+  --ui-s2: #16222f;
+  --ui-s3: #1d2c3c;
+  --ui-border: #243445;
+  --ui-border-strong: #5b7a96;
+  --ui-text: #e4e9ee;
+  --ui-muted: #93a5b7;
+  --ui-accent: #26bbea;
+  --ui-accent-2: #33f0d8;
+  --ui-node: #20adf7;
+  --ui-accent-ink: #04141c;
+  --ui-accent-soft: rgba(38, 187, 234, 0.14);
+  --ui-glow-color: rgba(38, 187, 234, 0.32);
+  --ui-success: #3ddc97;
+  --ui-warning: #f0b74a;
+  --ui-danger: #ff6b7f;
+  --ui-info: #5ab4ff;
+  --ui-code-bg: #0c141c;
+  --ui-overlay: rgba(3, 8, 12, 0.66);
+  --ui-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --ui-shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
+  --ui-shadow-3: 0 18px 48px rgba(0, 0, 0, 0.55);
+  --ui-hl: rgba(240, 183, 74, 0.28);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    color-scheme: light;
+    --ui-s0: #f3f7fa;
+    --ui-s1: #ffffff;
+    --ui-s2: #e9f0f5;
+    --ui-s3: #dce7ef;
+    --ui-border: #cbd8e3;
+    --ui-border-strong: #6a8296;
+    --ui-text: #0e1a25;
+    --ui-muted: #44596c;
+    --ui-accent: #08698e;
+    --ui-accent-2: #0a8f80;
+    --ui-node: #0b6fb8;
+    --ui-accent-ink: #ffffff;
+    --ui-accent-soft: rgba(10, 120, 163, 0.1);
+    --ui-glow-color: rgba(10, 120, 163, 0.22);
+    --ui-success: #0b7a4b;
+    --ui-warning: #85560a;
+    --ui-danger: #b3202f;
+    --ui-info: #0b64b0;
+    --ui-code-bg: #eef3f7;
+    --ui-overlay: rgba(14, 26, 37, 0.45);
+    --ui-shadow-1: 0 1px 2px rgba(14, 26, 37, 0.12);
+    --ui-shadow-2: 0 8px 24px rgba(14, 26, 37, 0.14);
+    --ui-shadow-3: 0 18px 48px rgba(14, 26, 37, 0.2);
+    --ui-hl: rgba(240, 183, 74, 0.45);
+  }
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --ui-s0: #f3f7fa;
+  --ui-s1: #ffffff;
+  --ui-s2: #e9f0f5;
+  --ui-s3: #dce7ef;
+  --ui-border: #cbd8e3;
+  --ui-border-strong: #6a8296;
+  --ui-text: #0e1a25;
+  --ui-muted: #44596c;
+  --ui-accent: #08698e;
+  --ui-accent-2: #0a8f80;
+  --ui-node: #0b6fb8;
+  --ui-accent-ink: #ffffff;
+  --ui-accent-soft: rgba(10, 120, 163, 0.1);
+  --ui-glow-color: rgba(10, 120, 163, 0.22);
+  --ui-success: #0b7a4b;
+  --ui-warning: #85560a;
+  --ui-danger: #b3202f;
+  --ui-info: #0b64b0;
+  --ui-code-bg: #eef3f7;
+  --ui-overlay: rgba(14, 26, 37, 0.45);
+  --ui-shadow-1: 0 1px 2px rgba(14, 26, 37, 0.12);
+  --ui-shadow-2: 0 8px 24px rgba(14, 26, 37, 0.14);
+  --ui-shadow-3: 0 18px 48px rgba(14, 26, 37, 0.2);
+  --ui-hl: rgba(240, 183, 74, 0.45);
+}
+
+/* Theme-independent tokens. */
+:root {
+  --ui-font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "Noto Sans Arabic", "Helvetica Neue", Arial, sans-serif;
+  --ui-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  --ui-text-xs: 0.75rem;
+  --ui-text-sm: 0.8125rem;
+  --ui-text-md: 0.9375rem;
+  --ui-text-lg: 1.125rem;
+  --ui-text-xl: 1.5rem;
+  --ui-text-2xl: 2rem;
+  --ui-leading: 1.5;
+  --ui-space-1: 4px;
+  --ui-space-2: 8px;
+  --ui-space-3: 12px;
+  --ui-space-4: 16px;
+  --ui-space-5: 24px;
+  --ui-space-6: 32px;
+  --ui-space-7: 48px;
+  --ui-radius-sm: 6px;
+  --ui-radius: 10px;
+  --ui-radius-lg: 16px;
+  --ui-radius-pill: 999px;
+  --ui-glow: 0 0 0 1px var(--ui-glow-color), 0 0 22px var(--ui-glow-color);
+  --ui-focus: 0 0 0 2px var(--ui-s0), 0 0 0 4px var(--ui-accent);
+  --ui-dur-fast: 120ms;
+  --ui-dur: 200ms;
+  --ui-dur-slow: 320ms;
+  --ui-ease: cubic-bezier(0.2, 0, 0, 1);
+  --ui-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ui-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --ui-touch: 40px;
+  --ui-header-h: 56px;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --ui-dur-fast: 0.01ms;
+    --ui-dur: 0.01ms;
+    --ui-dur-slow: 0.01ms;
+  }
+}
