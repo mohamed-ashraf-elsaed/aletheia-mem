@@ -73,6 +73,8 @@ export function createSyncRoutes({ store, getPeer = () => "loopback", behindTls 
       if (pushDenied) return json({ error: "A sync or admin token is required to push." }, pushDenied);
       const body = await readJson(request);
       if (!body || !Array.isArray(body.ops)) return json({ error: "ops must be an array." }, 400);
+      const quota = store.quotaExceeded(token.id);
+      if (quota) return json({ error: `This token's ${quota} quota is exhausted.` }, 402);
       const deviceId = request.headers.get("x-device-id") ?? token.device_id ?? null;
       if (!deviceId) return json({ error: "X-Device-Id is required." }, 400);
       const projectDenied = (op) => token.projects?.length && op?.payload?.project && !token.projects.includes(op.payload.project);
