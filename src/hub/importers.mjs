@@ -7,6 +7,33 @@ const TYPE_MAP = { bugfix: "bugfix", feature: "feature", refactor: "refactor", c
 
 const firstLine = (t, n = 120) => String(t ?? "").replace(/\s+/g, " ").trim().slice(0, n);
 
+/** Tables and columns this importer reads. A missing one is a schema change, not an empty import. */
+export const REQUIRED_SCHEMA = {
+  sdk_sessions: ["id", "memory_session_id", "content_session_id", "platform_source", "project"],
+  observations: ["id", "memory_session_id", "project", "type", "title", "text", "subtitle", "narrative", "facts", "concepts", "files_read", "files_modified", "created_at_epoch"],
+  session_summaries: ["id", "memory_session_id", "project", "request", "investigated", "learned", "completed", "next_steps", "notes", "created_at_epoch"],
+  user_prompts: ["id", "session_db_id", "prompt_text", "created_at_epoch"],
+};
+
+/**
+ * Fail loudly when an upstream claude-mem schema moved. Returns the tables it checked. Throws a RangeError that
+ * names the database, the missing table or the missing column. Call it before reading any row.
+ */
+export function probeClaudeMemSchema(src, dbPath, { includePrompts = true } = {}) {
+  const tables = new Set(src.prepare("SELECT name FROM sqlite_master WHERE type = 'table'").all().map((row) => row.name));
+  const checked = [];
+  for (const [table, columns] of Object.entries(REQUIRED_SCHEMA)) {
+    if (table === "user_prompts" && !includePrompts) continue;
+    if (!tables.has(table)) throw new RangeError(`claude-mem database ${dbPath} has no "${table}" table. The upstream schema changed; this importer cannot read it.`);
+    const present = new Set(src.prepare(`PRAGMA table_info(${table})`).all().map((column) => column.name));
+    for (const column of columns) {
+      if (!present.has(column)) throw new RangeError(`claude-mem database ${dbPath} has no "${table}.${column}" column. The upstream schema changed; this importer cannot read it.`);
+    }
+    checked.push(table);
+  }
+  return { tables: checked };
+}
+
 /**
  * claude-mem (any 15.x) database -> hub. Reads observations, session summaries and prompts. Read-only.
  * options: { includePrompts = true, project }
@@ -15,6 +42,12 @@ export function importClaudeMem(store, dbPath, { includePrompts = true, project 
   if (!existsSync(dbPath)) throw new RangeError(`No claude-mem database at ${dbPath}.`);
   const src = new Database(dbPath, { readonly: true, create: false });
   src.exec("PRAGMA query_only = ON");
+  try {
+    probeClaudeMemSchema(src, dbPath, { includePrompts });
+  } catch (error) {
+    src.close();
+    throw error;
+  }
   const counts = { observations: { added: 0, skipped: 0 }, summaries: { added: 0, skipped: 0 }, prompts: { added: 0, skipped: 0 } };
   try {
     const sessions = new Map(safeAll(src, "SELECT memory_session_id, content_session_id, platform_source FROM sdk_sessions").map((s) => [s.memory_session_id, s]));
