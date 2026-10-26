@@ -90,3 +90,5 @@ body { margin: 0; background: var(--bg, #faf8f5); color: var(--ink, #1d1b19); }
   .ui-search input { min-width: 120px; }
   .ui-tab:not(.ui-tab-work) { padding: 14px 10px 70px; }
 }
+
+.ui-work-frame { display: block; width: 100%; height: calc(100vh - 56px); border: 0; background: transparent; }

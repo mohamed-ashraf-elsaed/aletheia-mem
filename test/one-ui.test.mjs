@@ -56,13 +56,13 @@ describe("T-139: the one page", () => {
     expect(html).toContain('data-tab="memory"');
     expect(html).toContain('data-tab="rules"');
     expect(html).toContain('data-tab="tools"');
-    expect(html).toContain('<div id="root">');
+    expect(html).toContain('id="work-frame"');
     expect(html).toContain('id="ui-project"');
     expect(html).toContain('id="ui-search"');
     expect(html).toContain('id="ui-health"');
     expect(html).toContain('src="/work-view/one-ui.js"');
     expect(html).toContain('href="/work-view/one-ui.css"');
-    const workScript = /src="(\/work-view\/assets\/[^"]+\.js)"/.exec(html)?.[1];
+    const workScript = /src="(\/work-view\/assets\/[^"]+\.js)"/.exec(await (await get("/work-view/work.html")).text())?.[1];
     expect(workScript).toBeTruthy();
     expect((await get(workScript)).status).toBe(200);
     expect((await get("/work-view/one-ui.js")).headers.get("content-type")).toContain("javascript");

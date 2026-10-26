@@ -5,11 +5,9 @@
     <link rel="icon" type="image/svg+xml" href="/work-view/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aletheia</title>
-    <!-- The Work tab is the existing Work page, unchanged: same bundle, same mount point. -->
-    <link rel="stylesheet" crossorigin href="/work-view/assets/index-C6x466ZD.css" />
+    <!-- The Work tab runs the Work page inside an iframe (work.html), so its styles cannot clash with this page. -->
     <link rel="stylesheet" href="/hub/style.css" />
     <link rel="stylesheet" href="/work-view/one-ui.css" />
-    <script type="module" crossorigin src="/work-view/assets/index-s8vzksbN.js"></script>
     <script type="module" src="/work-view/one-ui.js"></script>
   </head>
   <body>
@@ -31,7 +29,7 @@
 
     <main class="ui-main">
       <section id="tab-work" class="ui-tab ui-tab-work" data-tab="work" role="tabpanel" aria-label="Work">
-        <div id="root"></div>
+        <iframe id="work-frame" class="ui-work-frame" src="/work-view/work.html" title="Work"></iframe>
       </section>
       <section id="tab-memory" class="ui-tab" data-tab="memory" role="tabpanel" aria-label="Memory" hidden>
         <div id="ui-memory"></div>

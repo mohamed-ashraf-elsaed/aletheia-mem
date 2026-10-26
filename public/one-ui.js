@@ -1,5 +1,5 @@
 // The one UI shell (T-134): one page at /, four hash routes, a shared header (project, memory search, health)
-// and the tab bar. The Work tab is the existing Work page mounted at #root, unchanged. The other three tabs
+// and the tab bar. The Work tab shows the existing Work page in an iframe (work.html). The other three tabs
 // are loaded on first visit from ./tabs/ so the shell stays small.
 import { TABS, healthView, parseRoute, routeHash } from "./ui-core.js";
 import { byId, h, state, swap } from "./ui-dom.js";
