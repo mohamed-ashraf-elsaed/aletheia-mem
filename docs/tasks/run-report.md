@@ -180,7 +180,7 @@ test/readmodel.test.mjs:
  115 pass
  0 fail
  552 expect() calls
-Ran 115 tests across 6 files. [1.68s]
+Ran 115 tests across 6 files. [2.00s]
 ```
 
 Exit code: 0.
