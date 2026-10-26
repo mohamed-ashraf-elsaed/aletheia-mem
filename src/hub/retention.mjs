@@ -85,6 +85,8 @@ export function shortenEpisodeText(episode, { head = 200, tail = 200 } = {}) {
 export function prune(store, { now = Date.now(), apply = false, settings = retentionSettings(store) } = {}) {
   const cold = coldCandidates(store, { now, settings });
   const episodes = episodeCandidates(store, { now, settings });
+  // T-123: a dismissal is a reversible hide. Only prune --apply removes the underlying row.
+  const dismissed = store.dismissedList({ limit: 500 });
   const report = {
     now,
     apply,
@@ -94,11 +96,23 @@ export function prune(store, { now = Date.now(), apply = false, settings = reten
     episodesShortened: episodes.length,
     episodeIds: episodes.slice(0, 100).map((episode) => episode.id),
     charsRemoved: episodes.reduce((sum, episode) => sum + Math.max(0, String(episode.text ?? "").length - 400), 0),
-    applied: { factsCold: 0, episodesShortened: 0 },
+    dismissed: dismissed.length,
+    dismissedItems: dismissed.slice(0, 100).map((row) => `${row.item_type}:${row.item_id}`),
+    applied: { factsCold: 0, episodesShortened: 0, dismissedPurged: 0 },
   };
   if (!apply) return report;
   store.db.exec("BEGIN IMMEDIATE");
   try {
+    for (const row of dismissed) {
+      const table = { memory: "memories", observation: "observations", fact: "facts" }[row.item_type];
+      if (!table) continue; // an episode stays as evidence; restoring is the only way back for now
+      const info = store.db.prepare(`DELETE FROM ${table} WHERE id = ?`).run(row.item_id);
+      if (info.changes) {
+        store.db.prepare("DELETE FROM dismissals WHERE item_type = ? AND item_id = ?").run(row.item_type, row.item_id);
+        store.audit("system", "dismissed.purge", { type: row.item_type, id: row.item_id, reason: row.reason ?? null });
+        report.applied.dismissedPurged++;
+      }
+    }
     for (const fact of cold) {
       const info = store.db.prepare("UPDATE facts SET status = 'cold', expired_at_epoch = ? WHERE id = ? AND status = 'active'").run(now, fact.id);
       if (info.changes) {
@@ -129,8 +143,9 @@ export const formatPruneReport = (report) => {
     `  cold days ${report.settings.coldDays}, retention days ${report.settings.retentionDays}`,
     `  facts to cold: ${report.factsCold}${report.factsColdIds.length ? ` (ids ${report.factsColdIds.join(", ")})` : ""}`,
     `  episodes to shorten: ${report.episodesShortened}, about ${report.charsRemoved} chars removed${report.episodeIds.length ? ` (ids ${report.episodeIds.join(", ")})` : ""}`,
+    `  dismissed items: ${report.dismissed}${report.dismissedItems?.length ? ` (${report.dismissedItems.join(", ")})` : ""}${report.apply ? "" : "; --apply deletes them"}`,
   ];
-  if (report.apply) lines.push(`  applied: ${report.applied.factsCold} fact(s) cold, ${report.applied.episodesShortened} episode(s) shortened`);
-  lines.push("  no row was deleted");
+  if (report.apply) lines.push(`  applied: ${report.applied.factsCold} fact(s) cold, ${report.applied.episodesShortened} episode(s) shortened, ${report.applied.dismissedPurged} dismissed row(s) purged`);
+  lines.push(report.apply && report.applied.dismissedPurged ? "  only dismissed rows were deleted; facts and episodes were not" : "  no row was deleted");
   return lines.join("\n");
 };

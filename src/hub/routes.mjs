@@ -240,6 +240,18 @@ export function createHubRoutes({ hub, config }) {
       return h.json(await compressRecent(hub, ask, { project: b.project }));
     }
     if (pathname === "/api/hub/audit" && method === "GET") return h.json({ audit: hub.auditLog(Number(qs(url).limit) || 100) });
+    // T-123: dismiss is reversible; nothing is deleted here.
+    if (pathname === "/api/hub/dismissed" && method === "GET") return h.json({ items: hub.dismissedList({ limit: Number(qs(url).limit) || 100 }) });
+    if (pathname === "/api/hub/dismiss" && method === "POST") {
+      const b = await readJson(request);
+      need(b && Number.isSafeInteger(Number(b.id)), "id is required.");
+      return h.json(hub.dismiss(b.type ?? "memory", Number(b.id), { actor: "ui", reason: b.reason ?? null }));
+    }
+    if (pathname === "/api/hub/restore" && method === "POST") {
+      const b = await readJson(request);
+      need(b && Number.isSafeInteger(Number(b.id)), "id is required.");
+      return h.json(hub.restore(b.type ?? "memory", Number(b.id), { actor: "ui" }));
+    }
     return h.json({ error: "Not found." }, 404);
   }
 

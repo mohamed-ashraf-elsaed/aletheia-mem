@@ -19,6 +19,9 @@
 //   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
 //   aletheia prune [--apply]                            report cold facts and old episodes; --apply changes them
 //   aletheia promote <type> <id>                        make a memory, episode, observation or fact global
+//   aletheia dismiss <id | type:id> [--reason r]        hide a memory, episode, observation or fact (reversible)
+//   aletheia restore <id | type:id>                     undo a dismissal
+//   aletheia dismissed [--limit n]                      list dismissed items
 //   aletheia optimize                                   rebuild FTS segments after a large import
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -52,6 +55,15 @@ function parseArgs(args) {
 }
 const out = (v) => console.log(typeof v === "string" ? v : JSON.stringify(v, null, 2));
 const die = (m) => { console.error(m); process.exit(1); };
+
+/** `12` means memory #12; `fact:12` names another dismissible type. */
+function dismissTarget(value) {
+  const text = String(value ?? "");
+  const match = /^(memory|episode|observation|fact):(\d+)$/.exec(text);
+  if (match) return { type: match[1], id: Number(match[2]) };
+  if (/^\d+$/.test(text)) return { type: "memory", id: Number(text) };
+  return null;
+}
 
 function installEnv(hub) {
   return {
@@ -192,6 +204,20 @@ async function main() {
         const facts = await embedMissingFacts(hub, embedder, { limit });
         const memories = await hub.embedMissing(embedder, { limit });
         return out(`Embedded ${facts} fact(s) and ${memories} memory/memories with ${embedder.model} (${embedder.dim} dims).`);
+      }
+      case "dismiss": {
+        const target = dismissTarget(pos[0]) ?? die("Usage: aletheia dismiss <id | memory:id | fact:id | observation:id | episode:id> [--reason r]");
+        const result = hub.dismiss(target.type, target.id, { actor: "cli", reason: typeof flags.reason === "string" ? flags.reason : null });
+        return out(result.changed ? `Dismissed ${result.type} #${result.id}. Restore with: aletheia restore ${result.type}:${result.id}` : `${result.type} #${result.id} was already dismissed.`);
+      }
+      case "restore": {
+        const target = dismissTarget(pos[0]) ?? die("Usage: aletheia restore <id | memory:id | fact:id | observation:id | episode:id>");
+        const result = hub.restore(target.type, target.id, { actor: "cli" });
+        return out(result.restored ? `Restored ${result.type} #${result.id}.` : `${result.type} #${result.id} was not dismissed.`);
+      }
+      case "dismissed": {
+        const rows = hub.dismissedList({ limit: Number(flags.limit) || 100 });
+        return out(rows.length ? rows.map((row) => `${row.item_type}:${row.item_id}  ${new Date(row.at_epoch).toISOString()}${row.reason ? `  ${row.reason}` : ""}`).join("\n") : "No dismissed items.");
       }
       case "promote": {
         if (!pos[0] || !pos[1]) return die("Usage: aletheia promote <memory|episode|observation|fact> <id>");
