@@ -16,6 +16,7 @@
 //   aletheia doctor                                       check the server, hooks, spool and last capture
 //   aletheia compress [--project p] [--daemon]         drain the extraction queue (provider or rule-based)
 //   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
+//   aletheia prune [--apply]                            report cold facts and old episodes; --apply changes them
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -241,6 +242,10 @@ async function main() {
         }
         if (scope === "list") return out(listSummaries(hub, { project: flags.project, limit: Number(flags.limit) || 50 }));
         return die(`Unknown scope "${scope}". Use session, project, entity or list.`);
+      }
+      case "prune": {
+        const { formatPruneReport, prune } = await import("../src/hub/retention.mjs");
+        return out(formatPruneReport(prune(hub, { apply: !!flags.apply })));
       }
       case "compress": {
         const { runWorker, startBackgroundWorker } = await import("../src/hub/queue.mjs");
