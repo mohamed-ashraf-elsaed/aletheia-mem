@@ -6,7 +6,7 @@ import { brainMark } from "./ui-brand.js";
 import { errorState, segmented, startClock, tabs, toast } from "./ui-components.js";
 import { byId, h, state, swap } from "./ui-dom.js";
 import { installKeys, openPalette, openShortcuts } from "./ui-keys.js";
-import { animate, enter, watchVisibility } from "./ui-motion.js";
+import { enter, watchVisibility } from "./ui-motion.js";
 import { parseHash } from "./ui-pure.js";
 import { mountSearch } from "./ui-search.js";
 import { mountStatus } from "./ui-status.js";
@@ -132,11 +132,12 @@ function boot() {
   swap(byId("ui-tabs"), nav);
   const themeControl = mountTheme();
 
-  statusApi = mountStatus({ el: byId("ui-status"), healthEl: byId("ui-health") });
+  statusApi = mountStatus({ el: byId("ui-status"), healthEl: byId("ui-health"), announce });
   loadProjects();
   byId("ui-project").addEventListener("change", (event) => {
     state.project = event.target.value;
     storeProject(state.project);
+    statusApi?.setProject();
     reloadView();
   });
 

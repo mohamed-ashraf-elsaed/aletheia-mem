@@ -441,7 +441,7 @@ export function withTooltip(target, text, { placement = "bottom" } = {}) {
  * A small panel anchored to a control: the status bar's details. Click or Enter opens it; Esc, a click outside or
  * focus leaving closes it. `content` is a node or a function returning one, called each time it opens.
  */
-export function popover({ anchor, content, label = "Details", placement = "bottom" }) {
+export function popover({ anchor, content, label = "Details", placement = "bottom", toggleOnClick = true }) {
   const panel = h("div", { class: "ui-popover", role: "dialog", "aria-label": label, tabindex: "-1", hidden: true });
   let open = false;
   const outside = (event) => { if (!panel.contains?.(event.target) && !anchor.contains?.(event.target)) api.close(); };
@@ -472,7 +472,7 @@ export function popover({ anchor, content, label = "Details", placement = "botto
   };
   anchor.setAttribute("aria-haspopup", "dialog");
   anchor.setAttribute("aria-expanded", "false");
-  anchor.addEventListener("click", () => api.toggle());
+  if (toggleOnClick) anchor.addEventListener("click", () => api.toggle());
   panel.addEventListener("keydown", (event) => { if (event.key === "Escape") { event.stopPropagation(); api.close({ restoreFocus: true }); } });
   anchor.addEventListener("keydown", (event) => { if (event.key === "Escape" && open) { event.stopPropagation(); api.close({ restoreFocus: true }); } });
   return api;

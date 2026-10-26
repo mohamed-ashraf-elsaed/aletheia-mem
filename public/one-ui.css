@@ -157,3 +157,16 @@ html, body { min-height: 100%; }
   .ui-search-list { position: fixed; inset-inline: 8px; top: auto; width: auto; }
   .ui-nav .ui-tab { gap: 4px; font-size: var(--ui-text-sm); }
 }
+
+/* ---- status bar details (T-206) ---- */
+.ui-status-list { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.ui-status-item:hover, .ui-status-item:focus-visible, .ui-status-item[aria-expanded="true"] { background: var(--ui-s2); border-color: var(--ui-border); color: var(--ui-text); }
+.ui-status-item { cursor: pointer; }
+.ui-status-right { display: flex; align-items: center; gap: var(--ui-space-2); margin-inline-start: auto; flex: none; padding-inline-start: var(--ui-space-3); }
+.ui-status-updated { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ui-status-refresh.is-spinning .ui-icon { animation: ui-spin 0.9s linear infinite; }
+.ui-status-pop h3 { font-size: var(--ui-text-md); margin-bottom: 4px; }
+.ui-status-pop-sum { margin: 0 0 var(--ui-space-2); }
+.ui-banner-slot { position: relative; z-index: 120; }
+@media (prefers-reduced-motion: reduce) { .ui-status-refresh.is-spinning .ui-icon { animation: none; opacity: 0.6; } }
+.ui-status-list.is-stale .ui-status-item:not([data-status="server"]) { opacity: 0.55; }
