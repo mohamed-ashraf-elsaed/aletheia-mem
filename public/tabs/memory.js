@@ -1,6 +1,8 @@
-// T-135: the Memory tab. Memories, facts (current/history), search channels, dismissed rows and import/export.
+// T-135 and the facts part of the Memory tab. Memories, facts (current/history), search channels, dismissed
+// rows and import/export. The review queue lives in ./review.js so T-136 is its own change.
 import { channelLines, factView, formatWhen, searchReasonText } from "../ui-core.js";
 import { activityDetails, api, chip, errorCard, errorText, h, qs, run, settledValue, state, swap, toast } from "../ui-dom.js";
+import { reviewPanel } from "./review.js";
 
 async function dismiss(type, id, what) {
   if (!confirm(`Hide this ${what} from search and context? It is not deleted, and Dismissed below can restore it.`)) return;
@@ -53,7 +55,7 @@ export async function renderMemory() {
       h("button", { "aria-pressed": String(state.factsHistory), onclick: () => { state.factsHistory = true; renderMemory(); } }, "History")),
     factList,
     h("h2", {}, "Review queue"),
-    h("div", { class: "ui-empty" }, "The review queue is added in T-136."),
+    reviewPanel(review, results[3], renderMemory),
     h("h2", {}, "Dismissed"),
     dismissedPanel(dismissed, results[4]),
     importExport(overview),
