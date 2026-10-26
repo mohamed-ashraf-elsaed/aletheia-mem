@@ -51,9 +51,9 @@ These are not `UNVERIFIED` facts about other projects; they are claims this proj
 | # | Claim | State | What would verify it |
 |---:|---|---|---|
 | 31 | "Works with Cursor, Gemini CLI, Codex CLI, Windsurf, OpenCode, Claude Code" | Config written from docs; **not tested on a real install** (`README.md`) | A real install test per tool (T-070, T-075) |
-| 32 | "Automatic capture through a tool's hooks" | Not built | T-058, T-059 |
+| 32 | "Automatic capture through a tool's hooks" | **proven end-to-end for Claude Code and Command Code** in T-101 (2026-10-26); the other hosts are not installed or tested | A real install test per remaining tool (T-070, T-075) |
 | 33 | "Answer accuracy is better" | Not measured | T-051, T-052 |
-| 34 | "p95 ≤ 50 ms at 50k rows" | Not met (measured 124–185 ms) | T-047 |
+| 34 | "p95 ≤ 50 ms at 50k rows" | **still not met**: 137.8 ms before the FTS `optimize` fix, 108.1 ms after it (2026-10-26) | T-047 / further index work |
 | 35 | "macOS and Windows supported" | Linux only tested | T-014 |
 | 36 | "30+ languages supported" | English only | T-087 to T-089 |
 
@@ -68,7 +68,6 @@ These are claims this run deliberately does not make. Each was measured only on 
 | 39 | Importance matches a human ranking (Spearman ≥0.5) | measured only on a synthetic 200-item rank (0.645) | Collect 200 human-ranked observations and rerun `test/importance.test.mjs` against them |
 | 40 | Near-duplicate precision and recall on human labels | measured only on a synthetic 200-pair set (precision 1.00, recall 0.90) | Build the human-labelled 200-pair set in D4 §23.9 and evaluate `src/hub/dedupe.mjs` |
 | 41 | Contradiction handling on the D4 knowledge-update set | measured only on a synthetic 30-pair set (30/30 newest-wins) | Build the 50-pair knowledge-update set and rerun `test/contradictions.test.mjs` |
-| 42 | 50k-row keyword search p95 ≤ 50 ms | **still missed**: 137.8 ms before the FTS `optimize` fix, 108.1 ms after it (2026-10-26) | T-047 / further index work |
 
 ## URLs referenced in the documents but not fetched as sources
 
