@@ -177,3 +177,4 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-139 | Add UI tests for the one page | P6 | T-134, T-135, T-136, T-137, T-138 | validated | 2026-10-26 | [T-139.md](T-139.md) |
 | T-140 | Prove end-to-end capture for every full-capability host | P3 | T-058, T-061, T-062, T-064, T-065 | validated | 2026-10-26 | [T-140.md](T-140.md) |
 | T-141 | Update docs and claims for the five hosts | P3 | T-070, T-140 | validated | 2026-10-26 | [T-141.md](T-141.md) |
+| T-142 | Add the /v1/work query layer and route | P6 | none | validated | 2026-10-26 | [T-142.md](T-142.md) |

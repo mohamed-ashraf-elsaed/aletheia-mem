@@ -14,6 +14,8 @@ import { INSTALLERS, doctor } from "./install.mjs";
 import { spoolPath, spoolRead } from "./hooks/shared.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "./rules-sync.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "./tools.mjs";
+import { sessionDetail, workOverview } from "./work.mjs";
+import { goalAction, proposeGoals } from "./goals.mjs";
 
 const MAX_BODY = 8 * 1024 * 1024;
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml" };
@@ -200,6 +202,28 @@ export function createHubRoutes({ hub, config }) {
         return h.json({ ...report, ok: report.status === "ok" }, report.status === "ok" ? 200 : 503);
       }
       if (pathname === "/v1/info" && method === "GET") return h.json({ name: "aletheia-mem", version: "0.1.0", api: "v1", stats: hub.stats() });
+      if (pathname === "/v1/work" && method === "GET") {
+        const q = qs(url);
+        return h.json({ ...workOverview(hub, {
+          project: q.project || null,
+          sessionLimit: q.sessions,
+          factLimit: q.facts,
+          reviewLimit: q.review,
+          activeMinutes: q.activeMinutes,
+          windowHours: q.windowHours,
+          dismissedHours: q.dismissedHours,
+        }), mode: config.mode });
+      }
+      if (pathname === "/v1/work/goals" && method === "GET") {
+        const q = qs(url);
+        return h.json(proposeGoals(hub, { project: q.project || null, minSessions: q.minSessions, limit: q.limit }));
+      }
+      if ((m = /^\/v1\/work\/session\/(.+)$/.exec(pathname)) && method === "GET") {
+        let id;
+        try { id = decodeURIComponent(m[1]); } catch { throw new BadRequest("The session id is not valid URL text."); }
+        const detail = sessionDetail(hub, { sessionId: id, project: qs(url).project || null });
+        return detail ? h.json({ session: detail }) : h.json({ error: "No session has that id." }, 404);
+      }
       if (pathname === "/v1/memories" && method === "POST") {
         const r = hub.add(memoryInput(await readJson(request), tool), { actor: tool ?? "api" });
         return h.json({ id: r.id, created: r.created }, r.created ? 201 : 200);
@@ -472,6 +496,16 @@ export function createHubRoutes({ hub, config }) {
 
     // ---- T-138: installer status from doctor data, read only ----
     if (pathname === "/api/hub/doctor" && method === "GET") return h.json(await doctorData(h.server));
+
+    // T-144: owner goals are pin/dismiss only; the goal list itself is computed from prompt rows.
+    if ((m = /^\/api\/hub\/goals\/([a-f0-9]{16})$/.exec(pathname)) && method === "POST") {
+      const b = await readJson(request);
+      try {
+        return h.json(goalAction(hub, m[1], { action: b.action, actor: "ui" }));
+      } catch (error) {
+        throw new BadRequest(error instanceof Error ? error.message : String(error));
+      }
+    }
 
     // T-123: dismiss is reversible; nothing is deleted here.
     if (pathname === "/api/hub/dismissed" && method === "GET") return h.json({ items: hub.dismissedList({ limit: Number(qs(url).limit) || 100 }) });
