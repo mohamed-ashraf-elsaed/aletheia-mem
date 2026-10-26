@@ -6,7 +6,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSyn
 import { createHash } from "node:crypto";
 import { basename, dirname, join } from "node:path";
 import { applyBlock, removeBlock, renderRules, targetPath } from "./rules-sync.mjs";
-import { MARK_BEGIN, MARK_END } from "./tools.mjs";
+import { MARK_BEGIN, MARK_END, resolveMcpPath, toolById } from "./tools.mjs";
 import { spoolPath, spoolRead } from "./hooks/shared.mjs";
 
 export const MANIFEST_FILE = "install-manifest.json";
@@ -390,6 +390,39 @@ export const INSTALLERS = [
     expectedHooks(env) {
       const events = ["SessionStart", "BeforeAgent", "AfterTool", "AfterAgent", "SessionEnd"];
       return { file: join(env.home, ".gemini", "settings.json"), commands: Object.fromEntries(events.map((event) => [event, hookCommand({ bun: env.bun, hookScript: runnerFor(env), tool: "gemini-cli", event })])) };
+    },
+  }),
+  defineInstaller({
+    id: "windsurf",
+    name: "Windsurf",
+    capabilities: "full",
+    verification: "from-docs-only",
+    evidence: "https://docs.windsurf.com/windsurf/cascade/hooks, /cascade/mcp and /cascade/memories fetched 2026-10-26; no working Windsurf/Devin install here",
+    detection: [".codeium/windsurf", ".windsurf", ".config/devin"],
+    notes: [
+      "Cascade has no session-start/session-end hook: there is no context injection and no session-end summary.",
+      "Hooks run from the workspace root by default; the installer omits working_directory.",
+      "Windsurf/Devin is not installed here; the config and payloads were tested against fixtures only.",
+    ],
+    events: ["pre_user_prompt", "post_run_command", "post_write_code", "post_cascade_response"],
+    plan(env) {
+      const mcpFile = resolveMcpPath(toolById("windsurf").mcp, env.home);
+      const hooks = { pre_user_prompt: null, post_run_command: null, post_write_code: null, post_cascade_response: null };
+      const rules = planRules({ tool: "windsurf", home: env.home, rules: env.rules ?? [] });
+      const steps = [
+        planMcp({ file: mcpFile, entry: { command: env.bun, args: [env.mcpScript] } }),
+        planFlatHooks({ file: join(env.home, ".codeium", "windsurf", "hooks.json"), events: hooks, env, tool: "windsurf" }),
+        rules,
+      ].filter(Boolean);
+      return { tool: "windsurf", name: "Windsurf", env, steps, notes: [
+        "Cascade has no session-start/session-end hook: there is no context injection and no session-end summary.",
+        "Hooks run from the workspace root by default; the installer omits working_directory.",
+        "Windsurf/Devin is not installed here; the config and payloads were tested against fixtures only.",
+      ] };
+    },
+    expectedHooks(env) {
+      const events = ["pre_user_prompt", "post_run_command", "post_write_code", "post_cascade_response"];
+      return { file: join(env.home, ".codeium", "windsurf", "hooks.json"), commands: Object.fromEntries(events.map((event) => [event, hookCommand({ bun: env.bun, hookScript: runnerFor(env), tool: "windsurf", event })])) };
     },
   }),
 ];

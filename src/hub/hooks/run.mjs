@@ -9,9 +9,10 @@ import commandCode from "./command-code.mjs";
 import codex from "./codex.mjs";
 import cursor from "./cursor.mjs";
 import geminiCli from "./gemini-cli.mjs";
+import windsurf from "./windsurf.mjs";
 import { enqueueCompression, flushSpool, projectOf, readPayload, spoolAppend } from "./shared.mjs";
 
-export const ADAPTERS = { "claude-code": claudeCode, "command-code": commandCode, codex, cursor, "gemini-cli": geminiCli };
+export const ADAPTERS = { "claude-code": claudeCode, "command-code": commandCode, codex, cursor, "gemini-cli": geminiCli, windsurf };
 
 export function adapterFor(tool) {
   const adapter = ADAPTERS[tool];
