@@ -186,6 +186,9 @@ function sessionRows(store, project, now, activeMinutes, windowHours, limit) {
           ORDER BY CASE f.status WHEN 'active' THEN 0 ELSE 1 END, f.recorded_at_epoch DESC, f.id DESC LIMIT 8`)
         .all(session.project, session.id)
         .map(factRow);
+      const ended = store.sessionEnd(session.project, session.id);
+      const state = ended ? "finished" : (now - (session.lastAt ?? 0) <= activeMinutes * MINUTE ? "in_progress" : "finished");
+      const endedBy = ended ? "event" : "heuristic";
       return {
         id: session.id,
         project: session.project,
@@ -195,7 +198,9 @@ function sessionRows(store, project, now, activeMinutes, windowHours, limit) {
         lastAtEpoch: session.lastAt,
         promptCount: session.promptCount,
         toolCount: session.toolCount,
-        state: now - (session.lastAt ?? 0) <= activeMinutes * MINUTE ? "in_progress" : "finished",
+        state,
+        endedBy,
+        endedAt: ended ? iso(ended.ended_at_epoch) : null,
         lastPrompt: lastPromptRow ? { text: oneLine(lastPromptRow.text).slice(0, 500), at: iso(lastPromptRow.at) } : null,
         summary: summaryRow ? { id: summaryRow.id, text: summaryRow.text, at: iso(summaryRow.at) } : null,
         sourceFacts,

@@ -7,7 +7,7 @@ import { copyFileSync, existsSync, mkdirSync } from "node:fs";
 import { randomBytes } from "node:crypto";
 import { dirname } from "node:path";
 import { canonicalOp, computeContentHash, compareOps, hashSync, stableStringify, validateOp } from "./engine.mjs";
-import { deriveKek, encryptPayload, isEnvelope, KDF, randomKey, unwrapKey, wrapKey } from "./e2ee.mjs";
+import { DEFAULT_KDF, deriveKek, encryptPayload, isEnvelope, randomKey, unwrapKey, wrapKey } from "./e2ee.mjs";
 
 const SCHEMA = `
 CREATE TABLE IF NOT EXISTS sync_account (
@@ -459,9 +459,9 @@ export class SyncStore {
     const kid = 1;
     const dataKey = randomKey(32);
     const salt = randomBytes(16).toString("base64");
-    const wrapped = wrapKey(dataKey, deriveKek(passphrase, salt));
+    const wrapped = wrapKey(dataKey, deriveKek(passphrase, salt, DEFAULT_KDF));
     this.db.prepare("INSERT INTO sync_e2ee_key (account_id, kid, salt, wrapped_key, kdf, params, created_at) VALUES (?,?,?,?,?,?,?)")
-      .run(Number(accountId), kid, salt, stableStringify(wrapped), KDF.name, stableStringify(KDF), Date.now());
+      .run(Number(accountId), kid, salt, stableStringify(wrapped), DEFAULT_KDF.name, stableStringify(DEFAULT_KDF), Date.now());
     this.db.prepare("UPDATE sync_account SET e2ee = 1, current_kid = ? WHERE id = ?").run(kid, Number(accountId));
     this.audit(accountId, { action: "e2ee.enable", result: "ok", detail: { kid } });
     return { enabled: true, kid };
@@ -473,17 +473,18 @@ export class SyncStore {
     if (!account.e2ee) throw new Error("E2EE is not enabled. Run: aletheia sync enable-e2ee");
     if (!passphrase) throw new Error("A passphrase is required (--passphrase).");
     const current = this.db.prepare("SELECT * FROM sync_e2ee_key WHERE account_id = ? AND kid = ?").get(Number(accountId), account.current_kid);
+    const params = parse(current.params, DEFAULT_KDF);
     try {
-      unwrapKey(parse(current.wrapped_key, null), deriveKek(passphrase, current.salt));
+      unwrapKey(parse(current.wrapped_key, null), deriveKek(passphrase, current.salt, params));
     } catch {
       throw new Error("Wrong passphrase.");
     }
     const kid = account.current_kid + 1;
     const dataKey = randomKey(32);
     const salt = randomBytes(16).toString("base64");
-    const wrapped = wrapKey(dataKey, deriveKek(passphrase, salt));
+    const wrapped = wrapKey(dataKey, deriveKek(passphrase, salt, DEFAULT_KDF));
     this.db.prepare("INSERT INTO sync_e2ee_key (account_id, kid, salt, wrapped_key, kdf, params, created_at) VALUES (?,?,?,?,?,?,?)")
-      .run(Number(accountId), kid, salt, stableStringify(wrapped), KDF.name, stableStringify(KDF), Date.now());
+      .run(Number(accountId), kid, salt, stableStringify(wrapped), DEFAULT_KDF.name, stableStringify(DEFAULT_KDF), Date.now());
     this.db.prepare("UPDATE sync_account SET current_kid = ? WHERE id = ?").run(kid, Number(accountId));
     this.audit(accountId, { action: "e2ee.rotate", result: "ok", detail: { kid } });
     return { kid };
@@ -497,7 +498,7 @@ export class SyncStore {
     const keys = this.db.prepare("SELECT * FROM sync_e2ee_key WHERE account_id = ? ORDER BY kid").all(Number(accountId));
     const current = keys.find((row) => row.kid === account.current_kid);
     try {
-      unwrapKey(parse(current.wrapped_key, null), deriveKek(oldPassphrase, current.salt));
+      unwrapKey(parse(current.wrapped_key, null), deriveKek(oldPassphrase, current.salt, parse(current.params, DEFAULT_KDF)));
     } catch {
       throw new Error("Wrong passphrase.");
     }
@@ -505,9 +506,10 @@ export class SyncStore {
     this.db.exec("BEGIN IMMEDIATE");
     try {
       for (const row of keys) {
-        const dataKey = unwrapKey(parse(row.wrapped_key, null), deriveKek(oldPassphrase, row.salt));
+        const params = parse(row.params, DEFAULT_KDF);
+        const dataKey = unwrapKey(parse(row.wrapped_key, null), deriveKek(oldPassphrase, row.salt, params));
         const salt = randomBytes(16).toString("base64");
-        update.run(salt, stableStringify(wrapKey(dataKey, deriveKek(newPassphrase, salt))), Number(accountId), row.kid);
+        update.run(salt, stableStringify(wrapKey(dataKey, deriveKek(newPassphrase, salt, params))), Number(accountId), row.kid);
       }
       this.db.exec("COMMIT");
     } catch (error) {
@@ -516,6 +518,37 @@ export class SyncStore {
     }
     this.audit(accountId, { action: "e2ee.change_passphrase", result: "ok", detail: { keys: keys.map((row) => row.kid) } });
     return { keys: keys.map((row) => row.kid) };
+  }
+
+  /** Re-wrap every data key under the current KDF (OWASP minimum). Never touches op ciphertext. */
+  upgradeE2eeKdf(accountId, { passphrase } = {}) {
+    const account = this.accountById(accountId);
+    if (!account.e2ee) throw new Error("E2EE is not enabled. Run: aletheia sync enable-e2ee");
+    if (!passphrase) throw new Error("A passphrase is required (--passphrase).");
+    const keys = this.db.prepare("SELECT * FROM sync_e2ee_key WHERE account_id = ? ORDER BY kid").all(Number(accountId));
+    const current = keys.find((row) => row.kid === account.current_kid);
+    try {
+      unwrapKey(parse(current.wrapped_key, null), deriveKek(passphrase, current.salt, parse(current.params, DEFAULT_KDF)));
+    } catch {
+      throw new Error("Wrong passphrase.");
+    }
+    const update = this.db.prepare("UPDATE sync_e2ee_key SET salt = ?, wrapped_key = ?, kdf = ?, params = ? WHERE account_id = ? AND kid = ?");
+    const upgraded = [];
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      for (const row of keys) {
+        const dataKey = unwrapKey(parse(row.wrapped_key, null), deriveKek(passphrase, row.salt, parse(row.params, DEFAULT_KDF)));
+        const salt = randomBytes(16).toString("base64");
+        update.run(salt, stableStringify(wrapKey(dataKey, deriveKek(passphrase, salt, DEFAULT_KDF))), DEFAULT_KDF.name, stableStringify(DEFAULT_KDF), Number(accountId), row.kid);
+        upgraded.push(row.kid);
+      }
+      this.db.exec("COMMIT");
+    } catch (error) {
+      try { this.db.exec("ROLLBACK"); } catch { /* ignore */ }
+      throw error;
+    }
+    this.audit(accountId, { action: "e2ee.upgrade_kdf", result: "ok", detail: { keys: upgraded } });
+    return { upgraded };
   }
 
   /** Count the plaintext bodies still on the server. */
@@ -546,7 +579,7 @@ export class SyncStore {
     const current = this.db.prepare("SELECT * FROM sync_e2ee_key WHERE account_id = ? AND kid = ?").get(Number(accountId), account.current_kid);
     let dataKey;
     try {
-      dataKey = unwrapKey(parse(current.wrapped_key, null), deriveKek(passphrase, current.salt));
+      dataKey = unwrapKey(parse(current.wrapped_key, null), deriveKek(passphrase, current.salt, parse(current.params, DEFAULT_KDF)));
     } catch {
       throw new Error("Wrong passphrase.");
     }

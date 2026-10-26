@@ -5,7 +5,7 @@
 `public/` is the original's production build, copied unchanged from
 `claude-mem/15.2.0/ui/work-view/`: `index.html`, `assets/index-s8vzksbN.js` (798 KB, React + Vite, minified, no
 source map), `assets/index-C6x466ZD.css`, a lazily loaded `setup-page-*.js` chunk, fonts (Geist, Hanken
-Grotesk), three images, `favicon.svg`, `icons.svg`. The clone serves these byte for byte. The decision not to
+Grotesk), three images, `favicon.png` (was `favicon.svg` until 2026-10-27), `icons.svg`. The clone serves these byte for byte. The decision not to
 rewrite the UI is deliberate: the original source is not shipped, the bundle is Apache-2.0, and it already
 speaks the API in [03-http-api.md](03-http-api.md).
 

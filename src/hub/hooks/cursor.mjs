@@ -37,7 +37,7 @@ export const cursor = {
     if (name === "beforeSubmitPrompt") return { memory: promptMemory(payload.prompt, base), compress: null };
     if (name === "postToolUse") return { memory: toolMemory({ name: payload.tool_name, input: payload.tool_input, response: payload.tool_output }, base), compress: null };
     if (name === "afterAgentResponse") return { memory: summaryMemory(payload.text, base), compress: null };
-    if (name === "stop" || name === "sessionEnd") return { memory: null, compress: { project: base.project, sessionId: base.sessionId } };
+    if (name === "stop" || name === "sessionEnd") return { memory: null, compress: { project: base.project, sessionId: base.sessionId }, sessionEnd: { project: base.project, sessionId: base.sessionId } };
     return { memory: null, compress: null };
   },
 

@@ -62,6 +62,24 @@ describe("T-143: the Work overview view", () => {
     expect(view.sourceFacts[0]).toMatchObject({ id: 7, sourceLabel: "episode #12 · memory:4", importanceLabel: "0.83 (confidence)" });
   });
 
+  test("a long prompt is truncated in the card and keeps the full text for expansion", () => {
+    const long = "x".repeat(320);
+    const view = sessionCardView({ ...session, lastPrompt: { text: long, at: "2026-10-26T09:55:00.000Z" } });
+    expect(view.lastPromptTruncated).toBe(true);
+    expect(view.lastPrompt.length).toBeLessThanOrEqual(201);
+    expect(view.lastPrompt.endsWith("…")).toBe(true);
+    expect(view.lastPromptFull).toBe(long);
+    const short = sessionCardView(session);
+    expect(short.lastPromptTruncated).toBe(false);
+    expect(short.lastPrompt).toContain("retry button");
+  });
+
+  test("the card labels whether a session-end event or the heuristic decided the end", () => {
+    expect(sessionCardView({ ...session, state: "finished", endedBy: "event" }).stateDetail).toBe("session-end event");
+    expect(sessionCardView({ ...session, state: "finished", endedBy: "heuristic" }).stateDetail).toBe("5-minute quiet");
+    expect(sessionCardView({ ...session, state: "in_progress", endedBy: "heuristic" }).stateDetail).toBeNull();
+  });
+
   test("needs-you has review, rule and dismissed items with actions", () => {
     const needs = workNeedsView(data);
     expect(needs.map((item) => item.kind)).toEqual(["review", "rule", "dismissed"]);

@@ -48,17 +48,23 @@ export function workEmptyView(data = {}) {
 
 export function sessionCardView(session = {}) {
   const facts = Array.isArray(session.sourceFacts) ? session.sourceFacts : [];
+  const promptFull = session.lastPrompt?.text ? oneLine(session.lastPrompt.text, 500) : "";
+  const promptShort = promptFull.length > 200 ? `${promptFull.slice(0, 200)}…` : promptFull;
+  const endedBy = session.state === "in_progress" ? null : (session.endedBy === "event" ? "session-end event" : "5-minute quiet");
   return {
     id: session.id,
     project: session.project ?? "default",
     href: session.href ?? `#/work/session/${encodeURIComponent(session.id ?? "")}?project=${encodeURIComponent(session.project ?? "default")}`,
     state: session.state === "in_progress" ? "in_progress" : "finished",
     stateLabel: session.state === "in_progress" ? "In progress" : "Finished",
+    stateDetail: endedBy,
     lastAt: formatWhen(session.lastAt),
     promptLabel: `${session.promptCount ?? 0} prompt${session.promptCount === 1 ? "" : "s"}`,
     toolLabel: `${session.toolCount ?? 0} tool event${session.toolCount === 1 ? "" : "s"}`,
     tool: session.tool ?? "unknown",
-    lastPrompt: session.lastPrompt?.text ? oneLine(session.lastPrompt.text, 500) : "No typed prompt captured.",
+    lastPrompt: promptShort || "No typed prompt captured.",
+    lastPromptFull: promptFull,
+    lastPromptTruncated: promptFull.length > 200,
     lastPromptAt: session.lastPrompt?.at ? formatWhen(session.lastPrompt.at) : null,
     summary: session.summary?.text ? oneLine(session.summary.text, 900) : "No summary yet.",
     summaryAt: session.summary?.at ? formatWhen(session.summary.at) : null,

@@ -61,7 +61,7 @@ export function findTranscripts(tool, { home, since = null } = {}) {
       return { file, mtimeMs };
     })
     .filter((row) => !since || row.mtimeMs >= since);
-  return filtered.sort((a, b) => b.mtimeMs - a.mtimeMs);
+  return filtered.sort((a, b) => b.mtimeMs - a.mtimeMs || a.file.localeCompare(b.file));
 }
 
 const textOf = (content) => {
@@ -160,12 +160,13 @@ export function importTranscripts(store, { tool, home, since = null, dryRun = fa
     counts.malformed += parsed.malformed;
     if (!parsed.episodes.length) continue;
     const project = parsed.project ?? basename(dirname(file)) ?? "default";
-    let wrote = 0;
+    let inScope = false;
     for (const episode of parsed.episodes.slice(0, Math.max(1, Number(limit) || 20_000))) {
       if (since && episode.createdAtEpoch < since) {
         counts.skipped++;
         continue;
       }
+      inScope = true;
       const sourceRef = `transcript:${tool}:${parsed.sessionId}:${episode.turnIndex}`;
       const contentHash = episodeHash(project, episode.text);
       if (dryRun) {
@@ -174,19 +175,17 @@ export function importTranscripts(store, { tool, home, since = null, dryRun = fa
         } else {
           seenInRun.add(contentHash);
           counts.added++;
-          wrote++;
         }
         continue;
       }
       const result = store.addEpisode({ project, tool, sessionId: parsed.sessionId, turnIndex: episode.turnIndex, role: episode.role, kind: episode.kind, text: episode.text, sourceRef, contentHash, createdAtEpoch: episode.createdAtEpoch });
       if (result.created) {
         counts.added++;
-        wrote++;
       } else {
         counts.skipped++;
       }
     }
-    if (wrote) {
+    if (inScope) {
       counts.sessions++;
       const key = `${project}\n${parsed.sessionId}`;
       if (!queued.has(key)) {

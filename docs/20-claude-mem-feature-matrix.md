@@ -207,7 +207,7 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 
 | ID | Feature | What it does (one sentence) | Source | Paid or free | Aletheia status | Gap task |
 |---|---|---|---|---|---|---|
-| F-P01 | Logo and wordmark | Ships light and dark logo variants in the docs assets. | `docs/public/` (repo tree) | Free | **missing**. A favicon exists (`site/favicon.svg`); no README logo. | T-083 |
+| F-P01 | Logo and wordmark | Ships light and dark logo variants in the docs assets. | `docs/public/` (repo tree) | Free | **parity (2026-10-27 correction)**. README logo, brain mark, favicons and a 1280x640 social card exist (`docs/assets/`, `site/`). The earlier text said "missing"; no light and dark variants yet. | T-083 |
 | F-P02 | README badges | Shows licence, version, Node version and two third-party awards. | `README.md` (repo tree) | Free | **partial**. No badges at all (`README.md`). | T-079 |
 | F-P03 | README translations | Ships 32 translated READMEs under `docs/i18n/`. | `docs/i18n/` (repo tree) | Free | **missing**. English only. | T-088 |
 | F-P04 | Language switcher | Puts a 32-language switcher under the logo. | `README.md` (repo tree) | Free | **missing**. | T-088 |

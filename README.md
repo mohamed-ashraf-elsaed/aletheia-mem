@@ -1,4 +1,4 @@
-<p align="center"><img src="docs/assets/logo.svg" alt="Aletheia" width="220"></p>
+<p align="center"><img src="docs/assets/logo.png" alt="Aletheia: a network brain with a stack of memory layers" width="320"></p>
 
 # Aletheia
 

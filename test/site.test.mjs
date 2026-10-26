@@ -80,7 +80,7 @@ describe("docs site", () => {
     const text = read(join(site, "index.html"));
     expect(text).toContain('"@type":"FAQPage"');
     expect(text).toContain('href="docs/"');
-    expect(text).toContain("assets/logo.svg");
+    expect(text).toContain("assets/mark.png");
   });
 
   test("robots.txt points at the generated sitemap", () => {

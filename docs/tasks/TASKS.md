@@ -145,7 +145,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-102 | Build Aletheia Sync: a replicated log with per-operation results | P6 | T-017 | validated | 2026-10-26 | [T-102.md](T-102.md) |
 | T-103 | Add tombstones, compaction and purge to sync | P6 | T-102 | validated | 2026-10-26 | [T-103.md](T-103.md) |
 | T-104 | Add device pairing, device tokens and revoke | P6 | T-102 | validated | 2026-10-26 | [T-104.md](T-104.md) |
-| T-105 | Add live update frames over WebSocket | P6 | T-102 | todo | — | [T-105.md](T-105.md) |
+| T-105 | Add live update frames over WebSocket | P6 | T-102 | validated | 2026-10-26 | [T-105.md](T-105.md) |
 | T-106 | Run hosted-style extraction as a server-side worker | P6 | T-020 | todo | — | [T-106.md](T-106.md) |
 | T-107 | Serve a private remote MCP endpoint | P6 | T-067, T-104 | validated | 2026-10-26 | [T-107.md](T-107.md) |
 | T-108 | Add scoped API tokens, quotas and an audit log | P6 | T-102 | validated | 2026-10-26 | [T-108.md](T-108.md) |
@@ -183,3 +183,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-145 | Add the read-only session page | P6 | T-143 | validated | 2026-10-26 | [T-145.md](T-145.md) |
 | T-146 | Retire the iframe and offer the classic viewer from Tools | P6 | T-143 | validated | 2026-10-26 | [T-146.md](T-146.md) |
 | T-147 | Test the Work view and guard the old branding | P6 | T-142, T-143, T-144, T-145, T-146 | validated | 2026-10-26 | [T-147.md](T-147.md) |
+| T-148 | Fix the transcript back-fill CI flake | P6 | T-121 | validated | 2026-10-26 | [T-148.md](T-148.md) |
+| T-149 | Raise the sync E2EE scrypt cost to the OWASP minimum | P6 | T-117 | validated | 2026-10-26 | [T-149.md](T-149.md) |
+| T-150 | Work tab polish (prompts, session-end, goals, 375px) | P6 | T-143, T-144 | validated | 2026-10-26 | [T-150.md](T-150.md) |
+| T-151 | Add an auto-start service (systemd user unit and launchd plist) | P3 | none | validated | 2026-10-26 | [T-151.md](T-151.md) |
