@@ -32,7 +32,7 @@ export const geminiCli = {
     if (name === "BeforeAgent") return { memory: promptMemory(payload.prompt, base), compress: null };
     if (name === "AfterTool") return { memory: toolMemory({ name: payload.tool_name, input: payload.tool_input, response: payload.tool_response }, base), compress: null };
     if (name === "AfterAgent") return { memory: summaryMemory(payload.prompt_response, base), compress: { project: base.project, sessionId: base.sessionId } };
-    if (name === "SessionEnd") return { memory: null, compress: { project: base.project, sessionId: base.sessionId } };
+    if (name === "SessionEnd") return { memory: null, compress: { project: base.project, sessionId: base.sessionId }, sessionEnd: { project: base.project, sessionId: base.sessionId } };
     return { memory: null, compress: null };
   },
 

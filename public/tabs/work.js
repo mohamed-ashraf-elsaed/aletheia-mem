@@ -67,6 +67,20 @@ function factLine(fact) {
     view.sourceText ? h("details", { class: "ui-details" }, h("summary", {}, "Show source text"), h("div", { class: "ui-fact-source" }, view.sourceText)) : null);
 }
 
+function promptParagraph(view) {
+  if (!view.lastPromptTruncated) return h("p", { class: "ui-fact-text" }, view.lastPrompt);
+  const p = h("p", { class: "ui-fact-text" });
+  p.textContent = view.lastPrompt;
+  p.dataset.expanded = "0";
+  const btn = h("button", { class: "ui-more", onclick: () => {
+    const expanded = p.dataset.expanded === "1";
+    p.textContent = expanded ? view.lastPrompt : view.lastPromptFull;
+    p.dataset.expanded = expanded ? "0" : "1";
+    btn.textContent = expanded ? "Show more" : "Show less";
+  } }, "Show more");
+  return h("div", { class: "ui-prompt" }, p, btn);
+}
+
 function sessionCard(session) {
   const view = sessionCardView(session);
   return h("article", { class: "ui-card ui-session" },
@@ -74,9 +88,9 @@ function sessionCard(session) {
       h("a", { class: "ui-work-link", href: view.href }, h("b", {}, `${view.project} · ${view.id}`)),
       chip(view.stateLabel, view.state === "in_progress" ? "ok" : ""),
       chip(view.tool)),
-    h("div", { class: "ui-meta" }, `last event ${view.lastAt}`, view.promptLabel, view.toolLabel),
+    h("div", { class: "ui-meta" }, `last event ${view.lastAt}`, view.stateDetail ? `ended by ${view.stateDetail}` : null, view.promptLabel, view.toolLabel),
     h("div", { class: "ui-meta" }, "last typed prompt", view.lastPromptAt ? `· ${view.lastPromptAt}` : ""),
-    h("p", { class: "ui-fact-text" }, view.lastPrompt),
+    promptParagraph(view),
     h("div", { class: "ui-meta" }, "summary", view.summaryAt ? `· ${view.summaryAt}` : ""),
     h("p", { class: "ui-fact-text" }, view.summary),
     view.sourceFacts.length

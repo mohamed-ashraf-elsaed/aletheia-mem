@@ -53,13 +53,14 @@ export async function runHook({ tool, event, stdin, config, dataDir } = {}) {
     try {
       if (item.memory) spoolAppend(dir, { kind: "memory", memory: item.memory, at: Date.now() });
       if (item.compress) spoolAppend(dir, { kind: "compress", ...item.compress, at: Date.now() });
+      if (item.sessionEnd) spoolAppend(dir, { kind: "sessionEnd", ...item.sessionEnd, source: name, at: Date.now() });
     } catch {
       // A broken spool is still not the session's problem.
     }
   };
 
-  // No memory, no compression and no context: skip the database entirely.
-  if (!item.memory && !item.compress && !/^sessionstart$/i.test(name)) return { ...fallback, stored: false, queued: false, flushed: 0 };
+  // No memory, no compression, no session end and no context: skip the database entirely.
+  if (!item.memory && !item.compress && !item.sessionEnd && !/^sessionstart$/i.test(name)) return { ...fallback, stored: false, queued: false, ended: false, flushed: 0 };
 
   let store = null;
   try {
@@ -83,9 +84,11 @@ export async function runHook({ tool, event, stdin, config, dataDir } = {}) {
 
   let stored = false;
   let queued = false;
+  let ended = false;
   try {
     if (item.memory) stored = store.add(item.memory, { actor: item.memory.tool ?? "hook", audit: false }).created;
     if (item.compress) queued = enqueueCompression(store, item.compress);
+    if (item.sessionEnd) ended = store.markSessionEnded(item.sessionEnd.project, item.sessionEnd.sessionId, { source: name, now: Date.now() });
   } catch {
     spool();
   }
@@ -101,5 +104,5 @@ export async function runHook({ tool, event, stdin, config, dataDir } = {}) {
   } catch {
     // ignore
   }
-  return { ...fallback, stdout, stored, queued, flushed };
+  return { ...fallback, stdout, stored, queued, ended, flushed };
 }

@@ -173,6 +173,8 @@ export function flushSpool(store, dataDir) {
           store.add(item.memory, { actor: item.memory.tool ?? "hook", audit: false });
         } else if (item.kind === "compress") {
           enqueueCompression(store, item);
+        } else if (item.kind === "sessionEnd") {
+          store.markSessionEnded(item.project, item.sessionId, { source: item.source ?? "hook", now: item.at ?? Date.now() });
         } else {
           continue;
         }

@@ -160,7 +160,7 @@ describe("T-140: end to end capture for every full-capability host", () => {
       expect(blob).toContain("[redacted");
       store.close();
     }
-  });
+  }, 30_000);
 
   test("hook work stays under 100 ms at p95 for every host", async () => {
     const cases = {

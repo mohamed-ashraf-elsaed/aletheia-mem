@@ -185,3 +185,4 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-147 | Test the Work view and guard the old branding | P6 | T-142, T-143, T-144, T-145, T-146 | validated | 2026-10-26 | [T-147.md](T-147.md) |
 | T-148 | Fix the transcript back-fill CI flake | P6 | T-121 | validated | 2026-10-26 | [T-148.md](T-148.md) |
 | T-149 | Raise the sync E2EE scrypt cost to the OWASP minimum | P6 | T-117 | validated | 2026-10-26 | [T-149.md](T-149.md) |
+| T-150 | Work tab polish (prompts, session-end, goals, 375px) | P6 | T-143, T-144 | validated | 2026-10-26 | [T-150.md](T-150.md) |

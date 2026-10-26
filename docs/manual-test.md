@@ -151,9 +151,11 @@ Playwright MCP browser. Observed:
 - `prefers-color-scheme: dark` was emulated; the page stayed readable and the shell colours switched.
 
 **NOT RUN BY AUTHOR:** a person should still check the Work tab at 375 px width, with a keyboard only (Tab through
-the header, open each tab, open a details block, pin and restore a goal), and with a real live capture over more
-than 10 seconds to see the refresh. The automated run proves the scripts load and the DOM is reachable; it does not
-assert pixel layout or the timer under a real host.
+the header, open each tab, open a details block, pin and restore a goal, expand a truncated prompt with "Show more"),
+and with a real live capture over more than 10 seconds to see the refresh. At 375 px confirm the page does not scroll
+horizontally and every button, tab link, select, search box and details summary is at least 40 px tall to tap. The
+automated run proves the scripts load and the DOM is reachable; it does not assert pixel layout or the timer under a
+real host.
 
 ### Work view steps (RUN BY AUTHOR, 2026-10-26)
 

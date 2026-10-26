@@ -32,7 +32,7 @@ export const commandCode = {
     const name = canonicalEvent(event);
     const base = { project: projectOf(payload), tool: "command-code", sessionId: payload.session_id ?? payload.sessionId ?? null };
     if (name === "PostToolUse") return { memory: toolMemory({ name: payload.tool_name, display: payload.tool_display_name, input: payload.tool_input, response: payload.tool_response }, base), compress: null };
-    if (name === "Stop") return { memory: null, compress: { project: base.project, sessionId: base.sessionId } };
+    if (name === "Stop") return { memory: null, compress: { project: base.project, sessionId: base.sessionId }, sessionEnd: { project: base.project, sessionId: base.sessionId } };
     return { memory: null, compress: null };
   },
 

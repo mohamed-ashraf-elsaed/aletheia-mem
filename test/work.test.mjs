@@ -87,6 +87,18 @@ describe("T-142: the Work query layer", () => {
     store.close();
   });
 
+  test("a real session-end event wins over the 5-minute heuristic and is labelled", () => {
+    const store = new HubStore(":memory:");
+    store.add({ project: "shop", kind: "prompt", type: "note", title: "Fix login", narrative: "Fix login", sessionId: "sx", tool: "claude-code", createdAtEpoch: at(1) });
+    const heuristic = workOverview(store, { project: "shop", now: NOW, activeMinutes: 5, windowHours: 24 });
+    expect(heuristic.sessions[0]).toMatchObject({ id: "sx", state: "in_progress", endedBy: "heuristic" });
+
+    store.markSessionEnded("shop", "sx", { source: "SessionEnd", now: NOW });
+    const event = workOverview(store, { project: "shop", now: NOW, activeMinutes: 5, windowHours: 24 });
+    expect(event.sessions[0]).toMatchObject({ id: "sx", state: "finished", endedBy: "event", endedAt: new Date(NOW).toISOString() });
+    store.close();
+  });
+
   test("facts, pinned items, review, queue, dismissals and last capture all come from rows", () => {
     const store = new HubStore(join(fx.dir, "work.db"));
     const data = workOverview(store, { project: "shop", now: NOW, dismissedHours: 24 });
