@@ -576,3 +576,13 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | https://modelcontextprotocol.io/specification/2025-03-26/basic/transports | MCP Streamable HTTP rules used for T-067: single endpoint for POST and GET, Accept header, Origin validation, Mcp-Session-Id, 202-for-notifications, 405-when-no-SSE, batch handling |
 | 2026-10-26 | https://docs.claude.com/en/docs/claude-code/mcp (redirected to https://code.claude.com/docs/en/mcp) | Claude Code remote MCP syntax for T-107: `claude mcp add --transport http <name> <url> --header "Authorization: Bearer <token>"` and the `mcpServers` JSON shape with `type: http`, `url`, `headers` |
 | 2026-10-26 | https://modelcontextprotocol.io/quickstart/user and https://modelcontextprotocol.io/docs/develop/connect-remote-servers | Claude Desktop MCP config (`claude_desktop_config.json`, `mcpServers`) and remote-server connection flow; used for the T-107 client snippets (Desktop snippet config-written-from-docs, not tested on a real install) |
+
+## C. Plugin and extension manifests (T-066)
+
+| Date | URL | What it gave |
+|---|---|---|
+| 2026-10-26 | https://code.claude.com/docs/en/plugins/manifest-reference | `.claude-plugin/plugin.json`, required `name`, metadata fields, inline `mcpServers` shape, inline `hooks` shape, `${CLAUDE_PLUGIN_ROOT}` in `args` and hook commands, path rules |
+| 2026-10-26 | https://developers.openai.com/plugins/build/plugins | Codex portable root `plugin.json`, `.codex-plugin/plugin.json` as a supported compatibility fallback, `hooks` allowed directly in the compatibility manifest, `${PLUGIN_ROOT}`; no field table for the compatibility manifest and no local `.mcp.json` server shape |
+| 2026-10-26 | https://docs.qoder.com/cli/plugins-reference | `.qoder-plugin/plugin.json`, required `name`, optional metadata fields, `mcpServers`/`hooks` component fields; no plugin-root path variable documented |
+| 2026-10-26 | https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/extensions/reference.md | `gemini-extension.json`, `name`, `version`, `description`, `mcpServers`, `cwd`, `${extensionPath}`; hooks live in `hooks/hooks.json`, not the manifest |
+| 2026-10-26 | https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/extensions/index.md | extension install/manage commands and the extension gallery link |

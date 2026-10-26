@@ -62,6 +62,10 @@ These are not `UNVERIFIED` facts about other projects; they are claims this proj
 | 40 | Claude Desktop on Linux | `~/.config/Claude/claude_desktop_config.json` exists here, but the MCP quickstart names only macOS and Windows | Official Linux documentation or a Linux Desktop build |
 | 41 | Real tool read of the rules files | Every rules target was checked against its docs and written in temp folders; no tool was opened to confirm it loaded the rule (T-070) | Open each tool and read the active rules (manual-test section 7) |
 | 42 | Windsurf/Devin path stability | The docs now call the product Devin Desktop while the user hook path stays `~/.codeium/windsurf`; the MCP path moved to `~/.config/devin` | Re-fetch the docs after a release and test both MCP paths |
+| 43 | Codex `.codex-plugin/plugin.json` full field schema | The official page (fetched 2026-10-26) names the path as a supported compatibility fallback and says `hooks` may be declared there, but it gives no field table for that manifest and no local `.mcp.json` server shape. The manifest uses only `name`, `version`, `description` and `hooks` (T-066) | Run `codex plugin validate` on `.codex-plugin/` and read the validator's output |
+| 44 | Qoder plugin-root path variable for a local MCP command | The official page (fetched 2026-10-26) documents `mcpServers` and `hooks` fields but no `${...}` variable for the plugin root, so the Qoder manifest claims metadata only (T-066) | Read Qoder's local-command docs or run `qoder plugins validate` on the manifest and a test plugin |
+| 45 | Every plugin manifest loaded by its host | All four manifests are labelled `from-docs-only`; `test/manifests.test.mjs` parses them and resolves their paths, but no host was opened (T-066) | Install or link each manifest in its host and read the plugin list; run one session |
+| 46 | The Claude Code plugin hook trust flow | The manifest declares `SessionStart` and `Stop` commands, but Claude Code has not been asked to load or trust this plugin (T-066) | Open Claude Code, install the plugin, approve the hooks, run one session |
 
 ## Memory-building measurements (2026-10-26)
 

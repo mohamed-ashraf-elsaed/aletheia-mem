@@ -217,6 +217,33 @@ are both drift, each with the file and line or the rule id. Each finding has a f
 The check is a warning, not a gate: `rules sync` still runs. `--json` returns `{findings, checked}`. A file
 without the managed-block markers is skipped, so a user's own CLAUDE.md/AGENTS.md text is never compared.
 
+## Plugin manifests
+
+Written 2026-10-26 from the official pages below. Every manifest carries `"x-aletheia-verification":
+"from-docs-only"`: it was parsed and its paths were resolved against this package, but no host was opened to
+load it. `test/manifests.test.mjs` checks the JSON, the paths and the hook commands.
+
+| Host | File | What it declares | Source (fetched 2026-10-26) |
+|---|---|---|---|
+| Claude Code | `.claude-plugin/plugin.json` | metadata, an inline `mcpServers.aletheia` (`bun ${CLAUDE_PLUGIN_ROOT}/bin/mcp.mjs`), `SessionStart` and `Stop` hooks running `bin/aletheia.mjs hook claude-code ...` | <https://code.claude.com/docs/en/plugins/manifest-reference> |
+| Codex | `.codex-plugin/plugin.json` | metadata and `SessionStart`/`Stop` hooks running `bin/aletheia.mjs hook codex ...` | <https://developers.openai.com/plugins/build/plugins> |
+| Qoder | `.qoder-plugin/plugin.json` | metadata only | <https://docs.qoder.com/cli/plugins-reference> |
+| Gemini CLI | `gemini-extension.json` | metadata and an `mcpServers.aletheia` entry using `${extensionPath}/bin/mcp.mjs` and `cwd: ${extensionPath}` | <https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/extensions/reference.md> |
+
+What was not written, and why:
+
+- **Codex MCP entry**: the official page says the compatibility layout can use a root `.mcp.json` and that
+  `.codex-plugin/plugin.json` remains supported, but it does not give the field table for the compatibility
+  manifest or the local `.mcp.json` server shape. Only the hook field, which the page names explicitly, is
+  written. The full compatibility schema is UNVERIFIED.
+- **Qoder components**: the page documents `mcpServers` and `hooks` as manifest fields, but not a variable for
+  the plugin root. A relative command would resolve against an unknown working directory, so no component is
+  claimed. The metadata shape is verified.
+- **Gemini hooks**: the reference says hooks live in `hooks/hooks.json` and are not in the manifest. No
+  extension hook file is shipped; the existing installers write the host's own hook files.
+
+No manifest claims a hook whose script is missing, and no path escapes the package.
+
 ## End-to-end test
 
 `test/e2e-more-hosts.test.mjs` installs all six full-capability hosts into a temp HOME, reads the command back
