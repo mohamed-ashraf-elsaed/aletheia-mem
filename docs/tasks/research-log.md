@@ -262,3 +262,37 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | https://r.jina.ai/https://docs.github.com/en/copilot/how-tos/use-copilot-agents/coding-agent/use-agent-memories | proxy returned a 404 page; Copilot memory remains UNVERIFIED |
 | 2026-10-26 | https://r.jina.ai/https://support.google.com/gemini/answer/16275805 | proxy returned the Gemini limits page, not a memory page; Gemini memory remains UNVERIFIED |
 | 2026-10-26 | https://docs.cursor.com/llms-full.txt | returned HTML, not a text index; Cursor memory specifics remain UNVERIFIED |
+
+## F. Fetches for the experiment plan (document 22)
+
+| Date | URL | What it gave |
+|---|---|---|
+| 2026-10-26 | https://huggingface.co/api/models/BAAI/bge-small-en-v1.5 | 33,360,512 parameters, MIT |
+| 2026-10-26 | https://huggingface.co/api/models/BAAI/bge-base-en-v1.5 | 109,482,752 parameters, MIT |
+| 2026-10-26 | https://huggingface.co/api/models/BAAI/bge-large-en-v1.5 | 335,142,400 parameters, MIT |
+| 2026-10-26 | https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 | 22,713,728 parameters, Apache-2.0 |
+| 2026-10-26 | https://huggingface.co/api/models/intfloat/e5-small-v2 | 33,360,512 parameters, MIT |
+| 2026-10-26 | https://huggingface.co/api/models/intfloat/e5-base-v2 | 109,482,752 parameters, MIT |
+| 2026-10-26 | https://huggingface.co/api/models/intfloat/multilingual-e5-small | 117,654,272 parameters, MIT |
+| 2026-10-26 | https://huggingface.co/api/models/nomic-ai/nomic-embed-text-v1.5 | 136,731,648 parameters, Apache-2.0 |
+| 2026-10-26 | https://huggingface.co/api/models/mixedbread-ai/mxbai-embed-large-v1 | 335,141,888 parameters, Apache-2.0 |
+| 2026-10-26 | https://huggingface.co/api/models/Snowflake/snowflake-arctic-embed-s | 33,212,160 parameters, Apache-2.0 |
+| 2026-10-26 | https://huggingface.co/api/models/jinaai/jina-embeddings-v3 | 572,310,396 parameters, CC-BY-NC-4.0 (non-commercial) |
+| 2026-10-26 | https://huggingface.co/api/models/cross-encoder/ms-marco-MiniLM-L-6-v2 | 22,714,113 parameters, Apache-2.0 |
+| 2026-10-26 | https://huggingface.co/api/models/cross-encoder/ms-marco-MiniLM-L-12-v2 | 33,360,897 parameters, Apache-2.0 |
+| 2026-10-26 | https://huggingface.co/api/models/BAAI/bge-reranker-base | 278,044,931 parameters, MIT |
+| 2026-10-26 | https://huggingface.co/api/models/BAAI/bge-reranker-v2-m3 | 567,755,777 parameters, Apache-2.0 |
+| 2026-10-26 | https://huggingface.co/api/models/mixedbread-ai/mxbai-rerank-large-v1 | 435,062,785 parameters, Apache-2.0 |
+| 2026-10-26 | https://huggingface.co/api/models/jinaai/jina-reranker-v2-base-multilingual | 278,437,633 parameters, CC-BY-NC-4.0 (non-commercial) |
+| 2026-10-26 | https://sqlite.org/fts5.html | FTS5 index, bm25(), optimize, prefix indexes |
+| 2026-10-26 | https://raw.githubusercontent.com/asg017/sqlite-vec/HEAD/README.md | sqlite-vec description; repository licence Apache-2.0 |
+| 2026-10-26 | https://raw.githubusercontent.com/nmslib/hnswlib/HEAD/README.md | HNSW implementation description; repository licence Apache-2.0 |
+| 2026-10-26 | https://raw.githubusercontent.com/facebookresearch/faiss/HEAD/README.md | FAISS description; repository licence MIT |
+| 2026-10-26 | https://raw.githubusercontent.com/unum-cloud/usearch/HEAD/README.md | USearch description; repository licence Apache-2.0 |
+| 2026-10-26 | https://arxiv.org/abs/1603.09320 | HNSW paper abstract (approximate nearest neighbour) |
+| 2026-10-26 | https://arxiv.org/abs/2307.03172 | Lost in the Middle abstract (position-dependent context use) |
+| 2026-10-26 | https://arxiv.org/abs/2212.10496 | HyDE abstract (hypothetical document embeddings) |
+| 2026-10-26 | https://arxiv.org/abs/2306.05685 | LLM-as-a-judge abstract (position, verbosity, self-enhancement biases) |
+| 2026-10-26 | https://www.anthropic.com/news/contextual-retrieval | contextual retrieval: 49% fewer failed retrievals, 67% with reranking |
+| 2026-10-26 | https://www.trychroma.com/research/context-rot | context rot: performance degrades as input grows; distractors hurt |
+| 2026-10-26 | https://www.sbert.net/examples/applications/retrieve_rerank/README.html | retrieve-and-rerank guide (cross-encoder reads query+document together) |

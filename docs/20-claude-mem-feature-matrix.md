@@ -42,15 +42,15 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 |---|---|---|---|---|---|---|
 | F-M01 | Observer agent | Turns queued activity into observations with an LLM. | https://docs.claude-mem.ai/architecture/overview | Free (you pay your model) | **partial**. `compress` writes observations through `claude-cli` or any OpenAI-compatible endpoint (`src/hub/compress.mjs:46`). No queue, no observer service. | T-020 |
 | F-M02 | Observation types | Classifies memory as bugfix, feature, refactor, change, discovery, decision or gotcha. | https://docs.claude-mem.ai/architecture/database | Free | **parity**. Same seven types (`src/hub/compress.mjs:9`). | — |
-| F-M03 | Session summaries | Writes a per-session request / investigated / learned / completed / next-steps record. | https://docs.claude-mem.ai/architecture/database | Free | **missing**. The importer reads summaries; nothing generates them (`src/hub/importers.mjs:36`). | T-034 |
+| F-M03 | Session summaries | Writes a per-session request / investigated / learned / completed / next-steps record. | https://docs.claude-mem.ai/architecture/database | Free | **missing**. The importer reads summaries; nothing generates them (`src/hub/importers.mjs:36`). | T-032 |
 | F-M04 | Strict output validation and retry | Rejects malformed model output and retries once with the error. | https://docs.claude-mem.ai/architecture/hooks | Free | **parity**. `validateObservations` plus one retry (`src/hub/compress.mjs:18,53`). | — |
-| F-M05 | Provider routing | Chooses Claude, Codex, Gemini, OpenRouter or OpenAI-compatible per installation. | https://docs.claude-mem.ai/configuration | Free (you pay your model) | **partial**. `none`, `claude-cli`, `openai` only (README configuration table; `src/refresh/providers.mjs`). | T-035 |
+| F-M05 | Provider routing | Chooses Claude, Codex, Gemini, OpenRouter or OpenAI-compatible per installation. | https://docs.claude-mem.ai/configuration | Free (you pay your model) | **partial**. `none`, `claude-cli`, `openai` only (README configuration table; `src/refresh/providers.mjs`). | T-034 |
 | F-M06 | Quota fallback and key pools | Switches provider when a plan is spent and rotates several API keys. | https://docs.claude-mem.ai/usage/quota-fallback | Free for the mechanism; model usage paid | **missing**. | T-036 |
-| F-M07 | Modes | Switches extraction behaviour and output language. | https://docs.claude-mem.ai/modes | Free | **missing**. | T-035 |
-| F-M08 | Mode languages | Ships 29 language modes in 35 mode files (the 29 languages plus chill, law-study, law-study--chill, email-investigation, meme-tokens, and the base code mode). | `plugin/modes/*.json` (repo tree); https://docs.claude-mem.ai/modes | Free | **missing**. English only. | T-035 |
-| F-M09 | Observation batching | Combines queued events from one prompt into a single observer request, with a character budget. | https://docs.claude-mem.ai/configuration | Free | **partial**. `compressRecent` sends up to 120 events in one prompt with no token accounting (`src/hub/compress.mjs:46`). | T-036 |
-| F-M10 | Custom Anthropic backends | Sends observer traffic through a compatible gateway or LiteLLM. | https://docs.claude-mem.ai/configuration/custom-anthropic-backends | Free for the mechanism | **partial**. An OpenAI-compatible base URL is supported; no Anthropic-shape gateway path (`README.md`, configuration). | T-035 |
-| F-M11 | Cost accounting | Shows token and dollar cost for model calls. | https://docs.claude-mem.ai/configuration | Free | **partial**. A usage log exists; no cost panel (see [15](15-product-spec.md), FR-U5). | T-016 |
+| F-M07 | Modes | Switches extraction behaviour and output language. | https://docs.claude-mem.ai/modes | Free | **missing**. | T-034 |
+| F-M08 | Mode languages | Ships 29 language modes in 35 mode files (the 29 languages plus chill, law-study, law-study--chill, email-investigation, meme-tokens, and the base code mode). | `plugin/modes/*.json` (repo tree); https://docs.claude-mem.ai/modes | Free | **missing**. English only. | T-034 |
+| F-M09 | Observation batching | Combines queued events from one prompt into a single observer request, with a character budget. | https://docs.claude-mem.ai/configuration | Free | **partial**. `compressRecent` sends up to 120 events in one prompt with no token accounting (`src/hub/compress.mjs:46`). | T-019 |
+| F-M10 | Custom Anthropic backends | Sends observer traffic through a compatible gateway or LiteLLM. | https://docs.claude-mem.ai/configuration/custom-anthropic-backends | Free for the mechanism | **partial**. An OpenAI-compatible base URL is supported; no Anthropic-shape gateway path (`README.md`, configuration). | T-034 |
+| F-M11 | Cost accounting | Shows token and dollar cost for model calls. | https://docs.claude-mem.ai/configuration | Free | **partial**. A usage log exists; no cost panel (see [15](15-product-spec.md), FR-U5). | T-019 |
 | F-M12 | Idle and overnight processing | Continues compression after a session ends and when the machine is idle. | https://docs.claude-mem.ai/architecture/worker-service | Free | **missing**. `compress` runs only when invoked. | T-020 |
 
 ## 20.3 Storage and retrieval
@@ -63,7 +63,7 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | F-S04 | Chroma vector index | Stores embeddings in a local Chroma service started through Python/uv. | https://docs.claude-mem.ai/architecture/search-architecture | Free | **partial**. Embeddings live in `memory_vectors` and are scanned in process; no Chroma, no Python (`src/hub/store.mjs:272`, `src/hub/embed.mjs:12`). | — |
 | F-S05 | Hybrid search | Blends keyword and semantic results. | https://docs.claude-mem.ai/architecture/search-architecture | Free | **parity**. BM25 + dense fused with RRF (`src/hub/store.mjs:248`; `src/hub/retrieval.mjs:77`). | — |
 | F-S06 | Optional local embeddings | Runs an ONNX embedding model on the user's machine. | https://docs.claude-mem.ai/architecture/search-architecture | Free | **better**. The package is optional and starts in-process; no second runtime (`src/hub/embed.mjs:12`). | — |
-| F-S07 | Cross-encoder rerank | Reorders the top candidates with a cross-encoder. | Not shipped in claude-mem docs read; this project added it | n/a | **better**. `ms-marco-MiniLM-L-6-v2`, optional (`src/hub/rerank.mjs:6`). Measure still missing from CI: T-054. | T-054 |
+| F-S07 | Cross-encoder rerank | Reorders the top candidates with a cross-encoder. | Not shipped in claude-mem docs read; this project added it | n/a | **better**. `ms-marco-MiniLM-L-6-v2`, optional (`src/hub/rerank.mjs:6`). Measure still missing from CI: T-054. | T-055 |
 | F-S08 | Near-duplicate detection | Detects and merges near-duplicates with TF-IDF cosine. | https://docs.claude-mem.ai/architecture/database | Free | **missing**. Only exact `(project, kind, title, narrative)` de-duplication (`src/hub/store.mjs:135`). | T-028 |
 | F-S09 | Reinforcement / ACT-R ranking | Lets re-confirmed observations climb the context window. | https://docs.claude-mem.ai/configuration | Free | **missing**. | T-030 |
 | F-S10 | Project merge | Merges one project into another, keeping the destination. | https://docs.claude-mem.ai/usage/my-work | Free | **parity**. `mergeProjects` re-hashes and drops duplicates (`src/hub/store.mjs:316`). | — |
@@ -71,7 +71,7 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | F-S12 | Search filters | Filter by project, record type, observation type, name, date range and order. | https://docs.claude-mem.ai/usage/search-tools | Free | **partial**. Project, kind, type, tool; no date range or `orderBy` (`src/hub/store.mjs:208`). | T-008 |
 | F-S13 | Pagination | Offset and limit on search results. | https://docs.claude-mem.ai/usage/search-tools | Free | **partial**. `list` paginates; `search` has only a limit (`src/hub/store.mjs:185,208`). | T-008 |
 | F-S14 | Dumb search | One-call title match, explicitly less reliable than the three-step flow. | https://docs.claude-mem.ai/usage/search-tools | Free | **missing**. | — |
-| F-S15 | Search by file | Finds observations that touched a given file. | https://docs.claude-mem.ai/usage/search-tools | Free | **missing**. `files` is stored but not indexed (`src/hub/store.mjs:40`). | T-004 |
+| F-S15 | Search by file | Finds observations that touched a given file. | https://docs.claude-mem.ai/usage/search-tools | Free | **missing**. `files` is stored but not indexed (`src/hub/store.mjs:40`). | T-036 |
 | F-S16 | Semantic prompt injection | Adds prompt-relevant observations at UserPromptSubmit. | https://docs.claude-mem.ai/configuration | Free | **missing**. | T-044 |
 | F-S17 | Recency window | Excludes date-less semantic matches older than N days. | https://docs.claude-mem.ai/configuration | Free | **missing**. | T-043 |
 | F-S18 | Vector scale strategy | Handles large vector collections through Chroma's index. | https://docs.claude-mem.ai/architecture/search-architecture | Free | **partial**. Brute-force cosine over all vectors (`src/hub/retrieval.mjs:57`); 50k-row result in [14](14-research-ai-memory.md#146-measured-results). | T-047 |
@@ -79,7 +79,7 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | F-S20 | Bulk import and export | Moves memory in and out in a documented format. | https://docs.claude-mem.ai/usage/export-import | Free | **better**. JSONL bundle, Markdown export, claude-mem import (`src/hub/store.mjs:431,492`; `src/hub/importers.mjs:14`). | — |
 | F-S21 | Import safety | Validates the export before applying it. | https://docs.claude-mem.ai/usage/export-import | Free | **parity**. Manifest and version check, per-line errors, transaction (`src/hub/store.mjs:454`). | — |
 | F-S22 | Data deletion | Deletes a memory and its derived rows. | https://docs.claude-mem.ai/hosted-server | Free local / paid hosted | **parity**. `remove` deletes the row and cascades vectors (`src/hub/store.mjs:178`). | — |
-| F-S23 | Tombstones for sync | Keeps deletion records so devices converge. | https://docs.claude-mem.ai/cloud-sync | Paid | **out-of-scope** for local v1; needed for P5. | T-081 |
+| F-S23 | Tombstones for sync | Keeps deletion records so devices converge. | https://docs.claude-mem.ai/cloud-sync | Paid | **out-of-scope** for local v1; needed for P5. | T-095 |
 
 ## 20.4 Context injection
 
@@ -97,7 +97,7 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | F-X10 | Smart outline / search / unfold | Gives the agent a tree-sitter outline, targeted search and unfolding. | https://docs.claude-mem.ai/file-read-gate | Free | **missing**. | T-060 |
 | F-X11 | Work state tools | Lets the agent keep a canonical to-do list in memory. | https://docs.claude-mem.ai/configuration | Free | **partial**. My Work has work state; MCP exposes no `work_state_*` tool (`src/hub/mcp.mjs:11-18`). | T-069 |
 | F-X12 | Knowledge agents | Builds queryable corpora ("brains") from observation history. | https://docs.claude-mem.ai/usage/knowledge-agents | Free | **missing**. | T-046 |
-| F-X13 | Context preview | Shows the exact block that will be injected. | https://docs.claude-mem.ai/usage/my-work | Free | **missing**. | T-043 |
+| F-X13 | Context preview | Shows the exact block that will be injected. | https://docs.claude-mem.ai/usage/my-work | Free | **missing**. | T-077 |
 | F-X14 | Context formatters | Chooses index or narrative format per injected result. | https://docs.claude-mem.ai/configuration | Free | **partial**. One Markdown list format (`src/hub/store.mjs:365`). | T-042 |
 
 ## 20.5 UI
@@ -105,20 +105,20 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | ID | Feature | What it does (one sentence) | Source | Paid or free | Aletheia status | Gap task |
 |---|---|---|---|---|---|---|
 | F-U01 | My Work view | Cards, goals, rules, build story, evidence and review, from the original built app. | https://docs.claude-mem.ai/usage/my-work | Free | **parity**. The built app is shipped unmodified; the server is a clean re-implementation ([11](11-feature-inventory.md)). | — |
-| F-U02 | Live memory stream | Shows new observations in real time over SSE. | https://docs.claude-mem.ai/introduction | Free | **missing**. The Hub Memory page has no live feed. | T-043 |
+| F-U02 | Live memory stream | Shows new observations in real time over SSE. | https://docs.claude-mem.ai/introduction | Free | **missing**. The Hub Memory page has no live feed. | T-077 |
 | F-U03 | Session detail pages | One page per session with observations, summary and prompts. | https://docs.claude-mem.ai/usage/my-work | Free | **missing**. | T-017 |
 | F-U04 | TV view | Read-only full-screen observation feed with a token. | https://docs.claude-mem.ai/configuration | Free | **missing**. | — |
-| F-U05 | Settings UI | Edits 208 settings from the browser. | https://docs.claude-mem.ai/configuration | Free | **missing**. Environment variables only (`README.md`, configuration). | T-041 |
+| F-U05 | Settings UI | Edits 208 settings from the browser. | https://docs.claude-mem.ai/configuration | Free | **missing**. Environment variables only (`README.md`, configuration). | T-078 |
 | F-U06 | Onboarding wizard | Walks a new user through setup. | https://docs.claude-mem.ai/installation | Free | **out-of-scope** for v1; a doctor command is planned instead. | T-075 |
 | F-U07 | Memory browser | Search, filter, pin, edit, delete and add notes. | https://docs.claude-mem.ai/usage/my-work | Free | **parity**. Hub Memory page (`src/hub/routes.mjs:123-136`). | — |
 | F-U08 | Rules page | Writes once and syncs rules to each tool. | Not in claude-mem docs (this project adds it) | Free | **better**. New surface (`src/hub/rules-sync.mjs`, `src/hub/routes.mjs:144`). | — |
 | F-U09 | Tools page | Detects installed tools and previews the MCP connection. | Not in claude-mem docs (this project adds it) | Free | **better**. `detectTools`, `mcpPlan`, `applyMcp` (`src/hub/tools.mjs:33,55,80`). | — |
 | F-U10 | Migrate page | Exports a bundle or Markdown and imports claude-mem. | https://docs.claude-mem.ai/usage/export-import | Free | **better**. Bundle + Markdown + claude-mem import (`src/hub/importers.mjs:14`). | — |
 | F-U11 | Activity/audit page | Shows who changed what. | Not in claude-mem docs (this project adds it) | Free | **better**. `auditLog` (`src/hub/store.mjs:431` area; route `src/hub/routes.mjs:223`). | — |
-| F-U12 | "Why was this recalled" | Shows per-retriever ranks and scores. | https://docs.claude-mem.ai/progressive-disclosure | Free | **missing**. | T-043 |
-| F-U13 | Cost panel | Totals model spend. | https://docs.claude-mem.ai/usage/my-work | Free | **missing**. | T-016 |
-| F-U14 | Theme toggle | Light and dark themes. | https://docs.claude-mem.ai/architecture-evolution | Free | **partial**. The shipped My Work app has it; the Hub UI has not been audited. | T-045 |
-| F-U15 | Accessibility | WCAG AA keyboard and contrast pass. | Not claimed in claude-mem docs | n/a | **partial**. No audit ([15](15-product-spec.md), NFR-9). | T-045 |
+| F-U12 | "Why was this recalled" | Shows per-retriever ranks and scores. | https://docs.claude-mem.ai/progressive-disclosure | Free | **missing**. | T-045 |
+| F-U13 | Cost panel | Totals model spend. | https://docs.claude-mem.ai/usage/my-work | Free | **missing**. | T-019 |
+| F-U14 | Theme toggle | Light and dark themes. | https://docs.claude-mem.ai/architecture-evolution | Free | **partial**. The shipped My Work app has it; the Hub UI has not been audited. | T-090 |
+| F-U15 | Accessibility | WCAG AA keyboard and contrast pass. | Not claimed in claude-mem docs | n/a | **partial**. No audit ([15](15-product-spec.md), NFR-9). | T-090 |
 
 ## 20.6 Rules
 
@@ -130,7 +130,7 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | F-L04 | Nine sync targets | Writes Claude, Codex/AGENTS, Gemini, Cursor, Windsurf, Copilot, Aider and the open AGENTS.md standard. | Not in claude-mem docs (this project adds it) | Free | **better**. `TOOLS` (`src/hub/tools.mjs:19`). Formats for Copilot and Aider are written from docs, not tested on real installs (`README.md`). | T-070 |
 | F-L05 | Preview and backup | Shows the before/after and keeps a timestamped backup before writing. | Not in claude-mem docs (this project adds it) | Free | **better**. `syncTool` (`src/hub/rules-sync.mjs:61`). | — |
 | F-L06 | Import rules back | Parses rules from an existing file into the store. | https://docs.claude-mem.ai/usage/my-work | Free | **parity**. `parseRulesFromText` (`src/hub/rules-sync.mjs:81`). | — |
-| F-L07 | Learned rule suggestions | Suggests rules from corrections using an LLM. | https://docs.claude-mem.ai/usage/my-work | Free (model usage paid) | **partial**. The My Work refresh path does it; it is not wired to captured events (`src/refresh/`). | T-021 |
+| F-L07 | Learned rule suggestions | Suggests rules from corrections using an LLM. | https://docs.claude-mem.ai/usage/my-work | Free (model usage paid) | **partial**. The My Work refresh path does it; it is not wired to captured events (`src/refresh/`). | T-035 |
 | F-L08 | Rule hygiene | Detects conflicts, duplicates and bloat. | Not in claude-mem docs | n/a | **missing**. | T-072 |
 | F-L09 | MY-RULES.md | Keeps a human-readable rules file. | https://docs.claude-mem.ai/usage/my-work | Free | **parity**. `ALETHEIA_RULES_FILE`, default `MY-RULES.md` (`README.md`). | — |
 
@@ -144,7 +144,7 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | F-I04 | Protocol negotiation | Accepts several MCP protocol versions. | https://docs.claude-mem.ai/usage/claude-desktop | Free | **parity**. 2025-11-25 through 2024-11-05 (`src/hub/mcp.mjs:8`). | — |
 | F-I05 | REST API | Gives scripts and other languages a plain HTTP interface. | https://docs.claude-mem.ai/hosted-server | Free local | **partial**. `/v1/info`, `/memories`, `/search`, `/timeline`, `/observations/batch`, `/context`, `/events` (`src/hub/routes.mjs:80-117`). | T-005 |
 | F-I06 | Versioned REST contract | Publishes an OpenAPI document and contract tests. | https://docs.claude-mem.ai/hosted-server | Free local | **missing**. No OpenAPI file. | T-006 |
-| F-I07 | API keys and ACLs | Issues per-client keys and per-project access. | https://docs.claude-mem.ai/hosted-server | Paid upstream | **partial**. One optional bearer key for all `/v1` calls (`README.md`). | T-073 |
+| F-I07 | API keys and ACLs | Issues per-client keys and per-project access. | https://docs.claude-mem.ai/hosted-server | Paid upstream | **partial**. One optional bearer key for all `/v1` calls (`README.md`). | T-092 |
 | F-I08 | Per-tool installers | One command installs hooks, MCP and rules for each tool. | https://docs.claude-mem.ai/platform-integration | Free | **missing**. A registry and config writer exist; no hook installers (`src/hub/tools.mjs:19`). | T-058 |
 | F-I09 | Config writer | Writes MCP config with preview and backup. | https://docs.claude-mem.ai/platform-integration | Free | **partial**. Cursor, Gemini, Codex, Windsurf, OpenCode, Claude command (`src/hub/tools.mjs:55,80`); not tested on real installs (`README.md`). | T-058 |
 | F-I10 | Claude Code plugin manifest | Ships `.claude-plugin/` so the plugin marketplace can install it. | `plugin/.claude-plugin` (repo tree) | Free | **missing**. | T-066 |
@@ -162,7 +162,7 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | F-I22 | Antigravity CLI integration | Hooks into `~/.gemini/config/hooks.json`. | https://docs.claude-mem.ai/antigravity-cli/setup | Free | **missing**. | — |
 | F-I23 | T3 Code integration | Native hooks and MCP search for T3 Code. | https://docs.claude-mem.ai/t3code-integration | Free | **missing**. | — |
 | F-I24 | Qoder integration | CLI and IDE integration. | https://docs.claude-mem.ai/qoder-integration | Free | **missing**. | — |
-| F-I25 | Claude Desktop | MCP setup for the desktop app. | https://docs.claude-mem.ai/usage/claude-desktop | Free | **partial**. Any MCP client can use `bin/mcp.mjs`; no documented Desktop setup. | T-068 |
+| F-I25 | Claude Desktop | MCP setup for the desktop app. | https://docs.claude-mem.ai/usage/claude-desktop | Free | **partial**. Any MCP client can use `bin/mcp.mjs`; no documented Desktop setup. | T-076 |
 | F-I26 | Grok Bot | Remote observer and bot integration. | https://docs.claude-mem.ai/grok-bot | Free (model usage paid) | **missing**. | — |
 | F-I27 | Screenpipe integration | Ingests screen/audio activity. | https://docs.claude-mem.ai/screenpipe-integration | Free | **missing**. | — |
 | F-I28 | Notion export | Upserts observations into a Notion database. | https://docs.claude-mem.ai/notion-export | Free (Notion plan may apply) | **missing**. | — |
@@ -172,65 +172,65 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 
 | ID | Feature | What it does (one sentence) | Source | Paid or free | Aletheia status | Gap task |
 |---|---|---|---|---|---|---|
-| F-T01 | Cloud sync | Replicates observations, summaries and prompts across devices through a sync hub. | https://docs.claude-mem.ai/cloud-sync | **Paid** (cmem.ai Pro account; price not stated on the page fetched) | **out-of-scope**. | T-081 |
-| F-T02 | TeamBrain | Board, brief and team search beside personal memory. | https://docs.claude-mem.ai/usage/teambrain | Free local / paid hosted | **out-of-scope** for v1. | T-083 |
-| F-T03 | Hosted Postgres server | Multi-tenant server with API keys, audit and split workers. | https://docs.claude-mem.ai/hosted-server | **Paid** | **out-of-scope**. | T-081 |
+| F-T01 | Cloud sync | Replicates observations, summaries and prompts across devices through a sync hub. | https://docs.claude-mem.ai/cloud-sync | **Paid** (cmem.ai Pro account; price not stated on the page fetched) | **out-of-scope**. | T-095 |
+| F-T02 | TeamBrain | Board, brief and team search beside personal memory. | https://docs.claude-mem.ai/usage/teambrain | Free local / paid hosted | **out-of-scope** for v1. | T-091 |
+| F-T03 | Hosted Postgres server | Multi-tenant server with API keys, audit and split workers. | https://docs.claude-mem.ai/hosted-server | **Paid** | **out-of-scope**. | T-091 |
 | F-T04 | SSO, RBAC, DLP | Enterprise identity and data-loss controls. | https://docs.claude-mem.ai/hosted-server | **Paid** | **out-of-scope**. | — |
-| F-T05 | Free self-hosted sharing | Shares a bundle or a server with a team without a vendor account. | Not in claude-mem docs (this project's plan) | Free | **partial**. Bundle export/import works; no shared server (`src/hub/store.mjs:431`). | T-083 |
-| F-T06 | Review queue | Proposes shared memories for approval. | https://docs.claude-mem.ai/usage/teambrain | Paid upstream | **missing**. | T-084 |
-| F-T07 | Device identity | Keeps a stable device id for sync. | https://docs.claude-mem.ai/cloud-sync | Paid | **missing**. | T-081 |
-| F-T08 | Data export for deletion | Exports and deletes everything on request. | https://docs.claude-mem.ai/hosted-server | Paid upstream | **parity**. Bundle export and delete exist (`src/hub/store.mjs:431,178`); no single "delete everything" command. | T-082 |
+| F-T05 | Free self-hosted sharing | Shares a bundle or a server with a team without a vendor account. | Not in claude-mem docs (this project's plan) | Free | **partial**. Bundle export/import works; no shared server (`src/hub/store.mjs:431`). | T-096 |
+| F-T06 | Review queue | Proposes shared memories for approval. | https://docs.claude-mem.ai/usage/teambrain | Paid upstream | **missing**. | T-094 |
+| F-T07 | Device identity | Keeps a stable device id for sync. | https://docs.claude-mem.ai/cloud-sync | Paid | **missing**. | T-095 |
+| F-T08 | Data export for deletion | Exports and deletes everything on request. | https://docs.claude-mem.ai/hosted-server | Paid upstream | **parity**. Bundle export and delete exist (`src/hub/store.mjs:431,178`); no single "delete everything" command. | T-091 |
 
 ## 20.9 Operations and evaluation
 
 | ID | Feature | What it does (one sentence) | Source | Paid or free | Aletheia status | Gap task |
 |---|---|---|---|---|---|---|
-| F-O01 | Worker supervision | Starts, restarts and health-checks a background worker. | https://docs.claude-mem.ai/architecture/worker-service | Free | **partial**. One process plus a systemd unit (`scripts/aletheia.service`); no supervisor. | T-075 |
-| F-O02 | `npx ... install / repair / doctor` | Installs, repairs and diagnoses from one CLI. | https://docs.claude-mem.ai/installation | Free | **missing**. | T-075 |
-| F-O03 | Docker | Ships an image and compose file. | `Dockerfile.test-installer`, `docker-compose.yml` (repo tree) | Free | **missing**. | T-079 |
+| F-O01 | Worker supervision | Starts, restarts and health-checks a background worker. | https://docs.claude-mem.ai/architecture/worker-service | Free | **partial**. One process plus a systemd unit (`scripts/aletheia.service`); no supervisor. | T-073 |
+| F-O02 | `npx ... install / repair / doctor` | Installs, repairs and diagnoses from one CLI. | https://docs.claude-mem.ai/installation | Free | **missing**. | T-073 |
+| F-O03 | Docker | Ships an image and compose file. | `Dockerfile.test-installer`, `docker-compose.yml` (repo tree) | Free | **missing**. | T-081 |
 | F-O04 | CI tests | Runs the test suite on push. | `.github/workflows/ci.yml` (repo tree) | Free | **partial**. `.github/workflows/test.yml` exists; no matrix, no Windows. | T-014 |
-| F-O05 | npm publishing | Publishes the package from CI. | `.github/workflows/npm-publish.yml` (repo tree) | Free | **missing**. Package is not published. | T-078 |
+| F-O05 | npm publishing | Publishes the package from CI. | `.github/workflows/npm-publish.yml` (repo tree) | Free | **missing**. Package is not published. | T-080 |
 | F-O06 | Windows CI | Runs the suite on Windows. | `.github/workflows/windows.yml` (repo tree) | Free | **missing**. Linux only tested ([15](15-product-spec.md), NFR-8). | T-014 |
 | F-O07 | Telemetry | Sends anonymous usage events, on by default and opt-out. | https://docs.claude-mem.ai/telemetry | Free | **better**. No telemetry at all. | — |
 | F-O08 | Crash safety | Survives a kill during writes. | https://docs.claude-mem.ai/architecture/database | Free | **partial**. WAL is on (`src/hub/store.mjs:98`); no kill test. | T-009 |
 | F-O09 | File permissions | Restricts the database and data directory. | https://docs.claude-mem.ai/troubleshooting | Free | **missing**. No mode set. | T-010 |
 | F-O10 | Memory-poisoning defence | Treats recalled text as data, never instructions. | Not in claude-mem docs | n/a | **missing**. The compress prompt says "untrusted data" (`src/hub/compress.mjs:15`); retrieval output is not wrapped or labelled. | T-011 |
-| F-O11 | Diagnostics and doctor | Lists worker, DB, hooks and MCP health. | https://docs.claude-mem.ai/troubleshooting | Free | **missing**. | T-075 |
-| F-O12 | Retrieval benchmark | Publishes a reproducible retrieval benchmark. | This project's `bench/locomo-retrieval.mjs` | Free | **parity**. Measured, with command and caveats ([14](14-research-ai-memory.md#146-measured-results)). | T-052 |
+| F-O11 | Diagnostics and doctor | Lists worker, DB, hooks and MCP health. | https://docs.claude-mem.ai/troubleshooting | Free | **missing**. | T-073 |
+| F-O12 | Retrieval benchmark | Publishes a reproducible retrieval benchmark. | This project's `bench/locomo-retrieval.mjs` | Free | **parity**. Measured, with command and caveats ([14](14-research-ai-memory.md#146-measured-results)). | T-055 |
 | F-O13 | Baseline harness | Runs the competitor on the same questions. | This project's `bench/claude-mem-baseline.mjs` | Free | **parity**. Isolated worker. | — |
 | F-O14 | Answer-accuracy benchmark | Reports LLM-judged answer accuracy. | https://docs.claude-mem.ai/architecture-evolution (no published number) | Free | **missing**. Not measured ([15](15-product-spec.md), S8). | T-051 |
 | F-O15 | Scale benchmark | Reports search time at 50k and 500k rows. | This project's `bench/scale.mjs` | Free | **partial**. 50k measured; 500k not. | T-047 |
-| F-O16 | CI regression gate | Fails a change that lowers recall or raises latency. | Not in claude-mem docs | n/a | **missing**. | T-054 |
+| F-O16 | CI regression gate | Fails a change that lowers recall or raises latency. | Not in claude-mem docs | n/a | **missing**. | T-055 |
 | F-O17 | Eval datasets beyond LoCoMo | LongMemEval, BEAM, MemoryAgentBench and a code-specific set. | https://docs.claude-mem.ai/architecture-evolution | Free | **missing**. | T-051 |
 
 ## 20.10 Repository polish and distribution
 
 | ID | Feature | What it does (one sentence) | Source | Paid or free | Aletheia status | Gap task |
 |---|---|---|---|---|---|---|
-| F-P01 | Logo and wordmark | Ships light and dark logo variants in the docs assets. | `docs/public/` (repo tree) | Free | **missing**. A favicon exists (`site/favicon.svg`); no README logo. | T-071 |
-| F-P02 | README badges | Shows licence, version, Node version and two third-party awards. | `README.md` (repo tree) | Free | **partial**. No badges at all (`README.md`). | T-071 |
-| F-P03 | README translations | Ships 32 translated READMEs under `docs/i18n/`. | `docs/i18n/` (repo tree) | Free | **missing**. English only. | T-073 |
-| F-P04 | Language switcher | Puts a 32-language switcher under the logo. | `README.md` (repo tree) | Free | **missing**. | T-073 |
-| F-P05 | Docs site | Publishes 54 documentation pages. | https://docs.claude-mem.ai/sitemap.xml | Free | **partial**. `site/index.html` plus Markdown docs; no generated docs site (`site/`). | T-074 |
-| F-P06 | Sitemap and robots | Publishes `sitemap.xml` and `robots.txt`. | `site/sitemap.xml`, `site/robots.txt` | Free | **partial**. Files exist; the sitemap lists only the home page (`site/sitemap.xml`). | T-075 |
-| F-P07 | Structured data | Adds JSON-LD and social metadata. | `site/index.html` | Free | **partial**. Basic meta tags; no JSON-LD (`site/index.html`). | T-075 |
-| F-P08 | Issue templates | Bug report and feature request templates. | `.github/ISSUE_TEMPLATE/` (repo tree) | Free | **missing**. | T-072 |
-| F-P09 | PR template | Prompts contributors for tests and docs. | Not present in claude-mem tree; standard practice | Free | **missing**. | T-072 |
-| F-P10 | Code of Conduct | Sets community behaviour rules. | Not present in claude-mem root tree | Free | **missing**. | T-072 |
+| F-P01 | Logo and wordmark | Ships light and dark logo variants in the docs assets. | `docs/public/` (repo tree) | Free | **missing**. A favicon exists (`site/favicon.svg`); no README logo. | T-083 |
+| F-P02 | README badges | Shows licence, version, Node version and two third-party awards. | `README.md` (repo tree) | Free | **partial**. No badges at all (`README.md`). | T-079 |
+| F-P03 | README translations | Ships 32 translated READMEs under `docs/i18n/`. | `docs/i18n/` (repo tree) | Free | **missing**. English only. | T-088 |
+| F-P04 | Language switcher | Puts a 32-language switcher under the logo. | `README.md` (repo tree) | Free | **missing**. | T-088 |
+| F-P05 | Docs site | Publishes 54 documentation pages. | https://docs.claude-mem.ai/sitemap.xml | Free | **partial**. `site/index.html` plus Markdown docs; no generated docs site (`site/`). | T-086 |
+| F-P06 | Sitemap and robots | Publishes `sitemap.xml` and `robots.txt`. | `site/sitemap.xml`, `site/robots.txt` | Free | **partial**. Files exist; the sitemap lists only the home page (`site/sitemap.xml`). | T-086 |
+| F-P07 | Structured data | Adds JSON-LD and social metadata. | `site/index.html` | Free | **partial**. Basic meta tags; no JSON-LD (`site/index.html`). | T-086 |
+| F-P08 | Issue templates | Bug report and feature request templates. | `.github/ISSUE_TEMPLATE/` (repo tree) | Free | **missing**. | T-084 |
+| F-P09 | PR template | Prompts contributors for tests and docs. | Not present in claude-mem tree; standard practice | Free | **missing**. | T-084 |
+| F-P10 | Code of Conduct | Sets community behaviour rules. | Not present in claude-mem root tree | Free | **missing**. | T-084 |
 | F-P11 | Security policy | Says how to report a vulnerability. | `SECURITY.md` | Free | **parity**. Exists (`SECURITY.md`). | — |
 | F-P12 | Contributing guide | Explains setup and the definition of done. | `CONTRIBUTING.md` in claude-mem? Not in root tree | Free | **parity**. Exists (`CONTRIBUTING.md`). | — |
-| F-P13 | CHANGELOG | Records every release. | `CHANGELOG.md` (repo tree) | Free | **missing**. | T-076 |
-| F-P14 | Release flow | Tags and publishes from CI. | `.github/workflows/npm-publish.yml` | Free | **missing**. | T-076 |
-| F-P15 | Dependabot | Keeps dependencies patched. | `.github/` (repo tree; no dependabot file found) | Free | **missing**. | T-076 |
-| F-P16 | Funding metadata | Shows a sponsor button. | `.github/FUNDING.yml` | Free | **missing**. | T-076 |
-| F-P17 | GitHub topics | Sets discoverable repository topics. | `api.github.com/repos/thedotmack/claude-mem` (topics list) | Free | **UNVERIFIED**. The local repo has keywords in `package.json`; the remote repository settings were not fetched. | T-077 |
-| F-P18 | GitHub Discussions | Hosts questions outside issues. | Not visible in tree | Free | **missing**. | T-077 |
-| F-P19 | Demo animation | Shows the product working in the README. | `README.md` (repo tree) | Free | **missing**. | T-071 |
-| F-P20 | Social preview image | Sets a repository social card. | Repository settings (not fetched) | Free | **UNVERIFIED**. | T-071 |
-| F-P21 | Docker distribution | Offers a container as an install path. | `docker-compose.yml` (repo tree) | Free | **missing**. | T-079 |
+| F-P13 | CHANGELOG | Records every release. | `CHANGELOG.md` (repo tree) | Free | **missing**. | T-085 |
+| F-P14 | Release flow | Tags and publishes from CI. | `.github/workflows/npm-publish.yml` | Free | **missing**. | T-085 |
+| F-P15 | Dependabot | Keeps dependencies patched. | `.github/` (repo tree; no dependabot file found) | Free | **missing**. | T-085 |
+| F-P16 | Funding metadata | Shows a sponsor button. | `.github/FUNDING.yml` | Free | **missing**. | T-085 |
+| F-P17 | GitHub topics | Sets discoverable repository topics. | `api.github.com/repos/thedotmack/claude-mem` (topics list) | Free | **UNVERIFIED**. The local repo has keywords in `package.json`; the remote repository settings were not fetched. | T-085 |
+| F-P18 | GitHub Discussions | Hosts questions outside issues. | Not visible in tree | Free | **missing**. | T-085 |
+| F-P19 | Demo animation | Shows the product working in the README. | `README.md` (repo tree) | Free | **missing**. | T-083 |
+| F-P20 | Social preview image | Sets a repository social card. | Repository settings (not fetched) | Free | **UNVERIFIED**. | T-083 |
+| F-P21 | Docker distribution | Offers a container as an install path. | `docker-compose.yml` (repo tree) | Free | **missing**. | T-081 |
 | F-P22 | Plugin marketplace entries | Ships manifests for each host's marketplace. | `.claude-plugin/`, `.codex-plugin/`, `.qoder-plugin/`, `.grok-plugin/`, `.cursor-plugin/` (repo tree) | Free | **missing**. | T-066 |
-| F-P23 | MCP registry listing | Lists the server in the official MCP registry and directories. | https://registry.modelcontextprotocol.io | Free | **missing**. | T-080 |
-| F-P24 | Awesome-list mentions | Appears in curated lists. | https://github.com/hesreallyhim/awesome-claude-code | Free | **missing**. | T-080 |
+| F-P23 | MCP registry listing | Lists the server in the official MCP registry and directories. | https://registry.modelcontextprotocol.io | Free | **missing**. | T-082 |
+| F-P24 | Awesome-list mentions | Appears in curated lists. | https://github.com/hesreallyhim/awesome-claude-code | Free | **missing**. | T-082 |
 
 ## 20.11 Counts
 
