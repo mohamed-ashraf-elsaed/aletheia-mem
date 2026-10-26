@@ -28,7 +28,7 @@ Screens (real captures of the running app on seeded demo data, labelled `?demo=1
 | `public/ui-region.js`, `public/ui-actions.js` | `region()` (loading, content, empty, error), `pagedList()` (server pages with state in the URL), optimistic actions with Undo, progress for long calls. |
 | `public/ui-status.js` | The status bar, the connection banner, polling and the `/v1/live` socket. |
 | `public/ui-search.js`, `public/ui-keys.js`, `public/ui-detail.js`, `public/ui-guide.js`, `public/ui-views.js`, `public/ui-frame.js` | Header search, shortcuts and the command palette, detail drawers, the first-run guide, shared cards and filters, the tab frame. |
-| `public/tabs/*.js` | One module per tab (`work`, `memory`, `rules`, `tools`) plus the pages inside them (`memory-views`, `review`, `rules-views`, `tools-views`). Loaded on the first visit. |
+| `public/tabs/*.js` | One module per tab (`work`, `memory`, `rules`, `tools`) plus the pages inside them (`memory-views`, `review`, `rules-views`, `tools-views`, `tools-team`). Loaded on the first visit. `team.js` and `alerts.js` are older standalone modules that nothing loads; the same features are the Team and Alerts pages of Tools. |
 | `public/one-ui.js`, `public/one-ui.css` | The shell logic and the shell and page styles. |
 
 ## 6.2 Pages and the URL
@@ -42,7 +42,7 @@ page.
 | Work | the overview, and `#/work/session/<id>?project=<name>` |
 | Memory | `memories`, `facts`, `review`, `dismissed`, `search?q=…` |
 | Rules | `rules`, `suggestions`, `sync` (write to tools), `import` |
-| Tools | `tools`, `devices`, `access`, `checks`, `activity` |
+| Tools | `tools`, `devices`, `access`, `alerts`, `team`, `checks`, `activity` |
 
 ## 6.3 Every list is paged on the server
 
@@ -58,6 +58,7 @@ and answers `total`, `limit`, `offset` and `hasMore`. The UI sends the page size
 | `GET /api/hub/dismissed` | `type`, `project` (each row names what was hidden) |
 | `GET /api/hub/audit` | `actor`, `action`, `since`, `until` |
 | `GET /api/hub/sync/status` | `limit`, `offset` over the devices |
+| `GET /api/hub/alerts/feed` | `limit`, `offset` over the newest 500 deliveries |
 | `GET /v1/work/sessions` | `project`, `state=in_progress\|finished`, `since`, `until`, `q` (session id) |
 | `GET /v1/work/goals` | `project`, `limit`, `offset` |
 | `POST /v1/search` | body `limit`, `offset`, `paged: true`, `scope`, `includeHistory`, `since`, `until`, `kind`, `mix`; without `offset` or `paged` it keeps its older shape |
