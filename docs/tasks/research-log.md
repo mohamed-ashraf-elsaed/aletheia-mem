@@ -333,3 +333,5 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | https://arxiv.org/html/2410.10813 | full text: fact-augmented keys improve recall@k by 9.4% and accuracy by 5.4%; time-aware query expansion improves temporal recall by 6.8%–11.3% with a strong LLM |
 | 2026-10-26 | https://arxiv.org/html/2512.12818 | full text: 2–5 comprehensive facts per conversation; coreference resolution, temporal expression normalisation, entity resolution; LongMemEval 39% → 83.6% and 91.4%, LoCoMo 89.61% |
 | 2026-10-26 | https://arxiv.org/html/2501.13956 | full text: `valid_at`/`invalid_at` edge facts and the bi-temporal model (event time and ingestion time) |
+| 2026-10-26 | https://docs.claude-mem.ai/cursor | HTTP 200 on re-fetch during verification; page cited by matrix row F-I13 |
+| 2026-10-26 | https://docs.claude-mem.ai/grok-bot | HTTP 200 on re-fetch during verification; page cited by matrix row F-I26 |
