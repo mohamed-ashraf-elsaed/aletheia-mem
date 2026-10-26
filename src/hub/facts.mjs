@@ -4,6 +4,7 @@
 import { readFileSync } from "node:fs";
 import { redact } from "./redact.mjs";
 import { attachFactEntities } from "./entities.mjs";
+import { parseTemporal } from "./temporal.mjs";
 import { estimateTokens, pricesFrom, recordCall } from "./usage.mjs";
 
 export const FACTS_PROMPT_VERSION = "facts-v1";
@@ -298,14 +299,17 @@ export function storeFacts(store, { facts, project, mode = "rules", model = null
     if (!episodeIds.length) continue;
     const episode = store.getEpisode(episodeIds[0]);
     if (!episode) continue;
+    const inferred = fact.validFromEpoch == null ? parseTemporal(text, { baseEpoch: episode.created_at_epoch }) : null;
+    const dated = fact.dated || !!inferred;
     const result = store.addFact({
       project, subject, predicate, object, text,
       episodeId: episode.id, episodeIds,
       observationId,
-      validFromEpoch: fact.validFromEpoch ?? episode.created_at_epoch,
-      validToEpoch: fact.validToEpoch ?? null,
+      validFromEpoch: fact.validFromEpoch ?? inferred?.fromEpoch ?? episode.created_at_epoch,
+      validToEpoch: fact.validToEpoch ?? inferred?.toEpoch ?? null,
       recordedAtEpoch: now,
-      confidence: Math.max(0, Math.min(1, (fact.confidence ?? 0.7) - (fact.dated ? 0 : 0.1))),
+      // A date inferred from a relative phrase is weaker evidence than an explicit one, so it costs 0.1.
+      confidence: Math.max(0, Math.min(1, (fact.confidence ?? 0.7) - (dated ? 0 : 0.1) - (inferred?.inferred ? 0.1 : 0))),
       extractorMode: mode, promptVersion, model,
     });
     store.addKey({ ownerType: "fact", ownerId: result.id, keyType: "fact", text });

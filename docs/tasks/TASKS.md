@@ -67,7 +67,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-024 | Add bi-temporal fact columns | P1 | T-017 | validated | 2026-10-26 | [T-024.md](T-024.md) |
 | T-025 | Invalidate contradicted facts instead of deleting them | P1 | T-018, T-024 | validated | 2026-10-26 | [T-025.md](T-025.md) |
 | T-026 | Add a history and as-of query API | P1 | T-024 | todo | — | [T-026.md](T-026.md) |
-| T-027 | Normalise relative dates to absolute ranges | P1 | T-024 | todo | — | [T-027.md](T-027.md) |
+| T-027 | Normalise relative dates to absolute ranges | P1 | T-024 | validated | 2026-10-26 | [T-027.md](T-027.md) |
 | T-028 | Add near-duplicate detection | P1 | T-017 | validated | 2026-10-26 | [T-028.md](T-028.md) |
 | T-029 | Merge duplicates with an audit trail | P1 | T-028 | validated | 2026-10-26 | [T-029.md](T-029.md) |
 | T-030 | Score importance with a transparent formula | P1 | T-017 | validated | 2026-10-26 | [T-030.md](T-030.md) |
