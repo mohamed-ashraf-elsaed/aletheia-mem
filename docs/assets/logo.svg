@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Aletheia mark">
+  <rect width="128" height="128" rx="28" fill="#fbfaf7"/>
+  <path d="M36 88V46a14 14 0 0 1 14-14h28a14 14 0 0 1 14 14v28a14 14 0 0 1-14 14H58" fill="none" stroke="#1b1d27" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="48" cy="78" r="6" fill="#b06a00"/>
+  <circle cx="68" cy="64" r="6" fill="#b06a00" opacity="0.66"/>
+  <circle cx="88" cy="50" r="6" fill="#b06a00" opacity="0.33"/>
+</svg>

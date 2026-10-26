@@ -153,9 +153,9 @@ Rule: a badge is a data read or an honest status. A static number that a human t
 
 | Item | Current | Task | Notes |
 |---|---|---|---|
-| Logo and wordmark | Missing | T-083 | Original artwork, light and dark variants, SVG + PNG. |
-| Social preview | UNVERIFIED (repository setting not readable from code) | T-083 | 1280×640, same wordmark. |
-| Demo GIF | Missing | T-083 | 15-25 s: capture, search, rules sync, export. No fake data. |
+| Logo and wordmark | **Done 2026-10-26**: `docs/assets/logo.svg` and `logo-dark.svg`, original geometric mark, no text | T-083 | SVG only; no PNG because no renderer was installed. |
+| Social preview | **SVG card 2026-10-26**: `docs/assets/social.svg`, 1280×640 | T-083 | The repository setting is the owner's action; no PNG was rendered. |
+| Demo GIF | **NOT RUN BY AUTHOR** | T-083 | Needs a real recorded session; no GIF is shipped. |
 | Issue templates | Missing | T-084 | Bug report asks for tool, version, install method, `aletheia doctor` output. |
 | PR template | Missing | T-084 | Tests, docs, measurement command, no new dependency without a reason. |
 | CODE_OF_CONDUCT | Missing | T-084 | Contributor Covenant 2.1, with a contact. |
