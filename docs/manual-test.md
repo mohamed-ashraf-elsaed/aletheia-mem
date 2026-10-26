@@ -141,15 +141,29 @@ Playwright MCP browser. Observed:
 - Typing `retry` in the header search and pressing Enter kept the `#/memory` route and printed the channels
   (`facts: lexical + keys`, `episodes: lexical`, `fused: none`) and the empty-store reason.
 - The Rules tab rendered the editor, suggestions, sync and import panels; no console errors.
-- The Tools tab rendered both installer cards, the hook counts, spool sizes and the full doctor table; no console
+- The Tools tab rendered the installer cards, the hook counts, spool sizes and the full doctor table; no console
   errors.
-- The Work tab mounted the existing Work page under the shell header. It showed "Local source unavailable" because
-  the temporary HOME has no claude-mem database; that is expected for this run.
+- The Work tab showed Aletheia's own view, not the old iframe: a health/last-capture/queue/mode strip, "Now" with
+  three sessions (one in progress, two finished), "Needs you" with a contradiction, a rule suggestion and a
+  dismissed row, "Recent memory" with source and importance, and a goal with two dated quotes.
+- The session page `#/work/session/s1?project=shop` showed the summary, an ordered timeline (prompt, tool, prompt,
+  summary) and the extracted fact with its source. No console errors.
 - `prefers-color-scheme: dark` was emulated; the page stayed readable and the shell colours switched.
 
-**NOT RUN BY AUTHOR:** a person should still check at 375 px width, with a real claude-mem database in the Work tab,
-and with a keyboard only (Tab through the header, open each tab, open a details block, and dismiss + restore one
-memory). The automated run proves the scripts load and the DOM is reachable; it does not assert pixel layout.
+**NOT RUN BY AUTHOR:** a person should still check the Work tab at 375 px width, with a keyboard only (Tab through
+the header, open each tab, open a details block, pin and restore a goal), and with a real live capture over more
+than 10 seconds to see the refresh. The automated run proves the scripts load and the DOM is reachable; it does not
+assert pixel layout or the timer under a real host.
+
+### Work view steps (RUN BY AUTHOR, 2026-10-26)
+
+1. Seed a temporary hub (the fixture in `test/work.test.mjs` creates prompts, tool events, a summary, a fact, a
+   review item, a rule suggestion, a dismissal and a job).
+2. Start the server with a temporary `HOME`, `ALETHEIA_DATA_DIR` and `ALETHEIA_HUB_DB`; open `/#/work`. This pass
+   used port 38882; the earlier Memory/Rules/Tools pass used 38881.
+3. Confirm the strip, Now, Needs you, Recent memory and Goals all use the seeded values; open a session link and
+   confirm the timeline and fact source; open Tools and confirm the classic viewer link appears only when the old
+   database exists.
 
 ## 7. The five more hosts (fixture-tested, NOT RUN BY AUTHOR)
 

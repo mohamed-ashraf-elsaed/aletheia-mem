@@ -2,20 +2,21 @@
 
 **Un-forgetting for AI tools.** Free, local, one memory and one set of rules for every tool you use.
 
-Aletheia (Greek *a-lethe*, "not forgetting") is a memory and rules hub for AI coding tools, built around a
-re-implementation of claude-mem's "My Work" view.
+Aletheia (Greek *a-lethe*, "not forgetting") is a memory and rules hub for AI coding tools. It began as a
+re-implementation of claude-mem's "My Work" view; today the Work tab is Aletheia's own view of captured sessions,
+facts and goals.
 
-Two parts that share one server:
+One app at `/` with four tabs:
 
-1. **My Work** (`/`): claude-mem's request cards, goals, rules and build story. The UI is the original's built app,
-   unmodified; the server is a clean re-implementation checked against the live original (identical JSON on the same data).
-2. **Memory Hub** (`/hub`): a store that **any** tool can read and write, with a UI to manage it.
-   - **Memory**: search, filter, pin, edit, delete, add notes. Observations, summaries, prompts, raw events.
-   - **Rules**: write once, **sync into** `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursor/rules`, `.windsurfrules`,
-     Copilot and Aider files. Preview, backup, never touches your own text. Import rules back from a file.
-   - **Tools**: detect installed tools, connect each to the memory over MCP (preview, backup, then write).
-   - **Migrate**: export a versioned bundle or Markdown, import a bundle, import from claude-mem. Idempotent.
-   - **Activity**: audit log of every change.
+1. **Work** (`#/work`): captured sessions, review items, recent facts and owner goals from this hub. The optional
+   legacy claude-mem viewer is linked from Tools only when its database exists.
+2. **Memory** (`#/memory`): a store that **any** tool can read and write, with a UI to manage it. Search, filter,
+   pin, edit, delete, add notes. Observations, summaries, prompts, raw events. Export a versioned bundle or Markdown,
+   import a bundle or the old database. Idempotent.
+3. **Rules** (`#/rules`): write once, **sync into** `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursor/rules`,
+   `.windsurf/rules`, Copilot and Aider files. Preview, backup, never touches your own text. Import rules back.
+4. **Tools** (`#/tools`): read-only installer status from `aletheia doctor`; the classic viewer link when the old
+   database exists; the audit log.
 
 Zero npm dependencies. Runtime: [Bun](https://bun.sh) >= 1.1. Loopback only. No account, no telemetry. Never writes
 to claude-mem's database.
@@ -55,7 +56,7 @@ writes the instruction file each tool already reads. What has and has not been c
 ```bash
 cd aletheia-mem   # after: git clone https://github.com/mohamed-ashraf-elsaed/aletheia-mem
 bun test                              # the test suite
-bun bin/aletheia-server.mjs                 # http://localhost:37790  (My Work)  and  /hub  (Memory Hub)
+bun bin/aletheia-server.mjs                 # http://localhost:37790  (Work, Memory, Rules, Tools)
 ```
 
 Bring your claude-mem memory into the hub (read-only, repeatable):
@@ -87,7 +88,7 @@ bun bin/aletheia.mjs context --project shop         # text to inject at session 
 Optional LLM features (off by default; they send data to the model you choose):
 
 ```bash
-ALETHEIA_PROVIDER=claude-cli bun bin/aletheia-server.mjs      # My Work refresh (grouping, reviews, goals, story)
+ALETHEIA_PROVIDER=claude-cli bun bin/aletheia-server.mjs      # legacy Work view refresh (grouping, reviews, goals, story)
 bun bin/aletheia.mjs compress                                  # raw events -> observations (needs a provider)
 # any OpenAI-compatible endpoint, including local models:
 ALETHEIA_PROVIDER=openai ALETHEIA_OPENAI_BASE_URL=http://localhost:11434/v1/chat/completions \
@@ -113,28 +114,29 @@ All settings are environment variables.
 | `ALETHEIA_DATA_DIR` | `~/.aletheia` | Everything this project writes, including `hub.db`. |
 | `ALETHEIA_HUB_DB` | `<data dir>/hub.db` | The shared memory store. |
 | `ALETHEIA_API_KEY` | empty | Bearer key required on `/v1/*` when set. |
-| `CLAUDE_MEM_DB` | `~/.claude-mem/claude-mem.db` | claude-mem's database (read-only; My Work and the importer). |
-| `ALETHEIA_LEDGER_DIR` | `<data dir>/ledger` | My Work refresh output. Point at `~/.claude-mem/work-view` to share the original's. |
-| `ALETHEIA_RULES_FILE` | `<data dir>/MY-RULES.md` | My Work's rules file. |
+| `CLAUDE_MEM_DB` | `~/.claude-mem/claude-mem.db` | claude-mem's database (read-only; the optional legacy viewer and the importer). |
+| `ALETHEIA_LEDGER_DIR` | `<data dir>/ledger` | Legacy Work view refresh output. Point at `~/.claude-mem/work-view` to share the original's. |
+| `ALETHEIA_RULES_FILE` | `<data dir>/MY-RULES.md` | The legacy Work view's rules file. |
 | `ALETHEIA_CLAUDE_MD` | `~/.claude/CLAUDE.md` | Where "Load in Claude Code" appends an `@` line. |
 | `ALETHEIA_PROVIDER` | `none` | `none`, `claude-cli` or `openai`. |
 | `ALETHEIA_OPENAI_BASE_URL`, `_API_KEY`, `_MODEL` | OpenRouter URL, empty, empty | For `openai`, and for human copy. |
-| `ALETHEIA_AUTO_REFRESH`, `ALETHEIA_REFRESH_CHECK_MS` | `true`, `600000` | My Work refresh scheduling. |
+| `ALETHEIA_AUTO_REFRESH`, `ALETHEIA_REFRESH_CHECK_MS` | `true`, `600000` | Legacy Work view refresh scheduling. |
 | `ALETHEIA_BUG_COMPAT` | off | `1` reproduces the original's empty observation half ([F1](docs/08-findings.md)). |
 | `ALETHEIA_TOOL`, `ALETHEIA_CWD` | | MCP server: names the calling tool and default project. |
 
 ## Layout
 
 ```
-bin/            aletheia-server.mjs (server)  aletheia.mjs (CLI)  mcp.mjs (MCP server)  ledger.mjs (My Work ledger CLI)
+bin/            aletheia-server.mjs (server)  aletheia.mjs (CLI)  mcp.mjs (MCP server)  ledger.mjs (legacy Work ledger CLI)
 src/
-  server.mjs app.mjs source.mjs config.mjs humancopy.mjs      My Work server
-  readmodel/ ledger/ refresh/ store/ http/                     My Work internals
+  server.mjs app.mjs source.mjs config.mjs humancopy.mjs      server and the legacy Work API
+  readmodel/ ledger/ refresh/ store/ http/                     legacy Work internals
   hub/            store (memories, FTS5, rules, bundles)  rules-sync  tools  importers  capture  compress  mcp  routes
-public/         the original's built My Work app (unmodified)
-public-hub/     Memory Hub UI (plain ES modules, no build)
+public/         the one UI (index.html, one-ui.*, tabs/, work-view.js);
+                work.html and assets/ are the optional legacy viewer
+public-hub/     the old Memory Hub assets, still served at /hub/app.js
 prompts/ vendor/ the original's skill prompts and Python scripts
-test/           103 tests and a synthetic fixture database
+test/           the test suite and a synthetic fixture database
 docs/           the documents
 ```
 

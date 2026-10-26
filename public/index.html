@@ -5,7 +5,6 @@
     <link rel="icon" type="image/svg+xml" href="/work-view/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Aletheia</title>
-    <!-- The Work tab runs the Work page inside an iframe (work.html), so its styles cannot clash with this page. -->
     <link rel="stylesheet" href="/hub/style.css" />
     <link rel="stylesheet" href="/work-view/one-ui.css" />
     <script type="module" src="/work-view/one-ui.js"></script>
@@ -29,7 +28,7 @@
 
     <main class="ui-main">
       <section id="tab-work" class="ui-tab ui-tab-work" data-tab="work" role="tabpanel" aria-label="Work">
-        <iframe id="work-frame" class="ui-work-frame" src="/work-view/work.html" title="Work"></iframe>
+        <div id="ui-work"></div>
       </section>
       <section id="tab-memory" class="ui-tab" data-tab="memory" role="tabpanel" aria-label="Memory" hidden>
         <div id="ui-memory"></div>

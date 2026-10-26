@@ -1,5 +1,4 @@
-/* The one UI shell. Loaded after the Work page stylesheet on purpose: the shell rules win on the shared
-   elements, and the Work tab keeps its own CSS for everything inside #root. */
+/* The one UI shell: shared header, tab bar, cards and the Work view. No external stylesheet and no build step. */
 :root {
   --ui-radius: 12px;
 }
@@ -91,4 +90,36 @@ body { margin: 0; background: var(--bg, #faf8f5); color: var(--ink, #1d1b19); }
   .ui-tab:not(.ui-tab-work) { padding: 14px 10px 70px; }
 }
 
-.ui-work-frame { display: block; width: 100%; height: calc(100vh - 56px); border: 0; background: transparent; }
+/* The Work tab (T-143). Same tokens as the rest of the one UI; no external stylesheet and no fixed width. */
+.ui-tab-work { padding: 0; }
+.ui-work { max-width: 1180px; margin: 0 auto; padding: 18px 16px 80px; }
+.ui-work h1 { margin: 0; }
+.ui-work h2 { margin: 20px 0 8px; }
+.ui-work-head { display: flex; flex-direction: column; gap: 2px; }
+.ui-work-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 12px 0 16px; }
+.ui-work-strip .ui-stat b { font-size: 19px; overflow-wrap: anywhere; }
+.ui-work-grid { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.ui-work-col { min-width: 0; }
+.ui-work-col > h2:first-child { margin-top: 0; }
+.ui-work-memory, .ui-work-goals { margin-top: 8px; }
+.ui-work-updated { margin-top: 18px; }
+.ui-work-link { color: var(--accent, #c4552d); text-decoration: none; }
+.ui-work-link:hover { text-decoration: underline; }
+.ui-button {
+  display: inline-block; border: 1px solid var(--line, #e6e0d8); background: var(--panel, #fff);
+  color: var(--ink, #1d1b19); border-radius: 8px; padding: 5px 10px; font-size: 13px; text-decoration: none;
+}
+.ui-button:hover { border-color: var(--accent, #c4552d); }
+.ui-session .ui-meta { margin-top: 3px; }
+.ui-session .ui-fact-text { margin: 5px 0; }
+.ui-work-empty { text-align: left; }
+.ui-timeline { list-style: none; margin: 0; padding: 0; }
+.ui-timeline li { border-left: 3px solid var(--line, #e6e0d8); padding: 6px 0 10px 12px; }
+.ui-timeline li.ui-timeline-prompt { border-left-color: var(--accent, #c4552d); }
+.ui-timeline li.ui-timeline-tool { border-left-color: var(--muted, #6b645c); }
+.ui-timeline li.ui-timeline-summary { border-left-color: var(--ok, #2f7d4f); }
+.ui-goal .ui-meta { margin: 3px 0; }
+@media (max-width: 900px) {
+  .ui-work-grid { grid-template-columns: minmax(0, 1fr); }
+  .ui-work { padding: 14px 10px 70px; }
+}

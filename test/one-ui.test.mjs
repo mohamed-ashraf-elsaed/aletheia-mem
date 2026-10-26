@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { startServer } from "../src/server.mjs";
-import { channelLines, duplicateView, factView, healthView, parseRoute, reviewView, routeHash, searchReasonText, TABS } from "../public/ui-core.js";
+import { channelLines, classicViewerAvailable, duplicateView, factView, healthView, parseRoute, reviewView, routeHash, searchReasonText, TABS } from "../public/ui-core.js";
 import { makeFixture } from "./fixture.mjs";
 
 const root = join(import.meta.dir, "..");
@@ -56,7 +56,9 @@ describe("T-139: the one page", () => {
     expect(html).toContain('data-tab="memory"');
     expect(html).toContain('data-tab="rules"');
     expect(html).toContain('data-tab="tools"');
-    expect(html).toContain('id="work-frame"');
+    expect(html).toContain('id="ui-work"');
+    expect(html).not.toContain("work-frame");
+    expect(html).not.toContain("/work-view/work.html");
     expect(html).toContain('id="ui-project"');
     expect(html).toContain('id="ui-search"');
     expect(html).toContain('id="ui-health"');
@@ -108,6 +110,19 @@ describe("T-139: the one page", () => {
     expect(found.channels).toHaveProperty("fused");
     expect(Array.isArray(found.results)).toBe(true);
     expect(Array.isArray(found.facts)).toBe(true);
+
+    const work = await get("/v1/work");
+    expect(work.status).toBe(200);
+    const workBody = await work.json();
+    expect(workBody).toHaveProperty("sessions");
+    expect(workBody).toHaveProperty("recentFacts");
+    expect(workBody).toHaveProperty("review");
+    expect(workBody).toHaveProperty("queue");
+    expect(workBody).toHaveProperty("lastCapture");
+    expect(workBody).toHaveProperty("empty");
+    const goals = await get("/v1/work/goals");
+    expect(goals.status).toBe(200);
+    expect(Array.isArray((await goals.json()).goals)).toBe(true);
   });
 
   test("the hub routes the tabs read answer JSON", async () => {
@@ -182,7 +197,7 @@ describe("T-139: the rule suggestions route", () => {
 
 describe("T-139: tab modules", () => {
   test("memory, review, rules and tools load without a DOM and export their renderer", async () => {
-    const modules = { memory: "renderMemory", rules: "renderRules", tools: "renderTools" };
+    const modules = { work: "renderWork", memory: "renderMemory", rules: "renderRules", tools: "renderTools" };
     for (const [name, exported] of Object.entries(modules)) {
       const module = await import(`../public/tabs/${name}.js`);
       expect(typeof module[exported]).toBe("function");
@@ -200,6 +215,7 @@ describe("T-139: DOM-free router and view helpers", () => {
     expect(parseRoute("#/memory")).toBe("memory");
     expect(parseRoute("#/rules?x=1")).toBe("rules");
     expect(parseRoute("#/tools")).toBe("tools");
+    expect(parseRoute("#/work/session/s1?project=shop")).toBe("work");
     expect(parseRoute("#/nope")).toBe("work");
     expect(parseRoute("")).toBe("work");
     expect(parseRoute(null)).toBe("work");
@@ -225,5 +241,12 @@ describe("T-139: DOM-free router and view helpers", () => {
     expect(reviewView({ id: 1, type: "fact", reason: "contradiction", text: "A", project: "shop" })).toMatchObject({ reason: "Two facts disagree", title: "A", mergeable: true });
     expect(reviewView({ id: 2, type: "entity", reason: "ambiguous_alias", name: "Sam" })).toMatchObject({ reason: "An alias may belong to two entities", mergeable: false });
     expect(duplicateView({ key: "1:2", a: 1, b: 2, aText: "A", bText: "B", score: 0.876 }).scoreLabel).toBe("0.88");
+  });
+
+  test("the classic viewer is offered only when the old database exists", () => {
+    expect(classicViewerAvailable({ claudeMem: { exists: true } })).toBe(true);
+    expect(classicViewerAvailable({ claudeMem: { exists: false } })).toBe(false);
+    expect(classicViewerAvailable({})).toBe(false);
+    expect(classicViewerAvailable(null)).toBe(false);
   });
 });

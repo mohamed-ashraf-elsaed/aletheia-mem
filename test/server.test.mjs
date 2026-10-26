@@ -38,7 +38,9 @@ describe("static", () => {
     const res = await get("/");
     expect(res.status).toBe(200);
     expect(res.headers.get("x-frame-options")).toBe("SAMEORIGIN");
-    expect(await res.text()).toContain("work-frame");
+    const html = await res.text();
+    expect(html).toContain("ui-work");
+    expect(html).not.toContain("work-frame");
   });
   test("assets are served with their types", async () => {
     const html = await (await get("/work-view/work.html")).text();
