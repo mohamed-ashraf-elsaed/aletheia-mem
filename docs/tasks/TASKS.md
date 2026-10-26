@@ -170,3 +170,4 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-132 | Re-run LoCoMo and publish the measured table | P2 | T-018, T-131 | validated | 2026-10-26 | [T-132.md](T-132.md) |
 | T-133 | Re-measure 50k-row latency and apply the first FTS index fix | P2 | T-018 | validated | 2026-10-26 | [T-133.md](T-133.md) |
 | T-134 | Build one app shell with Work, Memory, Rules and Tools tabs | P6 | none | validated | 2026-10-26 | [T-134.md](T-134.md) |
+| T-135 | Add a Memory tab with memories, facts and search channels | P6 | T-134 | validated | 2026-10-26 | [T-135.md](T-135.md) |
