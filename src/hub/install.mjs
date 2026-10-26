@@ -352,6 +352,11 @@ export async function doctor(env) {
 
   for (const installer of INSTALLERS) {
     const expected = installer.expectedHooks(env);
+    // A tool that is not installed is not a failure. Only a present config with missing hooks is.
+    if (!existsSync(expected.file)) {
+      checks.push({ name: `hooks ${installer.id}`, ok: true, detail: `not installed (no ${expected.file})` });
+      continue;
+    }
     let found = 0;
     let detail = expected.file;
     try {
@@ -374,11 +379,13 @@ export async function doctor(env) {
   let detail = env.dbPath;
   let queue = { pending: 0, running: 0, done: 0, failed: 0 };
   let extraction = { mode: env.provider === "none" ? "rules" : env.provider ?? "unknown", lastAtEpoch: null, rejected: 0 };
+  let health = null;
   try {
     if (!existsSync(env.dbPath)) {
       detail = "no capture yet";
     } else {
       const { HubStore } = await import("./store.mjs");
+      const { healthReport } = await import("./health.mjs");
       const store = new HubStore(env.dbPath);
       try {
         last = store.db.prepare("SELECT MAX(created_at_epoch) AS at FROM memories WHERE kind IN ('prompt','event','summary')").get().at;
@@ -387,6 +394,7 @@ export async function doctor(env) {
         const usage = store.db.prepare("SELECT mode, MAX(at_epoch) AS at, SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected FROM fact_usage ORDER BY id DESC LIMIT 1").get();
         const lastUsage = store.db.prepare("SELECT MAX(at_epoch) AS at FROM fact_usage WHERE status = 'ok'").get();
         extraction = { mode: usage?.mode ?? (env.provider === "none" ? "rules" : env.provider ?? "unknown"), lastAtEpoch: lastUsage?.at ?? null, rejected: usage?.rejected ?? 0 };
+        health = healthReport(store);
       } finally {
         store.close();
       }
@@ -399,5 +407,9 @@ export async function doctor(env) {
   checks.push({ name: "last capture", ok: readable, detail });
   checks.push({ name: "queue", ok: queue.failed === 0, detail: `${queue.pending} pending, ${queue.running} running, ${queue.failed} failed` });
   checks.push({ name: "extraction", ok: true, detail: `mode ${extraction.mode}; last ${extraction.lastAtEpoch ? new Date(extraction.lastAtEpoch).toISOString() : "never"}; ${extraction.rejected} rejected` });
+  checks.push({ name: "database", ok: health ? health.db.ok : readable, detail: health ? health.db.detail : detail });
+  checks.push({ name: "fts", ok: health ? health.fts.ok : readable, detail: health ? health.fts.detail : "no database yet" });
+  checks.push({ name: "vectors", ok: true, detail: health ? `${health.vectors.memories ?? 0} memory, ${health.vectors.facts ?? 0} fact` : "no database yet" });
+  checks.push({ name: "model", ok: true, detail: health ? health.model : "default" });
   return checks;
 }
