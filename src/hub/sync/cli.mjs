@@ -171,7 +171,123 @@ export async function runSyncCommand({ config, flags, pos, out }) {
     }
   }
 
-  return die("Usage: aletheia sync pair | join <url> <code> | status | devices | revoke <device> | push | pull | run | compact | purge <entity_id> | export <dir> | import <dir>");
+  // ---- end-to-end encryption (T-117) -------------------------------------------------------------
+  const passphrase = typeof flags.passphrase === "string" && flags.passphrase !== "" ? flags.passphrase : process.env.ALETHEIA_SYNC_PASSPHRASE;
+
+  if (sub === "enable-e2ee") {
+    const store = hubStore(config);
+    try {
+      const result = store.enableE2ee(store.ensureAccount().id, { passphrase });
+      return {
+        ...result,
+        note: "Future ops are encrypted with the data key. Old plaintext ops stay until `aletheia sync purge-plaintext`. Devices run `aletheia sync unlock-e2ee --passphrase <p>`. Export a recovery key with `aletheia sync export-recovery-key --out <file>`; without the passphrase and the recovery file the data is unrecoverable.",
+      };
+    } finally {
+      store.close();
+    }
+  }
+
+  if (sub === "unlock-e2ee") {
+    const { client, token, url } = syncToken(config);
+    try {
+      if (!url || !token) die("No sync hub configured. Run: aletheia sync join <url> <code>");
+      if (typeof flags["recovery-file"] === "string") {
+        const { readFileSync } = await import("node:fs");
+        return client.importRecoveryKey(readFileSync(flags["recovery-file"], "utf8"));
+      }
+      return client.unlockE2ee({ url, token, passphrase });
+    } finally {
+      client.close();
+    }
+  }
+
+  if (sub === "rotate-key") {
+    const store = hubStore(config);
+    try {
+      return store.rotateE2eeKey(store.ensureAccount().id, { passphrase });
+    } finally {
+      store.close();
+    }
+  }
+
+  if (sub === "change-passphrase") {
+    const store = hubStore(config);
+    try {
+      const oldPassphrase = typeof flags.old === "string" ? flags.old : process.env.ALETHEIA_SYNC_OLD_PASSPHRASE;
+      const newPassphrase = typeof flags.new === "string" ? flags.new : process.env.ALETHEIA_SYNC_NEW_PASSPHRASE;
+      return store.changePassphrase(store.ensureAccount().id, { oldPassphrase, newPassphrase });
+    } finally {
+      store.close();
+    }
+  }
+
+  if (sub === "export-recovery-key") {
+    const outFile = flags.out ?? die("Usage: aletheia sync export-recovery-key --out <file>");
+    const { client } = syncToken(config);
+    try {
+      const content = client.exportRecoveryKey();
+      const { writeFileSync } = await import("node:fs");
+      writeFileSync(outFile, `${content}\n`, { mode: 0o600 });
+      return { wrote: outFile, mode: "0600", note: "This file is the data keys. Keep it offline. Without it and the passphrase the ciphertext is unrecoverable." };
+    } finally {
+      client.close();
+    }
+  }
+
+  if (sub === "purge-plaintext") {
+    const store = hubStore(config);
+    try {
+      return store.purgePlaintext(store.ensureAccount().id, { apply: !!flags.apply, passphrase });
+    } finally {
+      store.close();
+    }
+  }
+
+  return die("Usage: aletheia sync pair | join <url> <code> | status | devices | revoke <device> | push | pull | run | compact | purge <entity_id> | export <dir> | import <dir> | enable-e2ee | unlock-e2ee | rotate-key | change-passphrase | export-recovery-key --out <file> | purge-plaintext [--apply]");
+}
+
+/**
+ * `aletheia mcp-link` manages the private remote MCP endpoint (T-107). Hub-side: it reads sync.db
+ * directly and mints a scoped token. The token is printed once and travels in the Authorization
+ * header, never in the URL.
+ */
+export function runMcpLinkCommand({ config, flags, pos }) {
+  const sub = pos[0];
+  const store = new SyncStore(config.syncDb);
+  try {
+    const account = store.ensureAccount();
+    if (sub === "create") {
+      const projects = typeof flags.projects === "string" ? flags.projects.split(",").map((p) => p.trim()).filter(Boolean) : [];
+      const scope = flags.scope === "sync" || flags.scope === "admin" ? flags.scope : "mcp";
+      const minted = store.mintToken(account.id, { scope, name: typeof flags.name === "string" ? flags.name : null, projects });
+      const base = (typeof flags.url === "string" && flags.url ? flags.url : `http://127.0.0.1:${config.syncPort}`).replace(/\/+$/, "");
+      const url = `${base}/mcp`;
+      const header = `Authorization: Bearer ${minted.token}`;
+      return {
+        id: minted.id,
+        scope,
+        projects,
+        url,
+        token: minted.token,
+        note: "The token is shown once and travels in the Authorization header, never in the URL. Revoke with: aletheia mcp-link revoke <id>.",
+        claudeCode: `claude mcp add --transport http aletheia ${url} --header "${header}"`,
+        claudeDesktop: JSON.stringify({ mcpServers: { aletheia: { type: "http", url, headers: { Authorization: `Bearer ${minted.token}` } } } }, null, 2),
+      };
+    }
+    if (sub === "list") {
+      return { links: store.listTokens(account.id).filter((token) => ["mcp", "read", "sync", "admin"].includes(token.scope)).map((token) => ({ id: token.id, scope: token.scope, name: token.name, projects: token.projects, revokedAt: token.revoked_at, lastUsedAt: token.last_used_at })) };
+    }
+    if (sub === "revoke") {
+      const id = Number(pos[1] ?? "");
+      if (!Number.isSafeInteger(id)) return die("Usage: aletheia mcp-link revoke <id>");
+      const revoked = store.revokeToken(account.id, id);
+      store.audit(account.id, { action: "token.revoke", result: revoked ? "ok" : "missing", detail: { id } });
+      return { revoked };
+    }
+    return die("Usage: aletheia mcp-link create [--projects a,b] [--scope mcp|sync|admin] [--name x] [--url https://hub.example] | list | revoke <id>");
+  } finally {
+    store.close();
+  }
 }
 
 /** `aletheia audit` reads the sync audit log (the hub's append-only audit table). */

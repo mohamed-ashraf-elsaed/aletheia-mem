@@ -8,8 +8,22 @@ T-134 to T-139. The rest of the table is still planned. See [tasks/TASKS.md](tas
 
 Status update, 2026-10-26 (sync): T-102 (replicated log with per-operation results), T-103 (tombstones, compaction
 and purge), T-104 (device pairing, tokens and revoke) and T-108 (scoped tokens, quotas and audit log) are
-`validated`. The design and behaviour are recorded in [29-sync.md](29-sync.md). End-to-end encryption (T-117) is
-not built, so this page does not claim "end-to-end encrypted".
+`validated`. The design and behaviour are recorded in [29-sync.md](29-sync.md).
+
+Status update, 2026-10-26 (E2EE): T-117 is `validated`. The optional end-to-end encryption mode for sync is
+built and the scheme, key hierarchy, rotation, recovery and the exact list of what the server can still see are
+in [29-sync.md](29-sync.md) §29.6. E2EE is off by default and per account; unencrypted accounts keep their old
+behaviour, so "end-to-end encrypted" is only claimed for accounts that enable it.
+
+Status update, 2026-10-26 (remote MCP): T-067 (MCP Streamable HTTP transport) and T-107 (the private remote MCP
+endpoint) are `validated`. F8 is built: bearer tokens with an `mcp`/`read` scope get the read tools only, project
+scope and a per-token rate limit apply, every call is audited, and `aletheia mcp-link create` prints the client
+config. See [30-remote-mcp.md](30-remote-mcp.md).
+
+Status update, 2026-10-26 (Hub login): T-110 is `validated`. F10 is built with one deviation from the A1 design:
+login exchanges the sync account's admin token for the session cookie (no separate scrypt password, no TOTP yet).
+Sessions are HttpOnly, SameSite=Strict, Secure-when-HTTPS, expire, and state-changing requests need the CSRF
+header; failed logins lock out with back-off. Loopback-only servers keep today's behaviour.
 
 ## Decision
 

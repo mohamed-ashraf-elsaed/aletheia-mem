@@ -1,9 +1,10 @@
 # 29. Aletheia Sync
 
-Status: implemented, 2026-10-26 (T-102, T-103, T-104, T-108). This page describes the code that exists.
+Status: implemented, 2026-10-26 (T-102, T-103, T-104, T-108; E2EE T-117). This page describes the code that exists.
 
 Aletheia Sync is a free, self-hosted, dependency-free way to move memory between devices. It is an
-append-only operation log with per-operation results, tombstones, device pairing and scoped tokens.
+append-only operation log with per-operation results, tombstones, device pairing, scoped tokens and an
+optional end-to-end encryption mode (§29.6).
 
 ## 29.1 Protocol
 
@@ -24,6 +25,7 @@ single Bun process with a SQLite file (`sync.db`). Binds to loopback by default;
 | `/v1/sync/compact` | POST | `admin` | run compaction |
 | `/v1/sync/purge` | POST | `admin` | purge one entity everywhere |
 | `/v1/sync/audit` | GET | `admin` | append-only audit log |
+| `/v1/sync/e2ee` | GET | any valid token | the account's wrapped E2EE keys (for a newly joined device) |
 
 Push returns one result per op: `applied`, `duplicate`, or `rejected` with a reason. One bad op never
 rejects the rest of the batch.
@@ -81,14 +83,76 @@ self-contained heads.
 
 - Tokens are 256-bit random values, stored only as sha256, compared in constant time, revocable.
 - Scopes: `sync` (push and pull), `read` (pull only), `mcp` (read tools), `admin` (mint, revoke, audit).
-  Each token is limited to named projects (empty = all).
+  Each token is limited to named projects (empty = all). The `mcp` scope also unlocks the private remote MCP
+  endpoint (docs/30), and an `admin` token is the Hub login password when the server is not loopback-only
+  (T-110).
 - Unknown, revoked or expired token: 401. Valid token with the wrong scope: 403.
 - Pairing codes: 8 characters, 10-minute life, single use, 5 failed attempts per minute.
 - Per-token ops/day and bytes/day quotas are local settings, off by default. A write quota never blocks reads.
 - The audit table is append-only and stores ids and counts, never payloads or secrets.
 - The hub binds to loopback by default.
 
-## 29.6 Threat list and what is NOT covered
+## 29.6 End-to-end encryption (optional, T-117)
+
+Status: implemented, 2026-10-26. Optional per account, off by default; unencrypted accounts behave exactly as
+before. Tested by `test/sync-e2ee.test.mjs`.
+
+### Key hierarchy
+
+- **Data key (DK)**: one random 256-bit key per account, generated with `crypto.getRandomValues`. It encrypts
+  every `put` payload on the device. Rotation replaces it; the account keeps a numbered list of keys and every
+  ciphertext names its key id (`kid`).
+- **Key-encryption key (KEK)**: `scrypt(passphrase, salt, 32)` with N=16384, r=8, p=1 (node:crypto defaults
+  except N, documented here). The salt is 16 random bytes, stored with the wrapped key.
+- **Wrapped DK**: AES-256-GCM(KEK, DK) with a random 96-bit nonce. Only the wrapped form is stored on the
+  server, one row per `kid`.
+- **Recovery key**: the DK itself. `aletheia sync export-recovery-key` writes the device's keyring to a file
+  with mode 0600. There is no escrow and no way to recover without the passphrase or this file.
+
+### What is encrypted and what is not
+
+Encrypted on the device, before the op enters the outbox: the whole `payload` of a `put` (titles, text,
+project names, tags — everything inside the payload object). The ciphertext is an envelope
+`{ "@e2ee": 1, v: 1, kid, nonce, ct }` (AES-256-GCM, random 96-bit nonce per message, never reused).
+`content_hash` is computed over the op with the ciphertext, so the server's dedupe and integrity checks run
+on ciphertext.
+
+Not encrypted, and visible to the server: `device_id`, `seq`, `hlc`, `entity_type`, `entity_id`, the op kind
+(`put`/`dismiss`/`restore`/`delete`), `supersedes`, the ciphertext size, the server-side timestamp, the
+per-op result code, device names, token ids and the audit rows (which already never carry payloads).
+
+Associated data: AES-GCM authenticates the ciphertext against the canonical op minus `payload` and
+`content_hash` — so ciphertext cannot be moved to another device, seq, entity, kind or hlc without failing
+the GCM tag.
+
+### Enabling, new devices, rotation, recovery
+
+- `aletheia sync enable-e2ee --passphrase <p>` (on the hub machine) generates the DK, wraps it and stores the
+  wrapped key. Future ops are encrypted; old plaintext ops stay readable and stay on the server until
+  `aletheia sync purge-plaintext`, which prints exactly what it will do and only re-encrypts with `--apply`.
+- A new device joins with the ordinary pairing code, then runs
+  `aletheia sync unlock-e2ee --passphrase <p>`: it fetches the wrapped keys over `/v1/sync/e2ee` and unwraps
+  them locally. The device stores the data keys in its own local sync DB — the device already holds the full
+  plaintext replica, so this adds no new local exposure.
+- `aletheia sync rotate-key --passphrase <p>`: new DK, new `kid`; new ops use it, old ciphertext stays
+  decryptable with the old key. `aletheia sync change-passphrase --old a --new b` re-wraps the current DK.
+- Losing the passphrase and the recovery file means the ciphertext is unrecoverable. That is the point, and
+  it is not recoverable by us.
+
+### What a compromised server can and cannot do
+
+Can see: the metadata list above, ciphertext, sizes, timing. Cannot see: payload plaintext, without the
+passphrase or a recovery key file. Cannot move ciphertext between entities (AAD fails). Can still drop,
+reorder or refuse ops — there is no hash chain across the log — and can DoS the account; the client keeps its
+outbox and full local replica either way.
+
+### What is not covered
+
+- Server-side search, server-run extraction, and the remote MCP read tools over an E2EE account would need
+  the plaintext. Aletheia does not build an "unlock" mode; with E2EE on, use the device's local search.
+- E2EE does not hide the fact that two entities share a `device_id` or that ops happen at certain times.
+
+## 29.7 Threat list and what is NOT covered
 
 | Threat | Covered |
 |---|---|
@@ -98,13 +162,13 @@ self-contained heads.
 | Lost ack mid-push | yes: outbox survives, re-push is idempotent |
 | Revoked device still writes | yes: 401 on the next call |
 | Eavesdropping on remote traffic | NOT covered here: TLS is delegated to a reverse proxy or tunnel |
-| Hub reading plaintext payloads | NOT covered here: end-to-end encryption is T-117, not built |
+| Hub reading plaintext payloads | covered when E2EE is on (§29.6); plaintext accounts keep the old behaviour |
 | Compromised hub tampering with history | NOT covered here: there is no hash chain across the log |
 | A device with an old cursor | covered: `snapshot_required` and snapshot re-bootstrap |
 
-Do not claim "end-to-end encrypted" anywhere in this project. T-117 is not built.
+Do not claim "end-to-end encrypted" for plaintext accounts. E2EE covers what §29.6 says and nothing more.
 
-## 29.7 Failure modes
+## 29.8 Failure modes
 
 | Failure | Behaviour |
 |---|---|
@@ -114,7 +178,7 @@ Do not claim "end-to-end encrypted" anywhere in this project. T-117 is not built
 | Poison op | rejected alone, the rest of the batch drains |
 | Disk full | push returns an error; the client keeps the outbox |
 
-## 29.8 Running two machines
+## 29.9 Running two machines
 
 On the hub machine:
 
@@ -140,7 +204,7 @@ aletheia sync join https://<assigned-host>.trycloudflare.com <code>
 
 The tunnel only forwards TLS to the loopback hub. Aletheia itself does not depend on the tunnel provider.
 
-## 29.9 Comparison with claude-mem's sync
+## 29.10 Comparison with claude-mem's sync
 
 claude-mem's hub appends to a per-user log and refuses the whole batch when any op is refused ("any refusal
 rolls back all of it", `store.ts`). Users got stuck for days on a stale or conflicting op: issue 4086 and
@@ -152,12 +216,11 @@ store, so there is no second system to lag.
 
 claude-mem stores op bodies in clear text on the hub; the schema file says retention, rotation and
 compaction are out of scope. Aletheia runs redaction before send, adds tombstones with compaction and purge,
-and keeps payloads off the audit table. End-to-end encryption is still not built (T-117), so Aletheia does
-not claim claude-mem's clear-text gap is closed.
+keeps payloads off the audit table, and offers the optional E2EE mode in §29.6 for accounts that enable it.
 
 Sources are in [research/A1-claude-mem-paid.md](research/A1-claude-mem-paid.md) and its dated source table.
 
-## 29.10 Sources
+## 29.11 Sources
 
 - [27-free-paid-parity.md](27-free-paid-parity.md) and [research/A1-claude-mem-paid.md](research/A1-claude-mem-paid.md).
-- The task files T-102, T-103, T-104 and T-108, and the sync tests.
+- The task files T-102, T-103, T-104, T-108 and T-117, and the sync tests.

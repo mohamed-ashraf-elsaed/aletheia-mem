@@ -264,6 +264,76 @@ Expected: the device lists on the hub (`aletheia sync devices`), pushes and pull
 the hub makes the device's next call fail. A non-loopback bind must print the TLS warning unless
 `--behind-tls` is set.
 
+### E2EE on two machines (NOT RUN BY AUTHOR)
+
+The E2EE paths are covered by `test/sync-e2ee.test.mjs` against temp dirs and a loopback hub; no real
+two-machine E2EE run has been done.
+
+**NOT RUN BY AUTHOR.** On the hub machine:
+
+```bash
+aletheia sync enable-e2ee --passphrase '<passphrase>'
+aletheia sync pair
+aletheia sync export-recovery-key --out ~/aletheia-recovery.key
+ls -l ~/aletheia-recovery.key   # expect -rw------- (0600)
+```
+
+On each device machine:
+
+```bash
+aletheia sync join <url> <code>
+aletheia sync unlock-e2ee --passphrase '<passphrase>'
+aletheia sync run
+```
+
+Expected: `aletheia sync status` shows E2EE on; the server's `sync.db` has no plaintext titles (the ops show
+an `@e2ee` envelope); a wrong passphrase fails cleanly; `aletheia sync rotate-key` and
+`aletheia sync change-passphrase` work; and without the passphrase or the recovery file the data is
+unreadable.
+
+## 9. A real client against the remote MCP endpoint (NOT RUN BY AUTHOR)
+
+The endpoint is tested with raw `fetch` in `test/remote-mcp.test.mjs`; no real MCP client has connected to it.
+
+**NOT RUN BY AUTHOR.** To run it by hand, on the hub machine:
+
+```bash
+bun bin/aletheia-sync.mjs --db ~/.aletheia/sync.db --hub-db ~/.aletheia/hub.db
+aletheia mcp-link create --projects shop
+```
+
+Then, on the same machine or a device that can reach the hub over a TLS tunnel:
+
+```bash
+claude mcp add --transport http aletheia http://127.0.0.1:37791/mcp --header "Authorization: Bearer <token>"
+```
+
+Expected: `claude mcp list` shows the server connected; a prompt like "search memory for backoff" finds the
+memory; `aletheia audit` shows one `mcp.call` row per tool call; `aletheia mcp-link revoke <id>` makes the next
+call fail with 401. For a remote hub the URL must be the tunnel's HTTPS URL and the hub must run with
+`--behind-tls`; add `--mcp-origins https://claude.ai` if a browser-based client is used.
+
+## 10. Hub login from a browser (NOT RUN BY AUTHOR)
+
+The session, CSRF, lock-out and expiry paths are tested by `test/hub-login.test.mjs` against `fetch`; no real
+browser login has been run.
+
+**NOT RUN BY AUTHOR.** Mint an admin token on the hub machine:
+
+```bash
+aletheia mcp-link create --scope admin
+```
+
+Start the server on a non-loopback bind behind a TLS tunnel:
+
+```bash
+bun bin/aletheia-server.mjs --host 0.0.0.0 --behind-tls
+```
+
+Open the tunnel URL in a browser. Expected: the login page appears; the admin token logs in; the Hub tabs load;
+a dismiss or pair action works (the UI sends the CSRF header); a server restart ends the session; five wrong
+tokens lock the login page with a wait message.
+
 ## What the automated tests already cover
 
 `test/install-claude.test.mjs`, `test/claude-hooks.test.mjs` and `test/e2e-capture.test.mjs` cover: the dry run,
