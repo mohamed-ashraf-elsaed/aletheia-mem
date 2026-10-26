@@ -16,6 +16,11 @@ endpoint) are `validated`. F8 is built: bearer tokens with an `mcp`/`read` scope
 scope and a per-token rate limit apply, every call is audited, and `aletheia mcp-link create` prints the client
 config. See [30-remote-mcp.md](30-remote-mcp.md).
 
+Status update, 2026-10-26 (Hub login): T-110 is `validated`. F10 is built with one deviation from the A1 design:
+login exchanges the sync account's admin token for the session cookie (no separate scrypt password, no TOTP yet).
+Sessions are HttpOnly, SameSite=Strict, Secure-when-HTTPS, expire, and state-changing requests need the CSRF
+header; failed logins lock out with back-off. Loopback-only servers keep today's behaviour.
+
 ## Decision
 
 The owner decided on 2026-10-26 that every feature claude-mem, and any rival, sells in a paid tier is built into Aletheia

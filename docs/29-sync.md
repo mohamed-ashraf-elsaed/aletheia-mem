@@ -81,7 +81,9 @@ self-contained heads.
 
 - Tokens are 256-bit random values, stored only as sha256, compared in constant time, revocable.
 - Scopes: `sync` (push and pull), `read` (pull only), `mcp` (read tools), `admin` (mint, revoke, audit).
-  Each token is limited to named projects (empty = all).
+  Each token is limited to named projects (empty = all). The `mcp` scope also unlocks the private remote MCP
+  endpoint (docs/30), and an `admin` token is the Hub login password when the server is not loopback-only
+  (T-110).
 - Unknown, revoked or expired token: 401. Valid token with the wrong scope: 403.
 - Pairing codes: 8 characters, 10-minute life, single use, 5 failed attempts per minute.
 - Per-token ops/day and bytes/day quotas are local settings, off by default. A write quota never blocks reads.

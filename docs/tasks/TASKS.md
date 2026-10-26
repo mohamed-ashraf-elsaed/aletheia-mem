@@ -150,7 +150,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-107 | Serve a private remote MCP endpoint | P6 | T-067, T-104 | validated | 2026-10-26 | [T-107.md](T-107.md) |
 | T-108 | Add scoped API tokens, quotas and an audit log | P6 | T-102 | validated | 2026-10-26 | [T-108.md](T-108.md) |
 | T-109 | Add a local usage ledger and caps | P6 | T-106 | todo | — | [T-109.md](T-109.md) |
-| T-110 | Add remote login for the Hub | P6 | T-104 | todo | — | [T-110.md](T-110.md) |
+| T-110 | Add remote login for the Hub | P6 | T-104 | validated | 2026-10-26 | [T-110.md](T-110.md) |
 | T-111 | Add an OAuth connector for ChatGPT and Claude.ai | P6 | T-107, T-110 | todo | — | [T-111.md](T-111.md) |
 | T-112 | Add team mode: shared memory, board, brief and search | P6 | T-102, T-103, T-104, T-108 | todo | — | [T-112.md](T-112.md) |
 | T-113 | Add purge, export and an erasure receipt | P6 | T-103 | todo | — | [T-113.md](T-113.md) |

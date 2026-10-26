@@ -10,6 +10,8 @@ import { EVIDENCE_KINDS } from "./readmodel/evidence.mjs";
 import { MIME_TYPES } from "./readmodel/work-product.mjs";
 import { BadRequest, createHubRoutes } from "./hub/routes.mjs";
 import { createMcpHttpHandler } from "./hub/mcp-http.mjs";
+import { createLoginGuard } from "./hub/login.mjs";
+import { SyncStore } from "./hub/sync/store.mjs";
 import { startBackgroundWorker } from "./hub/queue.mjs";
 import { HubStore } from "./hub/store.mjs";
 import { makeProvider } from "./refresh/providers.mjs";
@@ -30,9 +32,30 @@ const notFoundRoute = (method, path) =>
   });
 
 /** Create the service and the Bun server. Returns {server, service, stop}. */
-export function startServer(config, { autoRefresh = null } = {}) {
+export function startServer(config, {
+  autoRefresh = null,
+  requireLogin = null,
+  behindTls = false,
+  sessionTtlMs = 24 * 60 * 60 * 1000,
+  loginLockMs = 60_000,
+  loginMaxFailures = 5,
+} = {}) {
   const service = new WorkViewService(config, { autoRefresh });
   const hub = new HubStore(config.hubDb);
+  // Remote login (T-110): on by default exactly when the bind is not loopback-only. The sync account's
+  // admin token is the password. Loopback-only keeps today's behaviour (no login, no sessions).
+  const remoteMode = requireLogin ?? !["127.0.0.1", "localhost", "::1"].includes(config.host);
+  let loginStore = null;
+  const getLoginStore = () => loginStore ?? (loginStore = new SyncStore(config.syncDb));
+  const login = createLoginGuard({
+    store: { findToken: (raw) => getLoginStore().findToken(raw) },
+    requireLogin: remoteMode,
+    behindTls,
+    sessionTtlMs,
+    lockMs: loginLockMs,
+    maxFailures: loginMaxFailures,
+    getPeer: (request, server) => server?.requestIP(request)?.address ?? "unknown",
+  });
   // The extraction worker is a background task of the server, not part of any hook. A misconfigured provider
   // must not stop the server from booting: extraction falls back to the rule extractor and doctor reports it.
   let ask = null;
@@ -66,6 +89,7 @@ export function startServer(config, { autoRefresh = null } = {}) {
   };
 
   function guarded(request, server, { post = false } = {}) {
+    if (remoteMode) return null; // remote mode uses the login session instead of the local-only guard
     const peer = server.requestIP(request)?.address;
     if (!isLocalRequest(request, peer)) return json({ error: "Work view is available only on this computer." }, 403);
     if (post && !isSameOriginJson(request)) return json({ error: "Review changes must come from the local work viewer." }, 403);
@@ -95,6 +119,10 @@ export function startServer(config, { autoRefresh = null } = {}) {
 
     // ---- MCP over Streamable HTTP (its own bearer auth and Origin rules)
     if (pathname === "/mcp") return await mcpHttp(request);
+
+    // ---- login sessions (remote mode): /api/login, /api/logout, and the 401/403 gates
+    const loginResponse = await login.handle(request, { server });
+    if (loginResponse) return loginResponse;
 
     // ---- static
     if (method === "GET" && (pathname === "/" || pathname === "/index.html")) {
@@ -205,6 +233,7 @@ export function startServer(config, { autoRefresh = null } = {}) {
       server.stop(true);
       service.close();
       hub.close();
+      loginStore?.close();
     },
   };
 }

@@ -286,6 +286,27 @@ memory; `aletheia audit` shows one `mcp.call` row per tool call; `aletheia mcp-l
 call fail with 401. For a remote hub the URL must be the tunnel's HTTPS URL and the hub must run with
 `--behind-tls`; add `--mcp-origins https://claude.ai` if a browser-based client is used.
 
+## 10. Hub login from a browser (NOT RUN BY AUTHOR)
+
+The session, CSRF, lock-out and expiry paths are tested by `test/hub-login.test.mjs` against `fetch`; no real
+browser login has been run.
+
+**NOT RUN BY AUTHOR.** Mint an admin token on the hub machine:
+
+```bash
+aletheia mcp-link create --scope admin
+```
+
+Start the server on a non-loopback bind behind a TLS tunnel:
+
+```bash
+bun bin/aletheia-server.mjs --host 0.0.0.0 --behind-tls
+```
+
+Open the tunnel URL in a browser. Expected: the login page appears; the admin token logs in; the Hub tabs load;
+a dismiss or pair action works (the UI sends the CSRF header); a server restart ends the session; five wrong
+tokens lock the login page with a wait message.
+
 ## What the automated tests already cover
 
 `test/install-claude.test.mjs`, `test/claude-hooks.test.mjs` and `test/e2e-capture.test.mjs` cover: the dry run,

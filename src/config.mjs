@@ -19,8 +19,10 @@ export function defaultDataDir(homeDir = home) {
 export function loadConfig(overrides = {}) {
   const dataDir = overrides.dataDir ?? env.ALETHEIA_DATA_DIR ?? defaultDataDir();
   const cfg = {
-    host: "127.0.0.1",
+    host: overrides.host ?? env.ALETHEIA_HOST ?? "127.0.0.1",
     port: Number(overrides.port ?? env.ALETHEIA_PORT ?? DEFAULT_PORT),
+    // A non-loopback bind requires this flag (TLS is terminated by a reverse proxy or tunnel).
+    behindTls: (overrides.behindTls ?? env.ALETHEIA_BEHIND_TLS) === "1" || overrides.behindTls === true,
     // Read-only source: the claude-mem database.
     sourceDb: overrides.sourceDb ?? env.CLAUDE_MEM_DB ?? join(home, ".claude-mem", "claude-mem.db"),
     // Everything the clone writes lives under dataDir.
