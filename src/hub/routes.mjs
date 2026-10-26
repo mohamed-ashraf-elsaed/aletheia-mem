@@ -32,10 +32,11 @@ function absDir(p, what = "projectDir") {
   return resolve(p);
 }
 
-export function createHubRoutes({ hub, config }) {
+export function createHubRoutes({ hub, config, liveHub = null }) {
   const mcpScript = join(import.meta.dir, "..", "..", "bin", "mcp.mjs");
   const argv = () => mcpCommand({ bun: process.execPath, script: mcpScript });
   const qs = (url) => Object.fromEntries(url.searchParams);
+  const live = (frame) => liveHub?.broadcast(frame);
   let syncStore = null;
   const getSyncStore = () => syncStore ?? (syncStore = new SyncStore(config.syncDb));
 
@@ -228,7 +229,9 @@ export function createHubRoutes({ hub, config }) {
         return detail ? h.json({ session: detail }) : h.json({ error: "No session has that id." }, 404);
       }
       if (pathname === "/v1/memories" && method === "POST") {
-        const r = hub.add(memoryInput(await readJson(request), tool), { actor: tool ?? "api" });
+        const input = memoryInput(await readJson(request), tool);
+        const r = hub.add(input, { actor: tool ?? "api" });
+        live({ kind: "session", id: r.id, project: input.project ?? "default" });
         return h.json({ id: r.id, created: r.created }, r.created ? 201 : 200);
       }
       if ((m = /^\/v1\/memories\/(\d+)$/.exec(pathname)) && method === "GET") {
@@ -272,6 +275,7 @@ export function createHubRoutes({ hub, config }) {
         const memory = normalizeHook(b.payload ?? b, { tool: b.tool ?? tool ?? "api", project: b.project, excluded: config.excludedProjects });
         if (!memory) return h.json({ stored: false, reason: "Nothing to store for this event." });
         const r = hub.add(memory, { actor: memory.tool });
+        live({ kind: "session", id: r.id, project: memory.project ?? "default" });
         return h.json({ stored: r.created, id: r.id }, r.created ? 201 : 200);
       }
       return h.json({ error: "Not found." }, 404);
@@ -288,6 +292,7 @@ export function createHubRoutes({ hub, config }) {
     if (pathname === "/api/hub/memories" && method === "POST") {
       const b = await readJson(request);
       const r = hub.add({ ...memoryInput(b, "ui"), kind: "note", tool: b.tool ?? "manual" }, { actor: "ui" });
+      live({ kind: "session", id: r.id, project: b.project ?? "default" });
       return h.json({ ...r, memory: hub.get(r.id) }, r.created ? 201 : 200);
     }
     if ((m = /^\/api\/hub\/memories\/(\d+)$/.exec(pathname))) {
@@ -435,6 +440,7 @@ export function createHubRoutes({ hub, config }) {
       need(["accept", "reject", "reopen", "merge"].includes(b.action), "action must be accept, reject, reopen or merge.");
       const row = hub.getReview(id);
       need(row, "That review item does not exist.", 404);
+      const reviewProject = reviewItemView(row).project ?? null;
       const suggestion = row.item_type === "rule" ? hub.db.prepare("SELECT * FROM rule_suggestions WHERE id = ?").get(row.item_id) : null;
       if (b.action === "merge") {
         need(Number.isSafeInteger(Number(b.into)), "into (the id to keep) is required for a merge.");
@@ -451,6 +457,7 @@ export function createHubRoutes({ hub, config }) {
           throw new BadRequest(`A ${row.item_type} review item cannot be merged from this page.`);
         }
         const updated = hub.resolveReview(id, { status: "accepted", actor: "ui" });
+        live({ kind: "review", id, project: reviewProject });
         return h.json({ item: reviewItemView(updated) });
       }
       const status = b.action === "accept" ? "accepted" : b.action === "reject" ? "rejected" : "pending";
@@ -464,6 +471,7 @@ export function createHubRoutes({ hub, config }) {
         hub.audit("ui", `rule_suggestion.${b.action}`, { id: suggestion.id });
       }
       const updated = hub.resolveReview(id, { status, actor: "ui" });
+      live({ kind: "review", id, project: reviewProject });
       return h.json({ item: reviewItemView(updated) });
     }
 

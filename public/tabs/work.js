@@ -18,10 +18,33 @@ const REFRESH_MS = 10_000;
 let timer = null;
 let busy = false;
 let visibilityBound = false;
+let liveSocket = null;
+
+function disconnectLive() {
+  if (!liveSocket) return;
+  liveSocket.onmessage = liveSocket.onerror = liveSocket.onclose = null;
+  try { liveSocket.close(); } catch { /* ignore */ }
+  liveSocket = null;
+}
+
+function connectLive() {
+  disconnectLive();
+  try {
+    const scheme = location.protocol === "https:" ? "wss:" : "ws:";
+    const query = state.project ? `?project=${encodeURIComponent(state.project)}` : "";
+    liveSocket = new WebSocket(`${scheme}//${location.host}/v1/live${query}`);
+    liveSocket.onmessage = () => renderOverview(true);
+    liveSocket.onerror = () => disconnectLive();
+    liveSocket.onclose = () => disconnectLive();
+  } catch {
+    liveSocket = null;
+  }
+}
 
 export function stopWorkRefresh() {
   if (timer) clearInterval(timer);
   timer = null;
+  disconnectLive();
 }
 
 function sessionRoute() {
@@ -291,4 +314,5 @@ export async function renderWork() {
   }
   await renderOverview(false);
   startRefresh();
+  connectLive();
 }

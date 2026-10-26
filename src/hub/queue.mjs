@@ -151,6 +151,7 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
   const language = store.outputLanguage(payload.project ?? "default", config.outputLanguage ?? "");
   const priceTable = prices ?? pricesFrom(config);
   let facts = 0;
+  let factIds = [];
   let deduped = 0;
   let rejected = 0;
   const startedAt = now();
@@ -175,6 +176,7 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
       markExtracted(store, window.map((episode) => episode.episodeId), now());
       store.db.exec("COMMIT");
       facts += stored.added;
+      factIds.push(...(stored.ids ?? []));
       deduped += stored.deduped?.length ?? 0;
     } catch (error) {
       try { store.db.exec("ROLLBACK"); } catch { /* ignore */ }
@@ -197,7 +199,7 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
       store.audit("extract", "embed.error", { message: String(error instanceof Error ? error.message : error).slice(0, 300) });
     }
   }
-  return { memories: memories.length, episodes: episodes.length, windows: windows.length, facts, deduped, rejected, mode, language, startedAt, merged: observations.merged, summaries, embedded };
+  return { memories: memories.length, episodes: episodes.length, windows: windows.length, facts, factIds, project: payload.project ?? "default", deduped, rejected, mode, language, startedAt, merged: observations.merged, summaries, embedded };
 }
 
 /**

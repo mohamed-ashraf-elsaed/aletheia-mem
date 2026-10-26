@@ -145,7 +145,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-102 | Build Aletheia Sync: a replicated log with per-operation results | P6 | T-017 | validated | 2026-10-26 | [T-102.md](T-102.md) |
 | T-103 | Add tombstones, compaction and purge to sync | P6 | T-102 | validated | 2026-10-26 | [T-103.md](T-103.md) |
 | T-104 | Add device pairing, device tokens and revoke | P6 | T-102 | validated | 2026-10-26 | [T-104.md](T-104.md) |
-| T-105 | Add live update frames over WebSocket | P6 | T-102 | todo | — | [T-105.md](T-105.md) |
+| T-105 | Add live update frames over WebSocket | P6 | T-102 | validated | 2026-10-26 | [T-105.md](T-105.md) |
 | T-106 | Run hosted-style extraction as a server-side worker | P6 | T-020 | todo | — | [T-106.md](T-106.md) |
 | T-107 | Serve a private remote MCP endpoint | P6 | T-067, T-104 | validated | 2026-10-26 | [T-107.md](T-107.md) |
 | T-108 | Add scoped API tokens, quotas and an audit log | P6 | T-102 | validated | 2026-10-26 | [T-108.md](T-108.md) |
