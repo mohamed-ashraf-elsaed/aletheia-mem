@@ -372,6 +372,8 @@ export async function doctor(env) {
   let last = null;
   let readable = true;
   let detail = env.dbPath;
+  let queue = { pending: 0, running: 0, done: 0, failed: 0 };
+  let extraction = { mode: env.provider === "none" ? "rules" : env.provider ?? "unknown", lastAtEpoch: null, rejected: 0 };
   try {
     if (!existsSync(env.dbPath)) {
       detail = "no capture yet";
@@ -380,6 +382,11 @@ export async function doctor(env) {
       const store = new HubStore(env.dbPath);
       try {
         last = store.db.prepare("SELECT MAX(created_at_epoch) AS at FROM memories WHERE kind IN ('prompt','event','summary')").get().at;
+        const statuses = Object.fromEntries(store.db.prepare("SELECT status, COUNT(*) AS n FROM jobs GROUP BY status").all().map((row) => [row.status, row.n]));
+        queue = { pending: statuses.pending ?? 0, running: statuses.running ?? 0, done: statuses.done ?? 0, failed: statuses.failed ?? 0 };
+        const usage = store.db.prepare("SELECT mode, MAX(at_epoch) AS at, SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected FROM fact_usage ORDER BY id DESC LIMIT 1").get();
+        const lastUsage = store.db.prepare("SELECT MAX(at_epoch) AS at FROM fact_usage WHERE status = 'ok'").get();
+        extraction = { mode: usage?.mode ?? (env.provider === "none" ? "rules" : env.provider ?? "unknown"), lastAtEpoch: lastUsage?.at ?? null, rejected: usage?.rejected ?? 0 };
       } finally {
         store.close();
       }
@@ -390,5 +397,7 @@ export async function doctor(env) {
     detail = `cannot read ${env.dbPath}`;
   }
   checks.push({ name: "last capture", ok: readable, detail });
+  checks.push({ name: "queue", ok: queue.failed === 0, detail: `${queue.pending} pending, ${queue.running} running, ${queue.failed} failed` });
+  checks.push({ name: "extraction", ok: true, detail: `mode ${extraction.mode}; last ${extraction.lastAtEpoch ? new Date(extraction.lastAtEpoch).toISOString() : "never"}; ${extraction.rejected} rejected` });
   return checks;
 }

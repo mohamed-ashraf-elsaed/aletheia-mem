@@ -57,6 +57,18 @@ These are not `UNVERIFIED` facts about other projects; they are claims this proj
 | 35 | "macOS and Windows supported" | Linux only tested | T-014 |
 | 36 | "30+ languages supported" | English only | T-087 to T-089 |
 
+## Memory-building measurements (2026-10-26)
+
+These are claims this run deliberately does not make. Each was measured only on a synthetic fixture, or not at all.
+
+| # | Claim | State | What would verify it |
+|---:|---|---|---|
+| 37 | Extracted facts raise LoCoMo Recall@5 by ≥5 points | **not measured**: `locomo10.json` is not in the repo and the optional embedding runtime is not installed | Download the dataset, install `@huggingface/transformers`, run the E02 command in [22](../22-improve-the-numbers.md) |
+| 38 | A real local OpenAI-compatible endpoint accepts the extraction request | **not tested**: provider tests inject `fetchImpl` or use the fake provider | Run `ALETHEIA_PROVIDER=local ALETHEIA_LOCAL_BASE_URL=... aletheia compress` against Ollama, llama.cpp or LM Studio |
+| 39 | Importance matches a human ranking (Spearman ≥0.5) | measured only on a synthetic 200-item rank (0.645) | Collect 200 human-ranked observations and rerun `test/importance.test.mjs` against them |
+| 40 | Near-duplicate precision and recall on human labels | measured only on a synthetic 200-pair set (precision 1.00, recall 0.90) | Build the human-labelled 200-pair set in D4 §23.9 and evaluate `src/hub/dedupe.mjs` |
+| 41 | Contradiction handling on the D4 knowledge-update set | measured only on a synthetic 30-pair set (30/30 newest-wins) | Build the 50-pair knowledge-update set and rerun `test/contradictions.test.mjs` |
+
 ## URLs referenced in the documents but not fetched as sources
 
 These appear in [20](../20-claude-mem-feature-matrix.md) to [24](../24-repo-parity-and-growth.md) but were not used as

@@ -58,6 +58,8 @@ function installEnv(hub) {
     dataDir: config.dataDir,
     dbPath: config.hubDb,
     port: config.port,
+    provider: config.provider,
+    mode: config.mode,
     rules: hub ? hub.rules.list() : [],
   };
 }
@@ -156,8 +158,12 @@ async function main() {
       }
       case "context": return out(hub.context({ project: flags.project ?? projectKeyForPath(process.cwd()), tool: flags.tool, limit: Number(flags.limit) || 20 }));
       case "search": {
-        const rows = hub.search({ query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20 });
-        return out(rows.length ? rows.map((r) => `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title} (${r.project}, ${r.tool})`).join("\n") : "No matches.");
+        const asOf = typeof flags["as-of"] === "string" ? Date.parse(flags["as-of"]) : null;
+        if (flags["as-of"] && !Number.isFinite(asOf)) return die("--as-of needs a date, for example 2026-01-31.");
+        const rows = hub.searchAll({ query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20, includeHistory: !!flags.history, asOf });
+        return out(rows.length ? rows.map((r) => (r.kind === "fact"
+          ? `fact #${r.id} ${r.at.slice(0, 10)} [${r.status}] ${r.text} (source episode #${r.source?.episodeId ?? "-"})`
+          : `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title} (${r.project}, ${r.tool})`)).join("\n") : "No matches.");
       }
       case "save": {
         const text = pos.join(" ");

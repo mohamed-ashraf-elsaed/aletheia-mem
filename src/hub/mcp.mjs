@@ -36,7 +36,11 @@ export function callTool(name, args = {}, ctx) {
     switch (name) {
       case "search": {
         if (typeof args.query !== "string" || !args.query.trim()) return fail("query is required.");
-        return text(fmtIndex(store.search({ query: args.query, project: args.project, type: args.type, kind: args.kind, limit: args.limit ?? 20 })));
+        const limit = args.limit ?? 20;
+        const facts = store.searchFacts({ query: args.query, project: args.project, limit: Math.min(limit, 10) });
+        const factLines = facts.map((fact) => `fact #${fact.id} ${fact.text}${fact.source?.episodeId ? ` (episode #${fact.source.episodeId})` : ""}`);
+        const memoryIndex = fmtIndex(store.search({ query: args.query, project: args.project, type: args.type, kind: args.kind, limit }));
+        return text([...factLines, memoryIndex].filter(Boolean).join("\n"));
       }
       case "timeline": {
         const t = store.timeline({ anchor: args.anchor, query: args.query, project: args.project, before: args.before ?? 5, after: args.after ?? 5 });

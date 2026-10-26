@@ -746,7 +746,7 @@ export class HubStore {
 
   /** The fact that was true at `atEpoch`, using valid time and refusing facts recorded later. */
   factsAsOf(atEpoch, { project, subject, predicate, limit = 100 } = {}) {
-    const at = Number(atEpoch);
+    const at = typeof atEpoch === "string" ? Date.parse(atEpoch) : Number(atEpoch);
     if (!Number.isFinite(at)) throw new RangeError("as-of needs an epoch or a date.");
     const where = ["status != 'retracted'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)", "recorded_at_epoch <= ?"];
     const params = [at, at, at];
@@ -754,6 +754,88 @@ export class HubStore {
     if (subject) { where.push("subject = ?"); params.push(subject); }
     if (predicate) { where.push("predicate = ?"); params.push(predicate); }
     return this.db.prepare(`SELECT * FROM facts WHERE ${where.join(" AND ")} ORDER BY recorded_at_epoch DESC, id DESC LIMIT ?`).all(...params, Math.min(Number(limit) || 100, 1000));
+  }
+
+  /**
+   * Fact search over the FTS index and the extracted keys. Current facts are the default; `includeHistory` and
+   * `asOf` expose the older rows. Every hit carries the episode that produced it.
+   */
+  searchFacts({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null, pool = 100 } = {}) {
+    const expr = ftsAnyQuery(query);
+    if (!expr) return [];
+    const now = Date.now();
+    const asOfEpoch = asOf == null ? null : typeof asOf === "string" ? Date.parse(asOf) : Number(asOf);
+    const at = Number.isFinite(asOfEpoch) ? asOfEpoch : null;
+    const where = [];
+    const params = [];
+    if (project) { where.push("f.project = ?"); params.push(project); }
+    if (at != null) {
+      where.push("f.status != 'retracted'", "coalesce(f.valid_from_epoch, f.recorded_at_epoch) <= ?", "(f.valid_to_epoch IS NULL OR f.valid_to_epoch > ?)", "f.recorded_at_epoch <= ?");
+      params.push(at, at, at);
+    } else if (!includeHistory) {
+      where.push("f.status = 'active'", "coalesce(f.valid_from_epoch, f.recorded_at_epoch) <= ?", "(f.valid_to_epoch IS NULL OR f.valid_to_epoch > ?)", "(f.expired_at_epoch IS NULL OR f.expired_at_epoch > ?)");
+      params.push(now, now, now);
+    }
+    const clause = where.length ? `AND ${where.join(" AND ")}` : "";
+    const lexical = this.db
+      .prepare(`SELECT f.id FROM facts_fts CROSS JOIN facts f ON f.id = facts_fts.rowid WHERE facts_fts MATCH ? ${clause} ORDER BY bm25(facts_fts) LIMIT ?`)
+      .all(expr, ...params, pool)
+      .map((row) => row.id);
+    const keyed = this.db
+      .prepare("SELECT k.owner_id AS id FROM memory_keys_fts JOIN memory_keys k ON k.id = memory_keys_fts.rowid WHERE memory_keys_fts MATCH ? AND k.owner_type = 'fact' LIMIT ?")
+      .all(expr, pool)
+      .map((row) => row.id);
+    let ids = [...new Set([...lexical, ...keyed])];
+    if (queryVec) {
+      const vecRows = this.db.prepare("SELECT fact_id AS id, vec FROM fact_vectors").all().map((row) => ({ id: row.id, vec: unpackVector(row.vec) }));
+      if (vecRows.length) ids = rrf([ids, topKByVector(queryVec, vecRows, pool).map((row) => row.id)]).map((row) => row.id);
+    }
+    const facts = this.getFactsByIds(ids).filter((fact) => {
+      if (project && fact.project !== project) return false;
+      if (at != null) {
+        return fact.status !== "retracted" && (fact.valid_from_epoch ?? fact.recorded_at_epoch) <= at && fact.recorded_at_epoch <= at && (fact.valid_to_epoch == null || fact.valid_to_epoch > at);
+      }
+      if (includeHistory) return true;
+      const from = fact.valid_from_epoch ?? fact.recorded_at_epoch;
+      return fact.status === "active" && from <= now && (fact.valid_to_epoch == null || fact.valid_to_epoch > now) && (fact.expired_at_epoch == null || fact.expired_at_epoch > now);
+    });
+    facts.sort((a, b) => {
+      const active = Number(b.status === "active") - Number(a.status === "active");
+      if (active) return active;
+      return b.recorded_at_epoch - a.recorded_at_epoch || b.id - a.id;
+    });
+    return facts.slice(0, Math.min(Math.max(Number(limit) || 20, 1), 200)).map((fact) => this.factHit(fact));
+  }
+
+  getFactsByIds(ids) {
+    const list = [...new Set(ids.map(Number).filter(Number.isSafeInteger))].slice(0, 500);
+    if (!list.length) return [];
+    return this.db.prepare(`SELECT * FROM facts WHERE id IN (${list.map(() => "?").join(",")})`).all(...list);
+  }
+
+  /** One search hit, always with the source episode it came from. */
+  factHit(fact) {
+    const episode = fact.episode_id ? this.getEpisode(fact.episode_id) : null;
+    return {
+      kind: "fact", id: fact.id, type: "fact", title: fact.text, text: fact.text, subject: fact.subject, predicate: fact.predicate, object: fact.object,
+      project: fact.project, status: fact.status, confidence: fact.confidence, pinned: false,
+      at: new Date(fact.recorded_at_epoch).toISOString(),
+      validFrom: fact.valid_from_epoch ? new Date(fact.valid_from_epoch).toISOString() : null,
+      validTo: fact.valid_to_epoch ? new Date(fact.valid_to_epoch).toISOString() : null,
+      source: { type: "fact", episodeId: fact.episode_id ?? null, episodeText: episode?.text?.slice(0, 1000) ?? null, sourceRef: episode?.source_ref ?? null, observationId: fact.observation_id ?? null },
+    };
+  }
+
+  setFactVector(factId, model, vec) {
+    this.db.prepare("INSERT INTO fact_vectors (fact_id, model, dim, vec) VALUES (?,?,?,?) ON CONFLICT(fact_id) DO UPDATE SET model=excluded.model, dim=excluded.dim, vec=excluded.vec")
+      .run(Number(factId), model, vec.length, packVector(normalize(vec)));
+  }
+
+  /** Memory hits first? No: a fact can carry a word the raw turn does not, so fact hits come first and cite it. */
+  searchAll({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null } = {}) {
+    const facts = this.searchFacts({ query, project, limit, includeHistory, asOf, queryVec });
+    const memories = this.ranked({ query, project, limit, queryVec }).map((memory) => ({ ...memory, kind: "memory", at: new Date(memory.created_at_epoch).toISOString(), source: { type: "memory", id: memory.id } }));
+    return [...facts, ...memories];
   }
 
   /**
