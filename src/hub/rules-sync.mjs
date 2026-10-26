@@ -46,7 +46,21 @@ export function removeBlock(text) {
   return `${text.slice(0, start).replace(/\n+$/, "\n")}${text.slice(end + MARK_END.length).replace(/^\n+/, "")}`.replace(/^\n+$/, "");
 }
 
-const cursorMdc = (markdown) => `---\ndescription: Standing rules managed by aletheia-mem\nalwaysApply: true\n---\n\n${markdown}`;
+const owned = (frontmatter, markdown) => `${frontmatter}\n\n${applyBlock("", markdown)}`;
+const cursorMdc = (markdown) => owned("---\ndescription: Standing rules managed by aletheia-mem\nalwaysApply: true\n---", markdown);
+const windsurfRule = (markdown) => owned("---\ntrigger: always_on\n---", markdown);
+
+/**
+ * The exact text a tool's rules file should hold. `owned` files are written whole with the frontmatter the
+ * tool documents; every other file gets the managed block, so user text outside the markers is untouched.
+ * Global scope always uses the block form: global files do not take workspace-rule frontmatter.
+ */
+export function renderTarget(toolId, before, markdown, { scope = "project" } = {}) {
+  const style = toolById(toolId).rules.style;
+  if (scope === "project" && style === "owned") return cursorMdc(markdown);
+  if (scope === "project" && style === "owned-windsurf") return windsurfRule(markdown);
+  return applyBlock(before, markdown);
+}
 
 /** Where this tool's rules file lives for `scope` ("project" with a directory, or "global"). null when the tool has none. */
 export function targetPath(toolId, { scope, projectDir, home }) {
@@ -64,7 +78,7 @@ export function syncTool(rules, toolId, { scope = "project", projectDir, home, d
   if (!path) return { tool: toolId, path: null, skipped: `${tool.name} has no ${scope} rules file.` };
   const { markdown, count } = renderRules(rules, toolId);
   const before = existsSync(path) ? readFileSync(path, "utf8") : "";
-  const after = tool.rules.style === "owned" ? cursorMdc(markdown) : applyBlock(before, markdown);
+  const after = renderTarget(toolId, before, markdown, { scope });
   const result = { tool: toolId, path, scope, rules: count, changed: before !== after, before, after, backup: null, written: false };
   if (dryRun || !result.changed) return result;
   mkdirSync(dirname(path), { recursive: true });

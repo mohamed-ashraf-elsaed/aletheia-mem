@@ -17,16 +17,16 @@ export const MARK_END = "<!-- aletheia:rules:end -->";
  * mcp:   { path under $HOME, format }  formats: json-mcpServers | json-mcpServers-commandcode | json-opencode | toml-codex | command
  */
 export const TOOLS = [
-  { id: "claude-code", name: "Claude Code", detect: [".claude"], rules: { project: "CLAUDE.md", global: ".claude/CLAUDE.md", style: "block" }, mcp: { format: "command", command: (cmd) => `claude mcp add --scope user aletheia -- ${cmd.join(" ")}` } },
-  { id: "command-code", name: "Command Code", detect: [".commandcode"], rules: { project: "AGENTS.md", global: ".commandcode/AGENTS.md", style: "block" }, mcp: { path: ".commandcode/mcp.json", format: "json-mcpServers-commandcode" } },
-  { id: "codex", name: "Codex CLI", detect: [".codex"], rules: { project: "AGENTS.md", global: ".codex/AGENTS.md", style: "block" }, mcp: { path: ".codex/config.toml", format: "toml-codex" } },
-  { id: "gemini-cli", name: "Gemini CLI", detect: [".gemini"], rules: { project: "GEMINI.md", global: ".gemini/GEMINI.md", style: "block" }, mcp: { path: ".gemini/settings.json", format: "json-mcpServers" } },
-  { id: "cursor", name: "Cursor", detect: [".cursor"], rules: { project: ".cursor/rules/aletheia.mdc", global: null, style: "owned" }, mcp: { path: ".cursor/mcp.json", format: "json-mcpServers" } },
-  { id: "windsurf", name: "Windsurf", detect: [".codeium/windsurf", ".windsurf", ".config/devin"], rules: { project: ".windsurfrules", global: ".codeium/windsurf/memories/global_rules.md", style: "block" }, mcp: { path: ".config/devin/mcp_config.json", alt: [".codeium/windsurf/mcp_config.json"], format: "json-mcpServers" } },
-  { id: "opencode", name: "OpenCode", detect: [".config/opencode"], rules: { project: "AGENTS.md", global: ".config/opencode/AGENTS.md", style: "block" }, mcp: { path: ".config/opencode/opencode.json", format: "json-opencode" } },
-  { id: "copilot", name: "GitHub Copilot", detect: [".config/github-copilot"], rules: { project: ".github/copilot-instructions.md", global: null, style: "block" }, mcp: null },
-  { id: "aider", name: "Aider", detect: [".aider.conf.yml"], rules: { project: "CONVENTIONS.md", global: null, style: "block" }, mcp: null },
-  { id: "agents-md", name: "AGENTS.md (open standard)", detect: [], rules: { project: "AGENTS.md", global: null, style: "block" }, mcp: null },
+  { id: "claude-code", name: "Claude Code", detect: [".claude"], rules: { project: "CLAUDE.md", global: ".claude/CLAUDE.md", style: "block", verifiedOn: "2026-10-26", source: "docs/25-installers.md" }, mcp: { format: "command", command: (cmd) => `claude mcp add --scope user aletheia -- ${cmd.join(" ")}` } },
+  { id: "command-code", name: "Command Code", detect: [".commandcode"], rules: { project: "AGENTS.md", global: ".commandcode/AGENTS.md", style: "block", verifiedOn: "2026-10-26", source: "docs/25-installers.md" }, mcp: { path: ".commandcode/mcp.json", format: "json-mcpServers-commandcode" } },
+  { id: "codex", name: "Codex CLI", detect: [".codex"], rules: { project: "AGENTS.md", global: ".codex/AGENTS.md", style: "block", verifiedOn: "2026-10-26", source: "https://developers.openai.com/codex/agent-configuration/agents-md" }, mcp: { path: ".codex/config.toml", format: "toml-codex" } },
+  { id: "gemini-cli", name: "Gemini CLI", detect: [".gemini"], rules: { project: "GEMINI.md", global: ".gemini/GEMINI.md", style: "block", verifiedOn: "2026-10-26", source: "https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/cli/gemini-md.md" }, mcp: { path: ".gemini/settings.json", format: "json-mcpServers" } },
+  { id: "cursor", name: "Cursor", detect: [".cursor"], rules: { project: ".cursor/rules/aletheia.mdc", global: null, style: "owned", verifiedOn: "2026-10-26", source: "https://cursor.com/docs/context/rules" }, mcp: { path: ".cursor/mcp.json", format: "json-mcpServers" } },
+  { id: "windsurf", name: "Windsurf", detect: [".codeium/windsurf", ".windsurf", ".config/devin"], rules: { project: ".windsurf/rules/aletheia.md", global: ".codeium/windsurf/memories/global_rules.md", style: "owned-windsurf", verifiedOn: "2026-10-26", source: "https://docs.windsurf.com/windsurf/cascade/memories" }, mcp: { path: ".config/devin/mcp_config.json", alt: [".codeium/windsurf/mcp_config.json"], format: "json-mcpServers" } },
+  { id: "opencode", name: "OpenCode", detect: [".config/opencode"], rules: { project: "AGENTS.md", global: ".config/opencode/AGENTS.md", style: "block", verifiedOn: "2026-10-26", source: "https://opencode.ai/docs/rules/" }, mcp: { path: ".config/opencode/opencode.json", format: "json-opencode" } },
+  { id: "copilot", name: "GitHub Copilot", detect: [".config/github-copilot"], rules: { project: ".github/copilot-instructions.md", global: null, style: "block", verifiedOn: null, source: null }, mcp: null },
+  { id: "aider", name: "Aider", detect: [".aider.conf.yml"], rules: { project: "CONVENTIONS.md", global: null, style: "block", verifiedOn: null, source: null }, mcp: null },
+  { id: "agents-md", name: "AGENTS.md (open standard)", detect: [], rules: { project: "AGENTS.md", global: null, style: "block", verifiedOn: null, source: null }, mcp: null },
 ];
 
 export const toolById = (id) => TOOLS.find((t) => t.id === id);

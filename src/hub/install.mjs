@@ -317,11 +317,11 @@ export const INSTALLERS = [
     name: "Codex CLI",
     capabilities: "full",
     verification: "from-docs-only",
-    evidence: "https://developers.openai.com/codex/hooks and /codex/config-reference fetched 2026-10-26; Codex 0.130.0 present, no hook run by Codex",
+    evidence: "https://developers.openai.com/codex/hooks, /codex/config-reference and /codex/agent-configuration/agents-md fetched 2026-10-26; Codex 0.130.0 present, no hook run by Codex",
     detection: [".codex"],
     notes: [
       "Codex requires non-managed hooks to be reviewed once with /hooks before they run.",
-      "No global Codex rules file was verified; use `aletheia rules sync --tools codex --dir <project> --write` for AGENTS.md.",
+      "Global rules go to ~/.codex/AGENTS.md; project rules go to AGENTS.md via rules sync.",
       "The MCP block is written to ~/.codex/config.toml; hooks go to ~/.codex/hooks.json.",
     ],
     events: ["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop", "SessionEnd"],
@@ -330,10 +330,11 @@ export const INSTALLERS = [
       const steps = [
         planMcpToml({ file: join(env.home, ".codex", "config.toml"), entry: { command: env.bun, args: [env.mcpScript] } }),
         planHooks({ file: join(env.home, ".codex", "hooks.json"), events, env, tool: "codex" }),
-      ];
+        planRules({ tool: "codex", home: env.home, rules: env.rules ?? [] }),
+      ].filter(Boolean);
       return { tool: "codex", name: "Codex CLI", env, steps, notes: [
         "Codex requires non-managed hooks to be reviewed once with /hooks before they run.",
-        "No global Codex rules file was verified; use `aletheia rules sync --tools codex --dir <project> --write` for AGENTS.md.",
+        "Global rules go to ~/.codex/AGENTS.md; project rules go to AGENTS.md via rules sync.",
         "The MCP block is written to ~/.codex/config.toml; hooks go to ~/.codex/hooks.json.",
       ] };
     },

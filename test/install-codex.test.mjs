@@ -55,7 +55,7 @@ describe("T-062: Codex CLI installer and hooks", () => {
     const plan = installerFor("codex").plan(ctx.env);
     expect(plan.capabilities).toBe("full");
     expect(plan.verification).toBe("from-docs-only");
-    expect(plan.steps.map((step) => step.kind)).toEqual(["mcp", "hooks"]);
+    expect(plan.steps.map((step) => step.kind)).toEqual(["mcp", "hooks", "rules"]);
     expect(plan.steps.every((step) => step.changed)).toBe(true);
     expect(plan.notes.join(" ")).toContain("/hooks");
     expect(existsSync(configPath(ctx.home))).toBe(false);
@@ -69,7 +69,8 @@ describe("T-062: Codex CLI installer and hooks", () => {
     writeFileSync(configPath(ctx.home), user);
 
     const result = await applyInstall(installerFor("codex").plan(ctx.env), { dataDir: ctx.dataDir });
-    expect(result.wrote.length).toBe(2);
+    expect(result.wrote.length).toBe(3);
+    expect(readFileSync(join(ctx.home, ".codex/AGENTS.md"), "utf8")).toContain("aletheia:rules:begin");
     const text = readFileSync(configPath(ctx.home), "utf8");
     expect(text).toContain("# my codex config");
     expect(text).toContain('model = "gpt-5"');
@@ -144,5 +145,6 @@ describe("T-062: Codex CLI installer and hooks", () => {
     const hooks = JSON.parse(readFileSync(hooksPath(ctx.home), "utf8"));
     expect(hooks.hooks.Stop).toEqual([{ hooks: [{ type: "command", command: "echo user" }] }]);
     expect(JSON.stringify(hooks)).not.toContain("aletheia-managed");
+    expect(readFileSync(join(ctx.home, ".codex/AGENTS.md"), "utf8")).not.toContain("aletheia:rules");
   });
 });
