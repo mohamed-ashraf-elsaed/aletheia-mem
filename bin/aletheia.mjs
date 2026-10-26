@@ -192,6 +192,15 @@ async function main() {
         const sub = pos[0];
         if (sub === "list") return out(hub.rules.list().map((r) => `${r.enabled ? "on " : "off"} ${r.id}  ${r.when ? `When ${r.when}: ` : ""}${r.then}  [${r.scopeTier === "everywhere" ? "everywhere" : r.scopeName}${r.tools ? `; ${r.tools.join(",")}` : ""}]`).join("\n") || "No rules yet.");
         if (sub === "add") { const r = hub.rules.add({ then: pos.slice(1).join(" "), when: typeof flags.when === "string" ? flags.when : "" }); return out(r.created ? `Added ${r.id}.` : `Already there (${r.id}).`); }
+        if (sub === "suggest") {
+          const { suggestRules } = await import("../src/hub/rule-suggest.mjs");
+          return out(suggestRules(hub, { project: flags.project ?? null }));
+        }
+        if (sub === "suggestions") {
+          const { listSuggestions } = await import("../src/hub/rule-suggest.mjs");
+          const rows = listSuggestions(hub, { project: flags.project, status: typeof flags.status === "string" ? flags.status : "pending" });
+          return out(rows.length ? rows.map((row) => `#${row.id} [${row.status}] ${row.text}  (${row.project}, confidence ${row.confidence})`).join("\n") : "No rule suggestions.");
+        }
         if (sub === "sync" || sub === "import") {
           const scope = flags.global ? "global" : "project";
           const dir = scope === "project" ? resolve(flags.dir ?? process.cwd()) : undefined;

@@ -290,6 +290,20 @@ CREATE TABLE IF NOT EXISTS fact_vectors (
   dim INTEGER NOT NULL,
   vec BLOB NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS rule_suggestions (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project TEXT NOT NULL,
+  text TEXT NOT NULL,
+  when_text TEXT NOT NULL DEFAULT '',
+  confidence REAL NOT NULL DEFAULT 0.7,
+  source_type TEXT NOT NULL DEFAULT 'prompt',
+  source_id INTEGER,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at_epoch INTEGER NOT NULL,
+  UNIQUE(project, text)
+);
+CREATE INDEX IF NOT EXISTS idx_rule_suggestions_status ON rule_suggestions(status, created_at_epoch);
 `;
 
 export const targetSchemaVersion = SCHEMA_VERSION;
@@ -363,6 +377,27 @@ export class HubStore {
     this.vecCache = null;
     this.termOptions = { max: 12, maxShare: 0.6 }; // see selectTerms. Swept on LoCoMo (docs/14): 12/0.6 loses no recall; 8/0.35 lost ~8 points
     this.ensureScopeColumns();
+    this.ensureRuleSuggestions();
+  }
+
+  /** Add the T-035 suggestion table to databases created before it existed. */
+  ensureRuleSuggestions() {
+    if (this.setting("schema.rule_suggestions", false)) return false;
+    this.db.exec(`CREATE TABLE IF NOT EXISTS rule_suggestions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      project TEXT NOT NULL,
+      text TEXT NOT NULL,
+      when_text TEXT NOT NULL DEFAULT '',
+      confidence REAL NOT NULL DEFAULT 0.7,
+      source_type TEXT NOT NULL DEFAULT 'prompt',
+      source_id INTEGER,
+      status TEXT NOT NULL DEFAULT 'pending',
+      created_at_epoch INTEGER NOT NULL,
+      UNIQUE(project, text)
+    );
+    CREATE INDEX IF NOT EXISTS idx_rule_suggestions_status ON rule_suggestions(status, created_at_epoch);`);
+    this.setSetting("schema.rule_suggestions", true);
+    return true;
   }
 
   /**
