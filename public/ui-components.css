@@ -339,3 +339,17 @@ a.ui-card { display: block; color: inherit; text-decoration: none; }
   .ui-layer-panel.ui-modal { border-radius: var(--ui-radius-lg) var(--ui-radius-lg) 0 0; max-width: none; }
   .ui-drawer { max-width: none; border-radius: 0; }
 }
+
+/* ---- regions, paged lists, long tasks ---- */
+.ui-region { position: relative; }
+.ui-region-bar { position: absolute; left: 0; right: 0; top: 0; height: 2px; overflow: hidden; border-radius: 2px; background: var(--ui-s3); }
+.ui-region-bar::after { content: ""; position: absolute; inset: 0; width: 38%; background: linear-gradient(90deg, var(--ui-accent), var(--ui-accent-2)); animation: ui-indeterminate 1.3s var(--ui-ease) infinite; }
+.ui-fade { animation: ui-fade var(--ui-dur) var(--ui-ease) both; }
+.ui-inline-error { display: flex; align-items: center; justify-content: space-between; gap: var(--ui-space-3); padding: var(--ui-space-2) var(--ui-space-3); margin-bottom: var(--ui-space-3); border: 1px solid color-mix(in srgb, var(--ui-danger) 50%, var(--ui-border)); border-radius: var(--ui-radius); background: color-mix(in srgb, var(--ui-danger) 8%, var(--ui-s1)); font-size: var(--ui-text-sm); }
+.ui-paged-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--ui-space-3); margin-bottom: var(--ui-space-4); }
+.ui-list-rows:focus-visible { outline-offset: 6px; }
+.ui-longtask { display: grid; gap: var(--ui-space-2); margin-top: var(--ui-space-3); }
+.ui-longtask.is-failed .ui-progress-text { color: var(--ui-danger); }
+@media (prefers-reduced-motion: reduce) {
+  .ui-region-bar::after { animation: none; width: 100%; opacity: 0.5; }
+}

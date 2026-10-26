@@ -190,7 +190,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-152 | Build the component system | P6 | T-148, T-149 | validated | 2026-10-26 | [T-152.md](T-152.md) |
 | T-153 | Build the app shell, theme toggle, search, shortcuts and palette | P6 | T-152, T-150 | todo | — | [T-153.md](T-153.md) |
 | T-154 | Add the live status bar and connection banner | P6 | T-153 | todo | — | [T-154.md](T-154.md) |
-| T-155 | Add the Region wrapper, paged list controller and Pager | P6 | T-149, T-152, T-151 | todo | — | [T-155.md](T-155.md) |
+| T-155 | Add the Region wrapper, paged list controller and Pager | P6 | T-149, T-152, T-151 | validated | 2026-10-26 | [T-155.md](T-155.md) |
 | T-156 | Rebuild the Memory tab | P6 | T-155, T-150, T-151 | todo | — | [T-156.md](T-156.md) |
 | T-157 | Rebuild the Review queue | P6 | T-156 | todo | — | [T-157.md](T-157.md) |
 | T-158 | Rebuild the Rules tab | P6 | T-155 | todo | — | [T-158.md](T-158.md) |
