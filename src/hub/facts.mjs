@@ -3,6 +3,8 @@
 // each stored fact records which mode and prompt version produced it.
 import { readFileSync } from "node:fs";
 import { redact } from "./redact.mjs";
+import { attachFactEntities } from "./entities.mjs";
+import { parseTemporal } from "./temporal.mjs";
 import { estimateTokens, pricesFrom, recordCall } from "./usage.mjs";
 
 export const FACTS_PROMPT_VERSION = "facts-v1";
@@ -284,6 +286,7 @@ export async function extractWithUsage(store, { window, project = "default", ask
  */
 export function storeFacts(store, { facts, project, mode = "rules", model = null, promptVersion = FACTS_PROMPT_VERSION, observationId = null, now = Date.now() }) {
   const added = [];
+  const deduped = [];
   const superseded = [];
   const reviews = [];
   for (const fact of facts) {
@@ -296,26 +299,34 @@ export function storeFacts(store, { facts, project, mode = "rules", model = null
     if (!episodeIds.length) continue;
     const episode = store.getEpisode(episodeIds[0]);
     if (!episode) continue;
+    const inferred = fact.validFromEpoch == null ? parseTemporal(text, { baseEpoch: episode.created_at_epoch }) : null;
+    const dated = fact.dated || !!inferred;
     const result = store.addFact({
       project, subject, predicate, object, text,
       episodeId: episode.id, episodeIds,
       observationId,
-      validFromEpoch: fact.validFromEpoch ?? episode.created_at_epoch,
-      validToEpoch: fact.validToEpoch ?? null,
+      validFromEpoch: fact.validFromEpoch ?? inferred?.fromEpoch ?? episode.created_at_epoch,
+      validToEpoch: fact.validToEpoch ?? inferred?.toEpoch ?? null,
       recordedAtEpoch: now,
-      confidence: Math.max(0, Math.min(1, (fact.confidence ?? 0.7) - (fact.dated ? 0 : 0.1))),
+      // A date inferred from a relative phrase is weaker evidence than an explicit one, so it costs 0.1.
+      confidence: Math.max(0, Math.min(1, (fact.confidence ?? 0.7) - (dated ? 0 : 0.1) - (inferred?.inferred ? 0.1 : 0))),
       extractorMode: mode, promptVersion, model,
     });
     store.addKey({ ownerType: "fact", ownerId: result.id, keyType: "fact", text });
     for (const entity of fact.entities ?? []) store.addKey({ ownerType: "fact", ownerId: result.id, keyType: "entity", text: entity.name });
+    attachFactEntities(store, { factId: result.id, project, subject, object, text, entities: fact.entities ?? [], now });
     if (result.created) {
       added.push(result.id);
       const resolved = resolveContradictions(store, { factId: result.id, explicitSupersedes: fact.supersedesId, now });
       superseded.push(...resolved.superseded);
       reviews.push(...resolved.reviews);
+    } else {
+      // The same fact seen again is not a new row, but the new session is a source of the current one.
+      deduped.push(result.id);
+      for (const episodeId of episodeIds) store.link({ fromType: "fact", fromId: result.id, toType: "episode", toId: episodeId, relation: "mentions" });
     }
   }
-  return { added: added.length, ids: added, superseded, reviews };
+  return { added: added.length, ids: added, deduped, superseded, reviews };
 }
 
 // ---- contradiction handling ------------------------------------------------------------------------------

@@ -9,8 +9,10 @@ import { join } from "node:path";
 import { HubStore } from "../src/hub/store.mjs";
 import { topKByVector } from "../src/hub/retrieval.mjs";
 
-const N = Number(process.argv[2]) || 50_000;
-const V = Number(process.argv[3]) || 20_000;
+const positional = process.argv.slice(2).filter((arg) => !arg.startsWith("--"));
+const OPTIMIZE = process.argv.includes("--optimize");
+const N = Number(positional[0]) || 50_000;
+const V = Number(positional[1]) || 20_000;
 const path = join(tmpdir(), `wv-scale-${process.pid}.db`);
 const store = new HubStore(path);
 const vocab = Array.from({ length: 5000 }, (_, i) => `w${i.toString(36)}${i % 7 === 0 ? "ing" : ""}`);
@@ -27,6 +29,11 @@ for (let i = 0; i < N; i++) {
 store.db.exec("COMMIT");
 const insertMs = performance.now() - t0;
 console.log(`insert   ${N} memories in ${(insertMs / 1000).toFixed(1)} s  (${Math.round(N / (insertMs / 1000))}/s), db ${(statSync(path).size / 1e6).toFixed(0)} MB`);
+if (OPTIMIZE) {
+  const started = performance.now();
+  store.optimizeFts();
+  console.log(`optimize FTS segments and ANALYZE in ${((performance.now() - started) / 1000).toFixed(2)} s`);
+}
 
 const lat = (fn, n = 200) => { const xs = []; for (let i = 0; i < n; i++) { const t = performance.now(); fn(); xs.push(performance.now() - t); } return xs; };
 const queries = Array.from({ length: 200 }, () => sentence(9));

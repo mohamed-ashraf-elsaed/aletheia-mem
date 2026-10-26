@@ -40,6 +40,8 @@ export function loadConfig(overrides = {}) {
     promptsDir: overrides.promptsDir ?? join(import.meta.dir, "..", "prompts"),
     vendorDir: overrides.vendorDir ?? join(import.meta.dir, "..", "vendor"),
     pollIntervalMs: Number(overrides.pollIntervalMs ?? env.ALETHEIA_POLL_MS ?? 1000),
+    // Projects whose activity is never captured. Comma-separated, matched case-insensitively by project key.
+    excludedProjects: overrides.excludedProjects ?? String(env.ALETHEIA_EXCLUDED_PROJECTS ?? "").split(",").map((name) => name.trim()).filter(Boolean),
     // The LLM refresh (grouping, reviews, goals, story) is off unless a provider is chosen.
     // ALETHEIA_PROVIDER = claude-cli | openai | none
     provider: overrides.provider ?? env.ALETHEIA_PROVIDER ?? "none",

@@ -44,11 +44,11 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 |---|---|---|---|---|---|---|
 | T-001 | Make README claims generated, not typed | P0 | none | todo | — | [T-001.md](T-001.md) |
 | T-002 | Add a run-report script | P0 | none | todo | — | [T-002.md](T-002.md) |
-| T-003 | Add a schema probe to the claude-mem importer | P0 | none | todo | — | [T-003.md](T-003.md) |
-| T-004 | Make empty search results explain themselves | P0 | none | todo | — | [T-004.md](T-004.md) |
+| T-003 | Add a schema probe to the claude-mem importer | P0 | none | validated | 2026-10-26 | [T-003.md](T-003.md) |
+| T-004 | Make empty search results explain themselves | P0 | none | validated | 2026-10-26 | [T-004.md](T-004.md) |
 | T-005 | Add REST contract tests for every documented route | P0 | none | todo | — | [T-005.md](T-005.md) |
 | T-006 | Publish an OpenAPI document generated from the routes | P0 | T-005 | todo | — | [T-006.md](T-006.md) |
-| T-007 | Add health detail: database, FTS, vectors, model | P0 | none | todo | — | [T-007.md](T-007.md) |
+| T-007 | Add health detail: database, FTS, vectors, model | P0 | none | validated | 2026-10-26 | [T-007.md](T-007.md) |
 | T-008 | Add date range, order and pagination to search | P0 | none | todo | — | [T-008.md](T-008.md) |
 | T-009 | Add a kill -9 crash-safety test | P0 | none | todo | — | [T-009.md](T-009.md) |
 | T-010 | Restrict data directory and database permissions | P0 | none | todo | — | [T-010.md](T-010.md) |
@@ -57,26 +57,26 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-013 | Add a documentation link checker | P0 | none | todo | — | [T-013.md](T-013.md) |
 | T-014 | Add Linux, macOS and Windows CI | P0 | T-002 | todo | — | [T-014.md](T-014.md) |
 | T-015 | Add a benchmark protocol test | P0 | none | todo | — | [T-015.md](T-015.md) |
-| T-016 | Add excluded projects and context scope | P0 | none | todo | — | [T-016.md](T-016.md) |
+| T-016 | Add excluded projects and context scope | P0 | none | validated | 2026-10-26 | [T-016.md](T-016.md) |
 | T-017 | Add schema v3 with an additive migration | P1 | T-003 | validated | 2026-10-26 | [T-017.md](T-017.md) |
 | T-018 | Add fact extraction with a strict validator | P1 | T-017 | validated | 2026-10-26 | [T-018.md](T-018.md) |
 | T-019 | Batch extraction and record its cost | P1 | T-018 | validated | 2026-10-26 | [T-019.md](T-019.md) |
 | T-020 | Run compression in a resumable background queue | P1 | T-017 | validated | 2026-10-26 | [T-020.md](T-020.md) |
-| T-021 | Extract entities from facts | P1 | T-017 | todo | — | [T-021.md](T-021.md) |
-| T-022 | Resolve entity aliases | P1 | T-021 | todo | — | [T-022.md](T-022.md) |
+| T-021 | Extract entities from facts | P1 | T-017 | validated | 2026-10-26 | [T-021.md](T-021.md) |
+| T-022 | Resolve entity aliases | P1 | T-021 | validated | 2026-10-26 | [T-022.md](T-022.md) |
 | T-023 | Link facts and episodes to their sources | P1 | T-017 | validated | 2026-10-26 | [T-023.md](T-023.md) |
 | T-024 | Add bi-temporal fact columns | P1 | T-017 | validated | 2026-10-26 | [T-024.md](T-024.md) |
 | T-025 | Invalidate contradicted facts instead of deleting them | P1 | T-018, T-024 | validated | 2026-10-26 | [T-025.md](T-025.md) |
 | T-026 | Add a history and as-of query API | P1 | T-024 | todo | — | [T-026.md](T-026.md) |
-| T-027 | Normalise relative dates to absolute ranges | P1 | T-024 | todo | — | [T-027.md](T-027.md) |
+| T-027 | Normalise relative dates to absolute ranges | P1 | T-024 | validated | 2026-10-26 | [T-027.md](T-027.md) |
 | T-028 | Add near-duplicate detection | P1 | T-017 | validated | 2026-10-26 | [T-028.md](T-028.md) |
 | T-029 | Merge duplicates with an audit trail | P1 | T-028 | validated | 2026-10-26 | [T-029.md](T-029.md) |
 | T-030 | Score importance with a transparent formula | P1 | T-017 | validated | 2026-10-26 | [T-030.md](T-030.md) |
-| T-031 | Add decay and pruning that never deletes silently | P1 | T-030 | todo | — | [T-031.md](T-031.md) |
-| T-032 | Generate session, project and entity summaries | P1 | T-018, T-028 | todo | — | [T-032.md](T-032.md) |
-| T-033 | Enforce project and global scopes | P1 | T-017 | todo | — | [T-033.md](T-033.md) |
+| T-031 | Add decay and pruning that never deletes silently | P1 | T-030 | validated | 2026-10-26 | [T-031.md](T-031.md) |
+| T-032 | Generate session, project and entity summaries | P1 | T-018, T-028 | validated | 2026-10-26 | [T-032.md](T-032.md) |
+| T-033 | Enforce project and global scopes | P1 | T-017 | validated | 2026-10-26 | [T-033.md](T-033.md) |
 | T-034 | Route providers and add modes for extraction | P1 | T-020 | validated | 2026-10-26 | [T-034.md](T-034.md) |
-| T-035 | Suggest rules from captured corrections | P1 | T-018 | todo | — | [T-035.md](T-035.md) |
+| T-035 | Suggest rules from captured corrections | P1 | T-018 | validated | 2026-10-26 | [T-035.md](T-035.md) |
 | T-036 | Index the files field and add search-by-file | P2 | T-017 | todo | — | [T-036.md](T-036.md) |
 | T-037 | Index at round level | P2 | T-017 | todo | — | [T-037.md](T-037.md) |
 | T-038 | Expand and rewrite queries | P2 | T-018 | todo | — | [T-038.md](T-038.md) |
@@ -165,3 +165,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-122 | Prove Aletheia never writes into project folders | P6 | T-016 | todo | — | [T-122.md](T-122.md) |
 | T-123 | Add reversible dismiss and delete from the Hub, CLI and MCP | P6 | T-017 | todo | — | [T-123.md](T-123.md) |
 | T-124 | Research and add installers for Antigravity, Kimi, Pi and OpenClaw | P6 | T-058 | todo | — | [T-124.md](T-124.md) |
+| T-130 | Wire dedupe and source accumulation into the worker insert path | P1 | T-018, T-028, T-029 | validated | 2026-10-26 | [T-130.md](T-130.md) |
+| T-131 | Embed facts automatically and fuse facts with episodes | P1 | T-018, T-020, T-033, T-130 | validated | 2026-10-26 | [T-131.md](T-131.md) |
+| T-132 | Re-run LoCoMo and publish the measured table | P2 | T-018, T-131 | validated | 2026-10-26 | [T-132.md](T-132.md) |
+| T-133 | Re-measure 50k-row latency and apply the first FTS index fix | P2 | T-018 | validated | 2026-10-26 | [T-133.md](T-133.md) |

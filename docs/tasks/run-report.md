@@ -349,3 +349,83 @@ LoCoMo measurement.
 | `AGENTS.md` | New: task workflow and writing rules |
 | `scripts/check-tasks.mjs` | New: dependency-free consistency checker |
 | `package.json` | One script entry: `check:tasks` |
+
+## 10. Pipeline finish and measurement (2026-10-26, branch `feat/pipeline-finish`)
+
+This run finished the memory pipeline and measured it. No push.
+
+### 10.1 Task status after this run
+
+| Task | Status | Validation |
+|---|---|---|
+| T-003 schema probe | validated | `bun test test/importer-schema.test.mjs` — 4 pass |
+| T-004 empty results | validated | `bun test test/empty-results.test.mjs` — 4 pass |
+| T-007 health detail | validated | `bun test test/health.test.mjs` — 4 pass |
+| T-016 excluded projects | validated | `bun test test/excluded-projects.test.mjs` — 5 pass |
+| T-021 entities | validated | `bun test test/entities.test.mjs` — 5 pass |
+| T-022 aliases | validated | `bun test test/aliases.test.mjs` — 6 pass |
+| T-027 relative dates | validated | `bun test test/temporal-parse.test.mjs` — 8 pass |
+| T-031 decay and pruning | validated | `bun test test/decay.test.mjs` — 6 pass |
+| T-032 summaries | validated | `bun test test/consolidation.test.mjs` — 5 pass |
+| T-033 scopes | validated | `bun test test/scopes.test.mjs` — 4 pass |
+| T-035 rule suggestions | validated | `bun test test/rule-suggest.test.mjs` — 5 pass |
+| T-130 dedupe on insert | validated | `bun test test/dedupe-insert.test.mjs` — 2 pass |
+| T-131 fact embeddings and hybrid search | validated | `bun test test/hybrid-search.test.mjs` — 4 pass |
+| T-132 LoCoMo re-run | validated | `bun scripts/compare-bench.mjs bench/results/2026-10-26` |
+| T-133 50k latency and FTS fix | validated | `bun run bench:scale -- 50000 20000 --optimize` |
+
+### 10.2 Full suite
+
+```text
+$ bun test
+ 272 pass
+ 0 fail
+ 1542 expect() calls
+Ran 272 tests across 37 files. [9.62s]
+```
+
+### 10.3 Task consistency
+
+```text
+$ bun scripts/check-tasks.mjs
+check-tasks: ok — 104 tasks (todo=74 validated=30)
+```
+
+### 10.4 Measured numbers
+
+```text
+$ bun scripts/compare-bench.mjs bench/results/2026-10-26
+| claim | previous | measured | delta | status |
+|---|---:|---:|---:|---|
+| raw turns, all 10, hybrid R@5 | 57.5% | 57.4% | -0.1 | REPRODUCED |
+| dataset facts, all 10, hybrid+facts R@5 | 65.2% | 64.8% | -0.4 | REPRODUCED |
+| dataset facts, 3 conversations, hybrid+facts R@5 | 67.6% | 67.4% | -0.2 | REPRODUCED |
+| dataset facts, 3 conversations, +rerank R@5 | 73.7% | 73.9% | +0.2 | REPRODUCED |
+| dataset facts, 3 conversations, +rerank MRR | 0.686 | 0.686 | -0.000 | REPRODUCED |
+| dataset facts, all 10, +rerank R@5 | 72.5% | 72.3% | -0.2 | REPRODUCED |
+| dataset facts, all 10, +rerank MRR | 0.679 | 0.680 | +0.001 | REPRODUCED |
+
+Our rule extractor: hybrid 57.3% -> hybrid+facts 57.7% (1536 questions).
+```
+
+Dataset: LoCoMo `locomo10.json`, fetched 2026-10-26, SHA-256
+`79fa87e90f04081343b8c8debecb80a9a6842b76a7aa537dc9fdf651ea698ff4`, licence **CC BY-NC 4.0** (non-commercial).
+Runtime: `@huggingface/transformers@4.3.1` in `bench/runtime/` (optional, not a project dependency).
+
+50k-row scale, after the first index fix:
+
+```text
+$ bun run bench:scale -- 50000 20000 --optimize
+search   bm25 all projects      p50 77.9 ms   p95 108.1 ms
+search   bm25 one project       p50 54.2 ms   p95 75.2 ms
+hybrid   bm25 + vectors         p50 129.0 ms   p95 203.6 ms
+```
+
+Before the fix, BM25 all projects was p50 93.1 ms / p95 137.8 ms. The 50 ms target is still missed.
+
+### 10.5 What is not done in this run
+
+- Answer accuracy: not measured (no reader/judge).
+- Real-provider extraction: Ollama `llama3.2:1b` answered a trivial chat call but returned HTTP 500 after 4m41s on
+  a 2-turn `facts-v1` window; no provider recall number.
+- Review UI, graph channel, and the 50 ms latency target.

@@ -96,3 +96,21 @@ export const exactHash = ({ project, type, title, narrative }) => sha256(JSON.st
 
 /** Merge through the store so the whole change is one transaction with an audit row. */
 export const mergeDuplicates = (store, firstId, secondId, opts = {}) => store.mergeObservations(firstId, secondId, opts);
+
+/**
+ * Merge every auto pair in one scan. The scan reads active rows once; a row that a merge already retired is skipped,
+ * so one pass cannot merge the same memory twice. Returns counts, never throws on a missing row.
+ */
+export function mergeNearDuplicates(store, { project, maxRows = MAX_SCAN, autoThreshold = AUTO_MERGE } = {}) {
+  const scan = nearDuplicates(store, { project, maxRows, autoThreshold });
+  let merged = 0;
+  for (const pair of scan.pairs) {
+    if (!pair.auto) continue;
+    const a = store.getObservation(pair.a);
+    const b = store.getObservation(pair.b);
+    if (!a || !b || a.status !== "active" || b.status !== "active") continue;
+    store.mergeObservations(pair.a, pair.b, { actor: "extract" });
+    merged++;
+  }
+  return { merged, candidates: scan.pairs.length, scanned: scan.scanned };
+}

@@ -2,7 +2,8 @@
 // aletheia: the command line for the shared memory hub. Works without the server running.
 //   aletheia capture --tool <name> [--project p]          read one hook payload (JSON) on stdin, store it (secrets redacted)
 //   aletheia context [--project p] [--tool t]             print session-start context for any tool
-//   aletheia search <query> [--project p]                 index of matches
+//   aletheia search <query> [--project p] [--scope all] [--explain] [--semantic]
+//   aletheia embed [--limit n]                          write fact and memory vectors when the runtime is installed
 //   aletheia save <text> [--project p] [--type t] [--pin] save a memory
 //   aletheia import claude-mem [--path db] [--no-prompts] bring memory in from claude-mem
 //   aletheia import bundle <file.jsonl>                   restore an export
@@ -15,6 +16,10 @@
 //   aletheia hook <tool> <event>                          hook entry point: read one JSON payload on stdin
 //   aletheia doctor                                       check the server, hooks, spool and last capture
 //   aletheia compress [--project p] [--daemon]         drain the extraction queue (provider or rule-based)
+//   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
+//   aletheia prune [--apply]                            report cold facts and old episodes; --apply changes them
+//   aletheia promote <type> <id>                        make a memory, episode, observation or fact global
+//   aletheia optimize                                   rebuild FTS segments after a large import
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
@@ -152,19 +157,47 @@ async function main() {
       case "capture": {
         let payload;
         try { payload = JSON.parse(readFileSync(0, "utf8")); } catch { return void process.exit(0); } // a hook must never break the tool
-        const memory = normalizeHook(payload, { tool: flags.tool ?? "unknown", project: flags.project });
+        const memory = normalizeHook(payload, { tool: flags.tool ?? "unknown", project: flags.project, excluded: config.excludedProjects });
         if (memory) hub.add(memory, { actor: memory.tool });
         return;
       }
-      case "context": return out(hub.context({ project: flags.project ?? projectKeyForPath(process.cwd()), tool: flags.tool, limit: Number(flags.limit) || 20 }));
+      case "context": return out(hub.context({ project: flags.project ?? projectKeyForPath(process.cwd()), tool: flags.tool, limit: Number(flags.limit) || 20, scope: flags.scope === "all" ? "all" : "current" }));
       case "search": {
         const asOf = typeof flags["as-of"] === "string" ? Date.parse(flags["as-of"]) : null;
         if (flags["as-of"] && !Number.isFinite(asOf)) return die("--as-of needs a date, for example 2026-01-31.");
-        const rows = hub.searchAll({ query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20, includeHistory: !!flags.history, asOf });
-        return out(rows.length ? rows.map((r) => (r.kind === "fact"
+        const { formatChannels, searchMemory } = await import("../src/hub/search.mjs");
+        let embedder = null;
+        if (flags.semantic) {
+          const { createEmbedderIfAvailable } = await import("../src/hub/embed.mjs");
+          embedder = await createEmbedderIfAvailable();
+          if (!embedder) return die("--semantic needs the optional runtime: bun add @huggingface/transformers");
+        }
+        const { results: rows, channels } = await searchMemory({
+          store: hub, query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20,
+          includeHistory: !!flags.history, asOf, scope: flags.scope === "all" ? "all" : "current", embedder,
+        });
+        const body = rows.length ? rows.map((r) => (r.kind === "fact"
           ? `fact #${r.id} ${r.at.slice(0, 10)} [${r.status}] ${r.text} (source episode #${r.source?.episodeId ?? "-"})`
-          : `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title} (${r.project}, ${r.tool})`)).join("\n") : "No matches.");
+          : `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title} (${r.project}, ${r.tool})`)).join("\n") : "No matches.";
+        if (!flags.explain) return out(body);
+        const reason = rows.length ? null : hub.searchDetailed({ query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20, scope: flags.scope === "all" ? "all" : "current" }).reason;
+        return out(`${body}${reason ? ` (${reason})` : ""}\n${formatChannels(channels)}`);
       }
+      case "embed": {
+        const { createEmbedderIfAvailable } = await import("../src/hub/embed.mjs");
+        const { embedMissingFacts } = await import("../src/hub/search.mjs");
+        const embedder = await createEmbedderIfAvailable();
+        if (!embedder) return die("Embeddings need the optional runtime: bun add @huggingface/transformers (or set ALETHEIA_TRANSFORMERS_FROM).");
+        const limit = Number(flags.limit) || 5000;
+        const facts = await embedMissingFacts(hub, embedder, { limit });
+        const memories = await hub.embedMissing(embedder, { limit });
+        return out(`Embedded ${facts} fact(s) and ${memories} memory/memories with ${embedder.model} (${embedder.dim} dims).`);
+      }
+      case "promote": {
+        if (!pos[0] || !pos[1]) return die("Usage: aletheia promote <memory|episode|observation|fact> <id>");
+        return out(hub.promote(pos[0], Number(pos[1]), { actor: "cli" }));
+      }
+      case "optimize": return out(hub.optimizeFts());
       case "save": {
         const text = pos.join(" ");
         if (!text) die("Usage: aletheia save <text>");
@@ -185,6 +218,15 @@ async function main() {
         const sub = pos[0];
         if (sub === "list") return out(hub.rules.list().map((r) => `${r.enabled ? "on " : "off"} ${r.id}  ${r.when ? `When ${r.when}: ` : ""}${r.then}  [${r.scopeTier === "everywhere" ? "everywhere" : r.scopeName}${r.tools ? `; ${r.tools.join(",")}` : ""}]`).join("\n") || "No rules yet.");
         if (sub === "add") { const r = hub.rules.add({ then: pos.slice(1).join(" "), when: typeof flags.when === "string" ? flags.when : "" }); return out(r.created ? `Added ${r.id}.` : `Already there (${r.id}).`); }
+        if (sub === "suggest") {
+          const { suggestRules } = await import("../src/hub/rule-suggest.mjs");
+          return out(suggestRules(hub, { project: flags.project ?? null }));
+        }
+        if (sub === "suggestions") {
+          const { listSuggestions } = await import("../src/hub/rule-suggest.mjs");
+          const rows = listSuggestions(hub, { project: flags.project, status: typeof flags.status === "string" ? flags.status : "pending" });
+          return out(rows.length ? rows.map((row) => `#${row.id} [${row.status}] ${row.text}  (${row.project}, confidence ${row.confidence})`).join("\n") : "No rule suggestions.");
+        }
         if (sub === "sync" || sub === "import") {
           const scope = flags.global ? "global" : "project";
           const dir = scope === "project" ? resolve(flags.dir ?? process.cwd()) : undefined;
@@ -220,6 +262,31 @@ async function main() {
         const { recomputeImportance } = await import("../src/hub/importance.mjs");
         return out(recomputeImportance(hub, { project: flags.project }));
       }
+      case "summarize": {
+        const { buildEntitySummary, buildProjectSummary, buildSessionSummary, listSummaries } = await import("../src/hub/summaries.mjs");
+        const scope = typeof flags.scope === "string" ? flags.scope : "session";
+        if (scope === "session") {
+          if (!flags.session) return die("Usage: aletheia summarize --scope session --project p --session s");
+          const result = buildSessionSummary(hub, { project: flags.project ?? "default", sessionId: flags.session });
+          return out(result ? `summary #${result.id}: ${result.factIds.length} source fact(s), ${result.tokenCount} tokens` : "No active fact for that session; nothing summarised.");
+        }
+        if (scope === "project") {
+          if (!flags.project) return die("Usage: aletheia summarize --scope project --project p");
+          const result = buildProjectSummary(hub, { project: flags.project, days: Number(flags.days) || 7 });
+          return out(result ? `summary #${result.id}: ${result.factIds.length} source fact(s), ${result.tokenCount} tokens` : "No active fact in that window; nothing summarised.");
+        }
+        if (scope === "entity") {
+          if (!flags.entity) return die("Usage: aletheia summarize --scope entity --entity <id>");
+          const result = buildEntitySummary(hub, { entityId: Number(flags.entity) });
+          return out(result ? `summary #${result.id}: ${result.factIds.length} source fact(s), ${result.tokenCount} tokens` : "That entity has no active fact; nothing summarised.");
+        }
+        if (scope === "list") return out(listSummaries(hub, { project: flags.project, limit: Number(flags.limit) || 50 }));
+        return die(`Unknown scope "${scope}". Use session, project, entity or list.`);
+      }
+      case "prune": {
+        const { formatPruneReport, prune } = await import("../src/hub/retention.mjs");
+        return out(formatPruneReport(prune(hub, { apply: !!flags.apply })));
+      }
       case "compress": {
         const { runWorker, startBackgroundWorker } = await import("../src/hub/queue.mjs");
         let ask = null;
@@ -229,21 +296,26 @@ async function main() {
           return die(error.message);
         }
         const mode = ask ? config.provider : "rules";
+        let embedder = null;
+        if (process.env.ALETHEIA_EMBED_FACTS !== "0") {
+          const { createEmbedderIfAvailable } = await import("../src/hub/embed.mjs");
+          embedder = await createEmbedderIfAvailable();
+        }
         if (flags.daemon) {
           const worker = startBackgroundWorker({
-            store: hub, ask, config, intervalMs: Number(flags.interval) || 2000,
-            onTick: (result) => { if (result?.processed) out(`processed ${result.processed} job(s), ${result.last?.facts ?? 0} new fact(s)`); },
+            store: hub, ask, config, embedder, intervalMs: Number(flags.interval) || 2000,
+            onTick: (result) => { if (result?.processed) out(`processed ${result.processed} job(s), ${result.last?.facts ?? 0} new fact(s), ${result.last?.embedded ?? 0} embedded`); },
             onError: (error) => out(`worker error: ${error.message}`),
           });
-          out(`Extraction worker running (${mode}); Ctrl-C to stop.`);
+          out(`Extraction worker running (${mode}${embedder ? `, embeddings ${embedder.model}` : ", keyword only"}); Ctrl-C to stop.`);
           await new Promise((resolve) => {
             for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { worker.stop(); resolve(); });
           });
           return;
         }
-        const result = await runWorker({ store: hub, ask, config });
-        const last = result.last ? `\nlast: ${result.last.memories} memories, ${result.last.windows} window(s), ${result.last.facts} new fact(s), ${result.last.rejected} rejected` : "";
-        return out(`Extraction mode: ${mode}\nqueue: ${JSON.stringify(result.counts)}${last}`);
+        const result = await runWorker({ store: hub, ask, config, embedder });
+        const last = result.last ? `\nlast: ${result.last.memories} memories, ${result.last.windows} window(s), ${result.last.facts} new fact(s), ${result.last.rejected} rejected, ${result.last.embedded ?? 0} embedded` : "";
+        return out(`Extraction mode: ${mode}${embedder ? `; embeddings ${embedder.model}` : "; keyword only"}\nqueue: ${JSON.stringify(result.counts)}${last}`);
       }
       default:
         return die(readFileSync(new URL(import.meta.url), "utf8").split("\n").filter((l) => l.startsWith("//")).map((l) => l.slice(3)).join("\n"));

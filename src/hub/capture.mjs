@@ -10,6 +10,20 @@ const cut = (t, n) => (typeof t === "string" && t.length > n ? `${t.slice(0, n -
 const asText = (v) => (typeof v === "string" ? v : v == null ? "" : JSON.stringify(v));
 const SKIP_TOOLS = new Set(["TodoWrite", "TaskCreate", "TaskUpdate", "ToolSearch"]);
 
+/** Comma-separated list from config. `*` excludes everything, which is occasionally useful for a dry run. */
+export function parseExcluded(value) {
+  if (Array.isArray(value)) return value.map((name) => String(name).trim().toLowerCase()).filter(Boolean);
+  return String(value ?? "").split(",").map((name) => name.trim().toLowerCase()).filter(Boolean);
+}
+
+/** True when this project key is on the exclude list. Matching is exact and case-insensitive. */
+export function isProjectExcluded(project, excluded = []) {
+  const key = String(project ?? "").trim().toLowerCase();
+  if (!key) return false;
+  const list = parseExcluded(excluded);
+  return list.includes("*") || list.includes(key);
+}
+
 function brief(toolName, input) {
   const i = typeof input === "object" && input ? input : {};
   return cut(i.command ?? i.file_path ?? i.path ?? i.pattern ?? i.query ?? i.url ?? i.description ?? asText(input), 160).replace(/\s+/g, " ");
@@ -20,10 +34,11 @@ function brief(toolName, input) {
  * Understands Claude Code style hooks ({hook_event_name, prompt, tool_name, tool_input, tool_response, session_id, cwd})
  * and a generic shape ({kind|event, title, text, project, session}).
  */
-export function normalizeHook(payload, { tool = "unknown", project } = {}) {
+export function normalizeHook(payload, { tool = "unknown", project, excluded = [] } = {}) {
   if (!payload || typeof payload !== "object") return null;
   const cwd = payload.cwd ?? payload.workspace ?? payload.project_dir;
   const proj = project ?? payload.project ?? (cwd ? projectKeyForPath(cwd) : "default");
+  if (isProjectExcluded(proj, excluded)) return null;
   const session = payload.session_id ?? payload.sessionId ?? payload.session;
   const event = payload.hook_event_name ?? payload.event ?? payload.type;
   const base = { project: proj, tool, sessionId: session };
