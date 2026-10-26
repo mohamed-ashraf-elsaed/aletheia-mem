@@ -102,22 +102,22 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-058 | Build the installer core and Claude Code installer | P3 | none | validated | 2026-10-26 | [T-058.md](T-058.md) |
 | T-059 | Add Claude Code hooks and automatic context | P3 | T-058 | validated | 2026-10-26 | [T-059.md](T-059.md) |
 | T-060 | Add the file-read gate and smart outline | P3 | T-059 | todo | — | [T-060.md](T-060.md) |
-| T-061 | Add the Cursor installer and hooks | P3 | T-058 | todo | — | [T-061.md](T-061.md) |
-| T-062 | Add the Codex CLI installer | P3 | T-058 | todo | — | [T-062.md](T-062.md) |
+| T-061 | Add the Cursor installer and hooks | P3 | T-058 | validated | 2026-10-26 | [T-061.md](T-061.md) |
+| T-062 | Add the Codex CLI installer | P3 | T-058 | validated | 2026-10-26 | [T-062.md](T-062.md) |
 | T-063 | Add a transcript watcher | P3 | T-062 | todo | — | [T-063.md](T-063.md) |
-| T-064 | Add the Gemini CLI installer and hooks | P3 | T-058 | todo | — | [T-064.md](T-064.md) |
-| T-065 | Add the Windsurf installer and hooks | P3 | T-058 | todo | — | [T-065.md](T-065.md) |
+| T-064 | Add the Gemini CLI installer and hooks | P3 | T-058 | validated | 2026-10-26 | [T-064.md](T-064.md) |
+| T-065 | Add the Windsurf installer and hooks | P3 | T-058 | validated | 2026-10-26 | [T-065.md](T-065.md) |
 | T-066 | Ship plugin manifests for each host | P3 | T-058 | todo | — | [T-066.md](T-066.md) |
 | T-067 | Add MCP Streamable HTTP transport | P3 | T-011 | todo | — | [T-067.md](T-067.md) |
-| T-068 | Add the OpenCode installer and plugin | P3 | T-058 | todo | — | [T-068.md](T-068.md) |
+| T-068 | Add the OpenCode installer and plugin | P3 | T-058 | validated | 2026-10-26 | [T-068.md](T-068.md) |
 | T-069 | Add work-state and corpus MCP tools | P3 | T-017 | todo | — | [T-069.md](T-069.md) |
-| T-070 | Verify rules formats on real installs | P3 | T-058 | todo | — | [T-070.md](T-070.md) |
-| T-071 | Add uninstall for every installer | P3 | T-058 | todo | — | [T-071.md](T-071.md) |
+| T-070 | Verify rules formats on real installs | P3 | T-058 | validated | 2026-10-26 | [T-070.md](T-070.md) |
+| T-071 | Add uninstall for every installer | P3 | T-058 | validated | 2026-10-26 | [T-071.md](T-071.md) |
 | T-072 | Add rule hygiene checks | P3 | T-058 | todo | — | [T-072.md](T-072.md) |
 | T-073 | Add `aletheia doctor` | P3 | T-007 | todo | — | [T-073.md](T-073.md) |
 | T-074 | Generate folder context files | P3 | T-059 | todo | — | [T-074.md](T-074.md) |
 | T-075 | Add a connector verification registry | P3 | T-070 | todo | — | [T-075.md](T-075.md) |
-| T-076 | Document and test Claude Desktop MCP setup | P3 | T-058 | todo | — | [T-076.md](T-076.md) |
+| T-076 | Document and test Claude Desktop MCP setup | P3 | T-058 | validated | 2026-10-26 | [T-076.md](T-076.md) |
 | T-077 | Add live feed, session pages and context preview | P3 | T-017 | todo | — | [T-077.md](T-077.md) |
 | T-078 | Add a settings UI | P3 | T-016 | todo | — | [T-078.md](T-078.md) |
 | T-079 | Restructure the README and add real badges | P4 | T-001 | todo | — | [T-079.md](T-079.md) |
@@ -175,3 +175,5 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-137 | Add a Rules tab with the editor and suggested rules | P6 | T-134 | validated | 2026-10-26 | [T-137.md](T-137.md) |
 | T-138 | Add a read-only Tools tab from doctor data | P6 | T-134 | validated | 2026-10-26 | [T-138.md](T-138.md) |
 | T-139 | Add UI tests for the one page | P6 | T-134, T-135, T-136, T-137, T-138 | validated | 2026-10-26 | [T-139.md](T-139.md) |
+| T-140 | Prove end-to-end capture for every full-capability host | P3 | T-058, T-061, T-062, T-064, T-065 | validated | 2026-10-26 | [T-140.md](T-140.md) |
+| T-141 | Update docs and claims for the five hosts | P3 | T-070, T-140 | validated | 2026-10-26 | [T-141.md](T-141.md) |

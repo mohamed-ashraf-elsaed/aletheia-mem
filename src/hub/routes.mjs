@@ -104,22 +104,26 @@ export function createHubRoutes({ hub, config }) {
     const spoolItems = spoolRead(config.dataDir);
     const spoolBytes = existsSync(spoolPath(config.dataDir)) ? statSync(spoolPath(config.dataDir)).size : 0;
     const tools = INSTALLERS.map((installer) => {
-      const expected = installer.expectedHooks(env);
+      const expected = installer.expectedHooks?.(env) ?? null;
       let present = 0;
       let error = null;
-      try {
-        const doc = existsSync(expected.file) ? JSON.parse(readFileSync(expected.file, "utf8")) : {};
-        const handlers = Object.values(doc.hooks ?? {}).flatMap((definitions) => (Array.isArray(definitions) ? definitions : []).flatMap((definition) => definition?.hooks ?? []));
-        present = Object.values(expected.commands).filter((command) => handlers.some((handler) => handler?.command === command)).length;
-      } catch (failure) {
-        error = `cannot read ${expected.file}: ${failure instanceof Error ? failure.message : String(failure)}`;
+      if (expected) {
+        try {
+          const doc = existsSync(expected.file) ? JSON.parse(readFileSync(expected.file, "utf8")) : {};
+          const handlers = Object.values(doc.hooks ?? {}).flatMap((definitions) => (Array.isArray(definitions) ? definitions : []).flatMap((definition) => (Array.isArray(definition?.hooks) ? definition.hooks.map((handler) => handler?.command) : [definition?.command]))).filter(Boolean);
+          present = Object.values(expected.commands).filter((command) => handlers.includes(command)).length;
+        } catch (failure) {
+          error = `cannot read ${expected.file}: ${failure instanceof Error ? failure.message : String(failure)}`;
+        }
       }
       const last = hub.db.prepare("SELECT MAX(created_at_epoch) AS at FROM memories WHERE tool = ?").get(installer.id)?.at ?? null;
       return {
         id: installer.id,
         name: installer.name,
+        capabilities: installer.capabilities,
+        verification: installer.verification,
         installed: !!detected.get(installer.id)?.installed,
-        hooks: { file: expected.file, present, expected: Object.keys(expected.commands).length, events: Object.keys(expected.commands), commands: expected.commands, error },
+        hooks: { file: expected?.file ?? null, present, expected: Object.keys(expected?.commands ?? {}).length, events: Object.keys(expected?.commands ?? {}), commands: expected?.commands ?? {}, error },
         lastCapture: iso(last),
         spool: { items: spoolItems.length, bytes: spoolBytes, path: spoolPath(config.dataDir) },
         commands: {

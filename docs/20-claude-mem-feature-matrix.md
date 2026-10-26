@@ -293,7 +293,7 @@ Source: [docs/research/A4-claude-mem-prs.md](research/A4-claude-mem-prs.md). 683
 
 | ID | Need (PR count) | Example PRs | Aletheia status | Task |
 |---|---|---|---|---|
-| F-N01 | Support another AI tool (81) | #1233, #1355, #1758 | **partial**: hooks for Claude Code and Command Code; MCP config for 10 tools | T-062, T-064, T-065, T-068, T-124 |
+| F-N01 | Support another AI tool (81) | #1233, #1355, #1758 | **partial** (CORRECTED 2026-10-26: automatic capture is built for six tools — Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf; OpenCode is MCP+rules because its plugin payload fields are undocumented; Claude Desktop is documented MCP-only. All configs are fixture-tested and each installed hook command is run end to end in a temp HOME (T-061, T-062, T-064, T-065, T-068, T-076, T-140). No config has been run inside its tool yet). | T-124 |
 | F-N02 | More model providers and presets for the observer (72) | see A4 section 2 | **partial** (CORRECTED 2026-10-26: presets and an ordered fallback chain are built and validated, T-119; Codex and Gemini providers remain). | T-119, T-034 |
 | F-N03 | Hooks that fail open, run fast, survive compaction (64) | see A4 section 2 | **partial**: spool and compact re-inject exist | T-009 |
 | F-N04 | Windows, Linux, macOS stability (57) | see A4 section 2 | **partial**: only Linux is tested | T-014 |

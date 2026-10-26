@@ -204,7 +204,8 @@ describe("rules sync", () => {
       const r = syncTool(rules, t.id, { scope: "project", projectDir: dir, home, dryRun: false });
       names[t.id] = r.path.replace(dir, "");
     }
-    expect(names).toMatchObject({ "claude-code": "/CLAUDE.md", codex: "/AGENTS.md", "gemini-cli": "/GEMINI.md", cursor: "/.cursor/rules/aletheia.mdc", windsurf: "/.windsurfrules", copilot: "/.github/copilot-instructions.md", aider: "/CONVENTIONS.md" });
+    expect(names).toMatchObject({ "claude-code": "/CLAUDE.md", codex: "/AGENTS.md", "gemini-cli": "/GEMINI.md", cursor: "/.cursor/rules/aletheia.mdc", windsurf: "/.windsurf/rules/aletheia.md", copilot: "/.github/copilot-instructions.md", aider: "/CONVENTIONS.md" });
+    expect(readFileSync(join(dir, ".windsurf/rules/aletheia.md"), "utf8")).toMatch(/^---\ntrigger: always_on\n---\n\n<!-- aletheia:rules:begin -->/);
     expect(readFileSync(join(dir, ".cursor/rules/aletheia.mdc"), "utf8")).toMatch(/^---\ndescription:.*\nalwaysApply: true\n---\n/);
     expect(syncTool(rules, "cursor", { scope: "global", home, dryRun: true }).skipped).toMatch(/no global rules file/);
     expect(() => syncTool(rules, "nope", { scope: "project", projectDir: dir, home })).toThrow(/Unknown tool/);

@@ -36,7 +36,7 @@ On LoCoMo (1,536 questions), claude-mem 15.2.0 as shipped vs this project, retri
 
 So the retrieval gap is real but **not 2×** when inputs are equal; the speed gap is two to three orders of magnitude. Answer accuracy (LLM-judged) is not measured yet. The plan to close the rest is in [15](docs/15-product-spec.md), [16](docs/16-target-architecture.md), [17](docs/17-tech-tasks.md), [18](docs/18-benchmark-plan.md).
 
-## Which tools it works with
+## Which tools it connects to
 
 Aletheia does not depend on any one tool. It speaks the open MCP protocol (stdio), a plain REST API and a CLI, and it
 writes the instruction file each tool already reads. What has and has not been checked:
@@ -44,16 +44,17 @@ writes the instruction file each tool already reads. What has and has not been c
 | Check | Result |
 |---|---|
 | MCP server against the official MCP SDK client | Passes (protocol versions 2025-11-25 to 2024-11-05) |
-| Config formats for Cursor, Gemini CLI, Codex CLI, Windsurf, OpenCode, Claude Code | Written from each tool's documentation |
-| Rules files: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursor/rules/*.mdc`, `.windsurfrules`, Copilot, Aider | Written and tested in temp folders |
+| Config formats for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI, Windsurf, OpenCode | Written from official docs fetched 2026-10-26 and tested against fixtures. **Not tested on a real install.** |
+| Claude Desktop MCP config | Documented and merge-tested against a fixture; not opened in the app |
+| Rules files: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursor/rules/*.mdc`, `.windsurf/rules/*.md`, Copilot, Aider | Written and tested in temp folders (`docs/verification/rules-targets.md`) |
 | Any of the above **on a real install of that tool** | **Not tested yet.** Reports welcome. |
-| Automatic capture through a tool's hooks | Not built. `aletheia capture` takes one hook payload by hand. |
+| Automatic capture through a tool's hooks | Built for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf. Each installed hook command is exercised end to end in a temp HOME with a recorded payload; none has been run inside the tool. OpenCode is MCP+rules. |
 
 ## Quick start
 
 ```bash
 cd aletheia-mem   # after: git clone https://github.com/mohamed-ashraf-elsaed/aletheia-mem
-bun test                              # 115 tests, ~2 s
+bun test                              # the test suite
 bun bin/aletheia-server.mjs                 # http://localhost:37790  (My Work)  and  /hub  (Memory Hub)
 ```
 
@@ -68,6 +69,7 @@ Give any tool the same memory:
 
 ```bash
 bun bin/aletheia.mjs tools                          # what is installed, and how each connects
+bun bin/aletheia.mjs install --list                 # capability level and verification per tool
 bun bin/aletheia.mjs connect cursor                 # preview the MCP config; add --write to apply (backup kept)
 bun bin/aletheia.mjs rules add "Run the tests before saying a task is done"
 bun bin/aletheia.mjs rules sync --tools codex,cursor,claude-code --dir /path/to/project          # preview
