@@ -120,15 +120,17 @@ describe("T-139: the one page", () => {
     expect(doctor.status).toBe(200);
     const data = await doctor.json();
     expect(Array.isArray(data.tools)).toBe(true);
-    expect(data.tools.length).toBe(2);
+    expect(data.tools.length).toBe(7);
     for (const tool of data.tools) {
       expect(tool).toHaveProperty("installed");
+      expect(["full", "mcp+rules", "rules-only"]).toContain(tool.capabilities);
       expect(tool.hooks).toHaveProperty("present");
       expect(tool.hooks).toHaveProperty("expected");
       expect(tool).toHaveProperty("lastCapture");
       expect(tool.spool).toHaveProperty("bytes");
       expect(tool.commands).toHaveProperty("install");
     }
+    expect(data.tools.find((tool) => tool.id === "opencode").hooks.expected).toBe(0);
     expect(Array.isArray(data.checks)).toBe(true);
   });
 });
