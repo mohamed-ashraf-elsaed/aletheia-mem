@@ -14,12 +14,11 @@
 //   aletheia uninstall <tool> [--write]                   remove only the entries the install manifest lists
 //   aletheia hook <tool> <event>                          hook entry point: read one JSON payload on stdin
 //   aletheia doctor                                       check the server, hooks, spool and last capture
-//   aletheia compress [--project p]                       turn raw events into observations (needs ALETHEIA_PROVIDER)
+//   aletheia compress [--project p] [--daemon]         drain the extraction queue (provider or rule-based)
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { normalizeHook, redact } from "../src/hub/capture.mjs";
-import { compressRecent } from "../src/hub/compress.mjs";
 import { importClaudeMem } from "../src/hub/importers.mjs";
 import { applyInstall, applyUninstall, doctor, formatPlan, formatUninstall, installerFor, installerIds, planUninstall } from "../src/hub/install.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "../src/hub/rules-sync.mjs";
@@ -210,8 +209,29 @@ async function main() {
         return out(applyMcp(tool, config.home, argv));
       }
       case "compress": {
-        const ask = makeProvider(config) ?? die("Set ALETHEIA_PROVIDER=claude-cli or openai first.");
-        return out(await compressRecent(hub, ask, { project: flags.project }));
+        const { runWorker, startBackgroundWorker } = await import("../src/hub/queue.mjs");
+        let ask = null;
+        try {
+          ask = makeProvider(config);
+        } catch (error) {
+          return die(error.message);
+        }
+        const mode = ask ? config.provider : "rules";
+        if (flags.daemon) {
+          const worker = startBackgroundWorker({
+            store: hub, ask, config, intervalMs: Number(flags.interval) || 2000,
+            onTick: (result) => { if (result?.processed) out(`processed ${result.processed} job(s), ${result.last?.facts ?? 0} new fact(s)`); },
+            onError: (error) => out(`worker error: ${error.message}`),
+          });
+          out(`Extraction worker running (${mode}); Ctrl-C to stop.`);
+          await new Promise((resolve) => {
+            for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { worker.stop(); resolve(); });
+          });
+          return;
+        }
+        const result = await runWorker({ store: hub, ask, config });
+        const last = result.last ? `\nlast: ${result.last.memories} memories, ${result.last.windows} window(s), ${result.last.facts} new fact(s), ${result.last.rejected} rejected` : "";
+        return out(`Extraction mode: ${mode}\nqueue: ${JSON.stringify(result.counts)}${last}`);
       }
       default:
         return die(readFileSync(new URL(import.meta.url), "utf8").split("\n").filter((l) => l.startsWith("//")).map((l) => l.slice(3)).join("\n"));

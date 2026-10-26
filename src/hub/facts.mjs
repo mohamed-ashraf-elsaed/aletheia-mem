@@ -13,7 +13,13 @@ export const EPISODE_PROMPT_CHARS = 2000;
 export const DEFAULT_BUDGET = { maxEpisodes: 20, maxChars: 12_000 };
 export const LIMITS = { subject: 120, predicate: 80, object: 300, text: 400, entityName: 100, confidence: 1 };
 
-const FACT_PROMPT = readFileSync(new URL("./prompts/facts.txt", import.meta.url), "utf8").trim();
+const PROMPT_URL = new URL("./prompts/facts.txt", import.meta.url);
+let factPromptText = null;
+// Lazy: a hook bundle must load without reading a file, and only the extraction path needs the prompt.
+function factsPromptText() {
+  if (factPromptText == null) factPromptText = readFileSync(PROMPT_URL, "utf8").trim();
+  return factPromptText;
+}
 
 const ENTITY_TYPES = ["person", "service", "file", "repo", "library", "concept", "org"];
 
@@ -192,7 +198,7 @@ export function factsPrompt({ window, project, modeInstruction = "", existing = 
   const known = existing.length
     ? `\n\nEXISTING ACTIVE FACTS (cite one in "supersedes" only if the new fact contradicts it):\n${existing.map((fact) => `#${fact.id} ${fact.text}`).join("\n")}`
     : "";
-  return `${FACT_PROMPT}${modeInstruction ? `\n\n${modeInstruction}` : ""}\n\nPROJECT: ${project}\nEPISODE_IDS: [${ids.join(", ")}]${known}\n\nLOG:\n${log}`;
+  return `${factsPromptText()}${modeInstruction ? `\n\n${modeInstruction}` : ""}\n\nPROJECT: ${project}\nEPISODE_IDS: [${ids.join(", ")}]${known}\n\nLOG:\n${log}`;
 }
 
 /**

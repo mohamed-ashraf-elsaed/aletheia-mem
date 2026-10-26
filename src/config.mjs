@@ -44,6 +44,8 @@ export function loadConfig(overrides = {}) {
     // ALETHEIA_PROVIDER = claude-cli | openai | none
     provider: overrides.provider ?? env.ALETHEIA_PROVIDER ?? "none",
     autoRefresh: (overrides.autoRefresh ?? env.ALETHEIA_AUTO_REFRESH ?? "true") !== "false" && (overrides.autoRefresh ?? true) !== false,
+    // The extraction worker is started by the server binary or `aletheia compress --daemon`, never by a hook.
+    extractionWorker: overrides.extractionWorker ?? env.ALETHEIA_EXTRACTION_WORKER === "1",
     refreshCheckMs: Number(overrides.refreshCheckMs ?? env.ALETHEIA_REFRESH_CHECK_MS ?? 10 * 60_000),
     // Fact extraction batching and cost. Prices default to 0: this project does not guess a vendor price.
     factBudget: {
