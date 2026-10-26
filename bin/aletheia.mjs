@@ -2,7 +2,8 @@
 // aletheia: the command line for the shared memory hub. Works without the server running.
 //   aletheia capture --tool <name> [--project p]          read one hook payload (JSON) on stdin, store it (secrets redacted)
 //   aletheia context [--project p] [--tool t]             print session-start context for any tool
-//   aletheia search <query> [--project p]                 index of matches
+//   aletheia search <query> [--project p] [--scope all] [--explain] [--semantic]
+//   aletheia embed [--limit n]                          write fact and memory vectors when the runtime is installed
 //   aletheia save <text> [--project p] [--type t] [--pin] save a memory
 //   aletheia import claude-mem [--path db] [--no-prompts] bring memory in from claude-mem
 //   aletheia import bundle <file.jsonl>                   restore an export
@@ -163,10 +164,31 @@ async function main() {
       case "search": {
         const asOf = typeof flags["as-of"] === "string" ? Date.parse(flags["as-of"]) : null;
         if (flags["as-of"] && !Number.isFinite(asOf)) return die("--as-of needs a date, for example 2026-01-31.");
-        const rows = hub.searchAll({ query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20, includeHistory: !!flags.history, asOf, scope: flags.scope === "all" ? "all" : "current" });
-        return out(rows.length ? rows.map((r) => (r.kind === "fact"
+        const { formatChannels, searchMemory } = await import("../src/hub/search.mjs");
+        let embedder = null;
+        if (flags.semantic) {
+          const { createEmbedderIfAvailable } = await import("../src/hub/embed.mjs");
+          embedder = await createEmbedderIfAvailable();
+          if (!embedder) return die("--semantic needs the optional runtime: bun add @huggingface/transformers");
+        }
+        const { results: rows, channels } = await searchMemory({
+          store: hub, query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20,
+          includeHistory: !!flags.history, asOf, scope: flags.scope === "all" ? "all" : "current", embedder,
+        });
+        const body = rows.length ? rows.map((r) => (r.kind === "fact"
           ? `fact #${r.id} ${r.at.slice(0, 10)} [${r.status}] ${r.text} (source episode #${r.source?.episodeId ?? "-"})`
-          : `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title} (${r.project}, ${r.tool})`)).join("\n") : "No matches.");
+          : `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title} (${r.project}, ${r.tool})`)).join("\n") : "No matches.";
+        return out(flags.explain ? `${body}\n${formatChannels(channels)}` : body);
+      }
+      case "embed": {
+        const { createEmbedderIfAvailable } = await import("../src/hub/embed.mjs");
+        const { embedMissingFacts } = await import("../src/hub/search.mjs");
+        const embedder = await createEmbedderIfAvailable();
+        if (!embedder) return die("Embeddings need the optional runtime: bun add @huggingface/transformers (or set ALETHEIA_TRANSFORMERS_FROM).");
+        const limit = Number(flags.limit) || 5000;
+        const facts = await embedMissingFacts(hub, embedder, { limit });
+        const memories = await hub.embedMissing(embedder, { limit });
+        return out(`Embedded ${facts} fact(s) and ${memories} memory/memories with ${embedder.model} (${embedder.dim} dims).`);
       }
       case "promote": {
         if (!pos[0] || !pos[1]) return die("Usage: aletheia promote <memory|episode|observation|fact> <id>");
@@ -270,21 +292,26 @@ async function main() {
           return die(error.message);
         }
         const mode = ask ? config.provider : "rules";
+        let embedder = null;
+        if (process.env.ALETHEIA_EMBED_FACTS !== "0") {
+          const { createEmbedderIfAvailable } = await import("../src/hub/embed.mjs");
+          embedder = await createEmbedderIfAvailable();
+        }
         if (flags.daemon) {
           const worker = startBackgroundWorker({
-            store: hub, ask, config, intervalMs: Number(flags.interval) || 2000,
-            onTick: (result) => { if (result?.processed) out(`processed ${result.processed} job(s), ${result.last?.facts ?? 0} new fact(s)`); },
+            store: hub, ask, config, embedder, intervalMs: Number(flags.interval) || 2000,
+            onTick: (result) => { if (result?.processed) out(`processed ${result.processed} job(s), ${result.last?.facts ?? 0} new fact(s), ${result.last?.embedded ?? 0} embedded`); },
             onError: (error) => out(`worker error: ${error.message}`),
           });
-          out(`Extraction worker running (${mode}); Ctrl-C to stop.`);
+          out(`Extraction worker running (${mode}${embedder ? `, embeddings ${embedder.model}` : ", keyword only"}); Ctrl-C to stop.`);
           await new Promise((resolve) => {
             for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { worker.stop(); resolve(); });
           });
           return;
         }
-        const result = await runWorker({ store: hub, ask, config });
-        const last = result.last ? `\nlast: ${result.last.memories} memories, ${result.last.windows} window(s), ${result.last.facts} new fact(s), ${result.last.rejected} rejected` : "";
-        return out(`Extraction mode: ${mode}\nqueue: ${JSON.stringify(result.counts)}${last}`);
+        const result = await runWorker({ store: hub, ask, config, embedder });
+        const last = result.last ? `\nlast: ${result.last.memories} memories, ${result.last.windows} window(s), ${result.last.facts} new fact(s), ${result.last.rejected} rejected, ${result.last.embedded ?? 0} embedded` : "";
+        return out(`Extraction mode: ${mode}${embedder ? `; embeddings ${embedder.model}` : "; keyword only"}\nqueue: ${JSON.stringify(result.counts)}${last}`);
       }
       default:
         return die(readFileSync(new URL(import.meta.url), "utf8").split("\n").filter((l) => l.startsWith("//")).map((l) => l.slice(3)).join("\n"));

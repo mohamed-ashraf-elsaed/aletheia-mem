@@ -4,6 +4,7 @@
 import { chunkEpisodes, storeFacts, extractWithUsage, FACTS_PROMPT_VERSION, modeInstruction as modeInstructionFor } from "./facts.mjs";
 import { mergeNearDuplicates } from "./dedupe.mjs";
 import { buildProjectSummary, buildSessionSummary } from "./summaries.mjs";
+import { embedMissingFacts } from "./search.mjs";
 import { modelFor } from "../refresh/providers.mjs";
 import { pricesFrom } from "./usage.mjs";
 
@@ -117,7 +118,7 @@ function markExtracted(store, episodeIds, at) {
  * Run one job: make episodes for the captured memories, split them into windows, extract each window, store the
  * facts and mark the window done in one transaction. A window that already completed is never asked for again.
  */
-export async function executeJob(store, job, { ask = null, config = {}, now = () => Date.now(), batchSize = null, charBudget = null, modeInstruction = "", prices = null } = {}) {
+export async function executeJob(store, job, { ask = null, config = {}, now = () => Date.now(), batchSize = null, charBudget = null, modeInstruction = "", prices = null, embedder = null } = {}) {
   const payload = JSON.parse(job.payload ?? "{}");
   const memories = pendingMemories(store, payload);
   if (!memories.length) return { memories: 0, windows: 0, facts: 0, rejected: 0, mode: ask ? "provider" : "rules" };
@@ -169,14 +170,22 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
   } catch (error) {
     store.audit("extract", "summary.error", { message: String(error instanceof Error ? error.message : error).slice(0, 300) });
   }
-  return { memories: memories.length, windows: windows.length, facts, deduped, rejected, mode, startedAt, merged: observations.merged, summaries };
+  let embedded = 0;
+  if (embedder) {
+    try {
+      embedded = await embedMissingFacts(store, embedder, { limit: 500 });
+    } catch (error) {
+      store.audit("extract", "embed.error", { message: String(error instanceof Error ? error.message : error).slice(0, 300) });
+    }
+  }
+  return { memories: memories.length, windows: windows.length, facts, deduped, rejected, mode, startedAt, merged: observations.merged, summaries, embedded };
 }
 
 /**
  * Drain due jobs oldest-first. One failing job is rescheduled, not lost; the loop stops when no job is due.
  * Recovering stale rows first is what makes a restart after kill -9 safe.
  */
-export async function runWorker({ store, ask = null, config = {}, now = () => Date.now(), maxJobs = Infinity, workerId = `pid-${process.pid}`, leaseMs = LEASE_MS, batchSize = null, charBudget = null, modeInstruction = "", prices = null, onError = null } = {}) {
+export async function runWorker({ store, ask = null, config = {}, now = () => Date.now(), maxJobs = Infinity, workerId = `pid-${process.pid}`, leaseMs = LEASE_MS, batchSize = null, charBudget = null, modeInstruction = "", prices = null, onError = null, embedder = null } = {}) {
   const at = now();
   const recovered = recoverStale(store, { now: at, leaseMs });
   const fromSettings = enqueueFromSettings(store, { now: at });
@@ -187,7 +196,7 @@ export async function runWorker({ store, ask = null, config = {}, now = () => Da
     const job = claimNext(store, { workerId, now: now(), leaseMs });
     if (!job) break;
     try {
-      lastResult = await executeJob(store, job, { ask, config, now, batchSize, charBudget, modeInstruction, prices });
+      lastResult = await executeJob(store, job, { ask, config, now, batchSize, charBudget, modeInstruction, prices, embedder });
       completeJob(store, job.id, { now: now() });
     } catch (error) {
       failed++;
@@ -203,14 +212,14 @@ export async function runWorker({ store, ask = null, config = {}, now = () => Da
  * A lazy background task: the server (or `aletheia compress --daemon`) owns one. The timer is unref'd so it never
  * holds the process open, and a tick that is still running is not started twice.
  */
-export function startBackgroundWorker({ store, ask = null, config = {}, intervalMs = 2000, maxJobs = 5, onError = null, onTick = null } = {}) {
+export function startBackgroundWorker({ store, ask = null, config = {}, intervalMs = 2000, maxJobs = 5, onError = null, onTick = null, embedder = null } = {}) {
   let stopped = false;
   let running = false;
   const tick = async () => {
     if (stopped || running) return null;
     running = true;
     try {
-      const result = await runWorker({ store, ask, config, maxJobs, onError });
+      const result = await runWorker({ store, ask, config, maxJobs, onError, embedder });
       onTick?.(result);
       return result;
     } catch (error) {

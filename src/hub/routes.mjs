@@ -92,9 +92,16 @@ export function createHubRoutes({ hub, config }) {
       if (pathname === "/v1/search" && method === "POST") {
         const b = await readJson(request);
         need(typeof b.query === "string" && b.query.trim(), "query is required.");
+        const scope = b.scope === "all" ? "all" : "current";
         return h.json({
-          results: hub.search({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope: b.scope === "all" ? "all" : "current" }),
-          facts: hub.searchFacts({ query: b.query, project: b.project, limit: b.limit ?? 20, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, scope: b.scope === "all" ? "all" : "current" }),
+          results: hub.search({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope }),
+          facts: hub.searchFacts({ query: b.query, project: b.project, limit: b.limit ?? 20, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, scope }),
+          channels: {
+            facts: { lexical: true, keys: true, vector: false },
+            episodes: { lexical: true, vector: false },
+            fused: "none",
+            note: "This route answers from keyword channels only. Use the CLI with --semantic, or POST a query vector, for dense results.",
+          },
         });
       }
       if (pathname === "/v1/timeline" && method === "POST") {

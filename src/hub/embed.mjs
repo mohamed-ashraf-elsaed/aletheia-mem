@@ -33,3 +33,12 @@ export async function createEmbedder({ model = DEFAULT_MODEL, cacheDir = join(de
   const probe = (await run(["probe"]))[0];
   return { model, dim: probe.length, embedDocs: (texts) => run(texts), embedQuery: async (text) => (await run([text], QUERY_PREFIX))[0] };
 }
+
+/** The optional runtime, or null. Callers fall back to keyword channels when this returns null. */
+export async function createEmbedderIfAvailable(options = {}) {
+  try {
+    return await createEmbedder(options);
+  } catch {
+    return null;
+  }
+}
