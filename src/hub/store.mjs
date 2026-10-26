@@ -4,12 +4,12 @@
 //   rules     your standing instructions, each optionally limited to some tools
 //   audit     who changed what
 import { Database } from "bun:sqlite";
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { sha256 } from "../lib/hash.mjs";
 import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVector, unpackVector } from "./retrieval.mjs";
 
-const SCHEMA_VERSION = 2; // 2: porter stemming in the full-text index, memory_vectors
+const SCHEMA_VERSION = 3; // 3: episodes, observations, facts, entities, keys, links, queue and usage
 
 export const KINDS = ["observation", "summary", "prompt", "note", "event"];
 export const TYPES = ["bugfix", "feature", "refactor", "change", "discovery", "decision", "note", "gotcha", "event"];
@@ -85,6 +85,237 @@ CREATE TABLE IF NOT EXISTS audit (id INTEGER PRIMARY KEY AUTOINCREMENT, at_epoch
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 `;
 
+/** Schema v3 adds the memory-building tables. Every statement is CREATE IF NOT EXISTS and additive. */
+export const SCHEMA_V3 = `
+CREATE TABLE IF NOT EXISTS episodes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project TEXT NOT NULL,
+  tool TEXT NOT NULL DEFAULT 'unknown',
+  session_id TEXT,
+  turn_index INTEGER,
+  role TEXT NOT NULL DEFAULT 'user',
+  kind TEXT NOT NULL DEFAULT 'message',
+  text TEXT NOT NULL,
+  source_ref TEXT,
+  content_hash TEXT NOT NULL UNIQUE,
+  token_count INTEGER,
+  extracted_at_epoch INTEGER,
+  created_at_epoch INTEGER NOT NULL,
+  recorded_at_epoch INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_episodes_project_time ON episodes(project, created_at_epoch DESC);
+CREATE INDEX IF NOT EXISTS idx_episodes_session ON episodes(session_id, turn_index);
+CREATE INDEX IF NOT EXISTS idx_episodes_hash ON episodes(content_hash);
+CREATE INDEX IF NOT EXISTS idx_episodes_pending ON episodes(extracted_at_epoch, id);
+
+CREATE TABLE IF NOT EXISTS observations (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  legacy_memory_id INTEGER UNIQUE,
+  project TEXT NOT NULL,
+  session_id TEXT,
+  episode_id INTEGER REFERENCES episodes(id) ON DELETE SET NULL,
+  type TEXT NOT NULL DEFAULT 'note',
+  title TEXT NOT NULL DEFAULT '',
+  subtitle TEXT,
+  narrative TEXT NOT NULL DEFAULT '',
+  importance REAL NOT NULL DEFAULT 0.5,
+  importance_components TEXT,
+  confidence REAL NOT NULL DEFAULT 1.0,
+  pinned INTEGER NOT NULL DEFAULT 0,
+  edited_at_epoch INTEGER,
+  status TEXT NOT NULL DEFAULT 'active',
+  origin TEXT,
+  content_hash TEXT NOT NULL UNIQUE,
+  created_at_epoch INTEGER NOT NULL,
+  updated_at_epoch INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_observations_project_time ON observations(project, created_at_epoch DESC);
+CREATE INDEX IF NOT EXISTS idx_observations_episode ON observations(episode_id);
+
+CREATE TABLE IF NOT EXISTS facts (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  observation_id INTEGER REFERENCES observations(id) ON DELETE SET NULL,
+  episode_id INTEGER REFERENCES episodes(id) ON DELETE RESTRICT,
+  project TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  predicate TEXT NOT NULL,
+  object TEXT NOT NULL,
+  text TEXT NOT NULL,
+  valid_from_epoch INTEGER,
+  valid_to_epoch INTEGER,
+  recorded_at_epoch INTEGER NOT NULL,
+  expired_at_epoch INTEGER,
+  confidence REAL NOT NULL DEFAULT 0.8,
+  supersedes_id INTEGER REFERENCES facts(id),
+  status TEXT NOT NULL DEFAULT 'active',
+  extractor_mode TEXT NOT NULL DEFAULT 'rules',
+  prompt_version TEXT,
+  model TEXT,
+  content_hash TEXT NOT NULL UNIQUE,
+  created_at_epoch INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_facts_project_subject ON facts(project, subject);
+CREATE INDEX IF NOT EXISTS idx_facts_valid ON facts(project, valid_from_epoch, valid_to_epoch);
+CREATE INDEX IF NOT EXISTS idx_facts_observation ON facts(observation_id);
+CREATE INDEX IF NOT EXISTS idx_facts_episode ON facts(episode_id);
+CREATE VIRTUAL TABLE IF NOT EXISTS facts_fts USING fts5(text, subject, predicate, object, content='facts', content_rowid='id', tokenize='porter unicode61 remove_diacritics 2');
+CREATE TRIGGER IF NOT EXISTS facts_ai AFTER INSERT ON facts BEGIN
+  INSERT INTO facts_fts(rowid, text, subject, predicate, object) VALUES (new.id, new.text, new.subject, new.predicate, new.object);
+END;
+CREATE TRIGGER IF NOT EXISTS facts_ad AFTER DELETE ON facts BEGIN
+  INSERT INTO facts_fts(facts_fts, rowid, text, subject, predicate, object) VALUES ('delete', old.id, old.text, old.subject, old.predicate, old.object);
+END;
+CREATE TRIGGER IF NOT EXISTS facts_au AFTER UPDATE ON facts BEGIN
+  INSERT INTO facts_fts(facts_fts, rowid, text, subject, predicate, object) VALUES ('delete', old.id, old.text, old.subject, old.predicate, old.object);
+  INSERT INTO facts_fts(rowid, text, subject, predicate, object) VALUES (new.id, new.text, new.subject, new.predicate, new.object);
+END;
+
+CREATE TABLE IF NOT EXISTS entities (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project TEXT NOT NULL,
+  name TEXT NOT NULL,
+  canonical_name TEXT NOT NULL,
+  type TEXT NOT NULL,
+  created_at_epoch INTEGER NOT NULL,
+  UNIQUE(project, canonical_name, type)
+);
+CREATE TABLE IF NOT EXISTS entity_aliases (
+  alias TEXT NOT NULL,
+  entity_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+  confidence REAL NOT NULL DEFAULT 1.0,
+  PRIMARY KEY(alias, entity_id)
+);
+CREATE TABLE IF NOT EXISTS fact_entities (
+  fact_id INTEGER NOT NULL REFERENCES facts(id) ON DELETE CASCADE,
+  entity_id INTEGER NOT NULL REFERENCES entities(id) ON DELETE CASCADE,
+  role TEXT NOT NULL,
+  PRIMARY KEY(fact_id, entity_id, role)
+);
+CREATE TABLE IF NOT EXISTS memory_links (
+  from_type TEXT NOT NULL, from_id INTEGER NOT NULL,
+  to_type TEXT NOT NULL, to_id INTEGER NOT NULL,
+  relation TEXT NOT NULL,
+  confidence REAL NOT NULL DEFAULT 1.0,
+  PRIMARY KEY(from_type, from_id, to_type, to_id, relation)
+);
+CREATE INDEX IF NOT EXISTS idx_links_from ON memory_links(from_type, from_id);
+CREATE INDEX IF NOT EXISTS idx_links_to ON memory_links(to_type, to_id);
+
+CREATE TABLE IF NOT EXISTS memory_keys (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  owner_type TEXT NOT NULL,
+  owner_id INTEGER NOT NULL,
+  key_type TEXT NOT NULL,
+  text TEXT NOT NULL,
+  source TEXT NOT NULL,
+  UNIQUE(owner_type, owner_id, key_type, text)
+);
+CREATE INDEX IF NOT EXISTS idx_keys_owner ON memory_keys(owner_type, owner_id);
+CREATE VIRTUAL TABLE IF NOT EXISTS memory_keys_fts USING fts5(text, content='memory_keys', content_rowid='id', tokenize='porter unicode61 remove_diacritics 2');
+CREATE TRIGGER IF NOT EXISTS memory_keys_ai AFTER INSERT ON memory_keys BEGIN
+  INSERT INTO memory_keys_fts(rowid, text) VALUES (new.id, new.text);
+END;
+CREATE TRIGGER IF NOT EXISTS memory_keys_ad AFTER DELETE ON memory_keys BEGIN
+  INSERT INTO memory_keys_fts(memory_keys_fts, rowid, text) VALUES ('delete', old.id, old.text);
+END;
+CREATE TRIGGER IF NOT EXISTS memory_keys_au AFTER UPDATE ON memory_keys BEGIN
+  INSERT INTO memory_keys_fts(memory_keys_fts, rowid, text) VALUES ('delete', old.id, old.text);
+  INSERT INTO memory_keys_fts(rowid, text) VALUES (new.id, new.text);
+END;
+
+CREATE TABLE IF NOT EXISTS summaries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  project TEXT NOT NULL,
+  scope TEXT NOT NULL,
+  period_start_epoch INTEGER NOT NULL,
+  period_end_epoch INTEGER NOT NULL,
+  text TEXT NOT NULL,
+  source_ids TEXT NOT NULL,
+  token_count INTEGER,
+  created_at_epoch INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS review_queue (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  item_type TEXT NOT NULL,
+  item_id INTEGER NOT NULL,
+  reason TEXT NOT NULL,
+  proposed_by TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  created_at_epoch INTEGER NOT NULL,
+  resolved_at_epoch INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_review_pending ON review_queue(status, created_at_epoch);
+
+CREATE TABLE IF NOT EXISTS jobs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  type TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  attempts INTEGER NOT NULL DEFAULT 0,
+  max_attempts INTEGER NOT NULL DEFAULT 5,
+  next_attempt_epoch INTEGER NOT NULL DEFAULT 0,
+  locked_at_epoch INTEGER,
+  worker_id TEXT,
+  last_error TEXT,
+  created_at_epoch INTEGER NOT NULL,
+  updated_at_epoch INTEGER NOT NULL,
+  UNIQUE(type, payload)
+);
+CREATE INDEX IF NOT EXISTS idx_jobs_claim ON jobs(status, next_attempt_epoch, id);
+
+CREATE TABLE IF NOT EXISTS fact_usage (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  at_epoch INTEGER NOT NULL,
+  batch_id TEXT,
+  model TEXT,
+  mode TEXT NOT NULL DEFAULT 'rules',
+  input_tokens INTEGER NOT NULL DEFAULT 0,
+  output_tokens INTEGER NOT NULL DEFAULT 0,
+  estimated_usd REAL NOT NULL DEFAULT 0,
+  episodes INTEGER NOT NULL DEFAULT 0,
+  facts INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'ok',
+  error TEXT,
+  raw_output TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_usage_time ON fact_usage(at_epoch DESC);
+
+CREATE TABLE IF NOT EXISTS fact_vectors (
+  fact_id INTEGER PRIMARY KEY REFERENCES facts(id) ON DELETE CASCADE,
+  model TEXT NOT NULL,
+  dim INTEGER NOT NULL,
+  vec BLOB NOT NULL
+);
+`;
+
+export const targetSchemaVersion = SCHEMA_VERSION;
+
+/** Read-only view of a database before migrating. Used by `aletheia migrate --dry-run`. */
+export function inspectMigration(path) {
+  if (!existsSync(path)) return { exists: false, path, version: 0, target: SCHEMA_VERSION, needsMigration: false, counts: null };
+  const db = new Database(path, { readonly: true });
+  try {
+    const version = db.prepare("PRAGMA user_version").get().user_version;
+    const number = (table) => {
+      try {
+        return db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n;
+      } catch {
+        return null;
+      }
+    };
+    return {
+      exists: true,
+      path,
+      version,
+      target: SCHEMA_VERSION,
+      needsMigration: version < SCHEMA_VERSION,
+      counts: { memories: number("memories"), episodes: number("episodes"), observations: number("observations"), facts: number("facts") },
+    };
+  } finally {
+    db.close();
+  }
+}
+
 /** Fold a free-text query into an FTS5 expression: every word must match as a prefix. null when no words. */
 export function ftsQuery(text) {
   const words = String(text ?? "").toLowerCase().match(/[\p{L}\p{N}_]+/gu) ?? [];
@@ -93,6 +324,7 @@ export function ftsQuery(text) {
 
 export class HubStore {
   constructor(path) {
+    this.path = path;
     if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
     this.db = new Database(path, { create: true });
     this.db.exec("PRAGMA journal_mode = WAL");
@@ -101,20 +333,88 @@ export class HubStore {
     this.db.exec("PRAGMA foreign_keys = ON");
     const version = this.db.prepare("PRAGMA user_version").get().user_version;
     const hadMemories = !!this.db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'memories'").get();
-    const migrate = hadMemories && version < SCHEMA_VERSION;
-    if (migrate) {
-      // Older stores indexed without stemming. Rebuild the full-text index; the memory rows are untouched.
-      for (const name of ["memories_ai", "memories_ad", "memories_au"]) this.db.exec(`${"DR" + "OP"} TRIGGER IF EXISTS ${name}`);
-      this.db.exec(`${"DR" + "OP"} TABLE IF EXISTS memories_fts`);
+    if (version > SCHEMA_VERSION) {
+      this.db.close();
+      throw new RangeError(`This database is schema v${version}; this build understands up to v${SCHEMA_VERSION}.`);
+    }
+    // v1 indexed without stemming. Drop the old index before the additive v3 migration so SCHEMA can rebuild it.
+    if (hadMemories && version < 2) {
+      for (const name of ["memories_ai", "memories_ad", "memories_au"]) this.db.exec(`DROP TRIGGER IF EXISTS ${name}`);
+      this.db.exec("DROP TABLE IF EXISTS memories_fts");
+      this.db.exec("DROP TABLE IF EXISTS memories_vocab");
     }
     // A hook opens the store on every event. Re-running the whole schema costs several milliseconds, so skip it
     // when this database already carries the current version (the version is written only after the schema runs).
     const ready = hadMemories && version === SCHEMA_VERSION;
-    if (!ready) this.db.exec(SCHEMA);
-    if (migrate) this.db.exec("INSERT INTO memories_fts(memories_fts) VALUES('rebuild')");
-    if (!ready) this.db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+    if (!ready) {
+      this.db.exec(SCHEMA);
+      if (hadMemories && version < 2) this.db.exec("INSERT INTO memories_fts(memories_fts) VALUES('rebuild')");
+      if (hadMemories) {
+        this.migrateV3();
+      } else {
+        this.db.exec(SCHEMA_V3);
+        this.db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+      }
+    }
     this.vecCache = null;
     this.termOptions = { max: 12, maxShare: 0.6 }; // see selectTerms. Swept on LoCoMo (docs/14): 12/0.6 loses no recall; 8/0.35 lost ~8 points
+  }
+
+  /**
+   * Copy v2 memories into episodes and observations, add the v3 tables, and set the version, all in one
+   * transaction. A failure rolls back and leaves user_version at 2 so the old code can still open the file.
+   */
+  migrateV3() {
+    const already = this.db.prepare("PRAGMA user_version").get().user_version;
+    if (already >= SCHEMA_VERSION) return { migrated: false, version: already };
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      this.db.exec(SCHEMA_V3);
+      this.db.exec(`
+        INSERT OR IGNORE INTO episodes (project, tool, session_id, turn_index, role, kind, text, source_ref, content_hash, created_at_epoch, recorded_at_epoch)
+        SELECT project, tool, session_id, NULL, CASE WHEN kind = 'prompt' THEN 'user' ELSE 'tool' END, kind,
+               CASE WHEN coalesce(narrative, '') <> '' THEN narrative ELSE title END,
+               'memory:' || id, 'legacy-episode-' || id, created_at_epoch, created_at_epoch
+        FROM memories WHERE kind IN ('prompt', 'event')
+      `);
+      this.db.exec(`
+        INSERT OR IGNORE INTO observations (legacy_memory_id, project, session_id, episode_id, type, title, subtitle, narrative, origin, content_hash, created_at_epoch, updated_at_epoch)
+        SELECT id, project, session_id, NULL, type, title, subtitle, coalesce(narrative, ''), origin, 'legacy-memory-' || id, created_at_epoch, updated_at_epoch
+        FROM memories WHERE kind NOT IN ('prompt', 'event')
+      `);
+      const vectorColumns = this.db.prepare("PRAGMA table_info(memory_vectors)").all().map((column) => column.name);
+      if (!vectorColumns.includes("owner_type")) this.db.exec("ALTER TABLE memory_vectors ADD COLUMN owner_type TEXT");
+      if (!vectorColumns.includes("owner_id")) this.db.exec("ALTER TABLE memory_vectors ADD COLUMN owner_id INTEGER");
+      this.db.exec("UPDATE memory_vectors SET owner_type = 'observation', owner_id = (SELECT legacy_memory_id FROM observations o WHERE o.legacy_memory_id = memory_vectors.memory_id) WHERE owner_type IS NULL");
+      this.db.exec(`PRAGMA user_version = ${SCHEMA_VERSION}`);
+      this.db.exec("COMMIT");
+    } catch (error) {
+      try {
+        this.db.exec("ROLLBACK");
+      } catch {
+        // leave the file as it was
+      }
+      try {
+        this.db.close();
+      } catch {
+        // ignore
+      }
+      throw error;
+    }
+    this.vecCache = null;
+    return { migrated: true, version: SCHEMA_VERSION };
+  }
+
+  /** Row counts for the migration report. */
+  migrationCounts() {
+    const count = (table) => {
+      try {
+        return this.db.prepare(`SELECT COUNT(*) AS n FROM ${table}`).get().n;
+      } catch {
+        return null;
+      }
+    };
+    return { memories: count("memories"), episodes: count("episodes"), observations: count("observations"), facts: count("facts") };
   }
 
   audit(actor, action, detail) {
@@ -183,6 +483,411 @@ export class HubStore {
     const info = this.db.prepare("DELETE FROM memories WHERE id = ?").run(id);
     if (info.changes) { this.vecCache = null; this.statsCache = null; this.audit(actor, "memory.delete", { id }); }
     return info.changes > 0;
+  }
+
+  // ---- episodes, facts, provenance (schema v3) ---------------------------------------------------------
+
+  /** One raw turn or tool step. Episodes are append-only; `source_ref` makes a memory's episode idempotent. */
+  addEpisode(input = {}) {
+    const project = clean(input.project, 200)?.trim() || "default";
+    const sourceRef = clean(input.sourceRef ?? input.source_ref, 300);
+    if (sourceRef) {
+      const existing = this.db.prepare("SELECT * FROM episodes WHERE source_ref = ?").get(sourceRef);
+      if (existing) return existing;
+    }
+    const text = String(input.text ?? "").slice(0, 20_000);
+    if (!text.trim()) throw new RangeError("An episode needs text.");
+    const hash = input.contentHash ?? sha256(`episode\n${project}\n${sourceRef ?? ""}\n${text}`);
+    const at = Number.isFinite(input.createdAtEpoch) ? input.createdAtEpoch : Date.now();
+    this.db
+      .prepare(`INSERT OR IGNORE INTO episodes (project, tool, session_id, turn_index, role, kind, text, source_ref, content_hash, token_count, created_at_epoch, recorded_at_epoch)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(project, clean(input.tool, 60) || "unknown", clean(input.sessionId ?? input.session_id, 200), Number.isFinite(input.turnIndex) ? input.turnIndex : null,
+        clean(input.role, 20) || "user", clean(input.kind, 30) || "message", text, sourceRef, hash, Number.isFinite(input.tokenCount) ? input.tokenCount : null, at, at);
+    return this.db.prepare("SELECT * FROM episodes WHERE content_hash = ?").get(hash);
+  }
+
+  /** The episode for one `memories` row, created once. Capture does not write episodes (a hook stays cheap). */
+  ensureEpisodeForMemory(memory) {
+    const sourceRef = `memory:${memory.id}`;
+    const found = this.db.prepare("SELECT * FROM episodes WHERE source_ref = ?").get(sourceRef);
+    if (found) return found;
+    const kind = memory.kind ?? "message";
+    return this.addEpisode({
+      project: memory.project,
+      tool: memory.tool,
+      sessionId: memory.session_id,
+      role: kind === "prompt" ? "user" : kind === "summary" ? "assistant" : "tool",
+      kind,
+      text: memory.narrative || memory.title || "",
+      sourceRef,
+      contentHash: sha256(`memory-episode\n${memory.id}`),
+      createdAtEpoch: memory.created_at_epoch,
+    });
+  }
+
+  getEpisode(id) {
+    return this.db.prepare("SELECT * FROM episodes WHERE id = ?").get(Number(id)) ?? null;
+  }
+
+  /** Insert one derived observation. Idempotent on (project, type, title, narrative) unless a hash is given. */
+  addObservation(input = {}, { actor = "extract" } = {}) {
+    const project = clean(input.project, 200)?.trim() || "default";
+    const type = clean(input.type, 40) || "note";
+    const title = clean(input.title, 400) || "";
+    const narrative = clean(input.narrative, 20_000) || "";
+    if (!title.trim() && !narrative.trim()) throw new RangeError("An observation needs a title or narrative.");
+    const hash = input.contentHash ?? sha256(JSON.stringify([project, type, title, narrative]));
+    const existing = this.db.prepare("SELECT * FROM observations WHERE content_hash = ?").get(hash);
+    if (existing) return { id: existing.id, created: false, observation: existing };
+    const at = Number.isFinite(input.createdAtEpoch) ? input.createdAtEpoch : Date.now();
+    const episodeId = Number(input.episodeId ?? input.episode_id);
+    if (Number.isSafeInteger(episodeId) && episodeId > 0 && !this.getEpisode(episodeId)) throw new RangeError(`episode #${episodeId} does not exist.`);
+    const info = this.db
+      .prepare(`INSERT INTO observations (legacy_memory_id, project, session_id, episode_id, type, title, subtitle, narrative, importance, importance_components,
+                confidence, pinned, edited_at_epoch, status, origin, content_hash, created_at_epoch, updated_at_epoch)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(Number.isSafeInteger(input.legacyMemoryId) ? input.legacyMemoryId : null, project, clean(input.sessionId ?? input.session_id, 200),
+        Number.isSafeInteger(episodeId) && episodeId > 0 ? episodeId : null, type, title, clean(input.subtitle, 400), narrative,
+        Number.isFinite(input.importance) ? input.importance : 0.5, input.importanceComponents ? json(input.importanceComponents) : null,
+        Number.isFinite(input.confidence) ? input.confidence : 1, input.pinned ? 1 : 0, Number.isFinite(input.editedAtEpoch) ? input.editedAtEpoch : null,
+        clean(input.status, 20) || "active", clean(input.origin, 200), hash, at, at);
+    const id = Number(info.lastInsertRowid);
+    if (Number.isSafeInteger(episodeId) && episodeId > 0) this.link({ fromType: "observation", fromId: id, toType: "episode", toId: episodeId, relation: "derived_from" });
+    if (actor !== "import") this.audit(actor, "observation.add", { id, episodeId: episodeId || null });
+    return { id, created: true, observation: this.getObservation(id) };
+  }
+
+  getObservation(id) {
+    return this.db.prepare("SELECT * FROM observations WHERE id = ?").get(Number(id)) ?? null;
+  }
+
+  listObservations({ project, status, limit = 500, offset = 0 } = {}) {
+    const where = [];
+    const params = [];
+    if (project) { where.push("project = ?"); params.push(project); }
+    if (status) { where.push("status = ?"); params.push(status); }
+    const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    return this.db.prepare(`SELECT * FROM observations ${clause} ORDER BY created_at_epoch DESC, id DESC LIMIT ? OFFSET ?`).all(...params, Math.min(Number(limit) || 500, 50_000), Math.max(Number(offset) || 0, 0));
+  }
+
+  /**
+   * Merge one observation into the older id. The loser row stays with status 'merged'; its facts move to the
+   * survivor, the narrative is appended under a "Merged from" line, and an audit row names both ids.
+   */
+  mergeObservations(firstId, secondId, { actor = "ui" } = {}) {
+    const a = this.getObservation(firstId);
+    const b = this.getObservation(secondId);
+    if (!a || !b) throw new RangeError("Both observations must exist.");
+    if (a.id === b.id) throw new RangeError("Pick two different observations.");
+    if (a.project !== b.project) throw new RangeError("Refusing to merge observations across projects.");
+    const [keep, drop] = a.created_at_epoch < b.created_at_epoch || (a.created_at_epoch === b.created_at_epoch && a.id < b.id) ? [a, b] : [b, a];
+    this.db.exec("BEGIN IMMEDIATE");
+    let moved = 0;
+    try {
+      const marker = `Merged from #${drop.id}`;
+      const narrative = String(keep.narrative ?? "").includes(marker)
+        ? keep.narrative
+        : `${keep.narrative ?? ""}${keep.narrative ? "\n\n" : ""}${marker}: ${drop.narrative ?? ""}`.slice(0, 20_000);
+      this.db.prepare("UPDATE observations SET narrative = ?, importance = max(importance, ?), pinned = max(pinned, ?), importance_components = coalesce(importance_components, ?), updated_at_epoch = ? WHERE id = ?")
+        .run(narrative, drop.importance, drop.pinned, drop.importance_components, Date.now(), keep.id);
+      moved = this.db.prepare("SELECT COUNT(*) AS n FROM facts WHERE observation_id = ?").get(drop.id).n;
+      this.db.prepare("UPDATE facts SET observation_id = ? WHERE observation_id = ?").run(keep.id, drop.id);
+      this.db.prepare("UPDATE memory_keys SET owner_id = ? WHERE owner_type = 'observation' AND owner_id = ?").run(keep.id, drop.id);
+      this.db.prepare("UPDATE observations SET status = 'merged', updated_at_epoch = ? WHERE id = ?").run(Date.now(), drop.id);
+      this.link({ fromType: "observation", fromId: keep.id, toType: "observation", toId: drop.id, relation: "duplicate_of" });
+      this.db.exec("COMMIT");
+    } catch (error) {
+      try { this.db.exec("ROLLBACK"); } catch { /* ignore */ }
+      throw error;
+    }
+    this.audit(actor, "observation.merge", { keep: keep.id, drop: drop.id, facts: moved });
+    return { keepId: keep.id, dropId: drop.id, facts: moved, keep: this.getObservation(keep.id), drop: this.getObservation(drop.id) };
+  }
+
+  updateObservation(id, patch = {}, { actor = "ui" } = {}) {
+    const cur = this.getObservation(id);
+    if (!cur) return null;
+    const next = {
+      title: patch.title !== undefined ? clean(patch.title, 400) : cur.title,
+      narrative: patch.narrative !== undefined ? clean(patch.narrative, 20_000) : cur.narrative,
+      importance: Number.isFinite(patch.importance) ? patch.importance : cur.importance,
+      importanceComponents: patch.importanceComponents !== undefined ? patch.importanceComponents : cur.importance_components,
+      pinned: patch.pinned !== undefined ? (patch.pinned ? 1 : 0) : cur.pinned,
+      status: patch.status !== undefined ? clean(patch.status, 20) : cur.status,
+      editedAtEpoch: patch.editedAtEpoch !== undefined ? patch.editedAtEpoch : cur.edited_at_epoch,
+    };
+    this.db.prepare("UPDATE observations SET title=?, narrative=?, importance=?, importance_components=?, pinned=?, status=?, edited_at_epoch=?, updated_at_epoch=? WHERE id=?")
+      .run(next.title, next.narrative, next.importance, next.importanceComponents ? json(next.importanceComponents) : null, next.pinned, next.status, next.editedAtEpoch, Date.now(), Number(id));
+    if (actor !== "import") this.audit(actor, "observation.update", { id: Number(id), fields: Object.keys(patch) });
+    return this.getObservation(id);
+  }
+
+  /** Refuse to delete an episode a fact still cites. Nothing in the extraction path deletes episodes. */
+  deleteEpisode(id) {
+    const key = Number(id);
+    const facts = this.db.prepare("SELECT COUNT(*) AS n FROM facts WHERE episode_id = ?").get(key).n;
+    if (facts) throw new RangeError(`Cannot delete episode #${key}: ${facts} fact(s) reference it.`);
+    const info = this.db.prepare("DELETE FROM episodes WHERE id = ?").run(key);
+    if (info.changes) this.audit("system", "episode.delete", { id: key });
+    return info.changes > 0;
+  }
+
+  link({ fromType, fromId, toType, toId, relation, confidence = 1 }) {
+    this.db
+      .prepare("INSERT OR IGNORE INTO memory_links (from_type, from_id, to_type, to_id, relation, confidence) VALUES (?,?,?,?,?,?)")
+      .run(fromType, Number(fromId), toType, Number(toId), relation, confidence);
+  }
+
+  addKey({ ownerType, ownerId, keyType, text, source = "extracted" }) {
+    const value = String(text ?? "").trim();
+    if (!value) return;
+    this.db
+      .prepare("INSERT OR IGNORE INTO memory_keys (owner_type, owner_id, key_type, text, source) VALUES (?,?,?,?,?)")
+      .run(ownerType, Number(ownerId), keyType, value.slice(0, 500), source);
+  }
+
+  /**
+   * Insert one atomic fact. `episode_id` is required: an orphan fact is rejected here, not only by the validator.
+   * A duplicate (project, subject, predicate, object) returns the existing row instead of writing a second one.
+   */
+  addFact(input = {}, { actor = "extract" } = {}) {
+    const project = clean(input.project, 200)?.trim() || "default";
+    const subject = clean(input.subject, 200)?.trim();
+    const predicate = clean(input.predicate, 120)?.trim();
+    const object = clean(input.object, 400)?.trim();
+    const text = clean(input.text, 600)?.trim();
+    if (!subject || !predicate || !object || !text) throw new RangeError("A fact needs subject, predicate, object and text.");
+    const episodeId = Number(input.episodeId ?? input.episode_id);
+    if (!Number.isSafeInteger(episodeId) || !this.getEpisode(episodeId)) throw new RangeError("A fact needs an existing episode_id.");
+    const hash = sha256(JSON.stringify([project, subject, predicate, object]));
+    const existing = this.db.prepare("SELECT * FROM facts WHERE content_hash = ?").get(hash);
+    if (existing) return { id: existing.id, created: false, fact: existing };
+    const observationId = Number(input.observationId ?? input.observation_id);
+    if (Number.isSafeInteger(observationId) && observationId > 0 && !this.db.prepare("SELECT 1 FROM observations WHERE id = ?").get(observationId)) {
+      throw new RangeError(`observation #${observationId} does not exist.`);
+    }
+    const episode = this.getEpisode(episodeId);
+    const recordedAt = Number.isFinite(input.recordedAtEpoch) ? input.recordedAtEpoch : Date.now();
+    const validFrom = Number.isFinite(input.validFromEpoch) ? input.validFromEpoch : episode.created_at_epoch;
+    const validTo = Number.isFinite(input.validToEpoch) ? input.validToEpoch : null;
+    const confidence = Number.isFinite(input.confidence) ? Math.max(0, Math.min(1, input.confidence)) : 0.8;
+    const info = this.db
+      .prepare(`INSERT INTO facts (observation_id, episode_id, project, subject, predicate, object, text, valid_from_epoch, valid_to_epoch,
+                recorded_at_epoch, expired_at_epoch, confidence, supersedes_id, status, extractor_mode, prompt_version, model, content_hash, created_at_epoch)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(Number.isSafeInteger(observationId) && observationId > 0 ? observationId : null, episodeId, project, subject, predicate, object, text,
+        validFrom, validTo, recordedAt, Number.isFinite(input.expiredAtEpoch) ? input.expiredAtEpoch : null, confidence,
+        Number.isSafeInteger(input.supersedesId) ? input.supersedesId : null, clean(input.status, 20) || "active",
+        clean(input.extractorMode, 20) || "rules", clean(input.promptVersion, 40), clean(input.model, 120), hash, recordedAt);
+    const id = Number(info.lastInsertRowid);
+    for (const other of Array.isArray(input.episodeIds) ? input.episodeIds : []) {
+      const otherId = Number(other);
+      if (Number.isSafeInteger(otherId) && this.getEpisode(otherId)) this.link({ fromType: "fact", fromId: id, toType: "episode", toId: otherId, relation: "mentions" });
+    }
+    if (actor !== "import") this.audit(actor, "fact.add", { id, episodeId, subject, predicate });
+    return { id, created: true, fact: this.getFact(id) };
+  }
+
+  getFact(id) {
+    return this.db.prepare("SELECT * FROM facts WHERE id = ?").get(Number(id)) ?? null;
+  }
+
+  /** Only update the closing side of a fact. recorded_at and created_at are never touched. */
+  closeFact(id, { validToEpoch, status = "superseded" } = {}) {
+    const fact = this.getFact(id);
+    if (!fact) return null;
+    this.db.prepare("UPDATE facts SET valid_to_epoch = ?, status = ? WHERE id = ?")
+      .run(Number.isFinite(validToEpoch) ? validToEpoch : fact.recorded_at_epoch, status, Number(id));
+    return this.getFact(id);
+  }
+
+  /** Record which older fact this row replaced. Only supersedes_id changes; the timing columns stay put. */
+  setFactSupersedes(id, supersedesId) {
+    this.db.prepare("UPDATE facts SET supersedes_id = ? WHERE id = ?").run(Number(supersedesId), Number(id));
+    return this.getFact(id);
+  }
+
+  setFactConfidence(id, confidence) {
+    this.db.prepare("UPDATE facts SET confidence = ? WHERE id = ?").run(Math.max(0, Math.min(1, Number(confidence) || 0)), Number(id));
+    return this.getFact(id);
+  }
+
+  addReview({ itemType, itemId, reason, proposedBy = "extractor", now = Date.now() }) {
+    const info = this.db.prepare("INSERT INTO review_queue (item_type, item_id, reason, proposed_by, status, created_at_epoch) VALUES (?,?,?,?, 'pending', ?)")
+      .run(itemType, Number(itemId), reason, proposedBy, now);
+    return Number(info.lastInsertRowid);
+  }
+
+  reviewQueue({ status = "pending", limit = 100 } = {}) {
+    return this.db.prepare("SELECT * FROM review_queue WHERE status = ? ORDER BY created_at_epoch, id LIMIT ?").all(status, Math.min(Number(limit) || 100, 500));
+  }
+
+  /** Current facts: no valid_to (or one in the future), not expired, status active. */
+  factsCurrent({ project, subject, predicate, limit = 100, now = Date.now() } = {}) {
+    const where = ["status = 'active'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)", "(expired_at_epoch IS NULL OR expired_at_epoch > ?)"];
+    const params = [now, now, now];
+    if (project) { where.push("project = ?"); params.push(project); }
+    if (subject) { where.push("subject = ?"); params.push(subject); }
+    if (predicate) { where.push("predicate = ?"); params.push(predicate); }
+    return this.db.prepare(`SELECT * FROM facts WHERE ${where.join(" AND ")} ORDER BY recorded_at_epoch DESC, id DESC LIMIT ?`).all(...params, Math.min(Number(limit) || 100, 1000));
+  }
+
+  /** Every row for a subject or predicate, including superseded ones, oldest first. */
+  factsHistory({ project, subject, predicate, limit = 200 } = {}) {
+    const where = [];
+    const params = [];
+    if (project) { where.push("project = ?"); params.push(project); }
+    if (subject) { where.push("subject = ?"); params.push(subject); }
+    if (predicate) { where.push("predicate = ?"); params.push(predicate); }
+    const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    return this.db.prepare(`SELECT * FROM facts ${clause} ORDER BY coalesce(valid_from_epoch, recorded_at_epoch), recorded_at_epoch, id LIMIT ?`).all(...params, Math.min(Number(limit) || 200, 1000));
+  }
+
+  /** The fact that was true at `atEpoch`, using valid time and refusing facts recorded later. */
+  factsAsOf(atEpoch, { project, subject, predicate, limit = 100 } = {}) {
+    const at = typeof atEpoch === "string" ? Date.parse(atEpoch) : Number(atEpoch);
+    if (!Number.isFinite(at)) throw new RangeError("as-of needs an epoch or a date.");
+    const where = ["status != 'retracted'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)", "recorded_at_epoch <= ?"];
+    const params = [at, at, at];
+    if (project) { where.push("project = ?"); params.push(project); }
+    if (subject) { where.push("subject = ?"); params.push(subject); }
+    if (predicate) { where.push("predicate = ?"); params.push(predicate); }
+    return this.db.prepare(`SELECT * FROM facts WHERE ${where.join(" AND ")} ORDER BY recorded_at_epoch DESC, id DESC LIMIT ?`).all(...params, Math.min(Number(limit) || 100, 1000));
+  }
+
+  /**
+   * Fact search over the FTS index and the extracted keys. Current facts are the default; `includeHistory` and
+   * `asOf` expose the older rows. Every hit carries the episode that produced it.
+   */
+  searchFacts({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null, pool = 100 } = {}) {
+    const expr = ftsAnyQuery(query);
+    if (!expr) return [];
+    const now = Date.now();
+    const asOfEpoch = asOf == null ? null : typeof asOf === "string" ? Date.parse(asOf) : Number(asOf);
+    const at = Number.isFinite(asOfEpoch) ? asOfEpoch : null;
+    const where = [];
+    const params = [];
+    if (project) { where.push("f.project = ?"); params.push(project); }
+    if (at != null) {
+      where.push("f.status != 'retracted'", "coalesce(f.valid_from_epoch, f.recorded_at_epoch) <= ?", "(f.valid_to_epoch IS NULL OR f.valid_to_epoch > ?)", "f.recorded_at_epoch <= ?");
+      params.push(at, at, at);
+    } else if (!includeHistory) {
+      where.push("f.status = 'active'", "coalesce(f.valid_from_epoch, f.recorded_at_epoch) <= ?", "(f.valid_to_epoch IS NULL OR f.valid_to_epoch > ?)", "(f.expired_at_epoch IS NULL OR f.expired_at_epoch > ?)");
+      params.push(now, now, now);
+    }
+    const clause = where.length ? `AND ${where.join(" AND ")}` : "";
+    const lexical = this.db
+      .prepare(`SELECT f.id FROM facts_fts CROSS JOIN facts f ON f.id = facts_fts.rowid WHERE facts_fts MATCH ? ${clause} ORDER BY bm25(facts_fts) LIMIT ?`)
+      .all(expr, ...params, pool)
+      .map((row) => row.id);
+    const keyed = this.db
+      .prepare("SELECT k.owner_id AS id FROM memory_keys_fts JOIN memory_keys k ON k.id = memory_keys_fts.rowid WHERE memory_keys_fts MATCH ? AND k.owner_type = 'fact' LIMIT ?")
+      .all(expr, pool)
+      .map((row) => row.id);
+    let ids = [...new Set([...lexical, ...keyed])];
+    if (queryVec) {
+      const vecRows = this.db.prepare("SELECT fact_id AS id, vec FROM fact_vectors").all().map((row) => ({ id: row.id, vec: unpackVector(row.vec) }));
+      if (vecRows.length) ids = rrf([ids, topKByVector(queryVec, vecRows, pool).map((row) => row.id)]).map((row) => row.id);
+    }
+    const facts = this.getFactsByIds(ids).filter((fact) => {
+      if (project && fact.project !== project) return false;
+      if (at != null) {
+        return fact.status !== "retracted" && (fact.valid_from_epoch ?? fact.recorded_at_epoch) <= at && fact.recorded_at_epoch <= at && (fact.valid_to_epoch == null || fact.valid_to_epoch > at);
+      }
+      if (includeHistory) return true;
+      const from = fact.valid_from_epoch ?? fact.recorded_at_epoch;
+      return fact.status === "active" && from <= now && (fact.valid_to_epoch == null || fact.valid_to_epoch > now) && (fact.expired_at_epoch == null || fact.expired_at_epoch > now);
+    });
+    facts.sort((a, b) => {
+      const active = Number(b.status === "active") - Number(a.status === "active");
+      if (active) return active;
+      return b.recorded_at_epoch - a.recorded_at_epoch || b.id - a.id;
+    });
+    return facts.slice(0, Math.min(Math.max(Number(limit) || 20, 1), 200)).map((fact) => this.factHit(fact));
+  }
+
+  getFactsByIds(ids) {
+    const list = [...new Set(ids.map(Number).filter(Number.isSafeInteger))].slice(0, 500);
+    if (!list.length) return [];
+    return this.db.prepare(`SELECT * FROM facts WHERE id IN (${list.map(() => "?").join(",")})`).all(...list);
+  }
+
+  /** One search hit, always with the source episode it came from. */
+  factHit(fact) {
+    const episode = fact.episode_id ? this.getEpisode(fact.episode_id) : null;
+    return {
+      kind: "fact", id: fact.id, type: "fact", title: fact.text, text: fact.text, subject: fact.subject, predicate: fact.predicate, object: fact.object,
+      project: fact.project, status: fact.status, confidence: fact.confidence, pinned: false,
+      at: new Date(fact.recorded_at_epoch).toISOString(),
+      validFrom: fact.valid_from_epoch ? new Date(fact.valid_from_epoch).toISOString() : null,
+      validTo: fact.valid_to_epoch ? new Date(fact.valid_to_epoch).toISOString() : null,
+      source: { type: "fact", episodeId: fact.episode_id ?? null, episodeText: episode?.text?.slice(0, 1000) ?? null, sourceRef: episode?.source_ref ?? null, observationId: fact.observation_id ?? null },
+    };
+  }
+
+  setFactVector(factId, model, vec) {
+    this.db.prepare("INSERT INTO fact_vectors (fact_id, model, dim, vec) VALUES (?,?,?,?) ON CONFLICT(fact_id) DO UPDATE SET model=excluded.model, dim=excluded.dim, vec=excluded.vec")
+      .run(Number(factId), model, vec.length, packVector(normalize(vec)));
+  }
+
+  /** Memory hits first? No: a fact can carry a word the raw turn does not, so fact hits come first and cite it. */
+  searchAll({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null } = {}) {
+    const facts = this.searchFacts({ query, project, limit, includeHistory, asOf, queryVec });
+    const memories = this.ranked({ query, project, limit, queryVec }).map((memory) => ({ ...memory, kind: "memory", at: new Date(memory.created_at_epoch).toISOString(), source: { type: "memory", id: memory.id } }));
+    return [...facts, ...memories];
+  }
+
+  /**
+   * Where a fact, observation or memory came from: the episode text, the source ref, the links and the memory row.
+   * Returns { found: false } when the id is unknown.
+   */
+  provenance(type, id) {
+    const key = Number(id);
+    if (!Number.isSafeInteger(key)) return { found: false };
+    const out = { type, id: key, found: false, episode: null, episodes: [], observation: null, memory: null, links: [] };
+    const episodeByIds = (ids) => [...new Set(ids.filter(Number.isSafeInteger))].map((episodeId) => this.getEpisode(episodeId)).filter(Boolean);
+    if (type === "episode") {
+      const episode = this.getEpisode(key);
+      if (!episode) return out;
+      return { ...out, found: true, episode, episodes: [episode] };
+    }
+    if (type === "fact") {
+      const fact = this.getFact(key);
+      if (!fact) return out;
+      const linked = this.db.prepare("SELECT to_id FROM memory_links WHERE from_type = 'fact' AND from_id = ? AND to_type = 'episode'").all(key).map((r) => r.to_id);
+      const episodes = episodeByIds([fact.episode_id, ...linked]);
+      return { ...out, found: true, fact, episode: episodes[0] ?? null, episodes, observation: fact.observation_id ? this.db.prepare("SELECT * FROM observations WHERE id = ?").get(fact.observation_id) ?? null : null, links: this.db.prepare("SELECT * FROM memory_links WHERE (from_type = ? AND from_id = ?) OR (to_type = ? AND to_id = ?)").all("fact", key, "fact", key) };
+    }
+    if (type === "observation") {
+      const observation = this.db.prepare("SELECT * FROM observations WHERE id = ?").get(key);
+      if (!observation) return out;
+      const linked = this.db.prepare("SELECT to_id FROM memory_links WHERE from_type = 'observation' AND from_id = ? AND to_type = 'episode'").all(key).map((r) => r.to_id);
+      const episodes = episodeByIds([observation.episode_id, ...linked]);
+      return { ...out, found: true, observation, episode: episodes[0] ?? null, episodes };
+    }
+    if (type === "memory") {
+      const memory = this.get(key);
+      if (!memory) return out;
+      const episodes = episodeByIds([this.db.prepare("SELECT id FROM episodes WHERE source_ref = ?").get(`memory:${key}`)?.id]);
+      return { ...out, found: true, memory, episode: episodes[0] ?? null, episodes };
+    }
+    return out;
+  }
+
+  recordUsage(usage = {}) {
+    this.db
+      .prepare(`INSERT INTO fact_usage (at_epoch, batch_id, model, mode, input_tokens, output_tokens, estimated_usd, episodes, facts, status, error, raw_output)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
+      .run(Number.isFinite(usage.atEpoch) ? usage.atEpoch : Date.now(), clean(usage.batchId, 80), clean(usage.model, 120), clean(usage.mode, 20) || "rules",
+        Number(usage.inputTokens) || 0, Number(usage.outputTokens) || 0, Number(usage.estimatedUsd) || 0, Number(usage.episodes) || 0, Number(usage.facts) || 0,
+        clean(usage.status, 20) || "ok", clean(usage.error, 400), clean(usage.rawOutput, 8000));
+  }
+
+  usageSummary({ sinceEpoch = 0 } = {}) {
+    return this.db.prepare(`SELECT COUNT(*) AS calls, coalesce(SUM(input_tokens),0) AS input_tokens, coalesce(SUM(output_tokens),0) AS output_tokens,
+      coalesce(SUM(estimated_usd),0) AS estimated_usd, coalesce(SUM(facts),0) AS facts, SUM(CASE WHEN status = 'rejected' THEN 1 ELSE 0 END) AS rejected,
+      MAX(at_epoch) AS last_at_epoch FROM fact_usage WHERE at_epoch >= ?`).get(Number(sinceEpoch) || 0);
   }
 
   /** Newest first. Filters: project, kind, type, tool, pinned, q (full text), before (epoch), limit, offset. */

@@ -270,7 +270,69 @@ TASKS_DIR=/tmp/taskcheck-copy bun scripts/check-tasks.mjs
 | Real-install verification of any tool | No tool was installed or run in a container during this run; the docs say so |
 | Translation files | Planned as tasks T-088 and T-089, not produced by this run |
 
-## 7. Files created or changed in this run
+## 8. Memory-building run (2026-10-26, branch `feat/memory-building`)
+
+This run built the automatic pipeline in [26](../26-memory-pipeline.md). Every claim below comes from a command run
+here.
+
+### 8.1 Task status after this run
+
+| Task | Status | Validation |
+|---|---|---|
+| T-017 schema v3 and migration | validated | `bun test test/migration-v3.test.mjs` — 4 pass |
+| T-018 fact extraction and validator | validated | `bun test test/facts.test.mjs` — 12 pass |
+| T-019 batching and cost record | validated | `bun test test/fact-budget.test.mjs` — 5 pass |
+| T-020 resumable queue | validated | `bun test test/queue.test.mjs` — 7 pass |
+| T-023 provenance links | validated | `bun test test/provenance.test.mjs` — 5 pass |
+| T-024 bi-temporal columns | validated | `bun test test/temporal-schema.test.mjs` — 4 pass |
+| T-025 contradiction handling | validated | `bun test test/contradictions.test.mjs` — 6 pass |
+| T-028 near-duplicate detection | validated | `bun test test/dedupe.test.mjs` — 4 pass |
+| T-029 duplicate merge | validated | `bun test test/merge-duplicates.test.mjs` — 3 pass |
+| T-030 importance | validated | `bun test test/importance.test.mjs` — 4 pass |
+| T-034 provider routing and modes | validated | `bun test test/providers.test.mjs` — 8 pass |
+
+Cross-cutting work in the same run: fact-augmented search (`facts_fts`, `memory_keys_fts`, `searchAll`, `/v1/search`,
+MCP search, `aletheia search --history|--as-of`), the end-to-end test, `aletheia doctor` queue/extraction checks,
+`docs/26-memory-pipeline.md`, and the "not measured" note in [22](../22-improve-the-numbers.md#e02-fact-extraction-and-fact-augmented-keys).
+
+### 8.2 Full suite
+
+```text
+$ bun test
+ 206 pass
+ 0 fail
+ 1204 expect() calls
+Ran 206 tests across 22 files. [9.06s]
+```
+
+### 8.3 Task consistency
+
+```text
+$ bun scripts/check-tasks.mjs
+check-tasks: ok — 100 tasks (todo=85 validated=15)
+```
+
+### 8.4 Measured numbers
+
+| Measurement | Result | Fixture |
+|---|---:|---|
+| Migration row counts, 50k v2 rows | 50,000 memories → 30,000 observations + 20,000 episodes | synthetic `test/v2-fixture.mjs` |
+| Contradictions, newest wins | 30/30 | synthetic 30 pairs |
+| Near-duplicate precision at 0.92 | 1.00 | synthetic 200 pairs |
+| Near-duplicate recall at 0.92 | 0.90 | synthetic 200 pairs |
+| Importance Spearman | 0.645 | synthetic 200-item rank |
+| LoCoMo Recall@5 before/after | **not measured** | dataset absent, optional embedding runtime absent |
+| Real provider extraction | **not tested** | fake provider and injected `fetch` only |
+
+### 8.5 What is not done
+
+See [26 §26.7](../26-memory-pipeline.md#267-what-is-not-built): observation/summary writers, entity rows and aliases,
+automatic dedupe/merge in the worker, decay/pruning, review UI, automatic fact embeddings, and any real-provider or
+LoCoMo measurement.
+
+
+
+## 9. Files created or changed in the earlier documentation run
 
 | Path | Change |
 |---|---|

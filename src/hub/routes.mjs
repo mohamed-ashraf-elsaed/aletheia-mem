@@ -91,7 +91,10 @@ export function createHubRoutes({ hub, config }) {
       if (pathname === "/v1/search" && method === "POST") {
         const b = await readJson(request);
         need(typeof b.query === "string" && b.query.trim(), "query is required.");
-        return h.json({ results: hub.search({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20 }) });
+        return h.json({
+          results: hub.search({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20 }),
+          facts: hub.searchFacts({ query: b.query, project: b.project, limit: b.limit ?? 20, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null }),
+        });
       }
       if (pathname === "/v1/timeline" && method === "POST") {
         const b = await readJson(request);

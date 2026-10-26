@@ -61,6 +61,9 @@ commands that already exist are marked `[exists]`.
 - **Stop condition:** if extracted facts give < +3 points, remove the claim that fact keys are a win and keep the
   feature as an optional index only.
 - **Command:** `bun bench/locomo-retrieval.mjs --data locomo10.json --extract --provider local --out facts.json && bun bench/locomo-retrieval.mjs --data locomo10.json --facts facts.json --out r.json`
+- **Run note 2026-10-26:** **not measured** in the memory-building change. `locomo10.json` is not in this repository and
+  the optional `@huggingface/transformers` runtime is not installed here, so the before/after Recall@5 comparison was
+  not run. The extraction and indexing code is in place ([26](26-memory-pipeline.md)); no recall claim is added.
 
 ### E03. Query expansion and rewriting
 

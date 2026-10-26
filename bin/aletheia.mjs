@@ -14,16 +14,16 @@
 //   aletheia uninstall <tool> [--write]                   remove only the entries the install manifest lists
 //   aletheia hook <tool> <event>                          hook entry point: read one JSON payload on stdin
 //   aletheia doctor                                       check the server, hooks, spool and last capture
-//   aletheia compress [--project p]                       turn raw events into observations (needs ALETHEIA_PROVIDER)
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+//   aletheia compress [--project p] [--daemon]         drain the extraction queue (provider or rule-based)
+//   aletheia importance recompute [--project p]         recompute the transparent importance score
+import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { normalizeHook, redact } from "../src/hub/capture.mjs";
-import { compressRecent } from "../src/hub/compress.mjs";
 import { importClaudeMem } from "../src/hub/importers.mjs";
 import { applyInstall, applyUninstall, doctor, formatPlan, formatUninstall, installerFor, installerIds, planUninstall } from "../src/hub/install.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "../src/hub/rules-sync.mjs";
-import { HubStore } from "../src/hub/store.mjs";
+import { HubStore, inspectMigration, targetSchemaVersion } from "../src/hub/store.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "../src/hub/tools.mjs";
 import { projectKeyForPath } from "../src/readmodel/project.mjs";
 import { makeProvider } from "../src/refresh/providers.mjs";
@@ -58,6 +58,8 @@ function installEnv(hub) {
     dataDir: config.dataDir,
     dbPath: config.hubDb,
     port: config.port,
+    provider: config.provider,
+    mode: config.mode,
     rules: hub ? hub.rules.list() : [],
   };
 }
@@ -121,6 +123,21 @@ async function main() {
 
   if (cmd === "install" || cmd === "uninstall") return handleInstall(cmd, flags, pos);
 
+  if (cmd === "migrate") {
+    const dbPath = typeof flags.db === "string" ? flags.db : config.hubDb;
+    const before = inspectMigration(dbPath);
+    if (!before.exists) return out(`No database at ${dbPath}; nothing to migrate.`);
+    if (flags["dry-run"]) return out(JSON.stringify({ ...before, dryRun: true }, null, 2));
+    if (!before.needsMigration) return out(`Schema v${before.version} is current; nothing to do.`);
+    const backup = typeof flags.backup === "string" ? flags.backup : `${dbPath}.aletheia-bak-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+    mkdirSync(dirname(backup), { recursive: true });
+    copyFileSync(dbPath, backup);
+    const hub = new HubStore(dbPath);
+    const after = hub.migrationCounts();
+    hub.close();
+    return out(`Backed up to ${backup}\nMigrated schema v${before.version} -> v${targetSchemaVersion}: ${JSON.stringify(after)}`);
+  }
+
   if (cmd === "doctor") {
     const checks = await doctor(installEnv(null));
     for (const check of checks) out(`${check.ok ? "ok  " : "FAIL"} ${check.name.padEnd(20)} ${check.detail}`);
@@ -141,8 +158,12 @@ async function main() {
       }
       case "context": return out(hub.context({ project: flags.project ?? projectKeyForPath(process.cwd()), tool: flags.tool, limit: Number(flags.limit) || 20 }));
       case "search": {
-        const rows = hub.search({ query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20 });
-        return out(rows.length ? rows.map((r) => `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title} (${r.project}, ${r.tool})`).join("\n") : "No matches.");
+        const asOf = typeof flags["as-of"] === "string" ? Date.parse(flags["as-of"]) : null;
+        if (flags["as-of"] && !Number.isFinite(asOf)) return die("--as-of needs a date, for example 2026-01-31.");
+        const rows = hub.searchAll({ query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20, includeHistory: !!flags.history, asOf });
+        return out(rows.length ? rows.map((r) => (r.kind === "fact"
+          ? `fact #${r.id} ${r.at.slice(0, 10)} [${r.status}] ${r.text} (source episode #${r.source?.episodeId ?? "-"})`
+          : `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title} (${r.project}, ${r.tool})`)).join("\n") : "No matches.");
       }
       case "save": {
         const text = pos.join(" ");
@@ -194,9 +215,35 @@ async function main() {
         if (!flags.write) return out(`${plan.connected ? "Already connected.\n" : ""}Would write to ${plan.path}:\n${plan.snippet}\nAdd --write to apply (a backup is kept).`);
         return out(applyMcp(tool, config.home, argv));
       }
+      case "importance": {
+        if (pos[0] !== "recompute") return die("Usage: aletheia importance recompute [--project p]");
+        const { recomputeImportance } = await import("../src/hub/importance.mjs");
+        return out(recomputeImportance(hub, { project: flags.project }));
+      }
       case "compress": {
-        const ask = makeProvider(config) ?? die("Set ALETHEIA_PROVIDER=claude-cli or openai first.");
-        return out(await compressRecent(hub, ask, { project: flags.project }));
+        const { runWorker, startBackgroundWorker } = await import("../src/hub/queue.mjs");
+        let ask = null;
+        try {
+          ask = makeProvider(config);
+        } catch (error) {
+          return die(error.message);
+        }
+        const mode = ask ? config.provider : "rules";
+        if (flags.daemon) {
+          const worker = startBackgroundWorker({
+            store: hub, ask, config, intervalMs: Number(flags.interval) || 2000,
+            onTick: (result) => { if (result?.processed) out(`processed ${result.processed} job(s), ${result.last?.facts ?? 0} new fact(s)`); },
+            onError: (error) => out(`worker error: ${error.message}`),
+          });
+          out(`Extraction worker running (${mode}); Ctrl-C to stop.`);
+          await new Promise((resolve) => {
+            for (const signal of ["SIGINT", "SIGTERM"]) process.once(signal, () => { worker.stop(); resolve(); });
+          });
+          return;
+        }
+        const result = await runWorker({ store: hub, ask, config });
+        const last = result.last ? `\nlast: ${result.last.memories} memories, ${result.last.windows} window(s), ${result.last.facts} new fact(s), ${result.last.rejected} rejected` : "";
+        return out(`Extraction mode: ${mode}\nqueue: ${JSON.stringify(result.counts)}${last}`);
       }
       default:
         return die(readFileSync(new URL(import.meta.url), "utf8").split("\n").filter((l) => l.startsWith("//")).map((l) => l.slice(3)).join("\n"));

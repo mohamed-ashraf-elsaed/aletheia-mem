@@ -1,0 +1,7 @@
+{
+  "id": "language-en",
+  "language": "en",
+  "languageName": "English",
+  "style": "code",
+  "instruction": "Write every fact in English. Keep identifiers, paths, commands and versions unchanged."
+}

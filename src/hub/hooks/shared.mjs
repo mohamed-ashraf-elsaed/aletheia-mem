@@ -195,7 +195,13 @@ export function enqueueCompression(store, { project, sessionId, at = Date.now() 
   const key = "compress.queue";
   const queue = store.setting(key, []);
   if (!Array.isArray(queue)) return false;
-  if (queue.some((item) => item.project === project && item.sessionId === sessionId)) return false;
+  const existing = sessionId ? queue.find((item) => item.project === project && item.sessionId === sessionId) : null;
+  if (existing) {
+    // A session-end after a stop must not create a second job, but the job should cover the newer summary.
+    existing.at = at;
+    store.setSetting(key, queue.slice(-200));
+    return false;
+  }
   queue.push({ project, sessionId: sessionId ?? null, at });
   store.setSetting(key, queue.slice(-200));
   return true;
