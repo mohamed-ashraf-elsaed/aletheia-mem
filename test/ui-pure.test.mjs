@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
-  REGION_INITIAL, buildHash, clampLimit, countUpValue, errorDetails, formatBytes, formatNumber, highlightParts, nextPollDelay,
+  REGION_INITIAL, buildHash, chordStep, isTypingTarget, rovingIndex, trapTarget, clampLimit, countUpValue, errorDetails, formatBytes, formatNumber, highlightParts, nextPollDelay,
   offsetForPage, pagerModel, parseHash, queryTerms, regionReduce, relativeTime, updatedAgo,
 } from "../public/ui-pure.js";
 
@@ -170,5 +170,43 @@ describe("T-149: polling backoff", () => {
   });
   test("jitter scales the delay", () => {
     expect(nextPollDelay({ base: 1000, jitter: 0.1 })).toBe(1100);
+  });
+});
+
+describe("T-149: keyboard helpers", () => {
+  test("Tab wraps in a dialog", () => {
+    expect(trapTarget(3, 2, false)).toBe(0);
+    expect(trapTarget(3, 0, true)).toBe(2);
+    expect(trapTarget(3, 1, false)).toBe(2);
+    expect(trapTarget(3, -1, false)).toBe(0);
+    expect(trapTarget(3, -1, true)).toBe(2);
+    expect(trapTarget(0, -1, false)).toBe(-1);
+  });
+  test("arrow keys move through tabs and wrap", () => {
+    expect(rovingIndex(0, 3, "ArrowRight")).toBe(1);
+    expect(rovingIndex(2, 3, "ArrowRight")).toBe(0);
+    expect(rovingIndex(0, 3, "ArrowLeft")).toBe(2);
+    expect(rovingIndex(1, 3, "Home")).toBe(0);
+    expect(rovingIndex(1, 3, "End")).toBe(2);
+    expect(rovingIndex(1, 3, "x")).toBeNull();
+    expect(rovingIndex(0, 3, "ArrowDown", { vertical: true })).toBe(1);
+  });
+  test("shortcuts ignore typing targets", () => {
+    expect(isTypingTarget({ tagName: "INPUT" })).toBe(true);
+    expect(isTypingTarget({ tagName: "TEXTAREA" })).toBe(true);
+    expect(isTypingTarget({ tagName: "DIV", isContentEditable: true })).toBe(true);
+    expect(isTypingTarget({ tagName: "BUTTON" })).toBe(false);
+    expect(isTypingTarget(null)).toBe(false);
+  });
+  test("g then a letter completes within the window", () => {
+    let step = chordStep(0, "g", 1000);
+    expect(step).toEqual({ pending: 1000, letter: null });
+    step = chordStep(step.pending, "w", 1500);
+    expect(step).toEqual({ pending: 0, letter: "w" });
+  });
+  test("the chord expires and a stray key resets it", () => {
+    expect(chordStep(1000, "w", 5000)).toEqual({ pending: 0, letter: null });
+    expect(chordStep(1000, "1", 1100)).toEqual({ pending: 0, letter: null });
+    expect(chordStep(1000, "g", 1100).pending).toBe(1100);
   });
 });

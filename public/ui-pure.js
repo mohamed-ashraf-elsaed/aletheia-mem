@@ -223,3 +223,41 @@ export function countUpValue(from, to, t) {
   const eased = 1 - (1 - p) ** 3;
   return Math.round(from + (to - from) * eased);
 }
+
+// ---- keyboard helpers ------------------------------------------------------------------------------------
+
+/** Where Tab goes inside a dialog: wraps at both ends. Returns an index into the focusable list, or -1 for none. */
+export function trapTarget(count, current, shift = false) {
+  if (count <= 0) return -1;
+  if (current < 0 || current >= count) return shift ? count - 1 : 0;
+  return shift ? (current === 0 ? count - 1 : current - 1) : (current === count - 1 ? 0 : current + 1);
+}
+
+/** Arrow-key movement in a row of tabs or radio buttons. Returns the new index, or null for a key that does nothing. */
+export function rovingIndex(current, count, key, { vertical = false } = {}) {
+  if (count <= 0) return null;
+  const prev = vertical ? "ArrowUp" : "ArrowLeft";
+  const next = vertical ? "ArrowDown" : "ArrowRight";
+  if (key === next) return (current + 1) % count;
+  if (key === prev) return (current - 1 + count) % count;
+  if (key === "Home") return 0;
+  if (key === "End") return count - 1;
+  return null;
+}
+
+/** Is the keyboard event aimed at something the user is typing into? Shortcuts must not fire there. */
+export function isTypingTarget(target) {
+  if (!target) return false;
+  const tag = String(target.tagName ?? "").toLowerCase();
+  return tag === "input" || tag === "textarea" || tag === "select" || target.isContentEditable === true;
+}
+
+/**
+ * The two-key sequence "g" then a letter. `pending` is the time "g" was pressed, or 0. Returns the next pending
+ * time and, when the sequence completes within `windowMs`, the letter.
+ */
+export function chordStep(pending, key, now, windowMs = 1200) {
+  if (key === "g") return { pending: now, letter: null };
+  if (pending && now - pending <= windowMs && /^[a-z]$/.test(key)) return { pending: 0, letter: key };
+  return { pending: 0, letter: null };
+}
