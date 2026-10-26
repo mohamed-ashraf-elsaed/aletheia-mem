@@ -1,6 +1,6 @@
 // T-138: the Tools tab. Read-only status from `aletheia doctor`: installed, hooks present, last capture,
 // spool size, plus copy-ready commands. No install, uninstall or connect button is offered here.
-import { formatWhen } from "../ui-core.js";
+import { classicViewerAvailable, formatWhen } from "../ui-core.js";
 import { activityDetails, api, chip, copy, errorCard, errorText, h, settledValue, swap } from "../ui-dom.js";
 
 export async function renderTools() {
@@ -24,9 +24,19 @@ export async function renderTools() {
     h("p", { class: "ui-meta" }, "Read-only status from `aletheia doctor`. Install, uninstall and connect stay in the CLI."),
     h("div", { class: "ui-meta" }, `Data: ${data.dataDir}`, ` · generated ${formatWhen(data.generatedAt)}`, overview ? ` · provider: ${overview.provider}` : ""),
     h("div", {}, ...data.tools.map(toolCard)),
+    classicViewerCard(overview),
     h("h2", {}, "Doctor checks"),
     checksTable,
     activityDetails());
+}
+
+/** The old viewer is optional and only offered when its database exists. It is not part of the Work tab. */
+function classicViewerCard(overview) {
+  if (!classicViewerAvailable(overview)) return null;
+  return h("div", { class: "ui-card" },
+    h("h2", {}, "Classic claude-mem viewer (reads ~/.claude-mem, read-only)"),
+    h("p", { class: "ui-meta" }, "The optional legacy page reads the old database directly. It is not part of the Work tab."),
+    h("a", { class: "ui-button", href: "/work-view/work.html", target: "_blank", rel: "noreferrer" }, "Open the classic viewer"));
 }
 
 function toolCard(tool) {

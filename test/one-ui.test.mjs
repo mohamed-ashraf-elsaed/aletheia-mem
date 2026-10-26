@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { startServer } from "../src/server.mjs";
-import { channelLines, duplicateView, factView, healthView, parseRoute, reviewView, routeHash, searchReasonText, TABS } from "../public/ui-core.js";
+import { channelLines, classicViewerAvailable, duplicateView, factView, healthView, parseRoute, reviewView, routeHash, searchReasonText, TABS } from "../public/ui-core.js";
 import { makeFixture } from "./fixture.mjs";
 
 const root = join(import.meta.dir, "..");
@@ -241,5 +241,12 @@ describe("T-139: DOM-free router and view helpers", () => {
     expect(reviewView({ id: 1, type: "fact", reason: "contradiction", text: "A", project: "shop" })).toMatchObject({ reason: "Two facts disagree", title: "A", mergeable: true });
     expect(reviewView({ id: 2, type: "entity", reason: "ambiguous_alias", name: "Sam" })).toMatchObject({ reason: "An alias may belong to two entities", mergeable: false });
     expect(duplicateView({ key: "1:2", a: 1, b: 2, aText: "A", bText: "B", score: 0.876 }).scoreLabel).toBe("0.88");
+  });
+
+  test("the classic viewer is offered only when the old database exists", () => {
+    expect(classicViewerAvailable({ claudeMem: { exists: true } })).toBe(true);
+    expect(classicViewerAvailable({ claudeMem: { exists: false } })).toBe(false);
+    expect(classicViewerAvailable({})).toBe(false);
+    expect(classicViewerAvailable(null)).toBe(false);
   });
 });

@@ -114,3 +114,8 @@ export function duplicateView(pair = {}) {
 export function tabIdFromElement(element) {
   return TABS.some((tab) => tab.id === element) ? element : DEFAULT_TAB;
 }
+
+/** The optional legacy viewer is offered only when the old database exists. */
+export function classicViewerAvailable(overview) {
+  return overview?.claudeMem?.exists === true;
+}
