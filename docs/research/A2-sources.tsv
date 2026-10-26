@@ -1,0 +1,61 @@
+date	URL	what it gave
+2026-10-26	https://mem0.ai/pricing	Mem0 plans Hobby/Starter/Pro/Enterprise, limits, feature matrix, compliance badges
+2026-10-26	https://docs.mem0.ai/platform/platform-vs-oss	Mem0 platform vs OSS feature gap list
+2026-10-26	https://supermemory.ai/pricing	Supermemory plans, credits, rate card, self-host and connector gating
+2026-10-26	https://supermemory.ai/docs/deployment/self-hosting	Supermemory self-host: platform-only features list
+2026-10-26	https://www.getzep.com/pricing	Zep Flex/Flex Plus/Enterprise prices, credits, limits, features, deployment options
+2026-10-26	https://raw.githubusercontent.com/getzep/zep/main/README.md	Zep Community Edition deprecated; legacy folder
+2026-10-26	https://blog.getzep.com/announcing-a-new-direction-for-zeps-open-source-strategy/	Zep reason for ending Community Edition; Graphiti focus
+2026-10-26	https://www.letta.com/pricing	Letta Free/Pro/API/Teams Pro/Enterprise prices and limits (page content is the docs pricing page)
+2026-10-26	https://www.cognee.ai/pricing	Cognee Free/Standard/Enterprise BYOC prices and features
+2026-10-26	https://mastra.ai/pricing	Mastra Platform Starter/Teams/Enterprise prices, memory token and retrieval storage meters, self-hosted enterprise
+2026-10-26	https://raw.githubusercontent.com/mastra-ai/mastra/main/LICENSE.md	Mastra licence: Apache-2.0 except ee/ directories
+2026-10-26	https://raw.githubusercontent.com/mastra-ai/mastra/main/ee/LICENSE	Mastra Enterprise Edition licence: source-available, no production use
+2026-10-26	https://memorilabs.ai/pricing	Memori OSS, Cloud Free, Team, Business, Enterprise prices and included features
+2026-10-26	https://raw.githubusercontent.com/MemoriLabs/Memori/main/LICENSE	Memori licence is Apache-2.0
+2026-10-26	https://raw.githubusercontent.com/MemoriLabs/Memori/main/README.md	Memori README: cloud, BYODB self-host, advanced augmentation free for developers
+2026-10-26	https://vectorize.io/pricing	Hindsight self-host/Cloud/Enterprise, per-operation prices, feature table
+2026-10-26	https://raw.githubusercontent.com/vectorize-io/hindsight/main/README.md	Hindsight README cloud description, MIT
+2026-10-26	https://hindsight.vectorize.io/	Hindsight docs home: $5 free credit on sign-up with GitHub
+2026-10-26	https://docs.memvid.com/concepts/capacity-and-plans.md	Memvid docs plan table ($9.99, $49.99) and capacity limits
+2026-10-26	https://memvid.com/pricing	Memvid pricing page: fetched, JS-rendered, returned only contact page text (UNVERIFIED)
+2026-10-26	https://raw.githubusercontent.com/memvid/memvid/main/README.md	Memvid README: Apache-2.0, single .mv2 file
+2026-10-26	https://raw.githubusercontent.com/memodb-io/memobase/main/README.md	Memobase README: Apache-2.0, cloud free tier mentioned, no prices
+2026-10-26	https://www.memobase.io/en/login	Memobase cloud login URL from README: HTTP 404
+2026-10-26	https://docs.memobase.io/	Memobase docs: reachable, no pricing page found in text
+2026-10-26	https://memos.openmem.net/pricing	MemOS cloud plans Free/Starter/Pro/Enterprise and API limits
+2026-10-26	https://raw.githubusercontent.com/MemTensor/MemOS/main/README.md	MemOS README: Cloud API vs self-host vs plugins table
+2026-10-26	https://raw.githubusercontent.com/Gentleman-Programming/engram/main/README.md	Engram README: cloud optional, local SQLite authoritative, MIT
+2026-10-26	https://raw.githubusercontent.com/Gentleman-Programming/engram/main/docs/engram-cloud/README.md	Engram Cloud is self-hosted (engram cloud serve), dashboard, project-scoped sync
+2026-10-26	https://engram.gentlemanprogramming.com/	Engram site: no pricing text found
+2026-10-26	https://raw.githubusercontent.com/mksglu/context-mode/main/README.md	Context Mode README: no cloud, no account; ELv2 no-hosted-service clause
+2026-10-26	https://raw.githubusercontent.com/mksglu/context-mode/main/LICENSE	Context Mode licence: Elastic License 2.0
+2026-10-26	https://context-mode.com	Context Mode site: no pricing text found
+2026-10-26	https://raw.githubusercontent.com/rohitg00/agentmemory/main/README.md	agentmemory README: no cloud pricing stated, comparison table, Apache-2.0 via API
+2026-10-26	https://agent-memory.dev	agentmemory site: no account, no cloud
+2026-10-26	https://basicmemory.com/pricing	Basic Memory Team $15, Business $30, Agent Infrastructure custom; features
+2026-10-26	https://raw.githubusercontent.com/TencentCloud/TencentDB-Agent-Memory/main/README.md	TencentDB Agent Memory: MIT, local docker start-all, Memory Hub team ACLs
+2026-10-26	https://tencentcloud.github.io/TencentDB-Agent-Memory/	TencentDB site: JS-rendered, no text (UNVERIFIED for price)
+2026-10-26	https://cmem.ai/pricing	claude-mem OSS free; CMEM Pro $30, Heavy $70, Max $100; TeamBrain unpriced
+2026-10-26	https://claude.com/pricing	Claude plans Free/Pro/Max/Team prices; memory row per plan
+2026-10-26	https://support.claude.com/en/articles/11817273-use-claude-s-chat-search-and-memory-to-build-on-previous-context	Claude memory availability by plan, team owner control
+2026-10-26	https://cursor.com/pricing	Cursor pricing page as served: Free/Plus/Premium/Super/Ultra/Teams/Enterprise (content looks Grok-branded; see note)
+2026-10-26	https://cursor.com/docs/context/memories	Cursor docs: memories URL serves Rules page; Team Rules on Team/Enterprise
+2026-10-26	https://windsurf.com/pricing	Windsurf (Devin) Free/Pro/Max/Teams/Enterprise prices
+2026-10-26	https://docs.windsurf.com/windsurf/cascade/memories	Windsurf memories and rules doc; system-level rules for enterprise
+2026-10-26	https://github.com/features/copilot/plans	Copilot plans: Free/Pro/Pro+/Max prices (two price sets appear on page)
+2026-10-26	https://docs.github.com/en/copilot/concepts/agents/copilot-memory	Copilot Memory: public preview, paid plans, 28-day expiry, admin controls
+2026-10-26	https://one.google.com/about/google-ai-plans/	Google AI plans page fetched in Arabic locale; prices not readable (UNVERIFIED)
+2026-10-26	https://support.google.com/gemini/answer/15637730	Gemini personalization help: memory of past chats, not available to everyone
+2026-10-26	https://chatgpt.com/pricing	ChatGPT pricing: HTTP 403 (UNVERIFIED)
+2026-10-26	https://help.openai.com/en/articles/8590148-memory-faq	OpenAI memory FAQ: HTTP 403 this run (UNVERIFIED)
+2026-10-26	https://www.byterover.dev/pricing	ByteRover Free/Pro $15/Enterprise features
+2026-10-26	https://pieces.app/pricing	Pieces Pro $18.99, Enterprise $22.99
+2026-10-26	https://memmachine.ai/pricing	MemMachine OSS/Pro $79/Enterprise
+2026-10-26	https://www.graphlit.com/pricing	Graphlit tiers and wind-down notice
+2026-10-26	https://backboard.io/pricing	Backboard pricing update blog: Free $5 credit, Pro $9/mo
+2026-10-26	https://www.memoryplugin.com/pricing	MemoryPlugin: Core plan shown $89/year (struck $180), lifetime option; partial read
+2026-10-26	https://mempalace.tech	MemPalace comparison table of rival prices (third-party claim only)
+2026-10-26	https://github.com/supermemoryai/supermemory/issues/1140	User issue: pricing page shows no concrete figures (written before current page)
+2026-10-26	https://github.com/mem0ai/mem0/issues/6895	Mem0 issue: OSS graph memory removed in v3
+2026-10-26	https://hn.algolia.com/api/v1/search?query=Cursor%20Pricing%20Changes&tags=story	HN search result titles only (not opened): Cursor pricing-change threads, e.g. item 44496285

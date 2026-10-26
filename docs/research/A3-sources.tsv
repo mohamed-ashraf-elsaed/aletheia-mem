@@ -1,0 +1,77 @@
+2026-10-26	https://api.github.com/search/repositories (topics ai-memory, agent-memory, mcp-memory, llm-memory, claude-code-memory, context-engineering, memory-layer, ai-agent-memory, coding-agent memory)	candidate repos with stars, push date, licence, language
+2026-10-26	https://api.github.com/search/repositories (queries: ruler, rulesync, AGENTS.md sync, skills sync)	rules-sync candidates
+2026-10-26	https://api.github.com/search/repositories (byterover, mempalace, obsidian memory, benchmark harness)	ByteRover and MemPalace repo data; extra candidates
+2026-10-26	https://hn.algolia.com/api/v1/search (Show HN memory for Claude Code; persistent memory AI coding agents; MCP memory server; agent memory open source local)	Show HN titles, dates, URLs, item ids
+2026-10-26	https://api.github.com/repos/<owner>/<repo> and /commits?per_page=1 for the 51 new products and the 10 refreshed docs/21 products plus snap-research/locomo, xiaowu0162/LongMemEval, modelcontextprotocol/servers	stars, last commit, licence, language, open issues, archived flag, created date
+2026-10-26	https://api.github.com/repos/<owner>/<repo>/readme for the same repos	README text: storage, tools, install commands, benchmark claims
+2026-10-26	https://api.github.com/repos/<owner>/<repo>/issues?state=open&sort=comments (36 repos)	open issues used as weaknesses
+2026-10-26	https://api.github.com/repos/letta-ai/letta	archived=false, pushed_at 2026-10-18
+2026-10-26	https://api.github.com/repos/thedotmack/claude-mem/releases/latest	v15.2.1 published 2026-10-25
+2026-10-26	https://api.github.com/repos/MemPalace/mempalace/issues/39	title of reproduction issue, state closed, 2026-04-07
+2026-10-26	https://api.github.com/repos/punkpeye/awesome-mcp-servers/readme	Knowledge & Memory section entry count (138, approximate)
+2026-10-26	https://api.github.com/repos/hesreallyhim/awesome-claude-code/contents	repo listing only, not scanned for memory entries
+2026-10-26	https://pypi.org/pypi/<package>/json (mempalace, honcho-ai, memu-py, omega-memory, superlocalmemory, memsearch, memanto, telemem, agentmemory, mnemon, semantica, mengram-ai, mirix, simplemem, lightmem, basic-memory, hindsight-all)	versions, licences, python requirements; name-collision findings
+2026-10-26	https://registry.npmjs.org/<package>/latest (hippo-memory, ownmem, claude-smart, openwolf, @cortexkit/magic-context, @intellectronica/ruler, rulesync, memora)	npm versions and licences
+2026-10-26	https://arxiv.org/abs/2402.17753	LoCoMo paper abstract: no venue, no scores
+2026-10-26	https://arxiv.org/abs/2410.10813	LongMemEval: 500 questions, ICLR 2025 in comments, 30% drop
+2026-10-26	https://arxiv.org/html/2510.27246v1	BEAM paper table 1: Vanilla, RAG, LIGHT across four backbones and four lengths
+2026-10-26	https://iclr.cc/virtual/2026/poster/10006595	seen only as a search result for BEAM venue; page not opened
+2026-10-26	https://arxiv.org/html/2507.05257v3	MemoryAgentBench table 3 (10 systems)
+2026-10-26	https://arxiv.org/abs/2504.19413	Mem0 paper abstract: relative gains, latency, token savings
+2026-10-26	https://arxiv.org/abs/2501.13956	Zep paper: DMR 94.8 vs 93.4, LongMemEval relative gains
+2026-10-26	https://arxiv.org/abs/2512.12818	Hindsight paper: LongMemEval 91.4 and 83.6, LoCoMo 89.61
+2026-10-26	https://www.getzep.com/blog/lies-damn-lies-statistics-is-mem0-really-sota-in-agent-memory/	Zep corrected 75.14, Mem0 66.88 and 68.44, latency, cat 5 exclusion
+2026-10-26	https://blog.getzep.com/lies-damn-lies-statistics-is-mem0-really-sota-in-agent-memory/	301 redirect to the URL above
+2026-10-26	https://github.com/getzep/zep-papers/issues/5	Mem0 vs Zep LoCoMo dispute: 84 vs 58.44, reply with 75.14
+2026-10-26	https://github.com/mem0ai/mem0/issues/3944	user rerun of Mem0 on LoCoMo scoring about 0.20; fixed
+2026-10-26	https://github.com/EverMind-AI/EverMemOS/issues/73	EverOS reproduction 52.22 and 38.38 vs 93.0 claimed
+2026-10-26	https://github.com/Mirix-AI/MIRIX/issues/6	MIRIX LoCoMo run 0.6234 on one conversation; BM25 hardcoded
+2026-10-26	https://github.com/MemPalace/mempalace/issues/27	README-vs-code discrepancy list; maintainer doc commits 2026-10-12
+2026-10-26	https://github.com/MemPalace/mempalace/issues/39	independent reproduction: R@5 and end-to-end accuracy by mode
+2026-10-26	https://github.com/aiming-lab/SimpleMem/issues/94	531 tokens per query question, no reply
+2026-10-26	https://www.letta.com/blog/benchmarking-ai-agent-memory	Letta 74.0 on LoCoMo with GPT-4o mini, Mem0 68.5 cited, method
+2026-10-26	https://dev.to/penfieldlabs/we-audited-locomo-64-of-the-answer-key-is-wrong-and-the-judge-accepts-up-to-63-of-intentionally-33lg	LoCoMo audit: 99 errors in 1,540 q, judge accepts 62.81% of wrong answers
+2026-10-26	https://mem0.ai/research	Mem0 LoCoMo 92.5, LongMemEval 94.4, tokens
+2026-10-26	https://mem0.ai/library/agent-memory/ai-memory-benchmarks-in-2026	Mem0's table of third-party and own scores (ByteRover, EverMemOS, Dakera, ZeroMemory, BEAM)
+2026-10-26	https://mem0.ai/blog/ai-memory-benchmarks	404
+2026-10-26	https://supermemory.ai/research/longmembench	Supermemory LongMemEval-S 97% (gpt-4o), 84.6 gpt-5, 85.2 gemini-3-pro
+2026-10-26	https://mastra.ai/research/observational-memory	Mastra OM scores and comparator table (Hindsight, Supermemory 81.6, Zep 71.2)
+2026-10-26	https://honcho.dev/evals/	Honcho LongMemEval S 90.4, LoCoMo 89.9, BEAM 0.630 etc
+2026-10-26	https://hindsight.vectorize.io/blog/2026/04/02/beam-sota	Hindsight BEAM tiers and Honcho comparison
+2026-10-26	https://www.webull.com/news/15304952493908992	Exabase BEAM 76.9/75.0/68.0 press release
+2026-10-26	https://www.hpcwire.com/bigdatawire/this-just-in/exabase-reports-state-of-the-art-results-on-beam-memory-benchmark/	403 blocked; UNVERIFIED via this URL
+2026-10-26	https://vectorize.io/articles/mempalace-benchmarks	seen only in search summary: MemPalace tuning on test set; not opened (UNVERIFIED)
+2026-10-26	https://github.com/dial481/locomo-audit	named by the Penfield post; not opened
+2026-10-26	https://code.claude.com/docs/en/memory	Claude Code CLAUDE.md and auto memory behaviour, location, 200 lines or 25KB
+2026-10-26	https://docs.cline.bot/features/memory-bank	Cline Memory Bank files and loading
+2026-10-26	https://google-gemini.github.io/gemini-cli/docs/cli/gemini-md.html	Gemini CLI GEMINI.md hierarchy and /memory commands
+2026-10-26	https://developers.openai.com/codex/memories	308 redirect
+2026-10-26	https://learn.chatgpt.com/docs/customization/memories?surface=app	Codex memories: local, off by default, ~/.codex/memories/
+2026-10-26	https://kiro.dev/docs/steering/	Kiro steering locations and inclusion modes
+2026-10-26	https://docs.augmentcode.com/setup-augment/memories	404; Augment memories UNVERIFIED
+2026-10-26	https://github.com/MemPalace/mempalace	README: 96.6% R@5 raw, ChromaDB, install
+2026-10-26	https://github.com/memoket/memoket-kite	README: KITE 93.51 and 85.60
+2026-10-26	https://github.com/FlowElement-xinliuyuansu/m_flow	README: M-flow benchmark tables
+2026-10-26	https://github.com/qualixar/superlocalmemory	README: SLM LoCoMo table
+2026-10-26	https://github.com/sachitrafa/YourMemory	README: YourMemory LoCoMo recall chart and quota note
+2026-10-26	https://github.com/tstockham96/engram	README: LoCoMo 80.0 claim
+2026-10-26	https://github.com/tigerless-labs/agent-memory	README: bounded LongMemEval-S result
+2026-10-26	https://github.com/moorcheh-ai/memanto	README: 89.8 and 87.1 with TODO
+2026-10-26	https://github.com/vshulcz/deja-vu	README: 97.2 R@5, hit@1 figures
+2026-10-26	https://github.com/kitfunso/hippo-memory	README: 74.0 R@5, retraction note
+2026-10-26	https://github.com/hyperb1iss/sibyl	README: no benchmark number published
+2026-10-26	https://github.com/TeleAI-UAGI/telemem	README: ZH-4O 86.33
+2026-10-26	https://github.com/aiming-lab/SimpleMem	README: LoCoMo F1 claims
+2026-10-26	https://github.com/grpcer/ownmem	README: own-corpus recall
+2026-10-26	https://github.com/TheWinci/mimirs	README: Recall@10 on four codebases
+2026-10-26	https://github.com/ReflexioAI/claude-smart	README: 3x claim
+2026-10-26	https://github.com/Lyellr88/marm-memory	README: unstable concurrency ratio
+2026-10-26	https://github.com/zjunlp/LightMem	README: reproduction scripts
+2026-10-26	https://github.com/<owner>/<repo> READMEs for TonyStef/Grov, cytostack/openwolf, cortexkit/magic-context, okf-memory/okf-agent-memory, omega-memory/omega-memory, yoloshii/ClawMem, notkurt/ghost, DiaaAj/a-mem-mcp, campfirein/byterover-cli, plastic-labs/honcho, NevaMind-AI/memU, EverMind-AI/EverOS, zilliztech/memsearch, Mirix-AI/MIRIX, alibaizhanov/mengram, semantica-agi/semantica, mnemon-dev/mnemon, 0xK3vin/MegaMemory, Dataojitori/nocturne_memory, agentic-box/memora, elvismdev/mem0-mcp-selfhosted, intellectronica/ruler, dyoshikawa/rulesync, xingkongliang/skills-manager, microsoft/apm, knowns-dev/knowns, mjalalimanesh/skillhub-local, OSU-NLP-Group/HippoRAG	product descriptions, install commands, tool support (read via the readme API above)
+2026-10-26	https://github.com/xiaowu0162/LongMemEval-V2	named in LongMemEval README; not opened
+2026-10-26	https://news.ycombinator.com/item?id=47007379	Show HN: Ghost
+2026-10-26	https://news.ycombinator.com/item?id=47053534	Show HN: mem0-mcp-selfhosted
+2026-10-26	https://news.ycombinator.com/item?id=47116615	Show HN: Engram (tstockham96)
+2026-10-26	https://news.ycombinator.com/item?id=49975380	Show HN: SkillHub Local
+2026-10-26	https://news.ycombinator.com/item?id=46126066 / 46569660 / 49487838 / 47203115 / 47182534 / 49731353 / 47979991 / 48048713 / 47472965 / 47207442 / 47165499 / 49020619 / 47289727 / 46966203	other Show HN items listed in section 8 of the competitors file (titles and dates only)
+2026-10-26	web search: Zep Lies Damn Lies; Letta filesystem; LoCoMo audit; MemoryAgentBench; MemPalace criticism; BEAM; Supermemory memorybench; Mastra OM; reddit r/ClaudeCode	search summaries that located the primary pages; reddit search reached no thread

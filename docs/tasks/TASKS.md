@@ -24,6 +24,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | P3 | Per-tool installers and hooks, plus the Hub UI needed to operate them. |
 | P4 | Repository polish and i18n. |
 | P5 | Team and graph extensions. |
+| P6 | Free versions of every paid feature: sync, remote MCP, hosted-style extraction, team mode (see [27](../27-free-paid-parity.md)). |
 
 ## Rules
 
@@ -141,3 +142,26 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-098 | Add entity summaries and belief tracking | P5 | T-021, T-032 | todo | — | [T-098.md](T-098.md) |
 | T-100 | Add the Command Code installer and hooks | P3 | T-058 | validated | 2026-10-26 | [T-100.md](T-100.md) |
 | T-101 | Prove automatic capture end to end | P3 | T-058, T-059, T-100 | validated | 2026-10-26 | [T-101.md](T-101.md) |
+| T-102 | Build Aletheia Sync: a replicated log with per-operation results | P6 | T-017 | todo | — | [T-102.md](T-102.md) |
+| T-103 | Add tombstones, compaction and purge to sync | P6 | T-102 | todo | — | [T-103.md](T-103.md) |
+| T-104 | Add device pairing, device tokens and revoke | P6 | T-102 | todo | — | [T-104.md](T-104.md) |
+| T-105 | Add live update frames over WebSocket | P6 | T-102 | todo | — | [T-105.md](T-105.md) |
+| T-106 | Run hosted-style extraction as a server-side worker | P6 | T-020 | todo | — | [T-106.md](T-106.md) |
+| T-107 | Serve a private remote MCP endpoint | P6 | T-067, T-104 | todo | — | [T-107.md](T-107.md) |
+| T-108 | Add scoped API tokens, quotas and an audit log | P6 | T-102 | todo | — | [T-108.md](T-108.md) |
+| T-109 | Add a local usage ledger and caps | P6 | T-106 | todo | — | [T-109.md](T-109.md) |
+| T-110 | Add remote login for the Hub | P6 | T-104 | todo | — | [T-110.md](T-110.md) |
+| T-111 | Add an OAuth connector for ChatGPT and Claude.ai | P6 | T-107, T-110 | todo | — | [T-111.md](T-111.md) |
+| T-112 | Add team mode: shared memory, board, brief and search | P6 | T-102, T-103, T-104, T-108 | todo | — | [T-112.md](T-112.md) |
+| T-113 | Add purge, export and an erasure receipt | P6 | T-103 | todo | — | [T-113.md](T-113.md) |
+| T-114 | Add alert rules and webhooks | P6 | T-108 | todo | — | [T-114.md](T-114.md) |
+| T-115 | Add OIDC, SCIM, RBAC and DLP rules | P6 | T-110, T-108, T-112 | todo | — | [T-115.md](T-115.md) |
+| T-116 | Run My Work setup extraction on the user's own server | P6 | T-106 | todo | — | [T-116.md](T-116.md) |
+| T-117 | Add optional end-to-end encryption for sync | P6 | T-102 | todo | — | [T-117.md](T-117.md) |
+| T-118 | Generate the README and site comparison tables from docs/28 JSON | P6 | none | todo | — | [T-118.md](T-118.md) |
+| T-119 | Add provider presets and a fallback chain for extraction | P6 | T-034 | todo | — | [T-119.md](T-119.md) |
+| T-120 | Add an output-language setting for extraction and summaries | P6 | T-018 | todo | — | [T-120.md](T-120.md) |
+| T-121 | Back-fill memory from existing Claude Code and Command Code transcripts | P6 | T-018 | todo | — | [T-121.md](T-121.md) |
+| T-122 | Prove Aletheia never writes into project folders | P6 | T-016 | todo | — | [T-122.md](T-122.md) |
+| T-123 | Add reversible dismiss and delete from the Hub, CLI and MCP | P6 | T-017 | todo | — | [T-123.md](T-123.md) |
+| T-124 | Research and add installers for Antigravity, Kimi, Pi and OpenClaw | P6 | T-058 | todo | — | [T-124.md](T-124.md) |
