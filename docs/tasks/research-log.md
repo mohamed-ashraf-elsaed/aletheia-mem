@@ -325,3 +325,11 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | https://img.shields.io/badge/platform-linux%20(tested)-lightgrey | Proposed static badge; not fetched |
 | 2026-10-26 | https://mohamed-ashraf-elsaed.github.io/aletheia-mem/ | Homepage from repository metadata; site files read locally, URL not fetched |
 | 2026-10-26 | https://raw.githubusercontent.com/snap-research/locomo/main/data/locomo10.json | Dataset URL from the existing benchmark plan; not fetched in this run |
+
+## I. Full-text verification of numbers quoted in documents 22 and 23
+
+| Date | URL | What it gave |
+|---|---|---|
+| 2026-10-26 | https://arxiv.org/html/2410.10813 | full text: fact-augmented keys improve recall@k by 9.4% and accuracy by 5.4%; time-aware query expansion improves temporal recall by 6.8%–11.3% with a strong LLM |
+| 2026-10-26 | https://arxiv.org/html/2512.12818 | full text: 2–5 comprehensive facts per conversation; coreference resolution, temporal expression normalisation, entity resolution; LongMemEval 39% → 83.6% and 91.4%, LoCoMo 89.61% |
+| 2026-10-26 | https://arxiv.org/html/2501.13956 | full text: `valid_at`/`invalid_at` edge facts and the bi-temporal model (event time and ingestion time) |

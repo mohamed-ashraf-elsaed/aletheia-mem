@@ -30,7 +30,7 @@ we know; each row is a fact we could not fetch on 2026-10-26. Section 21.5 also 
 | 20 | Cursor and Windsurf plan prices | D2 rows 39, 41 | Product docs describe features, not prices | Each vendor's pricing page |
 | 21 | claude-mem cloud sync price | D1 F-T01 | The page says cmem.ai Pro is required but states no price | The cmem.ai pricing page |
 | 22 | Licence files for Memori, Mastra, Context Mode and TencentDB Agent Memory | D2 rows 10, 20, 24, 28 | GitHub API returned `NOASSERTION`; the `LICENSE` file was not read | Fetch each repository's `LICENSE` and identify the terms |
-| 23 | Hindsight's exact benchmark scores | D2 row 12 | The fetched arXiv abstract states a claim but the numbers were outside the fetched text | Fetch the full paper's results table |
+| 23 | Hindsight's self-host resource requirements (CPU, RAM, disk) | D2 row 12 | The README gives a Docker path but no measured footprint | Run the compose file and measure idle RSS, ingest throughput and disk per 1k memories |
 | 24 | claude-mem-lite benchmark numbers | D2 row 33 | The README mentions a LongMemEval section; the numbers were not in the extracted text | Read `benchmark/` in that repository |
 
 ## Distribution and platform rules

@@ -27,7 +27,7 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | F-C02 | Hook installer for Claude Code | Registers the hook commands in Claude Code's plugin settings. | https://docs.claude-mem.ai/installation | Free | **missing**. The CLI has no `install` command (`bin/aletheia.mjs`). | T-058 |
 | F-C03 | Per-tool payload adapters | Normalises Claude Code, Codex, Cursor, Kimi, Windsurf, Antigravity and raw payload shapes. | `src/cli/adapters/` (repo tree) | Free | **partial**. One normaliser understands Claude-style and generic shapes only (`src/hub/capture.mjs:45`). | T-059 |
 | F-C04 | Transcript watcher | Ingests session files for tools that have no hooks. | https://docs.claude-mem.ai/architecture/overview | Free | **missing**. No watcher. | T-063 |
-| F-C05 | Secret redaction | Replaces 11 vendor key patterns plus optional generic credentials before storage. | https://docs.claude-mem.ai/usage/auto-redaction | Free | **better**. 14 patterns, redaction always on, not opt-in (`src/hub/capture.mjs:8-24`). | — |
+| F-C05 | Secret redaction | Replaces 12 vendor key patterns plus optional generic credentials before storage. | https://docs.claude-mem.ai/usage/auto-redaction | Free | **better**. 15 patterns, redaction always on, not opt-in (`src/hub/capture.mjs:8-24`). | — |
 | F-C06 | `<private>` tags | Drops any block wrapped in `<private>...</private>` entirely. | https://docs.claude-mem.ai/usage/private-tags | Free | **parity**. Whole block replaced with `[private]` (`src/hub/capture.mjs:24`). | — |
 | F-C07 | Excluded projects | Skips capture for named checkouts. | https://docs.claude-mem.ai/configuration | Free | **missing**. No exclusion setting (`src/config.mjs`). | T-016 |
 | F-C08 | Skip rules | Skips named tools, Bash patterns and subagent types. | https://docs.claude-mem.ai/configuration | Free | **partial**. Fixed skip set for noisy tools only (`src/hub/capture.mjs:33`). | T-059 |
@@ -179,7 +179,7 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | F-T05 | Free self-hosted sharing | Shares a bundle or a server with a team without a vendor account. | Not in claude-mem docs (this project's plan) | Free | **partial**. Bundle export/import works; no shared server (`src/hub/store.mjs:431`). | T-096 |
 | F-T06 | Review queue | Proposes shared memories for approval. | https://docs.claude-mem.ai/usage/teambrain | Paid upstream | **missing**. | T-094 |
 | F-T07 | Device identity | Keeps a stable device id for sync. | https://docs.claude-mem.ai/cloud-sync | Paid | **missing**. | T-095 |
-| F-T08 | Data export for deletion | Exports and deletes everything on request. | https://docs.claude-mem.ai/hosted-server | Paid upstream | **parity**. Bundle export and delete exist (`src/hub/store.mjs:431,178`); no single "delete everything" command. | T-091 |
+| F-T08 | Data export for deletion | Exports and deletes everything on request. | https://docs.claude-mem.ai/hosted-server | Paid upstream | **partial**. Bundle export and per-item delete exist (`src/hub/store.mjs:431,178`); there is no single "delete everything" command. | T-091 |
 
 ## 20.9 Operations and evaluation
 
@@ -236,8 +236,8 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 
 | Status | Rows |
 |---|---:|
-| parity | 25 |
-| partial | 40 |
+| parity | 24 |
+| partial | 41 |
 | missing | 79 |
 | better | 12 |
 | out-of-scope | 6 |

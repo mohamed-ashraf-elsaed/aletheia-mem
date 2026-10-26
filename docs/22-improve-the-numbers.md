@@ -166,7 +166,7 @@ commands that already exist are marked `[exists]`.
 - **Task:** T-049. **Rank:** 9. **Cost:** medium (new index, recall/latency trade-off sweep).
 - **Hypothesis:** brute-force cosine stops being viable past a few hundred thousand vectors; HNSW or int8 scalar
   quantisation keeps p95 under the target with a small recall loss.
-- **Expected gain:** HNSW gives logarithmic-ish search with controllable recall
+- **Expected gain:** HNSW gives approximate nearest-neighbour search with a controllable recall/latency trade-off
   (`arXiv:1603.09320`, abstract). `sqlite-vec` (Apache-2.0) and hnswlib (Apache-2.0) are candidate implementations
   (licences fetched from their repositories). No gain number is claimed for this corpus until measured.
 - **Pass threshold:** p95 ≤ 150 ms at 500k vectors, Recall@5 loss ≤ 1 point versus brute force.

@@ -36,7 +36,7 @@ record their token cost. Stage 12 is derived data and can always be rebuilt from
 |---:|---|---|---|
 | 1 | Index at round level, not whole session | LongMemEval (`arXiv:2410.10813`, abstract): session decomposition for value granularity | One episode per turn or tool step. Whole sessions are a fallback when the tool gives no turn boundaries. |
 | 2 | Keep raw episodes, add derived facts as extra keys | same paper: fact-augmented key expansion raised recall@k by 9.4% and accuracy by 5.4% on average | The episode is the source of truth. A fact points at its episode; deleting the fact never deletes the episode. |
-| 3 | Extract 2-5 comprehensive facts per window, with coreference resolved | Hindsight (`arXiv:2512.12818`, abstract) | The prompt asks for resolved subjects ("the auth service", not "it") and absolute dates. |
+| 3 | Extract 2-5 comprehensive facts per extraction window, with coreference resolved | Hindsight (`arXiv:2512.12818`, abstract) | The prompt asks for resolved subjects ("the auth service", not "it") and absolute dates. |
 | 4 | Treat time as data: valid time and record time | Zep/Graphiti (`arXiv:2501.13956`, abstract): temporally aware graph, historical relationships | `valid_from`, `valid_to`, `recorded_at`; a contradicted fact gets `valid_to`, not a delete. |
 | 5 | Extract, consolidate and update memories | Mem0 (`arXiv:2504.19413`, abstract) | Extraction is not enough; new information must update or retire old information. |
 | 6 | Keep four kinds of memory separate: episodes, facts, entity summaries, beliefs | Hindsight (abstract): four logical networks | Different tables, different retention and ranking rules. Do not collapse them into one text blob. |
@@ -242,7 +242,7 @@ tool-specific adapters are T-059 through T-068.
 Order matters:
 
 1. Drop `<private>...</private>` blocks completely.
-2. Apply vendor patterns (14 in `src/hub/capture.mjs:8-22`).
+2. Apply vendor patterns (15 in `src/hub/capture.mjs:8-22`).
 3. Apply generic credential patterns (`password=`, `token=`, `Authorization: Bearer`).
 4. Re-scan the final string; if a pattern still matches, store `[redaction-failed]` and log the pattern name, not the
    value.
@@ -314,7 +314,7 @@ Rules:
 The extractor receives: the round text, the project name, the tool name, the timestamp, and the current active facts
 for the entities mentioned (top 20 by similarity). It never receives the whole database.
 
-Why 2-5: Hindsight's retain stage extracts 2 to 5 comprehensive facts per conversation (`arXiv:2512.12818`, abstract).
+Why 2-5: Hindsight's retain stage extracts 2 to 5 comprehensive facts per conversation (`arXiv:2512.12818`, full text).
 Why coreference and absolute time: the same abstract names coreference resolution and temporal normalisation.
 
 ### 23.5.3 Entity extraction and alias resolution

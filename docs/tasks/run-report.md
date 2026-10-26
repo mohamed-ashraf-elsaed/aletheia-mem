@@ -12,11 +12,11 @@ change `src/`, `bin/`, `public/`, `public-hub/`, `test/` or `bench/`.
 | Experiments in [22](../22-improve-the-numbers.md) | **18** (E01-E18) |
 | Tasks in [TASKS.md](TASKS.md) | **98** |
 | Tasks by phase | P0 16, P1 19, P2 22, P3 21, P4 12, P5 8 |
-| Unique URLs in the research log | 264 |
+| Unique URLs in the research log | 267 |
 | URLs in documents 20-24 not in the research log | **0** |
 | `UNVERIFIED` items listed | 36 numbered items + 13 matrix cells |
 
-Feature status spread: parity 25, partial 40, missing 79, better 12, out-of-scope 6, unverified 1.
+Feature status spread: parity 24, partial 41, missing 79, better 12, out-of-scope 6, unverified 1.
 
 ## 2. Test suite
 

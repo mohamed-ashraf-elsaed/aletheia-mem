@@ -108,7 +108,7 @@ Registry data, same date:
 | LangMem | None. | A library, not a product: no MCP, no capture, no CLI; native store assumes LangGraph (`README.md`). | Ship the whole loop: capture, store, retrieve, rules, migrate, UI. |
 | Memori | Benchmark image links to `memorilabs.ai/benchmark`; no number in the README text (`vendor-claimed`). | Enterprise-shaped Python infrastructure; no coding-tool hook story beyond OpenClaw. | Free local default, no account, honest benchmark with a command. |
 | Basic Memory | None in the README. | AGPL-3.0 restricts some corporate use; Markdown files are readable but the index is a second layer (`README.md`). | Apache-2.0; one SQLite store; export is optional, not the storage model. |
-| Hindsight | Paper claims state-of-the-art long-term memory (`arXiv:2512.12818` abstract; exact scores were not in the fetched abstract). | Self-host needs Docker and Postgres; the cloud is the easier path (`README.md`). | No Postgres, no Docker requirement; a 2 ms search path measured on the same machine. |
+| Hindsight | LongMemEval 39% → 83.6% with a 20B open model, 91.4% with a larger backbone; LoCoMo up to 89.61% versus 75.78% for the strongest prior open system (`arXiv:2512.12818`, full text, **vendor-authored**; conditions as stated in the paper). | Self-host needs Docker and Postgres; the cloud is the easier path (`README.md`). | No Postgres, no Docker requirement; a 2 ms search path measured on the same machine. |
 | MemMachine | None. | Neo4j plus SQL; a server to run (`README.md`). | One file, one process. |
 | Memvid | "+35% SOTA on LoCoMo", "+76% multi-hop, +56% temporal vs industry average" (`README.md`, **vendor-claimed**; baseline not named). | Last commit 2026-07-14; the file format is the product, so multi-tool rules and live capture are out of scope (`README.md`). | Capture and rules are first-class, not an SDK the user must wire. |
 | Memobase | None. | README missing on the default branch; last commit 2026-01-11. | Maintained, documented, testable. |
@@ -273,7 +273,7 @@ reasoning, team sync, or Windows support. None is true today.
 - 42 rows: 36 GitHub projects and 6 proprietary/vendor memory surfaces (ChatGPT, Claude memory tool, Cursor, Gemini, Windsurf, Copilot).
 - All 36 GitHub projects have metadata fetched in this run; the 6 vendor products have no repository.
 - 35 of the 36 GitHub projects have a usable README; Memobase's default-branch README returned 404.
-- 10 projects publish a benchmark number in the fetched text; **all 10 are vendor-claimed**.
+- 11 projects publish a benchmark number in the fetched text; **all 11 are vendor-claimed**.
 - Confidence is high for licence, language, stars and last commit (API data). It is medium for storage and
   retrieval (README prose, not source code). It is low for proprietary products whose docs could not be fetched;
   those cells say `UNVERIFIED` on purpose.
