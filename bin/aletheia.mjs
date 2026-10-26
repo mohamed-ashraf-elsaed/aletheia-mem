@@ -41,6 +41,9 @@
 //   aletheia service install|uninstall|status [--write] [--cpu-quota X] [--memory-max Y]
 //                                                          auto-start unit/plist (dry-run by default; Linux/macOS only)
 //   aletheia audit [--limit n]                          read the sync audit log
+//   aletheia erase [--project p | --id 12,fact:3 | --before DATE] [--apply] [--export file] [--receipt file]
+//                                                          report first; --apply exports, erases and signs a receipt
+//   aletheia erase verify <receipt.json>                  check a receipt's HMAC
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
@@ -299,6 +302,61 @@ async function main() {
           return out(runServiceCommand({ config, flags, pos }));
         } catch (error) {
           return die(error.message);
+        }
+      }
+      case "erase": {
+        const { applyErase, erasePlan, formatEraseReport, loadEraseKey, readReceipt, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } = await import("../src/hub/erasure.mjs");
+        if (pos[0] === "verify") {
+          const file = pos[1] ?? (typeof flags.receipt === "string" ? flags.receipt : null);
+          if (!file) return die("Usage: aletheia erase verify <receipt.json>");
+          const key = loadEraseKey(config.erasureKey, { create: false });
+          const result = verifyReceipt(readReceipt(file), key);
+          out(result.ok ? `ok ${file}` : `FAIL ${result.reason}`);
+          if (!result.ok) process.exitCode = 1;
+          return;
+        }
+        let before = null;
+        if (flags.before) {
+          before = Date.parse(String(flags.before));
+          if (!Number.isFinite(before)) return die("--before needs a date, for example 2026-01-31.");
+        }
+        const idValues = flags.id == null ? [] : String(flags.id).split(",").map((value) => value.trim()).filter(Boolean);
+        const plan = erasePlan(hub, { project: typeof flags.project === "string" ? flags.project : null, ids: idValues, before });
+        out(formatEraseReport(plan));
+        if (!flags.apply) return out("Report only. Add --apply to erase.");
+        if (!plan.counts.memories && !plan.counts.observations && !plan.counts.episodes && !plan.counts.facts) {
+          return out("Nothing matched; no export, no receipt, nothing deleted.");
+        }
+        const { SyncClient } = await import("../src/hub/sync/client.mjs");
+        const { SyncStore } = await import("../src/hub/sync/store.mjs");
+        const { TeamStore } = await import("../src/hub/team.mjs");
+        let syncStore = null;
+        let syncClient = null;
+        let teamStore = null;
+        if (existsSync(config.syncDb)) syncStore = new SyncStore(config.syncDb);
+        if (existsSync(config.syncClientDb)) syncClient = new SyncClient(config.syncClientDb);
+        if (existsSync(config.teamDb)) teamStore = new TeamStore(config.teamDb);
+        try {
+          const exportPath = typeof flags.export === "string" ? flags.export : join(config.erasureExportDir, `erase-${receiptId()}.jsonl`);
+          writePreEraseExport(hub, { path: exportPath, project: plan.scope.project });
+          out(`Pre-erase export: ${exportPath}`);
+          const result = applyErase(hub, plan, {
+            syncStore,
+            syncClient,
+            accountId: syncStore?.ensureAccount().id ?? null,
+            teamStore,
+            project: plan.scope.project,
+          });
+          const receipt = signReceipt(plan, { key: loadEraseKey(config.erasureKey), exports: [exportPath] });
+          const receiptPath = typeof flags.receipt === "string" ? flags.receipt : join(config.erasureReceiptDir, `${receipt.id}.json`);
+          writeReceipt(receipt, receiptPath);
+          out(`Erased ${JSON.stringify(result.counts)}; sync entities purged ${result.sync.entities}, local sync rows ${result.sync.localRows}.`);
+          out(`Receipt: ${receiptPath}\nVerify: aletheia erase verify ${receiptPath}`);
+          return;
+        } finally {
+          syncClient?.close();
+          syncStore?.close();
+          teamStore?.close();
         }
       }
       case "audit": {

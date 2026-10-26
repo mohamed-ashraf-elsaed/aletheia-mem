@@ -17,6 +17,7 @@ import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "./t
 import { sessionDetail, workOverview } from "./work.mjs";
 import { goalAction, proposeGoals } from "./goals.mjs";
 import { SyncStore } from "./sync/store.mjs";
+import { applyErase, erasePlan, loadEraseKey, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } from "./erasure.mjs";
 import { teamRequest } from "./team-api.mjs";
 import { TeamStore } from "./team.mjs";
 
@@ -225,6 +226,44 @@ export function createHubRoutes({ hub, config, liveHub = null }) {
         operator: true,
       });
       return result ? h.json(result.body, result.status) : h.json({ error: "Not found." }, 404);
+    }
+
+    // ---- T-113: erasure report, apply and receipt verification for the local UI/admin session ----
+    if (pathname === "/api/hub/erasure/report" && method === "POST") {
+      const b = await readJson(request);
+      const before = b.before == null ? null : typeof b.before === "number" ? b.before : Date.parse(String(b.before));
+      need(before == null || Number.isFinite(before), "before must be a date or an epoch.");
+      const plan = erasePlan(hub, { project: b.project ?? null, ids: Array.isArray(b.ids) ? b.ids : b.id == null ? [] : [b.id], before });
+      return h.json({ plan });
+    }
+    if (pathname === "/api/hub/erasure/apply" && method === "POST") {
+      const b = await readJson(request);
+      const before = b.before == null ? null : typeof b.before === "number" ? b.before : Date.parse(String(b.before));
+      need(before == null || Number.isFinite(before), "before must be a date or an epoch.");
+      const plan = erasePlan(hub, { project: b.project ?? null, ids: Array.isArray(b.ids) ? b.ids : b.id == null ? [] : [b.id], before });
+      if (!plan.counts.memories && !plan.counts.observations && !plan.counts.episodes && !plan.counts.facts) {
+        return h.json({ plan, erased: false, note: "Nothing matched; no export and no receipt." });
+      }
+      const exportPath = typeof b.export_path === "string" && b.export_path ? b.export_path : join(config.erasureExportDir, `erase-${receiptId()}.jsonl`);
+      writePreEraseExport(hub, { path: exportPath, project: plan.scope.project });
+      const sync = getSyncStore();
+      const result = applyErase(hub, plan, {
+        syncStore: sync,
+        accountId: sync.ensureAccount().id,
+        teamStore: existsSync(config.teamDb) ? getTeamStore() : null,
+        project: plan.scope.project,
+      });
+      const receipt = signReceipt(plan, { key: loadEraseKey(config.erasureKey), exports: [exportPath] });
+      const receiptPath = typeof b.receipt_path === "string" && b.receipt_path ? b.receipt_path : join(config.erasureReceiptDir, `${receipt.id}.json`);
+      writeReceipt(receipt, receiptPath);
+      return h.json({ erased: true, plan, sync: result.sync, exportPath, receiptPath, receipt });
+    }
+    if (pathname === "/api/hub/erasure/verify" && method === "POST") {
+      const b = await readJson(request);
+      need(b && b.receipt && typeof b.receipt === "object", "receipt (the JSON object) is required.");
+      const key = loadEraseKey(config.erasureKey, { create: false });
+      const result = verifyReceipt(b.receipt, key);
+      return h.json(result, result.ok ? 200 : 400);
     }
 
     // ================= /v1: the universal API (what any tool, script or MCP bridge calls) =================

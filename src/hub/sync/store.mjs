@@ -389,6 +389,33 @@ export class SyncStore {
   }
 
   /**
+   * Erasure (T-113): the live entity ids whose plaintext head payload names this project or these ids. An E2EE
+   * head cannot be matched here; the caller must pass explicit entity ids for an encrypted account.
+   */
+  findEntities({ project = null, ids = [] } = {}) {
+    const wanted = new Set(ids.map(String));
+    const rows = this.db.prepare("SELECT entity_id, entity_type, payload FROM sync_head WHERE payload IS NOT NULL AND deleted = 0").all();
+    const out = [];
+    for (const row of rows) {
+      let payload;
+      try {
+        payload = JSON.parse(row.payload);
+      } catch {
+        continue;
+      }
+      if (!payload || typeof payload !== "object" || payload["@e2ee"]) continue;
+      if (project != null && payload.project === project) {
+        out.push({ entityId: row.entity_id, entityType: row.entity_type });
+        continue;
+      }
+      if (!wanted.size) continue;
+      const candidates = [payload.id, payload.memoryId, payload.memory_id, payload.factId, payload.fact_id, payload.observationId];
+      if (candidates.some((value) => value != null && wanted.has(String(value)))) out.push({ entityId: row.entity_id, entityType: row.entity_type });
+    }
+    return out;
+  }
+
+  /**
    * Compaction: drop op bodies older than `retentionMs` that every non-revoked device has acked past
    * and that a newer head op superseded. The head op body is kept so snapshot recovery still works.
    */
@@ -424,12 +451,14 @@ export class SyncStore {
     this.db.exec("BEGIN IMMEDIATE");
     try {
       this.db.prepare("UPDATE sync_op SET body = '' WHERE account_id = ? AND entity_id = ?").run(Number(accountId), entityId);
-      const tombstone = { device_id: "server", seq: 0, hlc: Number(head.hlc) + 1, entity_type: head.entity_type, entity_id: entityId, op: "delete", payload: null, supersedes: null, content_hash: null };
-      tombstone.content_hash = computeContentHash(tombstone);
       headSeq += 1;
+      // The server tombstone needs its own device sequence: every purged entity gets one, and a shared seq would
+      // collide on the client's (device_id, seq) key and on the hub's unique index.
+      const tombstone = { device_id: "server", seq: headSeq, hlc: Number(head.hlc) + 1, entity_type: head.entity_type, entity_id: entityId, op: "delete", payload: null, supersedes: null, content_hash: null };
+      tombstone.content_hash = computeContentHash(tombstone);
       this.db.prepare("INSERT INTO sync_op (account_id, seq, epoch, entity_id, entity_type, kind, device_id, device_seq, hlc, content_hash, body, deleted, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)")
-        .run(Number(accountId), headSeq, account.epoch, entityId, head.entity_type, "delete", "server", 0, tombstone.hlc, tombstone.content_hash, stableStringify(tombstone), 1, Date.now());
-      this.db.prepare("UPDATE sync_head SET kind='delete', hlc=?, device_id='server', content_hash=?, deleted=1, seq=?, supersedes=? WHERE account_id = ? AND entity_id = ?")
+        .run(Number(accountId), headSeq, account.epoch, entityId, head.entity_type, "delete", "server", headSeq, tombstone.hlc, tombstone.content_hash, stableStringify(tombstone), 1, Date.now());
+      this.db.prepare("UPDATE sync_head SET kind='delete', hlc=?, device_id='server', content_hash=?, deleted=1, seq=?, supersedes=?, payload=NULL WHERE account_id = ? AND entity_id = ?")
         .run(tombstone.hlc, tombstone.content_hash, headSeq, head.supersedes, Number(accountId), entityId);
       this.db.prepare("UPDATE sync_account SET head_seq = ? WHERE id = ?").run(headSeq, Number(accountId));
       this.db.exec("COMMIT");

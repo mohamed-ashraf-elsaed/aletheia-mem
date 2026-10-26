@@ -32,6 +32,12 @@ Every ACL check is in the store, and a viewer, a cross-project read, a revoked m
 tested. Not built: SSO, SCIM, compliance claims and server-readable team memory under E2EE. See
 [31-team.md](31-team.md) and `test/team-mode.test.mjs`.
 
+Status update, 2026-10-26 (erasure): T-113 is `validated`. F14 is built for the local store, the device
+replica/outbox and the sync hub: a report first, `--apply` exports a bundle, deletes the rows (with FTS, vectors,
+keys, links, dismissals and review rows), asks the hub for a T-103 purge and writes an HMAC-SHA256 receipt that
+lists counts and ids but never content. `aletheia erase verify` checks a receipt. An offline device's copy and
+a compromised server are not covered; see [03-http-api.md](03-http-api.md#35-erasure-t-113).
+
 ## Decision
 
 The owner decided on 2026-10-26 that every feature claude-mem, and any rival, sells in a paid tier is built into Aletheia

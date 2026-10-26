@@ -153,7 +153,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-110 | Add remote login for the Hub | P6 | T-104 | validated | 2026-10-26 | [T-110.md](T-110.md) |
 | T-111 | Add an OAuth connector for ChatGPT and Claude.ai | P6 | T-107, T-110 | todo | — | [T-111.md](T-111.md) |
 | T-112 | Add team mode: shared memory, board, brief and search | P6 | T-102, T-103, T-104, T-108 | validated | 2026-10-26 | [T-112.md](T-112.md) |
-| T-113 | Add purge, export and an erasure receipt | P6 | T-103 | todo | — | [T-113.md](T-113.md) |
+| T-113 | Add purge, export and an erasure receipt | P6 | T-103 | validated | 2026-10-26 | [T-113.md](T-113.md) |
 | T-114 | Add alert rules and webhooks | P6 | T-108 | todo | — | [T-114.md](T-114.md) |
 | T-115 | Add OIDC, SCIM, RBAC and DLP rules | P6 | T-110, T-108, T-112 | todo | — | [T-115.md](T-115.md) |
 | T-116 | Run My Work setup extraction on the user's own server | P6 | T-106 | todo | — | [T-116.md](T-116.md) |

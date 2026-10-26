@@ -168,3 +168,26 @@ unknown team, member or project; `400` for a duplicate team name, the last owner
 The store check is the gate: `TeamStore.authorize()` runs for the HTTP route, the CLI and a direct store call.
 A route cannot bypass it, and a test calls the store directly to prove that.
 
+## 3.5 Erasure (T-113)
+
+These routes are the guarded local UI/admin path. The CLI is `aletheia erase ...`; both call the same modules.
+
+| Route | Method | What |
+|---|---|---|
+| `/api/hub/erasure/report` | POST | `{project?, ids?: ["memory:12"], before?}` returns `{plan}` with counts and ids. Reads only; deletes nothing. |
+| `/api/hub/erasure/apply` | POST | the same selector plus optional `export_path` and `receipt_path`; writes a pre-erase bundle, deletes the rows, purges the matching sync entities and writes an HMAC-signed receipt |
+| `/api/hub/erasure/verify` | POST | `{receipt: <object>}`; `200 {ok:true}` or `400 {ok:false, reason}` |
+
+`before` is an epoch or an ISO date and means `created_at_epoch < before`. `ids` accepts `12` (memory #12) or
+`memory:12`, `fact:12`, `observation:12`, `episode:12`. A plan follows provenance: a memory's episode, its
+observation, the facts on that observation/episode, and the summaries, keys, links, dismissals and review rows
+that point at them. `apply` removes the hub rows and their FTS entries, the vectors, the device replica/outbox
+when one is local, and asks the sync store for a T-103 purge, which drops every op body and leaves a tombstone
+with a null payload. The receipt records counts and ids, never text; it is signed with
+`HMAC-SHA256` over the key-sorted body with the local key at `~/.aletheia/erasure.key` (mode 0600).
+
+An erasure of an offline device's copy is not possible from here: revoke its token and wipe the device. An
+E2EE account cannot be matched by project or content id, so pass the entity ids explicitly or purge on the
+device that holds the key.
+
+
