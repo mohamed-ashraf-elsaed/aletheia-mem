@@ -27,15 +27,50 @@ to claude-mem's database.
 
 ## How it compares (measured, not claimed)
 
-On LoCoMo (1,536 questions), claude-mem 15.2.0 as shipped vs this project, retrieval only ([full tables and caveats](docs/14-research-ai-memory.md#146-measured-results)):
+On LoCoMo, claude-mem 15.2.0 as shipped vs this project, retrieval only
+([full tables and caveats](docs/14-research-ai-memory.md#146-measured-results)):
 
-| | claude-mem | this project |
-|---|---|---|
-| Recall@5, raw turns | 36.0% | 57.5% (1.6×) |
-| Recall@5, both given the same extracted facts (383 questions) | 57.7% | 67.6%, or 73.7% with reranking (1.17× to 1.28×) |
-| Search latency, idle | p50 1,699 ms | 2 to 6 ms (350 ms with reranking) |
+<!-- gen:bench -->
+| Run | Questions | Recall@5 | MRR | ms/query |
+|---|---|---|---|---|
+| claude-mem 15.2.0 (as shipped), raw turns | 1,536 | 36.0% | 0.285 | p50 1,699 ms, p95 2,824 ms (idle, 40 queries) |
+| Raw turns, all 10 conversations | 1,536 | 57.4% | 0.497 | 3.72 |
+| Dataset facts, all 10 | 1,536 | 64.8% | 0.591 | 5.53 |
+| Dataset facts, 3 conversations | 383 | 67.4% | 0.620 | 5.80 |
+| Dataset facts, 3 conversations, + rerank | 383 | 73.9% | 0.686 | 251.16 |
+| Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
+| Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
-So the retrieval gap is real but **not 2×** when inputs are equal; the speed gap is two to three orders of magnitude. Answer accuracy (LLM-judged) is not measured yet. The plan to close the rest is in [15](docs/15-product-spec.md), [16](docs/16-target-architecture.md), [17](docs/17-tech-tasks.md), [18](docs/18-benchmark-plan.md).
+_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Generated from bench/results/2026-10-26/ (docs/14 §14.6, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
+<!-- /gen:bench -->
+
+The retrieval gap is real but **not 2×** when both systems get the same extracted facts. Answer accuracy
+(LLM-judged) is **not measured**. The plan to close the rest is in [15](docs/15-product-spec.md),
+[16](docs/16-target-architecture.md), [17](docs/17-tech-tasks.md), [18](docs/18-benchmark-plan.md).
+
+### Capability comparison
+
+<!-- gen:capabilities -->
+| Capability | Aletheia (today) | claude-mem | Mem0 | Zep/Graphiti | Supermemory | Basic Memory |
+|---|---|---|---|---|---|---|
+| Local-first | yes | yes | yes OSS | partial (Graphiti only) | yes self-host | yes |
+| Free | yes | yes OSS | yes OSS | partial (Graphiti free) | yes OSS | yes OSS |
+| No account | yes | yes local | yes OSS | yes Graphiti | yes self-host | yes |
+| MCP | yes stdio + HTTP (T-067, T-107) | yes | yes | partial (reference servers) | yes | yes |
+| REST | yes `/v1` | yes worker API | yes | yes | yes | partial |
+| CLI | yes | yes `npx` | partial | no | partial | yes |
+| Rules sync to tool files | yes 9 targets | no | no | no | no | partial (AGENTS.md) |
+| Import/export between tools | partial (own bundle + claude-mem) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
+| Hook capture | yes six hosts, fixture-tested; no host opened (T-140) | yes | no | no | no | partial |
+| Vector search | partial (optional ONNX) | yes Chroma | yes | yes | yes | yes |
+| Graph / entity memory | partial (entity rows exist; graph retrieval T-048) | no | yes | yes | UNVERIFIED | yes wikilinks |
+| Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query T-026) | partial (dates) | yes | yes | yes | partial |
+| Team sharing | partial (self-hosted sync and devices; team mode T-112) | partial (paid) | yes paid | yes paid | yes paid | no |
+| Benchmark published and reproducible | partial (retrieval yes; answer no) | no | vendor only | vendor only | vendor only | no |
+| Languages supported | 1 (English) | 29 modes, 32 READMEs | SDK | SDK | SDK | SDK |
+
+_Generated from docs/28-competitor-report.json (rows copied from docs/21-competitor-landscape.md, fetched 2026-10-26). Aletheia cells updated 2026-10-26 from validated tasks; see docs/20 and docs/25. Cells the source did not state read UNVERIFIED._
+<!-- /gen:capabilities -->
 
 ## Which tools it connects to
 
@@ -50,6 +85,20 @@ writes the instruction file each tool already reads. What has and has not been c
 | Rules files: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursor/rules/*.mdc`, `.windsurf/rules/*.md`, Copilot, Aider | Written and tested in temp folders (`docs/verification/rules-targets.md`) |
 | Any of the above **on a real install of that tool** | **Not tested yet.** Reports welcome. |
 | Automatic capture through a tool's hooks | Built for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf. Each installed hook command is exercised end to end in a temp HOME with a recorded payload; none has been run inside the tool. OpenCode is MCP+rules. |
+
+<!-- gen:tools -->
+| Tool | Level | Verification | Hook events installed |
+|---|---|---|---|
+| claude-code | full | config written from docs, not tested on a real install | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| command-code | full | config written from docs, not tested on a real install | SessionStart, PostToolUse, Stop |
+| cursor | full | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
+| codex | full | config written from docs, not tested on a real install | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| gemini-cli | full | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
+| windsurf | full | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
+| opencode | mcp+rules | config written from docs, not tested on a real install | none (MCP and rules only) |
+
+_Generated from src/hub/install.mjs via `aletheia install --list`. A row says tested on a real install only when that column says so; today none do._
+<!-- /gen:tools -->
 
 ## Quick start
 

@@ -153,18 +153,23 @@ section 21.5.
 | Local-first | ✅ | ✅ | ✅ OSS | partial (Graphiti only) | ✅ self-host | ✅ | ✅ self-host | ✅ | ✅ | ❌ | ❌ |
 | Free | ✅ | ✅ OSS | ✅ OSS | partial (Graphiti free) | ✅ OSS | ✅ OSS | ✅ self-host | ✅ | ✅ | ❌ plan | ❌ plan |
 | No account | ✅ | ✅ local | ✅ OSS | ✅ Graphiti | ✅ self-host | ✅ | ✅ self-host | ✅ | ✅ | ❌ | ❌ |
-| MCP | ✅ stdio | ✅ | ✅ | partial (reference servers) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| MCP | ✅ stdio + HTTP (T-067, T-107) | ✅ | ✅ | partial (reference servers) | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
 | REST | ✅ `/v1` | ✅ worker API | ✅ | ✅ | ✅ | partial | ✅ | ✅ | ✅ | ❌ | ❌ |
 | CLI | ✅ | ✅ `npx` | partial | ❌ | partial | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
 | Rules sync to tool files | ✅ 9 targets | ❌ | ❌ | ❌ | ❌ | partial (AGENTS.md) | ❌ | partial (setup targets) | partial (hooks) | partial (custom instructions) | ✅ rules |
 | Import/export between tools | partial (own bundle + claude-mem) | partial (export/import) | partial (platform migration) | partial | partial | ✅ Markdown | partial | partial | partial | partial (export) | ❌ |
-| Hook capture | ❌ | ✅ | ❌ | ❌ | ❌ | partial | partial | ✅ | ✅ | ❌ | partial |
+| Hook capture | ✅ six hosts, fixture-tested; no host opened (T-140) | ✅ | ❌ | ❌ | ❌ | partial | partial | ✅ | ✅ | ❌ | partial |
 | Vector search | partial (optional ONNX) | ✅ Chroma | ✅ | ✅ | ✅ | ✅ | ✅ | UNVERIFIED | ✅ | UNVERIFIED | UNVERIFIED |
-| Graph / entity memory | ❌ | ❌ | ✅ | ✅ | UNVERIFIED | ✅ wikilinks | ✅ | partial | ✅ | ❌ | ❌ |
-| Temporal reasoning | ❌ | partial (dates) | ✅ | ✅ | ✅ | partial | ✅ | partial | partial | partial | ❌ |
-| Team sharing | ❌ | partial (paid) | ✅ paid | ✅ paid | ✅ paid | ❌ | ✅ paid | partial (cloud) | UNVERIFIED | partial | partial |
+| Graph / entity memory | partial (entity rows exist; graph retrieval T-048) | ❌ | ✅ | ✅ | UNVERIFIED | ✅ wikilinks | ✅ | partial | ✅ | ❌ | ❌ |
+| Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query T-026) | partial (dates) | ✅ | ✅ | ✅ | partial | ✅ | partial | partial | partial | ❌ |
+| Team sharing | partial (self-hosted sync and devices; team mode T-112) | partial (paid) | ✅ paid | ✅ paid | ✅ paid | ❌ | ✅ paid | partial (cloud) | UNVERIFIED | partial | partial |
 | Benchmark published and reproducible | partial (retrieval yes; answer no) | ❌ | vendor only | vendor only | vendor only | ❌ | vendor paper | ❌ | vendor claim | ❌ | ❌ |
 | Languages supported | 1 (English) | 29 modes, 32 READMEs | SDK | SDK | SDK | SDK | SDK | SDK | SDK | many (product) | many (product) |
+
+Aletheia column corrected 2026-10-26 after later tasks were validated: MCP over HTTP (T-067, T-107),
+hook capture for six hosts (T-140), entity rows (T-021), bi-temporal facts and invalidation (T-024, T-025,
+T-027), and self-hosted sync plus devices (T-102 to T-108). "Team sharing" stays partial because team mode
+(T-112) is not built. The competitor columns are unchanged.
 
 Column sources: Aletheia — this repository (`src/hub/*.mjs`, `README.md`); claude-mem —
 `https://docs.claude-mem.ai/platform-integration` and `README.md`; Mem0 — `README.md` and

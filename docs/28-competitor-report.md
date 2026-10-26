@@ -88,24 +88,30 @@ in [22](22-improve-the-numbers.md).
 
 ## 5. Capability comparison
 
-Today, from the repo. Full per-product matrix with sources: the JSON file and docs/21 (section "comparison table").
+Generated from [28-competitor-report.json](28-competitor-report.json); full per-product matrix with sources in
+[docs/21](21-competitor-landscape.md), section "comparison table".
 
-| Capability | Aletheia | claude-mem | Notes |
-|---|---|---|---|
-| Local first, no account | yes | yes (cloud is optional) | both |
-| Free, all features | yes | no: sync and hosted observation are paid | cmem.ai/pricing, 2026-10-26 |
-| MCP server | yes, stdio only | yes | HTTP transport planned (T-067) |
-| REST API | yes (`/v1`) | yes | contract tests planned (T-005) |
-| Rules sync into other tools' files | yes, 9 formats | no | A3: no memory tool does this |
-| Import and export between tools | bundle plus claude-mem import | partial | |
-| Automatic hook capture | Claude Code (smoke-tested), Command Code (not run live) | 9 harnesses | our gap |
-| Vector search | yes, optional local ONNX | yes (Chroma) | |
-| Facts, contradictions, time | yes, synthetic tests only | observations | quality unmeasured on real data |
-| Graph or entity memory | partial (rows exist) | no | T-021, T-097 |
-| Team sharing | export bundles only | paid pilot | planned T-112 |
-| Cross-device sync | no | paid | planned T-102 |
-| Reproducible published benchmark | yes (retrieval) | no | accuracy not measured |
-| Languages | English | 32 translated READMEs | T-088, T-089 |
+<!-- gen:capabilities -->
+| Capability | Aletheia (today) | claude-mem | Mem0 | Zep/Graphiti | Supermemory | Basic Memory |
+|---|---|---|---|---|---|---|
+| Local-first | yes | yes | yes OSS | partial (Graphiti only) | yes self-host | yes |
+| Free | yes | yes OSS | yes OSS | partial (Graphiti free) | yes OSS | yes OSS |
+| No account | yes | yes local | yes OSS | yes Graphiti | yes self-host | yes |
+| MCP | yes stdio + HTTP (T-067, T-107) | yes | yes | partial (reference servers) | yes | yes |
+| REST | yes `/v1` | yes worker API | yes | yes | yes | partial |
+| CLI | yes | yes `npx` | partial | no | partial | yes |
+| Rules sync to tool files | yes 9 targets | no | no | no | no | partial (AGENTS.md) |
+| Import/export between tools | partial (own bundle + claude-mem) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
+| Hook capture | yes six hosts, fixture-tested; no host opened (T-140) | yes | no | no | no | partial |
+| Vector search | partial (optional ONNX) | yes Chroma | yes | yes | yes | yes |
+| Graph / entity memory | partial (entity rows exist; graph retrieval T-048) | no | yes | yes | UNVERIFIED | yes wikilinks |
+| Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query T-026) | partial (dates) | yes | yes | yes | partial |
+| Team sharing | partial (self-hosted sync and devices; team mode T-112) | partial (paid) | yes paid | yes paid | yes paid | no |
+| Benchmark published and reproducible | partial (retrieval yes; answer no) | no | vendor only | vendor only | vendor only | no |
+| Languages supported | 1 (English) | 29 modes, 32 READMEs | SDK | SDK | SDK | SDK |
+
+_Generated from docs/28-competitor-report.json (rows copied from docs/21-competitor-landscape.md, fetched 2026-10-26). Aletheia cells updated 2026-10-26 from validated tasks; see docs/20 and docs/25. Cells the source did not state read UNVERIFIED._
+<!-- /gen:capabilities -->
 
 ## 6. Pricing and licences (dated 2026-10-26)
 
