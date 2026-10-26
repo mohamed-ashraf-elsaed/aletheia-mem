@@ -109,6 +109,21 @@ function pendingMemories(store, payload, limit = MAX_MEMORIES_PER_JOB) {
     .all(...params, Math.min(Number(limit) || MAX_MEMORIES_PER_JOB, MAX_MEMORIES_PER_JOB));
 }
 
+/**
+ * Episodes that arrived without a memory row: back-filled transcripts (T-121) and any direct episode write.
+ * Memory-derived episodes are excluded here because they are selected through their memory, so a job never
+ * extracts the same turn twice.
+ */
+function pendingEpisodes(store, payload, limit = MAX_MEMORIES_PER_JOB) {
+  const where = ["e.extracted_at_epoch IS NULL", "coalesce(e.text, '') <> ''", "(e.source_ref IS NULL OR e.source_ref NOT LIKE 'memory:%')"];
+  const params = [];
+  if (payload.project) { where.push("e.project = ?"); params.push(payload.project); }
+  if (payload.sessionId) { where.push("e.session_id = ?"); params.push(payload.sessionId); }
+  return store.db
+    .prepare(`SELECT e.* FROM episodes e WHERE ${where.join(" AND ")} ORDER BY e.id LIMIT ?`)
+    .all(...params, Math.min(Number(limit) || MAX_MEMORIES_PER_JOB, MAX_MEMORIES_PER_JOB));
+}
+
 function markExtracted(store, episodeIds, at) {
   const update = store.db.prepare("UPDATE episodes SET extracted_at_epoch = ? WHERE id = ?");
   for (const id of episodeIds) update.run(at, Number(id));
@@ -121,8 +136,11 @@ function markExtracted(store, episodeIds, at) {
 export async function executeJob(store, job, { ask = null, config = {}, now = () => Date.now(), batchSize = null, charBudget = null, modeInstruction = "", prices = null, embedder = null } = {}) {
   const payload = JSON.parse(job.payload ?? "{}");
   const memories = pendingMemories(store, payload);
-  if (!memories.length) return { memories: 0, windows: 0, facts: 0, rejected: 0, mode: ask ? "provider" : "rules" };
-  const episodes = memories.map((memory) => store.ensureEpisodeForMemory(memory));
+  const memoryEpisodes = memories.map((memory) => store.ensureEpisodeForMemory(memory));
+  const known = new Set(memoryEpisodes.map((episode) => episode.id));
+  const standalone = pendingEpisodes(store, payload).filter((episode) => !known.has(episode.id));
+  const episodes = [...memoryEpisodes, ...standalone];
+  if (!episodes.length) return { memories: 0, episodes: 0, windows: 0, facts: 0, rejected: 0, mode: ask ? "provider" : "rules" };
   const budget = {
     maxEpisodes: batchSize ?? config.factBudget?.maxEpisodes ?? 20,
     maxChars: charBudget ?? config.factBudget?.maxChars ?? 12_000,
@@ -130,6 +148,7 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
   const windows = chunkEpisodes(episodes.map((episode) => ({ episodeId: episode.id, text: episode.text, createdAtEpoch: episode.created_at_epoch, tool: episode.tool, kind: episode.kind })), budget);
   const model = ask ? ask.modelFor?.("extract") || modelFor(config, "extract") || "unknown" : "rules";
   const instruction = modeInstruction || modeInstructionFor(config.mode ?? "code");
+  const language = store.outputLanguage(payload.project ?? "default", config.outputLanguage ?? "");
   const priceTable = prices ?? pricesFrom(config);
   let facts = 0;
   let deduped = 0;
@@ -139,7 +158,7 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
 
   for (const [index, window] of windows.entries()) {
     const result = await extractWithUsage(store, {
-      window, project: payload.project ?? "default", ask, modeInstruction: instruction,
+      window, project: payload.project ?? "default", ask, modeInstruction: instruction, outputLanguage: language,
       model, batchId: `${job.id}:${index}`, prices: priceTable, now: now(),
     });
     if (result.rejected) {
@@ -178,7 +197,7 @@ export async function executeJob(store, job, { ask = null, config = {}, now = ()
       store.audit("extract", "embed.error", { message: String(error instanceof Error ? error.message : error).slice(0, 300) });
     }
   }
-  return { memories: memories.length, windows: windows.length, facts, deduped, rejected, mode, startedAt, merged: observations.merged, summaries, embedded };
+  return { memories: memories.length, episodes: episodes.length, windows: windows.length, facts, deduped, rejected, mode, language, startedAt, merged: observations.merged, summaries, embedded };
 }
 
 /**

@@ -2,6 +2,10 @@
 
 Date of research: 2026-10-26. Status: plan. Nothing in this file is built yet unless a task says `validated`.
 
+Status update, 2026-10-26: T-119 (provider presets and fallback), T-120 (output language), T-121 (transcript
+back-fill), T-122 (no project-folder writes) and T-123 (reversible dismiss) are `validated`; so are the one-UI tasks
+T-134 to T-139. The rest of the table is still planned. See [tasks/TASKS.md](tasks/TASKS.md).
+
 ## Decision
 
 The owner decided on 2026-10-26 that every feature claude-mem, and any rival, sells in a paid tier is built into Aletheia

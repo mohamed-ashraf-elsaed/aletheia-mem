@@ -9,6 +9,9 @@ import { healthReport } from "./health.mjs";
 import { projectKeyForPath } from "../readmodel/project.mjs";
 import { compressRecent } from "./compress.mjs";
 import { importClaudeMem } from "./importers.mjs";
+import { nearDuplicates } from "./dedupe.mjs";
+import { INSTALLERS, doctor } from "./install.mjs";
+import { spoolPath, spoolRead } from "./hooks/shared.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "./rules-sync.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "./tools.mjs";
 
@@ -50,6 +53,92 @@ export function createHubRoutes({ hub, config }) {
     return { ...b, tool: b.tool ?? tool ?? "api", narrative: b.narrative ?? b.text, sessionId: b.sessionId ?? b.session_id };
   };
 
+  const iso = (epoch) => (Number.isFinite(epoch) ? new Date(epoch).toISOString() : null);
+  const pairKeyOf = (a, b) => (Number(a) < Number(b) ? `${Number(a)}:${Number(b)}` : `${Number(b)}:${Number(a)}`);
+  const dismissedPairs = () => new Set(hub.setting("review.pairs.dismissed", []));
+
+  /** One review_queue row with the thing it points at. Unknown types stay as a reason and an id. */
+  function reviewItemView(row) {
+    const base = { id: row.id, type: row.item_type, itemId: row.item_id, reason: row.reason, status: row.status, proposedBy: row.proposed_by, createdAt: iso(row.created_at_epoch) };
+    try {
+      if (row.item_type === "fact") {
+        const fact = hub.getFact(row.item_id);
+        if (fact) return { ...base, text: fact.text, project: fact.project, factStatus: fact.status, confidence: fact.confidence };
+      }
+      if (row.item_type === "rule") {
+        const rule = hub.db.prepare("SELECT * FROM rule_suggestions WHERE id = ?").get(row.item_id);
+        if (rule) return { ...base, text: rule.text, project: rule.project, confidence: rule.confidence, suggestionStatus: rule.status };
+      }
+      if (row.item_type === "entity") {
+        const entity = hub.db.prepare("SELECT * FROM entities WHERE id = ?").get(row.item_id);
+        if (entity) {
+          const aliases = hub.db.prepare("SELECT alias, confidence FROM entity_aliases WHERE entity_id = ? ORDER BY confidence DESC").all(entity.id);
+          return { ...base, name: entity.name, canonicalName: entity.canonical_name, entityType: entity.type, project: entity.project, aliases };
+        }
+      }
+    } catch {
+      // a row whose target vanished stays visible with its reason
+    }
+    return base;
+  }
+
+  function doctorEnv(server) {
+    const root = join(import.meta.dir, "..", "..");
+    return {
+      home: config.home,
+      bun: process.execPath,
+      hookScript: join(root, "bin", "aletheia.mjs"),
+      hookRunner: join(config.dataDir, "aletheia.bundle.mjs"),
+      mcpScript: join(root, "bin", "mcp.mjs"),
+      dataDir: config.dataDir,
+      dbPath: config.hubDb,
+      port: server?.port ?? config.port,
+      provider: config.provider,
+      mode: config.mode,
+    };
+  }
+
+  async function doctorData(server) {
+    const env = doctorEnv(server);
+    const detected = new Map(detectTools(config.home).map((tool) => [tool.id, tool]));
+    const spoolItems = spoolRead(config.dataDir);
+    const spoolBytes = existsSync(spoolPath(config.dataDir)) ? statSync(spoolPath(config.dataDir)).size : 0;
+    const tools = INSTALLERS.map((installer) => {
+      const expected = installer.expectedHooks(env);
+      let present = 0;
+      let error = null;
+      try {
+        const doc = existsSync(expected.file) ? JSON.parse(readFileSync(expected.file, "utf8")) : {};
+        const handlers = Object.values(doc.hooks ?? {}).flatMap((definitions) => (Array.isArray(definitions) ? definitions : []).flatMap((definition) => definition?.hooks ?? []));
+        present = Object.values(expected.commands).filter((command) => handlers.some((handler) => handler?.command === command)).length;
+      } catch (failure) {
+        error = `cannot read ${expected.file}: ${failure instanceof Error ? failure.message : String(failure)}`;
+      }
+      const last = hub.db.prepare("SELECT MAX(created_at_epoch) AS at FROM memories WHERE tool = ?").get(installer.id)?.at ?? null;
+      return {
+        id: installer.id,
+        name: installer.name,
+        installed: !!detected.get(installer.id)?.installed,
+        hooks: { file: expected.file, present, expected: Object.keys(expected.commands).length, events: Object.keys(expected.commands), commands: expected.commands, error },
+        lastCapture: iso(last),
+        spool: { items: spoolItems.length, bytes: spoolBytes, path: spoolPath(config.dataDir) },
+        commands: {
+          install: `aletheia install ${installer.id} --write`,
+          uninstall: `aletheia uninstall ${installer.id} --write`,
+          doctor: "aletheia doctor",
+          mcp: argv().join(" "),
+        },
+      };
+    });
+    let checks = [];
+    try {
+      checks = await doctor(env);
+    } catch (failure) {
+      checks = [{ name: "doctor", ok: false, detail: failure instanceof Error ? failure.message : String(failure) }];
+    }
+    return { tools, checks, dataDir: config.dataDir, generatedAt: new Date().toISOString() };
+  }
+
   /** Returns a Response, or null when the path is not a hub route. `h` = {json, text, guarded, server}. */
   async function handle(request, h) {
     const url = new URL(request.url);
@@ -62,7 +151,25 @@ export function createHubRoutes({ hub, config }) {
 
     if (isUi) {
       if (method !== "GET") return null;
-      const rel = pathname === "/hub" || pathname === "/hub/" ? "index.html" : decodeURIComponent(pathname.slice(5));
+      // The one UI replaced the separate Memory Hub page. /hub is kept as a redirect so old links and
+      // bookmarks land on the Memory tab; its assets are still served for the old page and for tests.
+      if (pathname === "/hub" || pathname === "/hub/") {
+        const html = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Memory Hub</title>
+<meta http-equiv="refresh" content="0; url=/#/memory">
+<link rel="canonical" href="/#/memory">
+</head>
+<body>
+<p>Memory Hub is now the Memory tab of the Aletheia app. <a href="/#/memory">Open /#/memory</a>.</p>
+<script>location.replace("/#/memory")</script>
+</body>
+</html>`;
+        return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": "frame-ancestors 'none'", "X-Frame-Options": "DENY" } });
+      }
+      const rel = decodeURIComponent(pathname.slice(5));
       if (rel.includes("..")) return h.json({ error: "Not found." }, 404);
       const file = join(config.hubUiDir, rel);
       if (!existsSync(file) || !statSync(file).isFile()) return h.json({ error: "Not found." }, 404);
@@ -84,6 +191,10 @@ export function createHubRoutes({ hub, config }) {
 
     // ================= /v1: the universal API (what any tool, script or MCP bridge calls) =================
     if (isV1) {
+      if (pathname === "/v1/health" && method === "GET") {
+        const report = healthReport(hub);
+        return h.json({ ...report, ok: report.status === "ok" }, report.status === "ok" ? 200 : 503);
+      }
       if (pathname === "/v1/info" && method === "GET") return h.json({ name: "aletheia-mem", version: "0.1.0", api: "v1", stats: hub.stats() });
       if (pathname === "/v1/memories" && method === "POST") {
         const r = hub.add(memoryInput(await readJson(request), tool), { actor: tool ?? "api" });
@@ -240,6 +351,136 @@ export function createHubRoutes({ hub, config }) {
       return h.json(await compressRecent(hub, ask, { project: b.project }));
     }
     if (pathname === "/api/hub/audit" && method === "GET") return h.json({ audit: hub.auditLog(Number(qs(url).limit) || 100) });
+
+    // ---- T-135: the facts table (current by default, history on request) ----
+    if (pathname === "/api/hub/facts" && method === "GET") {
+      const q = qs(url);
+      return h.json(hub.listFacts({ project: q.project || undefined, history: q.history === "1" || q.history === "true", limit: Number(q.limit) || 100, offset: Number(q.offset) || 0 }));
+    }
+
+    // ---- T-136: the review queue, near-duplicate pairs and their actions ----
+    if (pathname === "/api/hub/review" && method === "GET") {
+      const q = qs(url);
+      const status = q.status || "pending";
+      const items = hub.reviewQueue({ status, limit: Number(q.limit) || 100 }).map(reviewItemView);
+      const dismissed = dismissedPairs();
+      const scanProject = q.project || hub.projects()[0]?.name || null;
+      const duplicates = [];
+      const dismissedDuplicates = [];
+      if (scanProject) {
+        const scan = nearDuplicates(hub, { project: scanProject, maxRows: Math.min(Number(q.scan) || 500, 2000) });
+        for (const pair of scan.pairs) {
+          const a = hub.getObservation(pair.a);
+          const b = hub.getObservation(pair.b);
+          if (!a || !b) continue;
+          const key = pairKeyOf(pair.a, pair.b);
+          const item = { key, a: pair.a, b: pair.b, aText: a.title, bText: b.title, score: Math.round(pair.score * 1000) / 1000, auto: pair.auto };
+          (dismissed.has(key) ? dismissedDuplicates : duplicates).push(item);
+        }
+      }
+      return h.json({ items, duplicates, dismissedDuplicates, project: scanProject, status });
+    }
+    if (pathname === "/api/hub/review/pairs" && method === "POST") {
+      const b = await readJson(request);
+      need(Number.isSafeInteger(Number(b.a)) && Number.isSafeInteger(Number(b.b)), "a and b are required.");
+      need(["merge", "distinct", "restore"].includes(b.action), "action must be merge, distinct or restore.");
+      const key = pairKeyOf(b.a, b.b);
+      const dismissed = dismissedPairs();
+      if (b.action === "merge") {
+        const result = hub.mergeObservations(Number(b.a), Number(b.b), { actor: "ui" });
+        dismissed.delete(key);
+        hub.setSetting("review.pairs.dismissed", [...dismissed]);
+        return h.json({ action: "merge", key, ...result });
+      }
+      if (b.action === "distinct") dismissed.add(key);
+      else dismissed.delete(key);
+      hub.setSetting("review.pairs.dismissed", [...dismissed]);
+      hub.audit("ui", `review.pair.${b.action}`, { key });
+      return h.json({ action: b.action, key, dismissed: dismissed.has(key) });
+    }
+    if ((m = /^\/api\/hub\/review\/(\d+)$/.exec(pathname)) && method === "POST") {
+      const id = Number(m[1]);
+      const b = await readJson(request);
+      need(["accept", "reject", "reopen", "merge"].includes(b.action), "action must be accept, reject, reopen or merge.");
+      const row = hub.getReview(id);
+      need(row, "That review item does not exist.", 404);
+      const suggestion = row.item_type === "rule" ? hub.db.prepare("SELECT * FROM rule_suggestions WHERE id = ?").get(row.item_id) : null;
+      if (b.action === "merge") {
+        need(Number.isSafeInteger(Number(b.into)), "into (the id to keep) is required for a merge.");
+        const into = Number(b.into);
+        need(into !== Number(row.item_id), "Pick a different row to merge into.");
+        if (row.item_type === "fact") {
+          need(hub.getFact(into), "The fact to keep does not exist.", 404);
+          hub.closeFact(row.item_id, { status: "superseded" });
+          hub.setFactSupersedes(row.item_id, into);
+          hub.link({ fromType: "fact", fromId: row.item_id, toType: "fact", toId: into, relation: "duplicate_of" });
+        } else if (row.item_type === "observation") {
+          hub.mergeObservations(into, row.item_id, { actor: "ui" });
+        } else {
+          throw new BadRequest(`A ${row.item_type} review item cannot be merged from this page.`);
+        }
+        const updated = hub.resolveReview(id, { status: "accepted", actor: "ui" });
+        return h.json({ item: reviewItemView(updated) });
+      }
+      const status = b.action === "accept" ? "accepted" : b.action === "reject" ? "rejected" : "pending";
+      if (suggestion) {
+        const suggestionStatus = b.action === "accept" ? "accepted" : b.action === "reject" ? "dismissed" : "pending";
+        if (b.action === "accept") {
+          const scopeTier = suggestion.project && suggestion.project !== "default" ? "project" : "everywhere";
+          hub.rules.add({ then: suggestion.text, when: suggestion.when_text, scopeTier, scopeName: scopeTier === "project" ? suggestion.project : "Everywhere", source: "suggested" });
+        }
+        hub.db.prepare("UPDATE rule_suggestions SET status = ? WHERE id = ?").run(suggestionStatus, suggestion.id);
+        hub.audit("ui", `rule_suggestion.${b.action}`, { id: suggestion.id });
+      }
+      const updated = hub.resolveReview(id, { status, actor: "ui" });
+      return h.json({ item: reviewItemView(updated) });
+    }
+
+    // ---- T-137: rule suggestions, accept / dismiss / restore ----
+    if (pathname === "/api/hub/rule-suggestions" && method === "GET") {
+      const q = qs(url);
+      const where = [];
+      const params = [];
+      if (q.project) { where.push("project = ?"); params.push(q.project); }
+      if (q.status) { where.push("status = ?"); params.push(q.status); }
+      const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+      const rows = hub.db.prepare(`SELECT * FROM rule_suggestions ${clause} ORDER BY created_at_epoch DESC, id DESC LIMIT ?`).all(...params, Math.min(Number(q.limit) || 100, 500));
+      return h.json({ items: rows.map((row) => ({ id: row.id, project: row.project, text: row.text, when: row.when_text, confidence: row.confidence, status: row.status, sourceType: row.source_type, createdAt: iso(row.created_at_epoch) })) });
+    }
+    if ((m = /^\/api\/hub\/rule-suggestions\/(\d+)$/.exec(pathname)) && method === "POST") {
+      const b = await readJson(request);
+      need(["accept", "dismiss", "restore"].includes(b.action), "action must be accept, dismiss or restore.");
+      const row = hub.db.prepare("SELECT * FROM rule_suggestions WHERE id = ?").get(Number(m[1]));
+      need(row, "That rule suggestion does not exist.", 404);
+      let ruleId = null;
+      if (b.action === "accept") {
+        const scopeTier = row.project && row.project !== "default" ? "project" : "everywhere";
+        ruleId = hub.rules.add({ then: row.text, when: row.when_text, scopeTier, scopeName: scopeTier === "project" ? row.project : "Everywhere", source: "suggested" }).id;
+      }
+      const status = b.action === "accept" ? "accepted" : b.action === "dismiss" ? "dismissed" : "pending";
+      hub.db.prepare("UPDATE rule_suggestions SET status = ? WHERE id = ?").run(status, row.id);
+      const pending = hub.db.prepare("SELECT * FROM review_queue WHERE item_type = 'rule' AND item_id = ? AND status = 'pending'").get(row.id);
+      if (pending) hub.resolveReview(pending.id, { status: b.action === "accept" ? "accepted" : b.action === "dismiss" ? "rejected" : "pending", actor: "ui" });
+      else if (b.action === "restore") hub.addReview({ itemType: "rule", itemId: row.id, reason: "rule_suggestion", proposedBy: "extractor" });
+      hub.audit("ui", `rule_suggestion.${b.action}`, { id: row.id, ruleId });
+      return h.json({ id: row.id, status, ruleId });
+    }
+
+    // ---- T-138: installer status from doctor data, read only ----
+    if (pathname === "/api/hub/doctor" && method === "GET") return h.json(await doctorData(h.server));
+
+    // T-123: dismiss is reversible; nothing is deleted here.
+    if (pathname === "/api/hub/dismissed" && method === "GET") return h.json({ items: hub.dismissedList({ limit: Number(qs(url).limit) || 100 }) });
+    if (pathname === "/api/hub/dismiss" && method === "POST") {
+      const b = await readJson(request);
+      need(b && Number.isSafeInteger(Number(b.id)), "id is required.");
+      return h.json(hub.dismiss(b.type ?? "memory", Number(b.id), { actor: "ui", reason: b.reason ?? null }));
+    }
+    if (pathname === "/api/hub/restore" && method === "POST") {
+      const b = await readJson(request);
+      need(b && Number.isSafeInteger(Number(b.id)), "id is required.");
+      return h.json(hub.restore(b.type ?? "memory", Number(b.id), { actor: "ui" }));
+    }
     return h.json({ error: "Not found." }, 404);
   }
 

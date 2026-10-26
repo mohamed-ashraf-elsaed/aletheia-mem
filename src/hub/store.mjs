@@ -7,6 +7,7 @@ import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { sha256 } from "../lib/hash.mjs";
+import { normalizeLanguage } from "./language.mjs";
 import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVector, unpackVector } from "./retrieval.mjs";
 
 const SCHEMA_VERSION = 3; // 3: episodes, observations, facts, entities, keys, links, queue and usage
@@ -304,6 +305,15 @@ CREATE TABLE IF NOT EXISTS rule_suggestions (
   UNIQUE(project, text)
 );
 CREATE INDEX IF NOT EXISTS idx_rule_suggestions_status ON rule_suggestions(status, created_at_epoch);
+
+CREATE TABLE IF NOT EXISTS dismissals (
+  item_type TEXT NOT NULL,
+  item_id INTEGER NOT NULL,
+  reason TEXT,
+  at_epoch INTEGER NOT NULL,
+  PRIMARY KEY(item_type, item_id)
+);
+CREATE INDEX IF NOT EXISTS idx_dismissals_time ON dismissals(at_epoch);
 `;
 
 export const targetSchemaVersion = SCHEMA_VERSION;
@@ -378,6 +388,22 @@ export class HubStore {
     this.termOptions = { max: 12, maxShare: 0.6 }; // see selectTerms. Swept on LoCoMo (docs/14): 12/0.6 loses no recall; 8/0.35 lost ~8 points
     this.ensureScopeColumns();
     this.ensureRuleSuggestions();
+    this.ensureDismissals();
+  }
+
+  /** Add the T-123 dismissal table to databases created before it existed. Idempotent, recorded once. */
+  ensureDismissals() {
+    if (this.setting("schema.dismissals", false)) return false;
+    this.db.exec(`CREATE TABLE IF NOT EXISTS dismissals (
+      item_type TEXT NOT NULL,
+      item_id INTEGER NOT NULL,
+      reason TEXT,
+      at_epoch INTEGER NOT NULL,
+      PRIMARY KEY(item_type, item_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_dismissals_time ON dismissals(at_epoch);`);
+    this.setSetting("schema.dismissals", true);
+    return true;
   }
 
   /** Add the T-035 suggestion table to databases created before it existed. */
@@ -429,6 +455,69 @@ export class HubStore {
     this.db.prepare(`UPDATE ${table} SET scope = 'global' WHERE id = ?`).run(key);
     this.audit(actor, "scope.promote", { type, id: key, project: row.project });
     return { type, id: key, scope: "global", project: row.project };
+  }
+
+  // ---- dismiss and restore (T-123) ---------------------------------------------------------------------
+  // A dismissal is a row, not a status change: nothing is deleted, the original status stays intact, and
+  // restore is the reverse write. Search and context skip dismissed rows. `prune --apply` is the only path
+  // that removes the underlying row, and it removes the dismissal with it.
+
+  static DISMISSIBLE = { memory: "memories", episode: "episodes", observation: "observations", fact: "facts" };
+
+  dismiss(type, id, { actor = "ui", reason = null, now = Date.now() } = {}) {
+    const table = HubStore.DISMISSIBLE[String(type)];
+    if (!table) throw new RangeError("Dismiss a memory, episode, observation or fact.");
+    const key = Number(id);
+    if (!Number.isSafeInteger(key) || key <= 0) throw new RangeError("A dismissal needs a numeric id.");
+    if (!this.db.prepare(`SELECT 1 FROM ${table} WHERE id = ?`).get(key)) throw new RangeError(`No ${type} #${key}.`);
+    const info = this.db.prepare("INSERT OR IGNORE INTO dismissals (item_type, item_id, reason, at_epoch) VALUES (?,?,?,?)").run(String(type), key, reason == null ? null : String(reason).slice(0, 300), now);
+    if (info.changes) this.audit(actor, "item.dismiss", { type: String(type), id: key, reason: reason ?? null });
+    return { type: String(type), id: key, dismissed: true, changed: info.changes > 0 };
+  }
+
+  restore(type, id, { actor = "ui", now = Date.now() } = {}) {
+    const key = Number(id);
+    if (!HubStore.DISMISSIBLE[String(type)] || !Number.isSafeInteger(key)) throw new RangeError("Restore a memory, episode, observation or fact by id.");
+    const info = this.db.prepare("DELETE FROM dismissals WHERE item_type = ? AND item_id = ?").run(String(type), key);
+    if (info.changes) this.audit(actor, "item.restore", { type: String(type), id: key, at: now });
+    return { type: String(type), id: key, restored: info.changes > 0 };
+  }
+
+  isDismissed(type, id) {
+    return !!this.db.prepare("SELECT 1 FROM dismissals WHERE item_type = ? AND item_id = ?").get(String(type), Number(id));
+  }
+
+  hasDismissals(type) {
+    return !!this.db.prepare("SELECT 1 FROM dismissals WHERE item_type = ? LIMIT 1").get(String(type));
+  }
+
+  dismissedList({ limit = 100 } = {}) {
+    return this.db.prepare("SELECT d.item_type, d.item_id, d.reason, d.at_epoch FROM dismissals d ORDER BY d.at_epoch DESC, d.item_id DESC LIMIT ?")
+      .all(Math.min(Math.max(Number(limit) || 100, 1), 500));
+  }
+
+  // ---- output language (T-120) --------------------------------------------------------------------------
+  // Stored per project under one settings key, so a project can answer in a different language without a new
+  // table. The global config value is the fallback when neither the project nor "default" has one.
+
+  setOutputLanguage(project, language, { actor = "ui" } = {}) {
+    const tag = normalizeLanguage(language);
+    const key = String(project ?? "").trim() || "default";
+    const map = this.setting("output.language", {});
+    if (tag) map[key] = tag;
+    else delete map[key];
+    this.setSetting("output.language", map);
+    this.audit(actor, "language.set", { project: key, language: tag || null });
+    return { project: key, language: tag };
+  }
+
+  outputLanguage(project, fallback = "") {
+    const map = this.setting("output.language", {});
+    return normalizeLanguage(map[String(project ?? "").trim()] ?? map.default ?? fallback ?? "");
+  }
+
+  outputLanguageMap() {
+    return this.setting("output.language", {});
   }
 
   /**
@@ -564,18 +653,19 @@ export class HubStore {
     const sourceRef = clean(input.sourceRef ?? input.source_ref, 300);
     if (sourceRef) {
       const existing = this.db.prepare("SELECT * FROM episodes WHERE source_ref = ?").get(sourceRef);
-      if (existing) return existing;
+      if (existing) return { ...existing, created: false };
     }
     const text = String(input.text ?? "").slice(0, 20_000);
     if (!text.trim()) throw new RangeError("An episode needs text.");
     const hash = input.contentHash ?? sha256(`episode\n${project}\n${sourceRef ?? ""}\n${text}`);
     const at = Number.isFinite(input.createdAtEpoch) ? input.createdAtEpoch : Date.now();
-    this.db
+    const info = this.db
       .prepare(`INSERT OR IGNORE INTO episodes (project, scope, tool, session_id, turn_index, role, kind, text, source_ref, content_hash, token_count, created_at_epoch, recorded_at_epoch)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`)
       .run(project, input.scope === "global" ? "global" : "project", clean(input.tool, 60) || "unknown", clean(input.sessionId ?? input.session_id, 200), Number.isFinite(input.turnIndex) ? input.turnIndex : null,
         clean(input.role, 20) || "user", clean(input.kind, 30) || "message", text, sourceRef, hash, Number.isFinite(input.tokenCount) ? input.tokenCount : null, at, at);
-    return this.db.prepare("SELECT * FROM episodes WHERE content_hash = ?").get(hash);
+    const row = this.db.prepare("SELECT * FROM episodes WHERE content_hash = ?").get(hash);
+    return row ? { ...row, created: info.changes > 0 } : null;
   }
 
   /** The episode for one `memories` row, created once. Capture does not write episodes (a hook stays cheap). */
@@ -798,6 +888,7 @@ export class HubStore {
   factsCurrent({ project, subject, predicate, limit = 100, now = Date.now() } = {}) {
     const where = ["status = 'active'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)", "(expired_at_epoch IS NULL OR expired_at_epoch > ?)"];
     const params = [now, now, now];
+    if (this.hasDismissals("fact")) where.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = facts.id)");
     if (project) { where.push("project = ?"); params.push(project); }
     if (subject) { where.push("subject = ?"); params.push(subject); }
     if (predicate) { where.push("predicate = ?"); params.push(predicate); }
@@ -813,6 +904,63 @@ export class HubStore {
     if (predicate) { where.push("predicate = ?"); params.push(predicate); }
     const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
     return this.db.prepare(`SELECT * FROM facts ${clause} ORDER BY coalesce(valid_from_epoch, recorded_at_epoch), recorded_at_epoch, id LIMIT ?`).all(...params, Math.min(Number(limit) || 200, 1000));
+  }
+
+  /**
+   * The Hub facts table (T-135). Current by default; `history` keeps superseded and cold rows. Every row carries
+   * the episode it came from, its extractor mode and scope. Importance is the linked observation's importance, or
+   * the fact confidence when no observation owns it; both are returned so the UI can say which.
+   */
+  listFacts({ project, history = false, limit = 100, offset = 0, now = Date.now() } = {}) {
+    const where = [];
+    const params = [];
+    if (project) {
+      where.push(this.hasGlobal("facts") ? "(f.project = ? OR f.scope = 'global')" : "f.project = ?");
+      params.push(project);
+    }
+    if (this.hasDismissals("fact")) where.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = f.id)");
+    if (!history) {
+      where.push("f.status = 'active'", "coalesce(f.valid_from_epoch, f.recorded_at_epoch) <= ?", "(f.valid_to_epoch IS NULL OR f.valid_to_epoch > ?)", "(f.expired_at_epoch IS NULL OR f.expired_at_epoch > ?)");
+      params.push(now, now, now);
+    }
+    const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    const lim = Math.min(Math.max(Number(limit) || 100, 1), 500);
+    const off = Math.max(Number(offset) || 0, 0);
+    const total = this.db.prepare(`SELECT COUNT(*) AS n FROM facts f ${clause}`).get(...params).n;
+    const rows = this.db
+      .prepare(`SELECT f.*, o.importance AS observation_importance, e.text AS episode_text, e.source_ref AS episode_source_ref
+                FROM facts f LEFT JOIN observations o ON o.id = f.observation_id LEFT JOIN episodes e ON e.id = f.episode_id
+                ${clause} ORDER BY f.recorded_at_epoch DESC, f.id DESC LIMIT ? OFFSET ?`)
+      .all(...params, lim, off);
+    const iso = (value) => (Number.isFinite(value) ? new Date(value).toISOString() : null);
+    return {
+      total,
+      current: !history,
+      items: rows.map((row) => ({
+        id: row.id, text: row.text, subject: row.subject, predicate: row.predicate, object: row.object,
+        project: row.project, scope: row.scope, status: row.status, confidence: row.confidence,
+        importance: Number.isFinite(row.observation_importance) ? row.observation_importance : row.confidence,
+        importanceSource: Number.isFinite(row.observation_importance) ? "observation" : "confidence",
+        extractorMode: row.extractor_mode, model: row.model, promptVersion: row.prompt_version,
+        validAt: iso(row.valid_from_epoch), validFrom: iso(row.valid_from_epoch), validTo: iso(row.valid_to_epoch),
+        recordedAt: iso(row.recorded_at_epoch),
+        source: { episodeId: row.episode_id ?? null, episodeText: row.episode_text ? String(row.episode_text).slice(0, 1000) : null, sourceRef: row.episode_source_ref ?? null, observationId: row.observation_id ?? null },
+      })),
+    };
+  }
+
+  /** Resolve one review_queue row. The row is kept; only status and resolved_at change. */
+  resolveReview(id, { status = "accepted", actor = "ui", now = Date.now() } = {}) {
+    const key = Number(id);
+    const row = this.db.prepare("SELECT * FROM review_queue WHERE id = ?").get(key);
+    if (!row) return null;
+    this.db.prepare("UPDATE review_queue SET status = ?, resolved_at_epoch = ? WHERE id = ?").run(status, now, key);
+    this.audit(actor, "review.resolve", { id: key, status, itemType: row.item_type, itemId: row.item_id });
+    return this.db.prepare("SELECT * FROM review_queue WHERE id = ?").get(key);
+  }
+
+  getReview(id) {
+    return this.db.prepare("SELECT * FROM review_queue WHERE id = ?").get(Number(id)) ?? null;
   }
 
   /** The fact that was true at `atEpoch`, using valid time and refusing facts recorded later. */
@@ -839,6 +987,7 @@ export class HubStore {
     const at = Number.isFinite(asOfEpoch) ? asOfEpoch : null;
     const where = [];
     const params = [];
+    if (this.hasDismissals("fact")) where.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = f.id)");
     if (project && scope !== "all") {
       if (this.hasGlobal("facts")) { where.push("(f.project = ? OR f.scope = 'global')"); } else { where.push("f.project = ?"); }
       params.push(project);
@@ -980,7 +1129,7 @@ export class HubStore {
   }
 
   /** Newest first. Filters: project, kind, type, tool, pinned, q (full text), before (epoch), limit, offset. */
-  list({ project, kind, type, tool, pinned, q, limit = 50, offset = 0, scope = "current" } = {}) {
+  list({ project, kind, type, tool, pinned, q, limit = 50, offset = 0, scope = "current", includeDismissed = false } = {}) {
     const where = [];
     const params = [];
     const match = ftsQuery(q);
@@ -990,6 +1139,7 @@ export class HubStore {
     if (project && scope !== "all") { where.push(this.hasGlobal("memories") ? "(m.project = ? OR m.scope = 'global')" : "m.project = ?"); params.push(project); }
     for (const [col, val] of [["kind", kind], ["type", type], ["tool", tool]]) if (val) { where.push(`m.${col} = ?`); params.push(val); }
     if (pinned) where.push("m.pinned = 1");
+    if (!includeDismissed && this.hasDismissals("memory")) where.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = m.id)");
     const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
     const lim = Math.min(Math.max(Number(limit) || 50, 1), 500);
     const off = Math.max(Number(offset) || 0, 0);
@@ -1068,6 +1218,7 @@ export class HubStore {
       params.push(project);
     }
     for (const [col, val] of [["kind", kind], ["type", type], ["tool", tool]]) if (val) { filters.push(`m.${col} = ?`); params.push(val); }
+    if (this.hasDismissals("memory")) filters.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = m.id)");
     const where = filters.length ? `AND ${filters.join(" AND ")}` : "";
     const expr = orExpr(this.selectTerms(query));
     const lexical = expr
@@ -1115,7 +1266,7 @@ export class HubStore {
   /** [{id, vec}] for memories that have vectors, optionally filtered. Cached until a vector or memory changes. */
   vectorRows({ project, kind, type, tool, scope = "current" } = {}) {
     if (!this.vecCache) {
-      this.vecCache = this.db.prepare("SELECT v.memory_id AS id, v.vec, m.project, m.scope, m.kind, m.type, m.tool FROM memory_vectors v JOIN memories m ON m.id = v.memory_id").all().map((r) => ({ id: r.id, vec: unpackVector(r.vec), project: r.project, scope: r.scope, kind: r.kind, type: r.type, tool: r.tool }));
+      this.vecCache = this.db.prepare("SELECT v.memory_id AS id, v.vec, m.project, m.scope, m.kind, m.type, m.tool FROM memory_vectors v JOIN memories m ON m.id = v.memory_id LEFT JOIN dismissals d ON d.item_type = 'memory' AND d.item_id = m.id WHERE d.item_id IS NULL").all().map((r) => ({ id: r.id, vec: unpackVector(r.vec), project: r.project, scope: r.scope, kind: r.kind, type: r.type, tool: r.tool }));
     }
     return this.vecCache.filter((r) => (!project || scope === "all" || r.project === project || r.scope === "global") && (!kind || r.kind === kind) && (!type || r.type === type) && (!tool || r.tool === tool));
   }
@@ -1198,8 +1349,9 @@ export class HubStore {
   context({ project, limit = 20, maxChars = 6000, tool, scope = "current" } = {}) {
     const pinned = this.list({ project, pinned: true, limit: 50, scope }).items;
     const scopeClause = scope === "all" ? "" : project ? this.hasGlobal("memories") ? "AND (project = ? OR scope = 'global')" : "AND project = ?" : "";
+    const dismissClause = this.hasDismissals("memory") ? "AND NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = memories.id)" : "";
     const recent = this.db
-      .prepare(`SELECT * FROM memories WHERE kind IN ('observation','summary','note') AND pinned = 0 ${scopeClause} ORDER BY created_at_epoch DESC LIMIT ?`)
+      .prepare(`SELECT * FROM memories WHERE kind IN ('observation','summary','note') AND pinned = 0 ${scopeClause} ${dismissClause} ORDER BY created_at_epoch DESC LIMIT ?`)
       .all(...(scopeClause ? [project] : []), Math.min(limit, 100))
       .map((r) => this.row(r));
     const line = (m) => `- #${m.id} ${new Date(m.created_at_epoch).toISOString().slice(0, 10)} [${m.type}] ${m.title}${m.narrative ? ` — ${m.narrative.replace(/\s+/g, " ").slice(0, 160)}` : ""}`;
@@ -1209,6 +1361,7 @@ export class HubStore {
     const now = Date.now();
     const factWhere = ["status = 'active'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)"];
     const factParams = [now, now];
+    if (this.hasDismissals("fact")) factWhere.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = facts.id)");
     if (project && scope !== "all") {
       if (this.hasGlobal("facts")) { factWhere.push("(project = ? OR scope = 'global')"); } else { factWhere.push("project = ?"); }
       factParams.push(project);

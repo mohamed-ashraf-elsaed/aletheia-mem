@@ -3,6 +3,8 @@
 Status: implemented, 2026-10-26. This page describes the code that exists, not the plan in
 [23](23-memory-building.md). Where the two differ, this page wins.
 
+Last change: 2026-10-26 (the one UI, dismiss/restore, provider chain, output language and transcript back-fill).
+
 ## 26.1 One page
 
 ```
@@ -15,7 +17,7 @@ hook (Claude Code / Command Code)
 worker (server background task or `aletheia compress --daemon`)
   → jobs row                                     src/hub/queue.mjs
   → claim one oldest-due job (BEGIN IMMEDIATE)
-  → episode per memory row (source_ref = memory:<id>)
+  → episode per memory row (and any episode written directly, e.g. a back-filled transcript)
   → windows of 20 episodes / 12,000 chars        src/hub/facts.mjs (chunkEpisodes)
   → provider (extract model) or rule extractor
   → strict validator, one retry with the refusal
@@ -41,7 +43,7 @@ claimable and the completed windows marked, so the restart neither loses nor rep
 | Table | Holds | Written by |
 |---|---|---|
 | `memories` | raw capture rows, unchanged since v2 | hooks, `/v1`, CLI |
-| `episodes` | one immutable row per captured memory; `source_ref = memory:<id>`; `extracted_at_epoch` is the window checkpoint | worker |
+| `episodes` | one immutable row per captured memory or imported transcript turn; `source_ref = memory:<id>` or `transcript:<tool>:<session>:<turn>`; `extracted_at_epoch` is the window checkpoint | worker, transcript import |
 | `facts` | subject, predicate, object, text, valid and record time, confidence, status, extractor mode, prompt version, model | extractor |
 | `memory_keys` | fact text and entity names as extra retrieval keys | extractor |
 | `memory_links` | `mentions`, `derived_from`, `supersedes`, `duplicate_of` | extractor, merge |
@@ -51,6 +53,7 @@ claimable and the completed windows marked, so the restart neither loses nor rep
 | `rule_suggestions` | proposed rules from user corrections; status stays `pending` until a human decides | `rule-suggest.mjs` |
 | `summaries` | session, project and entity summaries with `source_ids` | `summaries.mjs`, worker and `aletheia summarize` |
 | `fact_vectors` | optional vectors for facts, written automatically when an embedder is supplied | worker, `aletheia embed` |
+| `dismissals` | one row per hidden memory, episode, observation or fact; the row it names is untouched | `dismiss`, Hub, MCP |
 
 The `memories` table is kept, not replaced by a view. That is the one deliberate difference from D4 §23.3: every
 existing read path and every existing test keeps working, and the additive migration copies rows into the new
@@ -73,6 +76,12 @@ default is `ALETHEIA_OPENAI_MODEL`.
 Modes live in `src/hub/modes/*.json`: `code`, `chill`, `language-en`, `language-es`. `ALETHEIA_MODE` selects one. The
 mode adds an instruction to the fact prompt; it never changes the JSON schema.
 
+An ordered provider chain can replace the single provider: `ALETHEIA_PROVIDERS=ollama,openrouter,openai` builds
+each preset in order. On a quota, 429, 5xx or timeout the provider is skipped for a cool-down and the next is
+tried; a 400 is surfaced. Requests are capped at `ALETHEIA_MAX_CONCURRENT` (1 by default), each has
+`ALETHEIA_PROVIDER_TIMEOUT_MS`, and presets exist for Ollama, LM Studio, llama.cpp, OpenAI, OpenRouter and an
+`anthropic-compatible` URL (which requires `ALETHEIA_ANTHROPIC_BASE_URL`; see §26.8).
+
 ## 26.4 Config keys
 
 | Key | Default | Meaning |
@@ -90,6 +99,12 @@ mode adds an instruction to the fact prompt; it never changes the JSON schema.
 | `ALETHEIA_PRICE_IN_PER_1K` | `0` | dollars per 1k input tokens |
 | `ALETHEIA_PRICE_OUT_PER_1K` | `0` | dollars per 1k output tokens |
 | `ALETHEIA_EXTRACTION_WORKER` | off | server binary turns the worker on; `aletheia compress --daemon` does the same |
+| `ALETHEIA_PROVIDERS` | empty | ordered presets: `ollama`, `lmstudio`, `llamacpp`, `local`, `openai`, `openrouter`, `claude-cli`, `anthropic-compatible` |
+| `ALETHEIA_PROVIDER_TIMEOUT_MS` | `60000` | per-request timeout, including a chain member |
+| `ALETHEIA_MAX_CONCURRENT` | `1` | hard cap on in-flight model requests |
+| `ALETHEIA_PROVIDER_COOLDOWN_MS` | `60000` | how long a failed chain member is skipped |
+| `ALETHEIA_ANTHROPIC_BASE_URL` | empty | the URL for the `anthropic-compatible` preset (no public default) |
+| `ALETHEIA_OUTPUT_LANGUAGE` | empty | global output language; a per-project setting wins (`aletheia language set`) |
 
 Prices default to 0 on purpose. The project does not guess a vendor price; set them if you want a dollar figure.
 
@@ -105,6 +120,12 @@ aletheia embed [--limit n]                  write fact and memory vectors when t
 aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
 aletheia prune [--apply]                    report, then apply, cold facts and shortened episodes
 aletheia promote <memory|episode|observation|fact> <id>   make a row global
+aletheia dismiss <id | type:id> [--reason r]  hide a row from search and context (reversible)
+aletheia restore <id | type:id>               undo a dismissal
+aletheia dismissed [--limit n]                list dismissed rows
+aletheia language set <tag> [--project p]     output language for facts and summaries
+aletheia import transcripts <tool> [--since DATE] [--dry-run] [--limit n]
+                                              back-fill from local session files (read-only)
 aletheia optimize                           rebuild FTS segments after a large import
 aletheia rules suggest | suggestions        propose and list review-only rules
 aletheia doctor                             server, hooks, spool, last capture, queue, extraction, database, FTS, vectors, model
@@ -125,11 +146,12 @@ rejected count). A failed job makes the queue check fail.
 | Too many events | windows are capped by count and characters; a single long episode is truncated | `chunkEpisodes` |
 | Two workers | the claim is `BEGIN IMMEDIATE`; only one row moves to `running` | `claimNext` |
 | Same-time contradiction | both facts stay active, lose 0.1 confidence, and enter `review_queue` | `resolveContradictions` |
+| A chain provider is over quota or down | a 429, 5xx, timeout or quota text cools that provider down and the next is tried; when every one is cooling the call fails with the list | `createFallbackProvider` |
+| A row is dismissed | search, list and context skip it; the row and its status stay; only `prune --apply` deletes it | `store.dismiss`, `retention.prune` |
+| A transcript line is bad | the line is counted and skipped; the rest of the file is imported | `transcripts.parseTranscript` |
 
 ## 26.7 What is not built
 
-- **Review UI.** `review_queue` is written (contradictions, ambiguous aliases, low-confidence items, rule
-  suggestions); there is no page to resolve it. `aletheia rules suggestions` lists rule suggestions.
 - **Real-provider extraction quality.** The `local` provider code path is exercised with an injected `fetch` and the
   `fake` provider. Ollama was reachable on this machine on 2026-10-26: a trivial `llama3.2:1b` chat call returned in
   2.9 s, but the `facts-v1` request over a 2-turn window returned HTTP 500 after 4 min 41 s. No provider extraction
@@ -138,7 +160,7 @@ rejected count). A failed job makes the queue check fail.
 - **Graph retrieval.** Entities, aliases and `fact_entities` exist and are written by the extractor; there is no
   graph traversal channel yet (T-048).
 - **Automatic pruning.** `aletheia prune` is still explicit. The worker builds summaries and embeddings; it never
-  prunes.
+  prunes. `prune --apply` is also the only path that deletes a dismissed row.
 
 ## 26.8 UNVERIFIED
 
@@ -153,11 +175,38 @@ rejected count). A failed job makes the queue check fail.
 - Dedupe precision on human-labelled pairs: measured only on a synthetic 200-pair set (precision 1.00, recall 0.90).
 - Contradiction accuracy on the 50-pair knowledge-update set in D4: measured only on a synthetic 30-pair set (30/30).
 - LoCoMo dataset licence and hash are recorded in 22.9; the dataset itself is not committed.
+- The `anthropic-compatible` provider preset has no default URL. Anthropic publishes no OpenAI-shaped chat
+  endpoint that this project verified, so the preset requires `ALETHEIA_ANTHROPIC_BASE_URL` and points at a
+  gateway. No gateway was tested. See [tasks/unverified.md](tasks/unverified.md).
+- The one UI was loaded in Chromium on 2026-10-26 and checked for rendering and console errors (no errors). Its
+  pixel layout at 375 px, and its keyboard-only path, were not captured by an automated assertion.
+- Transcript back-fill supports only Claude Code and Command Code, the two layouts read on this machine. Other
+  tools' session files were not read, so their formats are not supported and not guessed.
 
+## 26.9 The one UI
 
-## 26.9 Sources
+One page at `/`, four hash routes, one shared header:
+
+| Route | What it shows | Main routes it calls |
+|---|---|---|
+| `#/work` | the existing Work page, mounted unchanged at `#root` | `/api/work-view`, `/api/work-view/events` |
+| `#/memory` | stats, memories, facts (current/history), search, review queue, dismissed, import/export | `/api/hub/memories`, `/facts`, `/review`, `/dismissed`, `/v1/search` |
+| `#/rules` | rule editor, suggested rules, sync, import | `/api/hub/rules`, `/rule-suggestions` |
+| `#/tools` | read-only installer status from `doctor` | `/api/hub/doctor` |
+
+The header carries a project selector, a memory search box and a health dot from `/v1/health`. `/hub` redirects to
+`/#/memory` so old links keep working. `public/ui-core.js` holds the router and the view helpers with no DOM, which
+is what `test/one-ui.test.mjs` imports.
+
+Every hide action is reversible: memories and facts are dismissed and restored; a rule is turned off, not deleted;
+a review row can be reopened if it was rejected; a dismissed rule suggestion and a kept-apart duplicate pair can be
+restored. Permanent `DELETE /api/hub/memories/:id` stays in the API and CLI, not in the page.
+
+## 26.10 Sources
 
 - [23-memory-building.md](23-memory-building.md) for the design and the schema.
 - [22-improve-the-numbers.md](22-improve-the-numbers.md) for the experiments and the fact-key claim.
 - The task files T-017, T-018, T-019, T-020, T-023, T-024, T-025, T-028, T-029, T-030 and T-034 for the acceptance
-  criteria. No external URL was fetched for this page.
+  criteria; T-119 to T-123 for the provider chain, output language, transcript back-fill, folder-pollution proof
+  and dismiss/restore; T-134 to T-139 for the one UI. [manual-test.md](manual-test.md) §6 records the browser run.
+  No external URL was fetched for this page.

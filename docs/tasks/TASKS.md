@@ -159,13 +159,19 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-116 | Run My Work setup extraction on the user's own server | P6 | T-106 | todo | — | [T-116.md](T-116.md) |
 | T-117 | Add optional end-to-end encryption for sync | P6 | T-102 | todo | — | [T-117.md](T-117.md) |
 | T-118 | Generate the README and site comparison tables from docs/28 JSON | P6 | none | todo | — | [T-118.md](T-118.md) |
-| T-119 | Add provider presets and a fallback chain for extraction | P6 | T-034 | todo | — | [T-119.md](T-119.md) |
-| T-120 | Add an output-language setting for extraction and summaries | P6 | T-018 | todo | — | [T-120.md](T-120.md) |
-| T-121 | Back-fill memory from existing Claude Code and Command Code transcripts | P6 | T-018 | todo | — | [T-121.md](T-121.md) |
-| T-122 | Prove Aletheia never writes into project folders | P6 | T-016 | todo | — | [T-122.md](T-122.md) |
-| T-123 | Add reversible dismiss and delete from the Hub, CLI and MCP | P6 | T-017 | todo | — | [T-123.md](T-123.md) |
+| T-119 | Add provider presets and a fallback chain for extraction | P6 | T-034 | validated | 2026-10-26 | [T-119.md](T-119.md) |
+| T-120 | Add an output-language setting for extraction and summaries | P6 | T-018 | validated | 2026-10-26 | [T-120.md](T-120.md) |
+| T-121 | Back-fill memory from existing Claude Code and Command Code transcripts | P6 | T-018 | validated | 2026-10-26 | [T-121.md](T-121.md) |
+| T-122 | Prove Aletheia never writes into project folders | P6 | T-016 | validated | 2026-10-26 | [T-122.md](T-122.md) |
+| T-123 | Add reversible dismiss and delete from the Hub, CLI and MCP | P6 | T-017 | validated | 2026-10-26 | [T-123.md](T-123.md) |
 | T-124 | Research and add installers for Antigravity, Kimi, Pi and OpenClaw | P6 | T-058 | todo | — | [T-124.md](T-124.md) |
 | T-130 | Wire dedupe and source accumulation into the worker insert path | P1 | T-018, T-028, T-029 | validated | 2026-10-26 | [T-130.md](T-130.md) |
 | T-131 | Embed facts automatically and fuse facts with episodes | P1 | T-018, T-020, T-033, T-130 | validated | 2026-10-26 | [T-131.md](T-131.md) |
 | T-132 | Re-run LoCoMo and publish the measured table | P2 | T-018, T-131 | validated | 2026-10-26 | [T-132.md](T-132.md) |
 | T-133 | Re-measure 50k-row latency and apply the first FTS index fix | P2 | T-018 | validated | 2026-10-26 | [T-133.md](T-133.md) |
+| T-134 | Build one app shell with Work, Memory, Rules and Tools tabs | P6 | none | validated | 2026-10-26 | [T-134.md](T-134.md) |
+| T-135 | Add a Memory tab with memories, facts and search channels | P6 | T-134 | validated | 2026-10-26 | [T-135.md](T-135.md) |
+| T-136 | Add the review queue to the Memory tab | P6 | T-135 | validated | 2026-10-26 | [T-136.md](T-136.md) |
+| T-137 | Add a Rules tab with the editor and suggested rules | P6 | T-134 | validated | 2026-10-26 | [T-137.md](T-137.md) |
+| T-138 | Add a read-only Tools tab from doctor data | P6 | T-134 | validated | 2026-10-26 | [T-138.md](T-138.md) |
+| T-139 | Add UI tests for the one page | P6 | T-134, T-135, T-136, T-137, T-138 | validated | 2026-10-26 | [T-139.md](T-139.md) |

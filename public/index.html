@@ -4,11 +4,46 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/work-view/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My Work · claude-mem</title>
+    <title>Aletheia</title>
+    <!-- The Work tab is the existing Work page, unchanged: same bundle, same mount point. -->
+    <link rel="stylesheet" crossorigin href="/work-view/assets/index-C6x466ZD.css" />
+    <link rel="stylesheet" href="/hub/style.css" />
+    <link rel="stylesheet" href="/work-view/one-ui.css" />
     <script type="module" crossorigin src="/work-view/assets/index-s8vzksbN.js"></script>
-    <link rel="stylesheet" crossorigin href="/work-view/assets/index-C6x466ZD.css">
+    <script type="module" src="/work-view/one-ui.js"></script>
   </head>
   <body>
-    <div id="root"></div>
+    <header class="ui-top">
+      <a class="ui-brand" href="#/work">Aletheia</a>
+      <nav id="ui-tabs" class="ui-tabs" role="tablist" aria-label="Sections"></nav>
+      <span class="ui-spacer"></span>
+      <label class="ui-sr" for="ui-project">Project</label>
+      <select id="ui-project" class="ui-select" aria-label="Project">
+        <option value="">All projects</option>
+      </select>
+      <form id="ui-search-form" class="ui-search" role="search">
+        <label class="ui-sr" for="ui-search">Search memory</label>
+        <input id="ui-search" type="search" placeholder="Search memory…" aria-label="Search memory" autocomplete="off" />
+        <button type="submit">Search</button>
+      </form>
+      <span id="ui-health" class="ui-health checking" role="status" aria-live="polite" aria-label="Checking server health">○</span>
+    </header>
+
+    <main class="ui-main">
+      <section id="tab-work" class="ui-tab ui-tab-work" data-tab="work" role="tabpanel" aria-label="Work">
+        <div id="root"></div>
+      </section>
+      <section id="tab-memory" class="ui-tab" data-tab="memory" role="tabpanel" aria-label="Memory" hidden>
+        <div id="ui-memory"></div>
+      </section>
+      <section id="tab-rules" class="ui-tab" data-tab="rules" role="tabpanel" aria-label="Rules" hidden>
+        <div id="ui-rules"></div>
+      </section>
+      <section id="tab-tools" class="ui-tab" data-tab="tools" role="tabpanel" aria-label="Tools" hidden>
+        <div id="ui-tools"></div>
+      </section>
+    </main>
+
+    <div id="ui-toast" class="ui-toast" role="status"></div>
   </body>
 </html>

@@ -16,6 +16,8 @@ export const TOOL_DEFS = [
   { name: "session_start_context", description: "Pinned and recent memories plus standing rules for a project. Call at the start of a session.", inputSchema: { type: "object", properties: { project: str, limit: { type: "number" } } } },
   { name: "list_rules", description: "The owner's standing rules.", inputSchema: { type: "object", properties: {} } },
   { name: "add_rule", description: "Add a standing rule the owner wants every tool to follow. Only when the owner asked for it.", inputSchema: { type: "object", properties: { then: str, when: str, scopeTier: { type: "string", enum: ["everywhere", "project", "situation"] }, scopeName: str }, required: ["then"] } },
+  { name: "dismiss_memory", description: "Hide a memory, observation or fact from search and context without deleting it. Reversible with restore_memory.", inputSchema: { type: "object", properties: { type: { type: "string", enum: ["memory", "observation", "fact", "episode"] }, id: { type: "number" }, reason: str }, required: ["id"] } },
+  { name: "restore_memory", description: "Undo a dismissal. The item appears in search and context again.", inputSchema: { type: "object", properties: { type: { type: "string", enum: ["memory", "observation", "fact", "episode"] }, id: { type: "number" } }, required: ["id"] } },
 ];
 
 const text = (t) => ({ content: [{ type: "text", text: t }] });
@@ -77,6 +79,18 @@ export function callTool(name, args = {}, ctx) {
       case "add_rule": {
         const r = store.rules.add({ then: args.then, when: args.when ?? "", scopeTier: args.scopeTier ?? "everywhere", scopeName: args.scopeName ?? "Everywhere", source: ctx.tool ?? "mcp" });
         return text(r.created ? `Rule saved (${r.id}). The owner syncs rules to tools from the Rules page.` : `That rule already exists (${r.id}).`);
+      }
+      case "dismiss_memory": {
+        if (!Number.isSafeInteger(Number(args.id))) return fail("id is required (a number).");
+        const type = args.type ?? "memory";
+        const r = store.dismiss(type, Number(args.id), { actor: ctx.tool ?? "mcp", reason: args.reason ?? null });
+        return text(r.changed ? `Dismissed ${r.type} #${r.id}. It is hidden from search and context; restore_memory undoes this.` : `${r.type} #${r.id} was already dismissed.`);
+      }
+      case "restore_memory": {
+        if (!Number.isSafeInteger(Number(args.id))) return fail("id is required (a number).");
+        const type = args.type ?? "memory";
+        const r = store.restore(type, Number(args.id), { actor: ctx.tool ?? "mcp" });
+        return text(r.restored ? `Restored ${r.type} #${r.id}.` : `${r.type} #${r.id} was not dismissed.`);
       }
       default:
         return fail(`Unknown tool: ${name}`);

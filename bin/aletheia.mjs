@@ -7,6 +7,8 @@
 //   aletheia save <text> [--project p] [--type t] [--pin] save a memory
 //   aletheia import claude-mem [--path db] [--no-prompts] bring memory in from claude-mem
 //   aletheia import bundle <file.jsonl>                   restore an export
+//   aletheia import transcripts <tool> [--since DATE] [--dry-run] [--limit n]
+//                                                          back-fill from local session files (read-only)
 //   aletheia export [--format jsonl|markdown] [--project p] [--events] [--out file]
 //   aletheia rules list | add <text> [--when w] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
 //   aletheia tools                                        detected tools and how to connect each
@@ -19,6 +21,10 @@
 //   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
 //   aletheia prune [--apply]                            report cold facts and old episodes; --apply changes them
 //   aletheia promote <type> <id>                        make a memory, episode, observation or fact global
+//   aletheia dismiss <id | type:id> [--reason r]        hide a memory, episode, observation or fact (reversible)
+//   aletheia restore <id | type:id>                     undo a dismissal
+//   aletheia dismissed [--limit n]                      list dismissed items
+//   aletheia language [set <tag> | list] [--project p]  output language for facts and summaries (empty clears)
 //   aletheia optimize                                   rebuild FTS segments after a large import
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -52,6 +58,15 @@ function parseArgs(args) {
 }
 const out = (v) => console.log(typeof v === "string" ? v : JSON.stringify(v, null, 2));
 const die = (m) => { console.error(m); process.exit(1); };
+
+/** `12` means memory #12; `fact:12` names another dismissible type. */
+function dismissTarget(value) {
+  const text = String(value ?? "");
+  const match = /^(memory|episode|observation|fact):(\d+)$/.exec(text);
+  if (match) return { type: match[1], id: Number(match[2]) };
+  if (/^\d+$/.test(text)) return { type: "memory", id: Number(text) };
+  return null;
+}
 
 function installEnv(hub) {
   return {
@@ -193,6 +208,28 @@ async function main() {
         const memories = await hub.embedMissing(embedder, { limit });
         return out(`Embedded ${facts} fact(s) and ${memories} memory/memories with ${embedder.model} (${embedder.dim} dims).`);
       }
+      case "dismiss": {
+        const target = dismissTarget(pos[0]) ?? die("Usage: aletheia dismiss <id | memory:id | fact:id | observation:id | episode:id> [--reason r]");
+        const result = hub.dismiss(target.type, target.id, { actor: "cli", reason: typeof flags.reason === "string" ? flags.reason : null });
+        return out(result.changed ? `Dismissed ${result.type} #${result.id}. Restore with: aletheia restore ${result.type}:${result.id}` : `${result.type} #${result.id} was already dismissed.`);
+      }
+      case "restore": {
+        const target = dismissTarget(pos[0]) ?? die("Usage: aletheia restore <id | memory:id | fact:id | observation:id | episode:id>");
+        const result = hub.restore(target.type, target.id, { actor: "cli" });
+        return out(result.restored ? `Restored ${result.type} #${result.id}.` : `${result.type} #${result.id} was not dismissed.`);
+      }
+      case "dismissed": {
+        const rows = hub.dismissedList({ limit: Number(flags.limit) || 100 });
+        return out(rows.length ? rows.map((row) => `${row.item_type}:${row.item_id}  ${new Date(row.at_epoch).toISOString()}${row.reason ? `  ${row.reason}` : ""}`).join("\n") : "No dismissed items.");
+      }
+      case "language": {
+        if (pos[0] === "set") {
+          const result = hub.setOutputLanguage(flags.project ?? "default", pos[1] ?? "", { actor: "cli" });
+          return out(result.language ? `Output language for ${result.project}: ${result.language}` : `Cleared the output language for ${result.project}; it follows the extraction mode.`);
+        }
+        const map = hub.outputLanguageMap();
+        return out(Object.keys(map).length ? Object.entries(map).map(([project, language]) => `${project.padEnd(24)} ${language}`).join("\n") : "No per-project output language; the extraction mode decides.");
+      }
       case "promote": {
         if (!pos[0] || !pos[1]) return die("Usage: aletheia promote <memory|episode|observation|fact> <id>");
         return out(hub.promote(pos[0], Number(pos[1]), { actor: "cli" }));
@@ -205,9 +242,18 @@ async function main() {
         return out(r.created ? `Saved as #${r.id}.` : `Already saved as #${r.id}.`);
       }
       case "import": {
+        if (pos[0] === "transcripts") {
+          const tool = pos[1];
+          const since = typeof flags.since === "string" ? Date.parse(flags.since) : null;
+          if (flags.since && !Number.isFinite(since)) return die("--since needs a date, for example 2026-01-31.");
+          const { importTranscripts } = await import("../src/hub/transcripts.mjs");
+          const result = importTranscripts(hub, { tool, home: config.home, since, dryRun: !!flags["dry-run"], limit: Number(flags.limit) || 20_000 });
+          const verb = result.dryRun ? "Would import" : "Imported";
+          return out(`${verb} ${result.added} episode(s) from ${result.files} file(s) for ${result.tool} (${result.skipped} already there, ${result.malformed} malformed line(s)); ${result.queued} extraction job(s) ${result.dryRun ? "would be queued" : "queued"}.`);
+        }
         if (pos[0] === "claude-mem") return out(importClaudeMem(hub, flags.path ?? config.sourceDb, { includePrompts: !flags["no-prompts"], project: flags.project || null }));
         if (pos[0] === "bundle") return out(hub.importBundle(readFileSync(pos[1] ?? die("Usage: aletheia import bundle <file>"), "utf8")));
-        return die("Usage: aletheia import claude-mem | bundle <file>");
+        return die("Usage: aletheia import claude-mem | bundle <file> | transcripts <claude-code|command-code> [--since DATE] [--dry-run]");
       }
       case "export": {
         const body = flags.format === "markdown" ? hub.exportMarkdown({ project: flags.project }) : hub.exportBundle({ project: flags.project, includeEvents: !!flags.events });

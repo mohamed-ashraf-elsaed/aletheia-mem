@@ -47,6 +47,16 @@ export function loadConfig(overrides = {}) {
     provider: overrides.provider ?? env.ALETHEIA_PROVIDER ?? "none",
     // Extraction mode: code, chill, language-en or language-es. See src/hub/modes/*.json.
     mode: overrides.mode ?? env.ALETHEIA_MODE ?? "code",
+    // An ordered provider chain. Presets: ollama, lmstudio, llamacpp, local, openai, openrouter,
+    // claude-cli, anthropic-compatible. Empty means the single ALETHEIA_PROVIDER path.
+    providers: overrides.providers ?? String(env.ALETHEIA_PROVIDERS ?? "").split(",").map((name) => name.trim()).filter(Boolean),
+    providerTimeoutMs: Number(overrides.providerTimeoutMs ?? env.ALETHEIA_PROVIDER_TIMEOUT_MS ?? 60_000),
+    // A hard cap on in-flight model requests. One by default: a laptop should not run several models at once.
+    maxConcurrent: Number(overrides.maxConcurrent ?? env.ALETHEIA_MAX_CONCURRENT ?? 1),
+    cooldownMs: Number(overrides.cooldownMs ?? env.ALETHEIA_PROVIDER_COOLDOWN_MS ?? 60_000),
+    anthropicBaseUrl: overrides.anthropicBaseUrl ?? env.ALETHEIA_ANTHROPIC_BASE_URL ?? "",
+    // Output language for extracted facts and summaries. Empty follows the extraction mode.
+    outputLanguage: overrides.outputLanguage ?? env.ALETHEIA_OUTPUT_LANGUAGE ?? "",
     // Model routing. Extraction should use the small model; summaries the larger one.
     extractModel: overrides.extractModel ?? env.ALETHEIA_EXTRACT_MODEL ?? "",
     summaryModel: overrides.summaryModel ?? env.ALETHEIA_SUMMARY_MODEL ?? "",

@@ -44,12 +44,12 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | F-M02 | Observation types | Classifies memory as bugfix, feature, refactor, change, discovery, decision or gotcha. | https://docs.claude-mem.ai/architecture/database | Free | **parity**. Same seven types (`src/hub/compress.mjs:9`). | — |
 | F-M03 | Session summaries | Writes a per-session request / investigated / learned / completed / next-steps record. | https://docs.claude-mem.ai/architecture/database | Free | **missing**. The importer reads summaries; nothing generates them (`src/hub/importers.mjs:36`). | T-032 |
 | F-M04 | Strict output validation and retry | Rejects malformed model output and retries once with the error. | https://docs.claude-mem.ai/architecture/hooks | Free | **parity**. `validateObservations` plus one retry (`src/hub/compress.mjs:18,53`). | — |
-| F-M05 | Provider routing | Chooses Claude, Codex, Gemini, OpenRouter or OpenAI-compatible per installation. | https://docs.claude-mem.ai/configuration | Free (you pay your model) | **partial**. `none`, `claude-cli`, `openai` only (README configuration table; `src/refresh/providers.mjs`). | T-034 |
-| F-M06 | Quota fallback and key pools | Switches provider when a plan is spent and rotates several API keys. | https://docs.claude-mem.ai/usage/quota-fallback | Free for the mechanism; model usage paid | **missing**. | T-036 |
+| F-M05 | Provider routing | Chooses Claude, Codex, Gemini, OpenRouter or OpenAI-compatible per installation. | https://docs.claude-mem.ai/configuration | Free (you pay your model) | **partial** (CORRECTED 2026-10-26: presets for Ollama, LM Studio, llama.cpp, `local`, `openai`, `openrouter`, `claude-cli` and an `anthropic-compatible` URL, plus an ordered fallback chain; validated T-119. Codex and Gemini providers are not built). Earlier text: `none`, `claude-cli`, `openai` only. | T-034, T-119 |
+| F-M06 | Quota fallback and key pools | Switches provider when a plan is spent and rotates several API keys. | https://docs.claude-mem.ai/usage/quota-fallback | Free for the mechanism; model usage paid | **partial** (CORRECTED 2026-10-26: a quota, 429, 5xx or timeout cools that provider down and the next in `ALETHEIA_PROVIDERS` is tried; validated T-119. Rotating several keys for one provider is not built). Earlier text: `missing`. | T-119, T-036 |
 | F-M07 | Modes | Switches extraction behaviour and output language. | https://docs.claude-mem.ai/modes | Free | **missing**. | T-034 |
 | F-M08 | Mode languages | Ships 29 language modes in 35 mode files (the 29 languages plus chill, law-study, law-study--chill, email-investigation, meme-tokens, and the base code mode). | `plugin/modes/*.json` (repo tree); https://docs.claude-mem.ai/modes | Free | **missing**. English only. | T-034 |
 | F-M09 | Observation batching | Combines queued events from one prompt into a single observer request, with a character budget. | https://docs.claude-mem.ai/configuration | Free | **partial**. `compressRecent` sends up to 120 events in one prompt with no token accounting (`src/hub/compress.mjs:46`). | T-019 |
-| F-M10 | Custom Anthropic backends | Sends observer traffic through a compatible gateway or LiteLLM. | https://docs.claude-mem.ai/configuration/custom-anthropic-backends | Free for the mechanism | **partial**. An OpenAI-compatible base URL is supported; no Anthropic-shape gateway path (`README.md`, configuration). | T-034 |
+| F-M10 | Custom Anthropic backends | Sends observer traffic through a compatible gateway or LiteLLM. | https://docs.claude-mem.ai/configuration/custom-anthropic-backends | Free for the mechanism | **partial** (CORRECTED 2026-10-26: the `anthropic-compatible` preset accepts any OpenAI-shaped gateway through `ALETHEIA_ANTHROPIC_BASE_URL`; no default URL, and no gateway was tested, so this stays partial. Validated T-119 for the preset and its clear missing-setting error). Earlier text: an OpenAI-compatible base URL is supported; no Anthropic-shape gateway path. | T-034, T-119 |
 | F-M11 | Cost accounting | Shows token and dollar cost for model calls. | https://docs.claude-mem.ai/configuration | Free | **partial**. A usage log exists; no cost panel (see [15](15-product-spec.md), FR-U5). | T-019 |
 | F-M12 | Idle and overnight processing | Continues compression after a session ends and when the machine is idle. | https://docs.claude-mem.ai/architecture/worker-service | Free | **missing**. `compress` runs only when invoked. | T-020 |
 
@@ -236,9 +236,9 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 
 | Status | Rows |
 |---|---:|
-| parity | 24 |
-| partial | 41 |
-| missing | 79 |
+| parity | 25 |
+| partial | 43 |
+| missing | 76 |
 | better | 12 |
 | out-of-scope | 6 |
 | unverified | 1 |
@@ -294,17 +294,17 @@ Source: [docs/research/A4-claude-mem-prs.md](research/A4-claude-mem-prs.md). 683
 | ID | Need (PR count) | Example PRs | Aletheia status | Task |
 |---|---|---|---|---|
 | F-N01 | Support another AI tool (81) | #1233, #1355, #1758 | **partial**: hooks for Claude Code and Command Code; MCP config for 10 tools | T-062, T-064, T-065, T-068, T-124 |
-| F-N02 | More model providers and presets for the observer (72) | see A4 section 2 | **partial**: `claude-cli` and one OpenAI-compatible endpoint | T-119 |
+| F-N02 | More model providers and presets for the observer (72) | see A4 section 2 | **partial** (CORRECTED 2026-10-26: presets and an ordered fallback chain are built and validated, T-119; Codex and Gemini providers remain). | T-119, T-034 |
 | F-N03 | Hooks that fail open, run fast, survive compaction (64) | see A4 section 2 | **partial**: spool and compact re-inject exist | T-009 |
 | F-N04 | Windows, Linux, macOS stability (57) | see A4 section 2 | **partial**: only Linux is tested | T-014 |
 | F-N05 | Sync, backup, team, self-hosted server (52; 37 external closed vs 3 merged) | #1722, #824, #2544 | **planned** | T-102 to T-112 |
 | F-N06 | Privacy: redaction, auth, loopback (35; 30 closed vs 1 merged) | #1157, #3680 | **partial**, ahead on redaction | T-010, T-011 |
 | F-N07 | Project and worktree scoping (25) | see A4 | **partial** | T-033 |
-| F-N08 | Quota fallback and spend guard (24) | see A4 | **missing** | T-109, T-119 |
+| F-N08 | Quota fallback and spend guard (24) | see A4 | **partial** (CORRECTED 2026-10-26: quota fallback is built and validated, T-119; the spend guard is still T-109). | T-109, T-119 |
 | F-N09 | Exclude memory per project (18) | see A4 | **missing** | T-016 |
-| F-N10 | Stop writing CLAUDE.md into folders (17; 16 closed vs 0 merged; #589 has 29 reactions) | #589, #672 | **better**: we write only a managed block in files you choose; no test yet | T-122 |
-| F-N11 | Output in the user's language (8 closed vs 0) | #2623, #398 | **missing** | T-120 |
-| F-N12 | Back-fill and portable export/import (11 closed vs 0) | #1129, #1773 | **partial**: bundle export/import exists, no transcript back-fill | T-121 |
+| F-N10 | Stop writing CLAUDE.md into folders (17; 16 closed vs 0 merged; #589 has 29 reactions) | #589, #672 | **better** (CORRECTED 2026-10-26: a test now installs both tools and runs the exact installed hooks plus the CLI read/write paths with a temp project, and asserts a byte-identical project tree; T-122 validated). We write only a managed block in files you choose. | T-122 |
+| F-N11 | Output in the user's language (8 closed vs 0) | #2623, #398 | **parity** (CORRECTED 2026-10-26: a validated per-project language setting is added to the fact prompt as `OUTPUT_LANGUAGE`; summaries follow the facts. T-120 validated). Earlier text: `missing`. | T-120 |
+| F-N12 | Back-fill and portable export/import (11 closed vs 0) | #1129, #1773 | **partial** (CORRECTED 2026-10-26: `aletheia import transcripts claude-code\|command-code` back-fills the two verified on-disk layouts, read-only, hashed and queued; T-121 validated. No other tool's layout is supported. Bundle export/import was already built). | T-121 |
 | F-N13 | More MCP tools and HTTP transport (14 closed vs 0) | #662, #1393 | **partial**: stdio only | T-067 |
 | F-N14 | Time-aware and reinforcement ranking (9 vs 1 merged) | #1257, #3414 | **partial**: importance score built | T-030 |
-| F-N15 | Reversible dismiss, delete from viewer/CLI/MCP (7 vs 2) | #3114, #2925 | **partial**: delete only | T-123 |
+| F-N15 | Reversible dismiss, delete from viewer/CLI/MCP (7 vs 2) | #3114, #2925 | **partial** (CORRECTED 2026-10-26: dismiss/restore is built for memories, observations and facts across the store, CLI, MCP tools, REST and the one UI; a dismissed row is excluded from search and context and only `prune --apply` deletes it. T-123 validated. Permanent delete is API/CLI only). | T-123 |
