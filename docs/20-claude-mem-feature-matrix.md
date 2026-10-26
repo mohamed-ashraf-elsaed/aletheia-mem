@@ -223,7 +223,7 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | F-P14 | Release flow | Tags and publishes from CI. | `.github/workflows/npm-publish.yml` | Free | **missing**. | T-085 |
 | F-P15 | Dependabot | Keeps dependencies patched. | `.github/` (repo tree; no dependabot file found) | Free | **missing**. | T-085 |
 | F-P16 | Funding metadata | Shows a sponsor button. | `.github/FUNDING.yml` | Free | **missing**. | T-085 |
-| F-P17 | GitHub topics | Sets discoverable repository topics. | `api.github.com/repos/thedotmack/claude-mem` (topics list) | Free | **UNVERIFIED**. The local repo has keywords in `package.json`; the remote repository settings were not fetched. | T-085 |
+| F-P17 | GitHub topics | Sets discoverable repository topics. | `api.github.com/repos/thedotmack/claude-mem` (topics list) | Free | **partial**. The remote lists 20 topics; this repository lists 12 (`api.github.com/repos/mohamed-ashraf-elsaed/aletheia-mem`, 2026-10-26). | T-085 |
 | F-P18 | GitHub Discussions | Hosts questions outside issues. | Not visible in tree | Free | **missing**. | T-085 |
 | F-P19 | Demo animation | Shows the product working in the README. | `README.md` (repo tree) | Free | **missing**. | T-083 |
 | F-P20 | Social preview image | Sets a repository social card. | Repository settings (not fetched) | Free | **UNVERIFIED**. | T-083 |
@@ -237,14 +237,14 @@ Every Aletheia cell cites the code that decides the status. Every gap points at 
 | Status | Rows |
 |---|---:|
 | parity | 25 |
-| partial | 39 |
+| partial | 40 |
 | missing | 79 |
 | better | 12 |
 | out-of-scope | 6 |
-| unverified | 2 |
+| unverified | 1 |
 | **Total** | **163** |
 
-Rows with `UNVERIFIED` (F-P17, F-P20) are repository *settings* that cannot be read from the code tree; they are listed in [unverified.md](tasks/unverified.md).
+Row with `UNVERIFIED` (F-P20) is a repository *setting* that cannot be read from the code tree; they are listed in [unverified.md](tasks/unverified.md).
 
 ## 20.12 The 20 most valuable gaps, ranked
 

@@ -309,3 +309,19 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | https://www.reddit.com/r/ClaudeAI/about/rules.json | HTTP 403: subreddit rules not read; marked UNVERIFIED |
 | 2026-10-26 | https://www.reddit.com/r/LocalLLaMA/about/rules.json | HTTP 403: subreddit rules not read; marked UNVERIFIED |
 | 2026-10-26 | https://www.reddit.com/r/mcp/about/rules.json | HTTP 403: subreddit rules not read; marked UNVERIFIED |
+
+## H. URLs referenced in the documents but not fetched as sources
+
+| Date | URL | Status |
+|---|---|---|
+| 2026-10-26 | https://github.com/hesreallyhim/awesome-claude-code | Referenced; the repository README and CONTRIBUTING were fetched, the HTML page was not |
+| 2026-10-26 | https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml/badge.svg | Proposed badge endpoint; not fetched |
+| 2026-10-26 | https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem | Proposed badge endpoint; not fetched |
+| 2026-10-26 | https://img.shields.io/github/stars/mohamed-ashraf-elsaed/aletheia-mem | Proposed badge endpoint; not fetched |
+| 2026-10-26 | https://img.shields.io/github/last-commit/mohamed-ashraf-elsaed/aletheia-mem | Proposed badge endpoint; not fetched |
+| 2026-10-26 | https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem | Proposed badge endpoint; not fetched |
+| 2026-10-26 | https://img.shields.io/badge/status-alpha-orange | Proposed static badge; not fetched |
+| 2026-10-26 | https://img.shields.io/badge/bun-%3E%3D1.1-black | Proposed static badge; not fetched |
+| 2026-10-26 | https://img.shields.io/badge/platform-linux%20(tested)-lightgrey | Proposed static badge; not fetched |
+| 2026-10-26 | https://mohamed-ashraf-elsaed.github.io/aletheia-mem/ | Homepage from repository metadata; site files read locally, URL not fetched |
+| 2026-10-26 | https://raw.githubusercontent.com/snap-research/locomo/main/data/locomo10.json | Dataset URL from the existing benchmark plan; not fetched in this run |
