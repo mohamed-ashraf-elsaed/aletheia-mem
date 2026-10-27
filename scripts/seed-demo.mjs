@@ -96,6 +96,8 @@ export function seed(dataDir, { rows = 120, empty = false, force = false } = {})
       ["demo-blog", "demo-req-onboarding-2", "Please use pnpm, not npm.", now - 2.3 * DAY],
       ["demo-api", "demo-req-queue-1", "Fix the queue backoff so retries do not hammer the API", now - 1.2 * DAY],
       ["demo-api", "demo-req-queue-2", "Fix the queue backoff and add a dead-letter table", now - 0.5 * DAY],
+      ["demo-api", "demo-req-arabic-1", `Build ${ARABIC} (demo)`, now - 0.3 * DAY],
+      ["demo-blog", "demo-req-token-1", `Build the ${LONG_TOKEN} importer (demo)`, now - 0.2 * DAY],
     ];
     for (const [project, sessionId, text, at] of prompts) episode(project, sessionId, text, at);
     episode("demo-blog", "demo-req-onboarding-2", "Reviewed the setup steps and the checklist.", now - 2.2 * DAY, "tool", "event");
@@ -122,6 +124,13 @@ export function seed(dataDir, { rows = 120, empty = false, force = false } = {})
           .run(suggestionId, project, quoteTexts[(i + q) % quoteTexts.length], latest - q * DAY, "prompt", i, `demo-session-${q % 14}`);
       }
     }
+    // One long Arabic rule with a 200-character unbroken token, to prove that rule text wraps.
+    const longRule = `${ARABIC} ${LONG_TOKEN} (demo long)`;
+    hub.db.prepare("INSERT INTO rule_suggestions (project, text, when_text, confidence, source_type, source_id, status, created_at_epoch, times_seen, latest_at_epoch) VALUES (?,?,?,?,?,?,?,?,?,?)")
+      .run("demo-shop", longRule, "", 0.6, "prompt", 9999, "pending", now, 3, now);
+    const longId = hub.db.prepare("SELECT id FROM rule_suggestions WHERE text = ?").get(longRule)?.id;
+    if (longId != null) for (let q = 0; q < 3; q += 1) hub.db.prepare("INSERT INTO rule_suggestion_quotes (suggestion_id, project, text, at_epoch, source_type, source_id, session_id) VALUES (?,?,?,?,?,?,?)")
+      .run(longId, "demo-shop", q === 0 ? `${ARABIC} ${LONG_TOKEN}` : quoteTexts[q], now - q * DAY, "prompt", 9999, `demo-session-${q}`);
     for (let i = 0; i < Math.min(8, Math.round(rows / 15)); i += 1) hub.dismiss("memory", memoryIds[(i * 7) % memoryIds.length], { actor: "demo", reason: "demo duplicate" });
     for (let i = 0; i < Math.round(rows / 4); i += 1) hub.audit(i % 3 ? "ui" : "demo", i % 2 ? "memory.update" : "memory.pin", { id: i, note: "demo" });
     hub.setSetting("demo.seeded", true);

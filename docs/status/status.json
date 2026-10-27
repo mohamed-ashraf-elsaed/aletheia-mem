@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-27T15:24:39.578Z",
-  "commit": "ff41a9a",
+  "generatedAt": "2026-10-27T15:36:09.835Z",
+  "commit": "31e6e48",
   "tasks": [
     {
       "id": "T-001",
@@ -11001,16 +11001,68 @@
       "blocked": false,
       "dependents": [],
       "stale": []
+    },
+    {
+      "id": "T-224",
+      "title": "Keyboard and small-screen walk of Requests, Goals, Story, Suggested rules and Economics",
+      "status": "validated",
+      "phase": "P4",
+      "depsRaw": "none",
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 705,
+      "acceptanceTicked": 4,
+      "acceptanceTotal": 4,
+      "acceptance": [
+        {
+          "done": true,
+          "text": "`docs/a11y-walk-requests.md` has the date, what was run, a pass/fail table per check, failing selectors and what was not checked."
+        },
+        {
+          "done": true,
+          "text": "Every fix has a test in `test/ui-a11y.test.mjs`."
+        },
+        {
+          "done": true,
+          "text": "The browser check was re-run after the fixes (0 targets under 40 px at 375 px; focus lands on the next card after Dismiss, Approve and Reject)."
+        },
+        {
+          "done": true,
+          "text": "No change to `src/` or API routes."
+        }
+      ],
+      "validation": "bun test test/ui-a11y.test.mjs test/ui-contract.test.mjs",
+      "lastHistory": "- 2026-10-27: validated - the validation command passed and its output is in Evidence.",
+      "history": [
+        "- 2026-10-27: todo, created.",
+        "- 2026-10-27: doing",
+        "- 2026-10-27: validated - the validation command passed and its output is in Evidence."
+      ],
+      "files": [
+        "docs/a11y-walk-requests.md",
+        "public/ui-components.css",
+        "public/tabs/work-requests.js",
+        "scripts/seed-demo.mjs",
+        "test/ui-a11y.test.mjs",
+        "docs/tasks/TASKS.md"
+      ],
+      "ownerSteps": [],
+      "deps": [],
+      "blockedBy": [],
+      "eligible": false,
+      "blocked": false,
+      "dependents": [],
+      "stale": []
     }
   ],
   "taskCounts": {
-    "validated": 127,
+    "validated": 128,
     "implemented": 0,
     "doing": 0,
     "failed": 0,
     "todo": 53
   },
-  "taskTotal": 180,
+  "taskTotal": 181,
   "phases": {
     "P0": {
       "total": 18,
@@ -11045,8 +11097,8 @@
       "todo": 6
     },
     "P4": {
-      "total": 13,
-      "validated": 10,
+      "total": 14,
+      "validated": 11,
       "implemented": 0,
       "doing": 0,
       "failed": 0,
@@ -15133,6 +15185,16 @@
       "orphan": true
     },
     {
+      "file": "docs/a11y-walk-requests.md",
+      "title": "Keyboard and small-screen walk: Requests, Goals, Story, Suggested rules, Economics",
+      "bytes": 5774,
+      "lastCommit": "n/a",
+      "linkedFromReadme": false,
+      "linkedFromIndex": false,
+      "linkedFromOtherDocs": 0,
+      "orphan": true
+    },
+    {
       "file": "docs/claude-desktop.md",
       "title": "Claude Desktop and the aletheia MCP server",
       "bytes": 1955,
@@ -15185,7 +15247,7 @@
   ],
   "links": {
     "broken": [],
-    "local": 1238,
+    "local": 1239,
     "external": 975
   },
   "verification": {
@@ -16122,7 +16184,7 @@
   },
   "checks": {
     "staticTestFiles": 121,
-    "staticTestCalls": 1094,
+    "staticTestCalls": 1099,
     "lastRecordedRun": {
       "source": "docs/tasks/run-report.md",
       "date": null,
@@ -16176,12 +16238,21 @@
   "git": {
     "available": true,
     "branch": "main",
-    "head": "ff41a9a",
-    "ahead": 1,
+    "head": "31e6e48",
+    "ahead": 0,
     "behind": 0,
-    "uncommitted": 1,
-    "uncommittedDocs": [],
+    "uncommitted": 16,
+    "uncommittedDocs": [
+      "docs/a11y-walk-requests.md",
+      "docs/tasks/T-224.md",
+      "docs/tasks/TASKS.md"
+    ],
     "commits": [
+      {
+        "sha": "31e6e48",
+        "date": "2026-10-27",
+        "subject": "docs(status): regenerate"
+      },
       {
         "sha": "ff41a9a",
         "date": "2026-10-27",
@@ -16251,18 +16322,12 @@
         "sha": "1e09b4b",
         "date": "2026-10-27",
         "subject": "ci: run tests on Linux, macOS and Windows (T-014)"
-      },
-      {
-        "sha": "050bffb",
-        "date": "2026-10-27",
-        "subject": "feat(tasks): add run-report script (T-002)"
       }
     ],
     "worktrees": [
-      "/home/mashraf/Projects/aletheia-mem                                           ff41a9a [main]",
-      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-a5f33ab6a8a2df6e4 ff41a9a [worktree-agent-a5f33ab6a8a2df6e4]",
-      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-aba78cdc0bd0d914c 3cd426f [worktree-agent-aba78cdc0bd0d914c] locked",
-      "/home/mashraf/Projects/aletheia-next                                          3cd426f [feat/after-v010]"
+      "/home/mashraf/Projects/aletheia-mem                                           31e6e48 [main]",
+      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-aba78cdc0bd0d914c ab9474f [worktree-agent-aba78cdc0bd0d914c]",
+      "/home/mashraf/Projects/aletheia-next                                          98848c6 [feat/after-v010]"
     ]
   },
   "ci": [
@@ -16360,7 +16425,7 @@
       },
       "public": {
         "files": 59,
-        "lines": 6884
+        "lines": 6939
       },
       "bin": {
         "files": 5,
@@ -16368,15 +16433,15 @@
       },
       "scripts": {
         "files": 21,
-        "lines": 2787
+        "lines": 2796
       },
       "test": {
         "files": 127,
-        "lines": 17902
+        "lines": 17983
       },
       "docs": {
-        "files": 270,
-        "lines": 34460
+        "files": 272,
+        "lines": 34623
       }
     },
     "routes": [

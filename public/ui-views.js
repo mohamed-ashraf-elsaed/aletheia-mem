@@ -83,8 +83,37 @@ export const filtersActive = (state, keys) => keys.some((key) => state[key] !== 
 
 // ---- cards -----------------------------------------------------------------------------------------------
 
+const isFocusable = (el) => {
+  const tag = String(el.tagName ?? "").toLowerCase();
+  if (tag === "a") return el.getAttribute?.("href") != null;
+  return ["button", "input", "select", "textarea"].includes(tag) && el.getAttribute?.("disabled") == null;
+};
+function firstFocusable(el) {
+  for (const kid of el.children ?? []) {
+    if (kid.hidden) continue;
+    if (isFocusable(kid)) return kid;
+    const deeper = firstFocusable(kid);
+    if (deeper) return deeper;
+  }
+  return null;
+}
+
+/** A keyboard user who just used a button on a card must not land on the page top when that card goes away. */
+function moveFocusOut(card) {
+  const active = globalThis.document?.activeElement;
+  let inside = false;
+  for (let node = active; node; node = node.parentNode) if (node === card) { inside = true; break; }
+  if (!inside) return;
+  const siblings = [...(card.parentNode?.children ?? [])];
+  const at = siblings.indexOf(card);
+  const live = (el) => !el.hidden && firstFocusable(el);
+  const neighbour = siblings.slice(at + 1).find(live) ?? siblings.slice(0, at).reverse().find(live);
+  (neighbour ? firstFocusable(neighbour) : globalThis.document.querySelector?.(".ui-main"))?.focus?.();
+}
+
 /** Remove a card from the screen with a short collapse; returns a function that brings it back. */
 export function hideCard(card) {
+  moveFocusOut(card);
   card.classList.add("is-leaving");
   const done = collapse(card);
   return () => done.then(() => { card.hidden = false; card.classList.remove("is-leaving"); return expand(card); });
