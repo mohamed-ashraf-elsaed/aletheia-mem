@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Install smoke check (macOS and no-Bun) · Aletheia docs</title>
+<meta name="description" content="Status: NOT RUN BY AUTHOR. The published package aletheia-mem@0.1.0 was smoke-tested only on the author's Linux machine with Bun 1.3.10 (see tasks/unverified.md item 60 and task...">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/install-check.html">
+<link rel="icon" type="image/png" sizes="64x64" href="../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Install smoke check (macOS and no-Bun)","description":"Status: NOT RUN BY AUTHOR. The published package aletheia-mem@0.1.0 was smoke-tested only on the author's Linux machine with Bun 1.3.10 (see tasks/unverified.md item 60 and task...","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/install-check.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="install-smoke-check-macos-and-no-bun">Install smoke check (macOS and no-Bun)</h1>
+<p>Status: <strong>NOT RUN BY AUTHOR</strong>. The published package <code>aletheia-mem@0.1.0</code> was smoke-tested only on the author's Linux machine with Bun 1.3.10 (see <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/tasks/unverified.md">tasks/unverified.md</a> item 60 and <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/tasks/T-080.md">tasks/T-080.md</a>). These are the exact commands and the expected output for the two remaining machines; neither has been run.</p>
+<p>The CLI prints its version with:</p>
+<pre><code class="language-bash">npx aletheia-mem --version</code></pre>
+<p>Expected output when it works:</p>
+<pre><code>0.1.0</code></pre>
+<h2 id="macos">macOS</h2>
+<p>The command is the same. <code>npx</code> needs Node.js and npm, and the package's own bin needs Bun (its shebang is <code>#!/usr/bin/env bun</code>), so install both before running.</p>
+<pre><code class="language-bash"># once, if not already installed
+brew install node bun
+
+# the check
+npx aletheia-mem --version</code></pre>
+<p>Expected: <code>0.1.0</code>.</p>
+<p><strong>NOT RUN BY AUTHOR.</strong> macOS was never opened for this check.</p>
+<h2 id="a-machine-without-bun">A machine without Bun</h2>
+<p>The package requires Bun at runtime; without it the bin cannot start. Run the same command to confirm that it fails loudly rather than printing a version:</p>
+<pre><code class="language-bash">npx aletheia-mem --version</code></pre>
+<p>Expected: the command fails with an error naming the missing <code>bun</code> interpreter (for example <code>env: 'bun': No such file or directory</code>, or npm's equivalent), <strong>not</strong> <code>0.1.0</code>.</p>
+<p><strong>NOT RUN BY AUTHOR.</strong> No machine without Bun was used.</p>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>
