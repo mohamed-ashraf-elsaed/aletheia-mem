@@ -46,7 +46,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-002 | Add a run-report script | P0 | none | validated | 2026-10-27 | [T-002.md](T-002.md) |
 | T-003 | Add a schema probe to the claude-mem importer | P0 | none | validated | 2026-10-26 | [T-003.md](T-003.md) |
 | T-004 | Make empty search results explain themselves | P0 | none | validated | 2026-10-26 | [T-004.md](T-004.md) |
-| T-005 | Add REST contract tests for every documented route | P0 | none | todo | — | [T-005.md](T-005.md) |
+| T-005 | Add REST contract tests for every documented route | P0 | none | validated | 2026-10-27 | [T-005.md](T-005.md) |
 | T-006 | Publish an OpenAPI document generated from the routes | P0 | T-005 | todo | — | [T-006.md](T-006.md) |
 | T-007 | Add health detail: database, FTS, vectors, model | P0 | none | validated | 2026-10-26 | [T-007.md](T-007.md) |
 | T-008 | Add date range, order and pagination to search | P0 | none | validated | 2026-10-27 | [T-008.md](T-008.md) |
