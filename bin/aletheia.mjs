@@ -18,6 +18,7 @@
 //   aletheia connect <tool> [--write]                     preview (default) or write the MCP config for a tool
 //   aletheia install <tool> [--write] [--dry-run]         preview (default) or write MCP, hooks and rules in one go
 //   aletheia install --list                               capability level, verification and detection per tool
+//   aletheia install [<tool>] --verify                    report whether the recorded install still matches (no writes)
 //   aletheia uninstall <tool> [--write] [--force]         remove only the entries the install manifest lists
 //   aletheia hook <tool> <event>                          hook entry point: read one JSON payload on stdin
 //   aletheia doctor                                       check the server, hooks, spool and last capture
@@ -57,7 +58,7 @@ import { dirname, join, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { normalizeHook, redact } from "../src/hub/capture.mjs";
 import { importClaudeMem } from "../src/hub/importers.mjs";
-import { applyInstall, applyUninstall, doctor, formatInstallerList, formatPlan, formatUninstall, installerFor, installerIds, planUninstall } from "../src/hub/install.mjs";
+import { applyInstall, applyUninstall, doctor, formatInstallerList, formatPlan, formatUninstall, formatVerify, installerFor, installerIds, planUninstall, verifyInstall } from "../src/hub/install.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "../src/hub/rules-sync.mjs";
 import { HubStore, inspectMigration, targetSchemaVersion } from "../src/hub/store.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "../src/hub/tools.mjs";
@@ -113,6 +114,12 @@ function installEnv(hub) {
 
 async function handleInstall(command, flags, pos) {
   if (command === "install" && flags.list) return out(formatInstallerList(installEnv(null)));
+  if (command === "install" && flags.verify) {
+    const report = verifyInstall(config.dataDir, pos[0] ?? null);
+    out(formatVerify(report));
+    if (Object.values(report.tools).some((tool) => !tool.installed || !tool.ok)) process.exitCode = 1;
+    return;
+  }
   const id = pos[0];
   if (!id) return die(`Usage: aletheia ${command} <tool>\nTools: ${installerIds().join(", ")}`);
   let installer;

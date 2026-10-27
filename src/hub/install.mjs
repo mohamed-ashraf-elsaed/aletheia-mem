@@ -514,6 +514,48 @@ export function readManifest(dataDir) {
   }
 }
 
+/** Compare every recorded step against the file on disk. Never writes. */
+export function verifyInstall(dataDir, toolId = null) {
+  const manifest = readManifest(dataDir);
+  const ids = toolId ? [toolId] : Object.keys(manifest.tools ?? {});
+  const tools = {};
+  for (const id of ids) {
+    const record = manifest.tools?.[id];
+    if (!record) {
+      tools[id] = { installed: false, steps: [], ok: false };
+      continue;
+    }
+    const steps = (record.steps ?? []).map((step) => {
+      if (!existsSync(step.file)) return { kind: step.kind, file: step.file, state: "missing" };
+      try {
+        const current = hashText(readFileSync(step.file, "utf8"));
+        return { kind: step.kind, file: step.file, state: current === step.hash ? "ok" : "drift" };
+      } catch {
+        return { kind: step.kind, file: step.file, state: "unreadable" };
+      }
+    });
+    tools[id] = { installed: true, steps, ok: steps.every((step) => step.state === "ok") };
+  }
+  return { tools };
+}
+
+/** Readable lines for `aletheia install --verify`. */
+export function formatVerify(report) {
+  const ids = Object.keys(report.tools);
+  if (!ids.length) return "Nothing installed; no manifest to verify.";
+  const lines = [];
+  for (const id of ids) {
+    const tool = report.tools[id];
+    if (!tool.installed) {
+      lines.push(`${id}: not installed (no manifest entry)`);
+      continue;
+    }
+    for (const step of tool.steps) lines.push(`  ${step.state.padEnd(9)} ${step.kind.padEnd(8)} ${step.file}`);
+    lines.push(`${id}: ${tool.ok ? "matches the recorded install" : "drifted from the recorded install"}`);
+  }
+  return lines.join("\n");
+}
+
 function writeManifest(dataDir, manifest) {
   mkdirSync(dataDir, { recursive: true });
   writeFileSync(manifestPath(dataDir), jsonText(manifest));
