@@ -6,6 +6,10 @@ history.
 
 ## [Unreleased]
 
+### Changed
+
+- MCP tool definitions now carry annotations and parameter descriptions.
+
 ## [0.1.2] - 2026-10-27
 
 ### Changed
