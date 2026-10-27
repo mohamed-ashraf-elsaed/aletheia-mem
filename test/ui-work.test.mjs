@@ -77,7 +77,7 @@ describe("T-218: the overview", () => {
     const paths = calls.map((c) => c.path);
     expect(paths).toContain("/v1/work?sessions=1&facts=8&review=6");
     expect(paths).toContain("/v1/work/requests?filter=all&sort=newest&limit=10");
-    expect(paths).toContain("/v1/work/goals?limit=5&offset=0");
+    expect(paths).toContain("/v1/work/goals?limit=10&offset=0");
     W.stopWorkRefresh();
   });
   test("shows the tiles, request cards, needs, recent facts and goals", async () => {
@@ -86,7 +86,7 @@ describe("T-218: the overview", () => {
     await flush();
     const root = dom.getElementById("ui-work");
     expect(root.querySelector("h1").textContent).toBe("Work");
-    expect(root.querySelectorAll(".ui-stat").length).toBe(6);
+    expect(root.querySelector(".ui-work-strip").querySelectorAll(".ui-stat").length).toBe(6);
     expect(root.querySelectorAll(".ui-request").length).toBe(2);
     expect(root.textContent).toContain("2 of 2 requests");
     expect(root.querySelector(".ui-needs-slot").querySelectorAll(".ui-item").length).toBe(2);

@@ -3,15 +3,16 @@
 // facts come from one small overview request that refreshes every 10 seconds while the tab is visible, and at once
 // when the status bar's WebSocket reports a change. Actions change the screen first and can be undone for 8 seconds.
 import { routeOf } from "../ui-core.js";
-import { badge, button, clampText, disclosure, emptyState, markdownView, mono, skeleton, statTile, statusDot, timeEl, timeline } from "../ui-components.js";
+import { badge, button, clampText, disclosure, emptyState, markdownView, mono, skeleton, statTile, statusDot, timeline } from "../ui-components.js";
 import { api, byId, h, state, swap } from "../ui-dom.js";
 import { optimistic } from "../ui-actions.js";
 import { estimated } from "../ui-estimates.js";
 import { firstRunGuide, guideHidden } from "../ui-guide.js";
-import { pagedList, region } from "../ui-region.js";
+import { region } from "../ui-region.js";
 import { hideCard } from "../ui-views.js";
-import { factLineView, goalView, sessionDetailView, workHeaderView, workNeedsView } from "../work-view.js";
+import { factLineView, sessionDetailView, workHeaderView, workNeedsView } from "../work-view.js";
 import { queryString } from "./memory-views.js";
+import { goalsRollupView } from "./work-goals.js";
 import { requestDetailPage, requestRoute, requestsView } from "./work-requests.js";
 
 const REFRESH_MS = 10_000;
@@ -103,34 +104,12 @@ function needsCard(item, refresh) {
   return card;
 }
 
-function goalCard(goal, { dismissed = false, refresh }) {
-  const view = goalView(goal);
-  const card = h("article", { class: "ui-card ui-item ui-goal", "data-kind": "goal", "data-id": view.id });
-  const post = (action) => api(`/api/hub/goals/${view.id}`, { method: "POST", body: { action } });
-  const act = (action, undoAction, done) => {
-    let back = () => {};
-    return optimistic({ apply: () => { back = hideCard(card); }, rollback: () => back(), request: () => post(action), done, undo: () => post(undoAction), reapply: () => { back(); refresh(); }, failure: "Could not change this goal." }).then((ok) => { if (ok) refresh({ soft: true }); return ok; });
-  };
-  swap(card,
-    h("div", { class: "ui-item-head" }, h("p", { class: "ui-item-title", dir: "auto" }, view.label), view.pinned ? badge("pinned", "success") : null),
-    h("div", { class: "ui-meta" }, h("span", {}, view.countLabel), h("span", {}, view.sessionLabel), h("span", {}, `last seen ${view.lastSeen}`), view.projects.length ? h("span", {}, `projects: ${view.projects.join(", ")}`) : null),
-    view.quotes.length ? disclosure({ summary: `Dated quotes (${view.quotes.length})`, content: h("div", { class: "ui-quotes" }, ...view.quotes.map((quote) => h("div", { class: "ui-fact-source", dir: "auto" }, `#${quote.id} · ${quote.at} · ${quote.project} · ${quote.text}`))) }) : null,
-    h("div", { class: "ui-acts" }, dismissed
-      ? button({ label: "Restore", size: "sm", icon: "undo", onClick: () => act("restore", "dismiss", "Goal restored.") })
-      : [
-        button({ label: view.pinned ? "Unpin" : "Pin", size: "sm", icon: "pin", onClick: () => act(view.pinned ? "unpin" : "pin", view.pinned ? "pin" : "unpin", view.pinned ? "Unpinned." : "Pinned.") }),
-        button({ label: "Dismiss", size: "sm", icon: "eye-off", onClick: () => act("dismiss", "restore", "Goal dismissed.") }),
-      ]));
-  return card;
-}
-
 // ---- the overview ------------------------------------------------------------------------------------------
 
 function buildOverview() {
   const guideSlot = h("div", { class: "ui-guide-slot" });
   const needsSlot = h("div", { class: "ui-needs-slot" }, skeleton({ kind: "card", count: 2 }));
   const recentSlot = h("div", { class: "ui-recent-slot" }, skeleton({ kind: "card", count: 2 }));
-  const dismissedGoals = h("div", { class: "ui-dismissed-goals" });
   let guide = null;
   let requests = null;
   let goals = null;
@@ -180,17 +159,7 @@ function buildOverview() {
 
   requests = requestsView({ onCounts: () => {} });
 
-  goals = pagedList({
-    defaults: { limit: 5 }, prefix: "g", label: "Goals",
-    fetchPage: async (p) => { const data = await api(`/v1/work/goals?${queryString({ limit: p.limit, offset: p.offset, project: state.project })}`); return { items: data.goals, total: data.total ?? data.goals.length, data }; },
-    renderItem: (goal) => goalCard(goal, { refresh }),
-    skeleton: () => skeleton({ kind: "card", count: 2 }),
-    empty: () => emptyState({ title: "No repeated topics yet", text: "A topic becomes a goal when you type it in at least two sessions.", art: "memory", compact: true }),
-    onData: (data) => {
-      const hidden = data.data?.dismissedGoals ?? [];
-      swap(dismissedGoals, hidden.length ? disclosure({ summary: `Dismissed goals (${hidden.length})`, content: h("div", {}, ...hidden.map((goal) => goalCard(goal, { dismissed: true, refresh }))) }) : null);
-    },
-  });
+  goals = goalsRollupView();
 
   const root = h("div", { class: "ui-work" },
     h("div", { class: "ui-work-head" }, h("h1", { id: "ui-work-title", tabindex: "-1" }, "Work"), h("p", { class: "ui-meta" }, `Captured sessions, facts and review items from this hub · project: ${state.project || "all"}`)),
@@ -203,7 +172,7 @@ function buildOverview() {
     h("div", { class: "ui-work-grid" },
       h("section", { class: "ui-work-col", "aria-labelledby": "ui-work-needs" }, h("h2", { id: "ui-work-needs" }, "Needs you"), needsSlot)),
     h("section", { class: "ui-work-memory", "aria-labelledby": "ui-work-recent" }, h("h2", { id: "ui-work-recent" }, "Recent memory"), h("p", { class: "ui-meta" }, "Current facts with their source episode and importance."), recentSlot),
-    h("section", { class: "ui-work-goals", "aria-labelledby": "ui-work-goals" }, h("h2", { id: "ui-work-goals" }, "Goals"), h("p", { class: "ui-meta" }, "From your own typed prompts only. A topic is a goal when it repeats in at least two sessions."), goals, dismissedGoals),
+    h("section", { class: "ui-work-goals", "aria-labelledby": "ui-work-goals" }, h("h2", { id: "ui-work-goals" }, "Goals"), h("p", { class: "ui-meta" }, "From your own typed prompts only. A topic is a goal when it repeats in at least two sessions."), goals),
     h("p", { class: "ui-meta ui-work-updated" }, "Refreshes every 10 s while this tab is visible, and at once when something changes."));
   return { el: root, refresh, project: state.project, dispose: () => { guide?.dispose(); requests?.dispose?.(); goals?.dispose?.(); } };
 }
