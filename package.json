@@ -40,6 +40,7 @@
     "start": "bun bin/aletheia-server.mjs",
     "dev": "bun --watch bin/aletheia-server.mjs",
     "test": "bun test",
+    "check:deps": "bun scripts/audit-deps.mjs",
     "check:tasks": "bun scripts/check-tasks.mjs",
     "check:claims": "bun scripts/check-claims.mjs",
     "check:links": "bun scripts/check-docs-links.mjs",
