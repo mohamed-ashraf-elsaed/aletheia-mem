@@ -28,6 +28,16 @@ export function whenOf(value, { end = false } = {}) {
   return end && /^\d{4}-\d{2}-\d{2}$/.test(text) ? ms + 86_400_000 : ms;
 }
 
+/** An as-of timestamp: a plain integer epoch in milliseconds, or an ISO date or date-time. Null when absent or invalid. */
+export function epochOrIso(value) {
+  if (value == null || value === "") return null;
+  if (typeof value === "number") return Number.isFinite(value) ? value : null;
+  const text = String(value).trim();
+  if (/^\d+$/.test(text)) return Number(text);
+  const ms = Date.parse(text);
+  return Number.isFinite(ms) ? ms : null;
+}
+
 /** The fields every paged response carries beside its items. */
 export const pageInfo = ({ total, limit, offset, count }) => ({ total, limit, offset, hasMore: offset + count < total });
 

@@ -108,7 +108,7 @@ export const TOOL_DEFS = [
         subject: str("The fact subject to look up, for example a service or library name. Required."),
         project: str(PROJECT),
         predicate: str("Only facts with this predicate (the relation or attribute of the subject)."),
-        as_of: str("Return the facts valid at this ISO 8601 date or date-time. Takes priority over include_superseded."),
+        as_of: str("Return the facts valid at this ISO 8601 date or date-time, or an epoch in milliseconds. Takes priority over include_superseded."),
         include_superseded: bool("Also list older, replaced facts. Default false. Ignored when as_of is given."),
       },
       required: ["subject"],

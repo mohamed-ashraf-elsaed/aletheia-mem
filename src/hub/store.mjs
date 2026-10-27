@@ -10,6 +10,7 @@ import { sha256 } from "../lib/hash.mjs";
 import { ensureDirMode, secureDbFiles } from "./permissions.mjs";
 import { normalizeLanguage } from "./language.mjs";
 import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVector, unpackVector } from "./retrieval.mjs";
+import { epochOrIso } from "./paging.mjs";
 
 const SCHEMA_VERSION = 3; // 3: episodes, observations, facts, entities, keys, links, queue and usage
 
@@ -1112,8 +1113,8 @@ export class HubStore {
 
   /** The fact that was true at `atEpoch`, using valid time and refusing facts recorded later. */
   factsAsOf(atEpoch, { project, subject, predicate, limit = 100 } = {}) {
-    const at = typeof atEpoch === "string" ? Date.parse(atEpoch) : Number(atEpoch);
-    if (!Number.isFinite(at)) throw new RangeError("as-of needs an epoch or a date.");
+    const at = epochOrIso(atEpoch);
+    if (at == null) throw new RangeError("as-of needs an epoch or a date.");
     const where = ["status != 'retracted'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)", "recorded_at_epoch <= ?"];
     const params = [at, at, at];
     if (project) { where.push("project = ?"); params.push(project); }
@@ -1130,7 +1131,7 @@ export class HubStore {
     const expr = ftsAnyQuery(query);
     if (!expr) return [];
     const now = Date.now();
-    const asOfEpoch = asOf == null ? null : typeof asOf === "string" ? Date.parse(asOf) : Number(asOf);
+    const asOfEpoch = asOf == null ? null : epochOrIso(asOf);
     const at = Number.isFinite(asOfEpoch) ? asOfEpoch : null;
     const where = [];
     const params = [];

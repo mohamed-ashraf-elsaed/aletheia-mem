@@ -24,7 +24,7 @@ import { buildStory } from "./story.mjs";
 import { economics } from "./economics.mjs";
 import { SyncStore } from "./sync/store.mjs";
 import { wrapUntrusted } from "./untrusted.mjs";
-import { pageInfo, pagingOf, slicePage, whenOf } from "./paging.mjs";
+import { epochOrIso, pageInfo, pagingOf, slicePage, whenOf } from "./paging.mjs";
 import { auditPage, dismissedPage, reviewRows, ruleSuggestionsPage, searchPage, sessionsPage } from "./lists.mjs";
 import { AlertStore, deliverDue, extractionFailures, queueDepth } from "./alerts.mjs";
 import { applyErase, erasePlan, loadEraseKey, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } from "./erasure.mjs";
@@ -459,8 +459,8 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
         let items;
         let at = null;
         if (asOf != null) {
-          at = typeof asOf === "string" ? Date.parse(asOf) : Number(asOf);
-          need(Number.isFinite(at), "as_of must be an ISO date or epoch ms.");
+          at = epochOrIso(asOf);
+          need(at != null, "as_of must be an ISO date or epoch ms.");
           items = hub.factsAsOf(at, { project, subject, predicate }).map((fact) => hub.factHit(fact));
         } else if (history) {
           items = hub.factsHistory({ project, subject, predicate }).map((fact) => hub.factHit(fact));

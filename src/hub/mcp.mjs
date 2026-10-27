@@ -5,7 +5,7 @@ import { projectKeyForPath } from "../readmodel/project.mjs";
 import { wrapUntrusted } from "./untrusted.mjs";
 import { redact } from "./capture.mjs";
 import { searchPage } from "./lists.mjs";
-import { pagingOf, whenOf } from "./paging.mjs";
+import { epochOrIso, pagingOf, whenOf } from "./paging.mjs";
 import { readWorkStateList, writeWorkStateList } from "./work-state.mjs";
 import { TOOL_DEFS } from "./mcp-tools.mjs";
 export { TOOL_DEFS };
@@ -93,8 +93,8 @@ export function callTool(name, args = {}, ctx) {
         const predicate = args.predicate ?? null;
         let rows;
         if (args.as_of != null) {
-          const at = Date.parse(String(args.as_of));
-          if (!Number.isFinite(at)) return fail("as_of must be an ISO date or epoch ms.");
+          const at = epochOrIso(args.as_of);
+          if (at == null) return fail("as_of must be an ISO date or epoch ms.");
           rows = store.factsAsOf(at, { project, subject, predicate }).map((fact) => store.factHit(fact));
         } else if (args.include_superseded === true) {
           rows = store.factsHistory({ project, subject, predicate }).map((fact) => store.factHit(fact));

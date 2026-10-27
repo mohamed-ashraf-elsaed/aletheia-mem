@@ -45,6 +45,18 @@ describe("history and as-of", () => {
     expect(asOf.content[0].text).toContain(`#${older.id}`);
     expect(asOf.content[0].text).not.toContain(`#${newer.id}`);
 
+    const asOfMs = callTool("fact_history", { subject: "API", project: "p", as_of: 2000 }, ctx);
+    expect(asOfMs.content[0].text).toContain(`#${older.id}`);
+    expect(asOfMs.content[0].text).not.toContain(`#${newer.id}`);
+
+    const asOfMsString = callTool("fact_history", { subject: "API", project: "p", as_of: "2000" }, ctx);
+    expect(asOfMsString.content[0].text).toContain(`#${older.id}`);
+    expect(asOfMsString.content[0].text).not.toContain(`#${newer.id}`);
+
+    const asOfNowMs = callTool("fact_history", { subject: "API", project: "p", as_of: "1700000000000" }, ctx);
+    expect(asOfNowMs.content[0].text).toContain(`#${newer.id}`);
+    expect(asOfNowMs.content[0].text).not.toContain(`#${older.id}`);
+
     const missing = callTool("fact_history", { subject: "ghost", project: "p" }, ctx);
     expect(missing.content[0].text).toContain("No facts found");
 
@@ -99,6 +111,14 @@ describe("history and as-of", () => {
     test("as_of returns the fact valid then", async () => {
       const before = await (await fetch(`${base}/v1/facts?subject=API&project=p&as_of=${encodeURIComponent(new Date(2000).toISOString())}`)).json();
       expect(before.items.map((item) => item.id)).toEqual([older.id]);
+    });
+
+    test("as_of accepts a plain integer epoch in milliseconds", async () => {
+      const ms = await (await fetch(`${base}/v1/facts?subject=API&project=p&as_of=2000`)).json();
+      expect(ms.items.map((item) => item.id)).toEqual([older.id]);
+
+      const nowMs = await (await fetch(`${base}/v1/facts?subject=API&project=p&as_of=1700000000000`)).json();
+      expect(nowMs.items.map((item) => item.id)).toEqual([newer.id]);
     });
 
     test("an unknown subject returns an empty list with a reason", async () => {
