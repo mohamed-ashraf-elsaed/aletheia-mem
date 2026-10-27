@@ -74,7 +74,8 @@ describe("T-117: end-to-end encryption for sync", () => {
     const envelope = encryptPayload(Buffer.from(JSON.stringify({ text: MARKER }), "utf8"), dataKey, "aad-1", 1);
     expect(decryptPayload(envelope, dataKey, "aad-1")).toContain(MARKER);
     expect(() => decryptPayload(envelope, dataKey, "different-aad")).toThrow(); // AAD binds the ciphertext
-    const tampered = { ...envelope, ct: `A${envelope.ct.slice(1)}` };
+    const flipped = envelope.ct[0] === "A" ? "B" : "A";
+    const tampered = { ...envelope, ct: `${flipped}${envelope.ct.slice(1)}` };
     expect(() => decryptPayload(tampered, dataKey, "aad-1")).toThrow(); // GCM tag fails
   });
 

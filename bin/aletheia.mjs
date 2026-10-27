@@ -50,6 +50,7 @@
 //   aletheia alerts add --event E --target webhook|file [--url u|--path p] [--secret s] [--allow-private]
 //                  | list | remove <id> | enable|disable <id> | test <id> | run | feed | check | emit <event> [--value n]
 //                                                          alert rules and delivery (T-114)
+import { Database } from "bun:sqlite";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
@@ -331,6 +332,15 @@ async function main() {
     if (!before.needsMigration) return out(`Schema v${before.version} is current; nothing to do.`);
     const backup = typeof flags.backup === "string" ? flags.backup : `${dbPath}.aletheia-bak-${new Date().toISOString().replace(/[:.]/g, "-")}`;
     mkdirSync(dirname(backup), { recursive: true });
+    // Checkpoint the WAL so the copied main file is a complete, standalone database. Some platforms do not
+    // checkpoint on close, so copying only the main file would drop the latest user_version.
+    try {
+      const raw = new Database(dbPath);
+      raw.exec("PRAGMA wal_checkpoint(TRUNCATE)");
+      raw.close();
+    } catch {
+      // A source that cannot be opened is still copied as-is; the migrate step below reports the real error.
+    }
     copyFileSync(dbPath, backup);
     const hub = new HubStore(dbPath);
     const after = hub.migrationCounts();
