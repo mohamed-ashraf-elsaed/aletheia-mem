@@ -302,9 +302,22 @@ CREATE TABLE IF NOT EXISTS rule_suggestions (
   source_id INTEGER,
   status TEXT NOT NULL DEFAULT 'pending',
   created_at_epoch INTEGER NOT NULL,
+  times_seen INTEGER NOT NULL DEFAULT 1,
+  latest_at_epoch INTEGER,
   UNIQUE(project, text)
 );
 CREATE INDEX IF NOT EXISTS idx_rule_suggestions_status ON rule_suggestions(status, created_at_epoch);
+CREATE TABLE IF NOT EXISTS rule_suggestion_quotes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  suggestion_id INTEGER NOT NULL REFERENCES rule_suggestions(id) ON DELETE CASCADE,
+  project TEXT NOT NULL,
+  text TEXT NOT NULL,
+  at_epoch INTEGER NOT NULL,
+  source_type TEXT NOT NULL DEFAULT 'prompt',
+  source_id INTEGER,
+  session_id TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_rule_quotes_suggestion ON rule_suggestion_quotes(suggestion_id, at_epoch);
 
 CREATE TABLE IF NOT EXISTS dismissals (
   item_type TEXT NOT NULL,
@@ -388,6 +401,7 @@ export class HubStore {
     this.termOptions = { max: 12, maxShare: 0.6 }; // see selectTerms. Swept on LoCoMo (docs/14): 12/0.6 loses no recall; 8/0.35 lost ~8 points
     this.ensureScopeColumns();
     this.ensureRuleSuggestions();
+    this.ensureRuleStrength();
     this.ensureDismissals();
     this.ensureSessionEnd();
   }
@@ -420,10 +434,33 @@ export class HubStore {
       source_id INTEGER,
       status TEXT NOT NULL DEFAULT 'pending',
       created_at_epoch INTEGER NOT NULL,
+      times_seen INTEGER NOT NULL DEFAULT 1,
+      latest_at_epoch INTEGER,
       UNIQUE(project, text)
     );
     CREATE INDEX IF NOT EXISTS idx_rule_suggestions_status ON rule_suggestions(status, created_at_epoch);`);
     this.setSetting("schema.rule_suggestions", true);
+    return true;
+  }
+
+  /** Add the T-171 rule-strength columns and quotes table to databases created before they existed. Idempotent. */
+  ensureRuleStrength() {
+    if (this.setting("schema.rule_strength", false)) return false;
+    const columns = this.db.prepare("PRAGMA table_info(rule_suggestions)").all().map((column) => column.name);
+    if (!columns.includes("times_seen")) this.db.exec("ALTER TABLE rule_suggestions ADD COLUMN times_seen INTEGER NOT NULL DEFAULT 1");
+    if (!columns.includes("latest_at_epoch")) this.db.exec("ALTER TABLE rule_suggestions ADD COLUMN latest_at_epoch INTEGER");
+    this.db.exec(`CREATE TABLE IF NOT EXISTS rule_suggestion_quotes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      suggestion_id INTEGER NOT NULL REFERENCES rule_suggestions(id) ON DELETE CASCADE,
+      project TEXT NOT NULL,
+      text TEXT NOT NULL,
+      at_epoch INTEGER NOT NULL,
+      source_type TEXT NOT NULL DEFAULT 'prompt',
+      source_id INTEGER,
+      session_id TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_rule_quotes_suggestion ON rule_suggestion_quotes(suggestion_id, at_epoch);`);
+    this.setSetting("schema.rule_strength", true);
     return true;
   }
 

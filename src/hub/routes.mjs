@@ -13,6 +13,7 @@ import { nearDuplicates } from "./dedupe.mjs";
 import { INSTALLERS, doctor } from "./install.mjs";
 import { spoolPath, spoolRead } from "./hooks/shared.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "./rules-sync.mjs";
+import { listSuggestions } from "./rule-suggest.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "./tools.mjs";
 import { sessionDetail, workOverview } from "./work.mjs";
 import { goalAction } from "./goals.mjs";
@@ -624,13 +625,8 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
     // ---- T-137: rule suggestions, accept / dismiss / restore ----
     if (pathname === "/api/hub/rule-suggestions" && method === "GET") {
       const q = qs(url);
-      const where = [];
-      const params = [];
-      if (q.project) { where.push("project = ?"); params.push(q.project); }
-      if (q.status) { where.push("status = ?"); params.push(q.status); }
-      const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
-      const rows = hub.db.prepare(`SELECT * FROM rule_suggestions ${clause} ORDER BY created_at_epoch DESC, id DESC LIMIT ?`).all(...params, Math.min(Number(q.limit) || 100, 500));
-      return h.json({ items: rows.map((row) => ({ id: row.id, project: row.project, text: row.text, when: row.when_text, confidence: row.confidence, status: row.status, sourceType: row.source_type, createdAt: iso(row.created_at_epoch) })) });
+      const rows = listSuggestions(hub, { project: q.project, status: q.status, limit: Number(q.limit) || 100 });
+      return h.json({ items: rows.map((row) => ({ id: row.id, project: row.project, text: row.text, when: row.when_text, confidence: row.confidence, status: row.status, sourceType: row.source_type, createdAt: iso(row.created_at_epoch), timesSeen: row.timesSeen, strength: row.strength, latestAt: row.latestAt, quotes: row.quotes, moreQuotes: row.moreQuotes })) });
     }
     if ((m = /^\/api\/hub\/rule-suggestions\/(\d+)$/.exec(pathname)) && method === "POST") {
       const b = await readJson(request);
