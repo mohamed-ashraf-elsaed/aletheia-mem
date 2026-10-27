@@ -32,8 +32,8 @@ aletheia-server
 
 <p align="center"><a href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/">Docs site</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/06-frontend.md">Frontend guide</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues">Issues</a></p>
 
-**Status: alpha.** The memory engine and the installers work in tests. No host has been opened with a generated
-config yet, and answer accuracy is not measured. CI runs on Linux and macOS; Windows is not supported yet and not tested.
+**Status: alpha.** The memory engine and the installers work in tests. The real Claude Code, Command Code, Codex CLI and
+OpenCode listed the generated MCP config, but no hook or session has run inside any tool yet, and answer accuracy is not measured. CI runs on Linux and macOS; Windows is not supported yet and not tested.
 
 <!-- claims:begin -->
 **1,398 tests** — 0 failures (run `bun test`).
