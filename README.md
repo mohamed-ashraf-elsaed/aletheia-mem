@@ -17,7 +17,7 @@
 config yet, and answer accuracy is not measured. CI runs on Linux and macOS; Windows is not supported yet and not tested.
 
 <!-- claims:begin -->
-**1,218 tests pass** — 1,218 pass, 0 fail (run `bun test`).
+**1,223 tests pass** — 1,223 pass, 0 fail (run `bun test`).
 <!-- claims:end -->
 
 [English](README.md) · [中文](docs/i18n/README.zh.md) · [Español](docs/i18n/README.es.md) · [Português (Brasil)](docs/i18n/README.pt-br.md) · [日本語](docs/i18n/README.ja.md) · [Deutsch](docs/i18n/README.de.md) · [Français](docs/i18n/README.fr.md) · [한국어](docs/i18n/README.ko.md) · [हिन्दी](docs/i18n/README.hi.md) · [العربية](docs/i18n/README.ar.md) · [Русский](docs/i18n/README.ru.md).

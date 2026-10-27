@@ -1,36 +1,37 @@
 {
-  "generatedAt": "2026-10-27T15:36:09.835Z",
-  "commit": "31e6e48",
+  "generatedAt": "2026-10-27T15:55:54.837Z",
+  "commit": "2edb6a7",
   "tasks": [
     {
       "id": "T-001",
       "title": "Make README claims generated, not typed",
-      "status": "todo",
+      "status": "validated",
       "phase": "P0",
       "depsRaw": "none",
-      "validatedOn": "—",
-      "evidenceNonEmpty": false,
-      "evidenceChars": 0,
-      "acceptanceTicked": 0,
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 450,
+      "acceptanceTicked": 3,
       "acceptanceTotal": 3,
       "acceptance": [
         {
-          "done": false,
+          "done": true,
           "text": "README contains no hand-typed test count."
         },
         {
-          "done": false,
+          "done": true,
           "text": "The script exits 1 when a marker value differs from the measured value."
         },
         {
-          "done": false,
+          "done": true,
           "text": "Exit 0 prints the measured values."
         }
       ],
       "validation": "bun scripts/check-claims.mjs",
-      "lastHistory": "- 2026-10-26: todo — created.",
+      "lastHistory": "- 2026-10-27: validated — check-claims regenerates and verifies the generated test-count block; exit 0 prints the measured values.",
       "history": [
-        "- 2026-10-26: todo — created."
+        "- 2026-10-26: todo — created.",
+        "- 2026-10-27: validated — check-claims regenerates and verifies the generated test-count block; exit 0 prints the measured values."
       ],
       "files": [
         "README.md",
@@ -40,7 +41,7 @@
       "ownerSteps": [],
       "deps": [],
       "blockedBy": [],
-      "eligible": true,
+      "eligible": false,
       "blocked": false,
       "dependents": [
         "T-079"
@@ -196,32 +197,33 @@
     {
       "id": "T-005",
       "title": "Add REST contract tests for every documented route",
-      "status": "todo",
+      "status": "validated",
       "phase": "P0",
       "depsRaw": "none",
-      "validatedOn": "—",
-      "evidenceNonEmpty": false,
-      "evidenceChars": 0,
-      "acceptanceTicked": 0,
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 428,
+      "acceptanceTicked": 3,
       "acceptanceTotal": 3,
       "acceptance": [
         {
-          "done": false,
+          "done": true,
           "text": "Every documented route has at least one test."
         },
         {
-          "done": false,
+          "done": true,
           "text": "A removed key fails the test."
         },
         {
-          "done": false,
+          "done": true,
           "text": "A wrong method returns 404 or 405, not 200."
         }
       ],
       "validation": "bun test test/routes-contract.test.mjs",
-      "lastHistory": "- 2026-10-26: todo — created.",
+      "lastHistory": "- 2026-10-27: validated — 68 tests pass; one contract row per documented route, plus wrong-method and bearer-key cases.",
       "history": [
-        "- 2026-10-26: todo — created."
+        "- 2026-10-26: todo — created.",
+        "- 2026-10-27: validated — 68 tests pass; one contract row per documented route, plus wrong-method and bearer-key cases."
       ],
       "files": [
         "test/routes-contract.test.mjs"
@@ -229,7 +231,7 @@
       "ownerSteps": [],
       "deps": [],
       "blockedBy": [],
-      "eligible": true,
+      "eligible": false,
       "blocked": false,
       "dependents": [
         "T-006"
@@ -239,28 +241,29 @@
     {
       "id": "T-006",
       "title": "Publish an OpenAPI document generated from the routes",
-      "status": "todo",
+      "status": "validated",
       "phase": "P0",
       "depsRaw": "T-005",
-      "validatedOn": "—",
-      "evidenceNonEmpty": false,
-      "evidenceChars": 0,
-      "acceptanceTicked": 0,
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 383,
+      "acceptanceTicked": 2,
       "acceptanceTotal": 2,
       "acceptance": [
         {
-          "done": false,
+          "done": true,
           "text": "Every path in the contract tests is in OpenAPI."
         },
         {
-          "done": false,
+          "done": true,
           "text": "The checker exits 1 on a missing path."
         }
       ],
       "validation": "bun scripts/check-openapi.mjs",
-      "lastHistory": "- 2026-10-26: todo — created.",
+      "lastHistory": "- 2026-10-27: validated — 62 route entries; `scripts/check-openapi.mjs` regenerates from the manifest and fails on a missing path.",
       "history": [
-        "- 2026-10-26: todo — created."
+        "- 2026-10-26: todo — created.",
+        "- 2026-10-27: validated — 62 route entries; `scripts/check-openapi.mjs` regenerates from the manifest and fails on a missing path."
       ],
       "files": [
         "docs/openapi.json",
@@ -271,14 +274,12 @@
       "deps": [
         {
           "id": "T-005",
-          "status": "todo"
+          "status": "validated"
         }
       ],
-      "blockedBy": [
-        "T-005"
-      ],
+      "blockedBy": [],
       "eligible": false,
-      "blocked": true,
+      "blocked": false,
       "dependents": [],
       "stale": []
     },
@@ -335,32 +336,33 @@
     {
       "id": "T-008",
       "title": "Add date range, order and pagination to search",
-      "status": "todo",
+      "status": "validated",
       "phase": "P0",
       "depsRaw": "none",
-      "validatedOn": "—",
-      "evidenceNonEmpty": false,
-      "evidenceChars": 0,
-      "acceptanceTicked": 0,
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 518,
+      "acceptanceTicked": 3,
       "acceptanceTotal": 3,
       "acceptance": [
         {
-          "done": false,
+          "done": true,
           "text": "Each filter changes the result set as expected."
         },
         {
-          "done": false,
+          "done": true,
           "text": "Pagination does not repeat or skip a row."
         },
         {
-          "done": false,
+          "done": true,
           "text": "MCP search accepts the same parameters."
         }
       ],
       "validation": "bun test test/search-filters.test.mjs",
-      "lastHistory": "- 2026-10-26: todo — created.",
+      "lastHistory": "- 2026-10-27: validated — 9 tests pass; `order` (relevance/date_desc/date_asc) added to `searchPage` and `/v1/search`, MCP `search` accepts `since`/`until`/`order`/`offset`.",
       "history": [
-        "- 2026-10-26: todo — created."
+        "- 2026-10-26: todo — created.",
+        "- 2026-10-27: validated — 9 tests pass; `order` (relevance/date_desc/date_asc) added to `searchPage` and `/v1/search`, MCP `search` accepts `since`/`until`/`order`/`offset`."
       ],
       "files": [
         "src/hub/store.mjs",
@@ -371,7 +373,7 @@
       "ownerSteps": [],
       "deps": [],
       "blockedBy": [],
-      "eligible": true,
+      "eligible": false,
       "blocked": false,
       "dependents": [],
       "stale": []
@@ -379,32 +381,33 @@
     {
       "id": "T-009",
       "title": "Add a kill -9 crash-safety test",
-      "status": "todo",
+      "status": "validated",
       "phase": "P0",
       "depsRaw": "none",
-      "validatedOn": "—",
-      "evidenceNonEmpty": false,
-      "evidenceChars": 0,
-      "acceptanceTicked": 0,
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 533,
+      "acceptanceTicked": 3,
       "acceptanceTotal": 3,
       "acceptance": [
         {
-          "done": false,
+          "done": true,
           "text": "`integrity_check` returns `ok` in 20 runs."
         },
         {
-          "done": false,
+          "done": true,
           "text": "No partially committed transaction is visible."
         },
         {
-          "done": false,
+          "done": true,
           "text": "The test finishes in under 30 s."
         }
       ],
       "validation": "bun test test/crash.test.mjs",
-      "lastHistory": "- 2026-10-26: todo — created.",
+      "lastHistory": "- 2026-10-27: validated — 20 SIGKILL runs, integrity ok, no half batch, 7.46 s.",
       "history": [
-        "- 2026-10-26: todo — created."
+        "- 2026-10-26: todo — created.",
+        "- 2026-10-27: validated — 20 SIGKILL runs, integrity ok, no half batch, 7.46 s."
       ],
       "files": [
         "test/crash.test.mjs"
@@ -412,7 +415,7 @@
       "ownerSteps": [],
       "deps": [],
       "blockedBy": [],
-      "eligible": true,
+      "eligible": false,
       "blocked": false,
       "dependents": [],
       "stale": []
@@ -470,7 +473,7 @@
       "depsRaw": "none",
       "validatedOn": "2026-10-27",
       "evidenceNonEmpty": true,
-      "evidenceChars": 615,
+      "evidenceChars": 616,
       "acceptanceTicked": 3,
       "acceptanceTotal": 3,
       "acceptance": [
@@ -488,10 +491,11 @@
         }
       ],
       "validation": "bun test test/poisoning.test.mjs",
-      "lastHistory": "- 2026-10-27: validated — 10 tests pass; full suite 1104 pass, 0 fail.",
+      "lastHistory": "- 2026-10-27: follow-up — added the real `POST /v1/context` route and the `aletheia context` CLI to the red-team set (12 tests now). The route is POST, matching the code and the note above; the session brief's \"GET\" is a typo.",
       "history": [
         "- 2026-10-26: todo — created.",
-        "- 2026-10-27: validated — 10 tests pass; full suite 1104 pass, 0 fail."
+        "- 2026-10-27: validated — 10 tests pass; full suite 1104 pass, 0 fail.",
+        "- 2026-10-27: follow-up — added the real `POST /v1/context` route and the `aletheia context` CLI to the red-team set (12 tests now). The route is POST, matching the code and the note above; the session brief's \"GET\" is a typo."
       ],
       "files": [
         "src/hub/untrusted.mjs",
@@ -4197,18 +4201,20 @@
       "deps": [
         {
           "id": "T-001",
-          "status": "todo"
+          "status": "validated"
         }
       ],
-      "blockedBy": [
-        "T-001"
-      ],
+      "blockedBy": [],
       "eligible": false,
       "blocked": false,
       "dependents": [],
       "stale": [
         {
           "file": "README.md",
+          "lastCommit": "2026-10-27"
+        },
+        {
+          "file": "scripts/check-claims.mjs",
           "lastCommit": "2026-10-27"
         },
         {
@@ -4332,32 +4338,34 @@
     {
       "id": "T-082",
       "title": "Submit to the MCP registry and two awesome lists",
-      "status": "todo",
+      "status": "validated",
       "phase": "P4",
       "depsRaw": "T-080",
-      "validatedOn": "—",
-      "evidenceNonEmpty": false,
-      "evidenceChars": 0,
-      "acceptanceTicked": 0,
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 930,
+      "acceptanceTicked": 3,
       "acceptanceTotal": 3,
       "acceptance": [
         {
-          "done": false,
+          "done": true,
           "text": "Each submission URL is recorded."
         },
         {
-          "done": false,
+          "done": true,
           "text": "No list is claimed until accepted."
         },
         {
-          "done": false,
+          "done": true,
           "text": "The registry entry points at the published package."
         }
       ],
       "validation": "bun scripts/check-docs-links.mjs && test -s docs/distribution.md",
-      "lastHistory": "- 2026-10-26: todo — created.",
+      "lastHistory": "- 2026-10-27: validated — prepare-only deliverables in place (server.json, docs/distribution.md, docs/submissions/*, test/server-json.test.mjs); nothing was published or submitted.",
       "history": [
-        "- 2026-10-26: todo — created."
+        "- 2026-10-26: todo — created.",
+        "- 2026-10-27: doing — prepare-only pass: fetch the registry quickstart/package-types and the two lists' CONTRIBUTING files, write server.json, the owner commands and the two entries.",
+        "- 2026-10-27: validated — prepare-only deliverables in place (server.json, docs/distribution.md, docs/submissions/*, test/server-json.test.mjs); nothing was published or submitted."
       ],
       "files": [
         "docs/distribution.md",
@@ -4371,7 +4379,7 @@
         }
       ],
       "blockedBy": [],
-      "eligible": true,
+      "eligible": false,
       "blocked": false,
       "dependents": [],
       "stale": []
@@ -4702,6 +4710,10 @@
         "T-088"
       ],
       "stale": [
+        {
+          "file": "scripts/i18n-check.mjs",
+          "lastCommit": "2026-10-27"
+        },
         {
           "file": "docs/i18n/.translation-state.json",
           "lastCommit": "2026-10-27"
@@ -11056,21 +11068,21 @@
     }
   ],
   "taskCounts": {
-    "validated": 128,
+    "validated": 134,
     "implemented": 0,
     "doing": 0,
     "failed": 0,
-    "todo": 53
+    "todo": 47
   },
   "taskTotal": 181,
   "phases": {
     "P0": {
       "total": 18,
-      "validated": 11,
+      "validated": 16,
       "implemented": 0,
       "doing": 0,
       "failed": 0,
-      "todo": 7
+      "todo": 2
     },
     "P1": {
       "total": 21,
@@ -11098,11 +11110,11 @@
     },
     "P4": {
       "total": 14,
-      "validated": 11,
+      "validated": 12,
       "implemented": 0,
       "doing": 0,
       "failed": 0,
-      "todo": 3
+      "todo": 2
     },
     "P5": {
       "total": 8,
@@ -11335,7 +11347,7 @@
     },
     {
       "id": "T-079",
-      "text": "T-079 validated 2026-10-26; changed later: README.md (2026-10-27), package.json (2026-10-27)"
+      "text": "T-079 validated 2026-10-26; changed later: README.md (2026-10-27), scripts/check-claims.mjs (2026-10-27), package.json (2026-10-27)"
     },
     {
       "id": "T-083",
@@ -11351,7 +11363,7 @@
     },
     {
       "id": "T-087",
-      "text": "T-087 validated 2026-10-26; changed later: docs/i18n/.translation-state.json (2026-10-27), package.json (2026-10-27), .github/workflows/ci.yml (2026-10-27)"
+      "text": "T-087 validated 2026-10-26; changed later: scripts/i18n-check.mjs (2026-10-27), docs/i18n/.translation-state.json (2026-10-27), package.json (2026-10-27), .github/workflows/ci.yml (2026-10-27)"
     },
     {
       "id": "T-088",
@@ -11684,16 +11696,6 @@
       },
       {
         "rank": 6,
-        "id": "T-005",
-        "title": "Add REST contract tests for every documented route",
-        "phase": "P0",
-        "unblocksDirect": 1,
-        "unblocksTotal": 1,
-        "files": 1,
-        "reason": "unblocks 1 open task directly and 1 in all; phase P0; 1 file to touch"
-      },
-      {
-        "rank": 7,
         "id": "T-048",
         "title": "Add a graph retrieval channel",
         "phase": "P2",
@@ -11703,7 +11705,7 @@
         "reason": "unblocks 1 open task directly and 1 in all; phase P2; 4 files to touch"
       },
       {
-        "rank": 8,
+        "rank": 7,
         "id": "T-077",
         "title": "Add live feed, session pages and context preview",
         "phase": "P3",
@@ -11713,17 +11715,7 @@
         "reason": "unblocks 1 open task directly and 1 in all; phase P3; 4 files to touch"
       },
       {
-        "rank": 9,
-        "id": "T-009",
-        "title": "Add a kill -9 crash-safety test",
-        "phase": "P0",
-        "unblocksDirect": 0,
-        "unblocksTotal": 0,
-        "files": 1,
-        "reason": "unblocks 0 open tasks directly and 0 in all; phase P0; 1 file to touch"
-      },
-      {
-        "rank": 10,
+        "rank": 8,
         "id": "T-013",
         "title": "Add a documentation link checker",
         "phase": "P0",
@@ -11733,7 +11725,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P0; 2 files to touch"
       },
       {
-        "rank": 11,
+        "rank": 9,
         "id": "T-015",
         "title": "Add a benchmark protocol test",
         "phase": "P0",
@@ -11743,27 +11735,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P0; 2 files to touch"
       },
       {
-        "rank": 12,
-        "id": "T-001",
-        "title": "Make README claims generated, not typed",
-        "phase": "P0",
-        "unblocksDirect": 0,
-        "unblocksTotal": 0,
-        "files": 3,
-        "reason": "unblocks 0 open tasks directly and 0 in all; phase P0; 3 files to touch"
-      },
-      {
-        "rank": 13,
-        "id": "T-008",
-        "title": "Add date range, order and pagination to search",
-        "phase": "P0",
-        "unblocksDirect": 0,
-        "unblocksTotal": 0,
-        "files": 4,
-        "reason": "unblocks 0 open tasks directly and 0 in all; phase P0; 4 files to touch"
-      },
-      {
-        "rank": 14,
+        "rank": 10,
         "id": "T-026",
         "title": "Add a history and as-of query API",
         "phase": "P1",
@@ -11773,7 +11745,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P1; 4 files to touch"
       },
       {
-        "rank": 15,
+        "rank": 11,
         "id": "T-036",
         "title": "Index the files field and add search-by-file",
         "phase": "P2",
@@ -11783,7 +11755,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 16,
+        "rank": 12,
         "id": "T-037",
         "title": "Index at round level",
         "phase": "P2",
@@ -11793,7 +11765,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 17,
+        "rank": 13,
         "id": "T-038",
         "title": "Expand and rewrite queries",
         "phase": "P2",
@@ -11803,7 +11775,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 18,
+        "rank": 14,
         "id": "T-039",
         "title": "Sweep hybrid weights and RRF k on a hold-out",
         "phase": "P2",
@@ -11813,7 +11785,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 19,
+        "rank": 15,
         "id": "T-043",
         "title": "Add temporal retrieval and filters",
         "phase": "P2",
@@ -11823,7 +11795,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 20,
+        "rank": 16,
         "id": "T-046",
         "title": "Add knowledge agents (queryable corpora)",
         "phase": "P2",
@@ -11833,7 +11805,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 21,
+        "rank": 17,
         "id": "T-047",
         "title": "Tune FTS5 at 50,000 rows",
         "phase": "P2",
@@ -11843,7 +11815,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 22,
+        "rank": 18,
         "id": "T-049",
         "title": "Add quantised vectors and ANN",
         "phase": "P2",
@@ -11853,7 +11825,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 23,
+        "rank": 19,
         "id": "T-050",
         "title": "Add query and result caching",
         "phase": "P2",
@@ -11863,7 +11835,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 24,
+        "rank": 20,
         "id": "T-060",
         "title": "Add the file-read gate and smart outline",
         "phase": "P3",
@@ -11873,7 +11845,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P3; 2 files to touch"
       },
       {
-        "rank": 25,
+        "rank": 21,
         "id": "T-074",
         "title": "Generate folder context files",
         "phase": "P3",
@@ -11883,7 +11855,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P3; 2 files to touch"
       },
       {
-        "rank": 26,
+        "rank": 22,
         "id": "T-069",
         "title": "Add work-state and corpus MCP tools",
         "phase": "P3",
@@ -11893,7 +11865,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P3; 3 files to touch"
       },
       {
-        "rank": 27,
+        "rank": 23,
         "id": "T-075",
         "title": "Add a connector verification registry",
         "phase": "P3",
@@ -11903,7 +11875,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P3; 3 files to touch"
       },
       {
-        "rank": 28,
+        "rank": 24,
         "id": "T-078",
         "title": "Add a settings UI",
         "phase": "P3",
@@ -11913,7 +11885,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P3; 3 files to touch"
       },
       {
-        "rank": 29,
+        "rank": 25,
         "id": "T-089",
         "title": "Translate the README into the remaining 22 languages",
         "phase": "P4",
@@ -11923,17 +11895,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P4; 0 files to touch"
       },
       {
-        "rank": 30,
-        "id": "T-082",
-        "title": "Submit to the MCP registry and two awesome lists",
-        "phase": "P4",
-        "unblocksDirect": 0,
-        "unblocksTotal": 0,
-        "files": 2,
-        "reason": "unblocks 0 open tasks directly and 0 in all; phase P4; 2 files to touch"
-      },
-      {
-        "rank": 31,
+        "rank": 26,
         "id": "T-098",
         "title": "Add entity summaries and belief tracking",
         "phase": "P5",
@@ -11943,7 +11905,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P5; 2 files to touch"
       },
       {
-        "rank": 32,
+        "rank": 27,
         "id": "T-111",
         "title": "Add an OAuth connector for ChatGPT and Claude.ai",
         "phase": "P6",
@@ -11953,7 +11915,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P6; 0 files to touch"
       },
       {
-        "rank": 33,
+        "rank": 28,
         "id": "T-115",
         "title": "Add OIDC, SCIM, RBAC and DLP rules",
         "phase": "P6",
@@ -11963,7 +11925,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P6; 0 files to touch"
       },
       {
-        "rank": 34,
+        "rank": 29,
         "id": "T-124",
         "title": "Research and add installers for Antigravity, Kimi, Pi and OpenClaw",
         "phase": "P6",
@@ -11973,14 +11935,8 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P6; 0 files to touch"
       }
     ],
-    "eligible": 34,
+    "eligible": 29,
     "blocked": [
-      {
-        "id": "T-006",
-        "blockedBy": [
-          "T-005"
-        ]
-      },
       {
         "id": "T-042",
         "blockedBy": [
@@ -12601,7 +12557,7 @@
                 "taskStates": [
                   {
                     "id": "T-008",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -12616,7 +12572,7 @@
                 "taskStates": [
                   {
                     "id": "T-008",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -13308,7 +13264,7 @@
                 "taskStates": [
                   {
                     "id": "T-005",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -13323,7 +13279,7 @@
                 "taskStates": [
                   {
                     "id": "T-006",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -13853,7 +13809,7 @@
                 "taskStates": [
                   {
                     "id": "T-009",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -14323,7 +14279,7 @@
                 "taskStates": [
                   {
                     "id": "T-082",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -14338,7 +14294,7 @@
                 "taskStates": [
                   {
                     "id": "T-082",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               }
@@ -14399,7 +14355,7 @@
                 "taskStates": [
                   {
                     "id": "T-009",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -14927,7 +14883,7 @@
     {
       "file": "docs/06-frontend.md",
       "title": "6. Frontend",
-      "bytes": 16538,
+      "bytes": 16578,
       "lastCommit": "2026-10-27",
       "linkedFromReadme": true,
       "linkedFromIndex": false,
@@ -15091,7 +15047,7 @@
       "lastCommit": "2026-10-27",
       "linkedFromReadme": true,
       "linkedFromIndex": false,
-      "linkedFromOtherDocs": 0,
+      "linkedFromOtherDocs": 1,
       "orphan": false
     },
     {
@@ -15188,7 +15144,7 @@
       "file": "docs/a11y-walk-requests.md",
       "title": "Keyboard and small-screen walk: Requests, Goals, Story, Suggested rules, Economics",
       "bytes": 5774,
-      "lastCommit": "n/a",
+      "lastCommit": "2026-10-27",
       "linkedFromReadme": false,
       "linkedFromIndex": false,
       "linkedFromOtherDocs": 0,
@@ -15208,6 +15164,26 @@
       "file": "docs/dependencies.md",
       "title": "Dependencies",
       "bytes": 1184,
+      "lastCommit": "2026-10-27",
+      "linkedFromReadme": false,
+      "linkedFromIndex": false,
+      "linkedFromOtherDocs": 0,
+      "orphan": true
+    },
+    {
+      "file": "docs/distribution.md",
+      "title": "Distribution and directory submissions",
+      "bytes": 1871,
+      "lastCommit": "2026-10-27",
+      "linkedFromReadme": false,
+      "linkedFromIndex": false,
+      "linkedFromOtherDocs": 0,
+      "orphan": true
+    },
+    {
+      "file": "docs/install-check.md",
+      "title": "Install smoke check (macOS and no-Bun)",
+      "bytes": 1322,
       "lastCommit": "2026-10-27",
       "linkedFromReadme": false,
       "linkedFromIndex": false,
@@ -15247,7 +15223,7 @@
   ],
   "links": {
     "broken": [],
-    "local": 1239,
+    "local": 1247,
     "external": 975
   },
   "verification": {
@@ -16183,8 +16159,8 @@
     ]
   },
   "checks": {
-    "staticTestFiles": 121,
-    "staticTestCalls": 1099,
+    "staticTestFiles": 125,
+    "staticTestCalls": 1124,
     "lastRecordedRun": {
       "source": "docs/tasks/run-report.md",
       "date": null,
@@ -16237,17 +16213,63 @@
   },
   "git": {
     "available": true,
-    "branch": "main",
-    "head": "31e6e48",
-    "ahead": 0,
+    "branch": "feat/after-v010",
+    "head": "2edb6a7",
+    "ahead": 8,
     "behind": 0,
-    "uncommitted": 16,
-    "uncommittedDocs": [
-      "docs/a11y-walk-requests.md",
-      "docs/tasks/T-224.md",
-      "docs/tasks/TASKS.md"
-    ],
+    "uncommitted": 1,
+    "uncommittedDocs": [],
     "commits": [
+      {
+        "sha": "2edb6a7",
+        "date": "2026-10-27",
+        "subject": "docs: add the macOS and no-Bun install smoke note"
+      },
+      {
+        "sha": "ed57804",
+        "date": "2026-10-27",
+        "subject": "docs: make the README test count generated, not typed (T-001)"
+      },
+      {
+        "sha": "744b9c2",
+        "date": "2026-10-27",
+        "subject": "test: add a kill -9 crash-safety test (T-009)"
+      },
+      {
+        "sha": "acd608a",
+        "date": "2026-10-27",
+        "subject": "docs: publish an OpenAPI document generated from the route manifest (T-006)"
+      },
+      {
+        "sha": "3fe8d17",
+        "date": "2026-10-27",
+        "subject": "test: add REST contract tests for every documented route (T-005)"
+      },
+      {
+        "sha": "6928899",
+        "date": "2026-10-27",
+        "subject": "feat(search): add order and expose date/offset filters to MCP and /v1/search"
+      },
+      {
+        "sha": "98db388",
+        "date": "2026-10-27",
+        "subject": "test: cover the real /v1/context route and CLI in the poisoning suite"
+      },
+      {
+        "sha": "cf52234",
+        "date": "2026-10-27",
+        "subject": "docs: prepare MCP registry and awesome-list submissions (T-082)"
+      },
+      {
+        "sha": "d328c17",
+        "date": "2026-10-27",
+        "subject": "chore: bring the requests accessibility walk into main"
+      },
+      {
+        "sha": "ab9474f",
+        "date": "2026-10-27",
+        "subject": "a11y: keyboard and 375 px walk of requests, goals, story, suggested rules and economics (T-224)"
+      },
       {
         "sha": "31e6e48",
         "date": "2026-10-27",
@@ -16272,62 +16294,12 @@
         "sha": "3811cb9",
         "date": "2026-10-27",
         "subject": "docs(status): regenerate after the merge"
-      },
-      {
-        "sha": "3f78c44",
-        "date": "2026-10-27",
-        "subject": "chore: bring the status dashboard into main"
-      },
-      {
-        "sha": "e081256",
-        "date": "2026-10-27",
-        "subject": "fix(status): split real inconsistencies from re-check suggestions"
-      },
-      {
-        "sha": "b2e6ece",
-        "date": "2026-10-27",
-        "subject": "docs(tasks): record the real macOS and Windows CI results"
-      },
-      {
-        "sha": "9bf4ae3",
-        "date": "2026-10-27",
-        "subject": "fix(cli): checkpoint the WAL before migrating and harden the tamper test"
-      },
-      {
-        "sha": "738f0dd",
-        "date": "2026-10-27",
-        "subject": "fix(ci): skip POSIX-only tests on Windows and fix macOS backup read"
-      },
-      {
-        "sha": "bb60063",
-        "date": "2026-10-27",
-        "subject": "fix(ci): make tests and checks cross-platform"
-      },
-      {
-        "sha": "98b5aa9",
-        "date": "2026-10-27",
-        "subject": "docs(api): explain why /api/hub/context stays unwrapped"
-      },
-      {
-        "sha": "bd0cfeb",
-        "date": "2026-10-27",
-        "subject": "chore(npm): prepare the package for publishing (T-080)"
-      },
-      {
-        "sha": "77711d5",
-        "date": "2026-10-27",
-        "subject": "feat(cli): report host, port and permissions in aletheia doctor (T-073)"
-      },
-      {
-        "sha": "1e09b4b",
-        "date": "2026-10-27",
-        "subject": "ci: run tests on Linux, macOS and Windows (T-014)"
       }
     ],
     "worktrees": [
-      "/home/mashraf/Projects/aletheia-mem                                           31e6e48 [main]",
-      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-aba78cdc0bd0d914c ab9474f [worktree-agent-aba78cdc0bd0d914c]",
-      "/home/mashraf/Projects/aletheia-next                                          98848c6 [feat/after-v010]"
+      "/home/mashraf/Projects/aletheia-mem                                           7668d87 [main]",
+      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-a02fa058132388323 5880761 [worktree-agent-a02fa058132388323]",
+      "/home/mashraf/Projects/aletheia-next                                          2edb6a7 [feat/after-v010]"
     ]
   },
   "ci": [
@@ -16421,7 +16393,7 @@
     "dirs": {
       "src": {
         "files": 94,
-        "lines": 17560
+        "lines": 17576
       },
       "public": {
         "files": 59,
@@ -16432,16 +16404,16 @@
         "lines": 814
       },
       "scripts": {
-        "files": 21,
-        "lines": 2796
+        "files": 22,
+        "lines": 2899
       },
       "test": {
-        "files": 127,
-        "lines": 17983
+        "files": 132,
+        "lines": 18476
       },
       "docs": {
-        "files": 272,
-        "lines": 34623
+        "files": 278,
+        "lines": 36483
       }
     },
     "routes": [
