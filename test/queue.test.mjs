@@ -1,12 +1,11 @@
 // T-020: the extraction queue is resumable. One claim at a time, exponential backoff, stale rows recovered, and a
 // kill -9 mid-run loses no window and duplicates no fact.
-import { describe, expect, test } from "bun:test";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { afterAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { enqueueCompression, compressionQueue } from "../src/hub/hooks/shared.mjs";
 import { JOB_TYPE, claimNext, completeJob, enqueueFromSettings, enqueueJob, executeJob, failJob, jobCounts, recoverStale, runWorker } from "../src/hub/queue.mjs";
 import { HubStore } from "../src/hub/store.mjs";
+import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
 
 const root = join(import.meta.dir, "..");
 const config = { factBudget: { maxEpisodes: 20, maxChars: 10_000 } };
@@ -127,7 +126,7 @@ describe("worker", () => {
 
 describe("kill -9 resume", () => {
   test("a killed worker leaves the unprocessed window claimable, with no duplicate and no loss", async () => {
-    const dir = mkdtempSync(join(tmpdir(), "aletheia-kill-"));
+    const dir = tempDir("aletheia-kill-");
     const dbPath = join(dir, "hub.db");
     const parent = new HubStore(dbPath);
     const first = parent.add({ project: "p", kind: "prompt", title: "one", narrative: "The checkout service uses Postgres one." });
@@ -167,3 +166,5 @@ describe("kill -9 resume", () => {
     parent.close();
   }, 30_000);
 });
+
+afterAll(() => cleanupTempDirs());
