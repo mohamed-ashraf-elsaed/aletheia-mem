@@ -221,3 +221,4 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-220 | Use rule strength, evidence and the decide flow in the Rules tab | P6 | T-171, T-172 | validated | 2026-10-27 | [T-220.md](T-220.md) |
 | T-221 | Add the build story and context economics panels | P6 | T-169, T-170, T-218 | validated | 2026-10-27 | [T-221.md](T-221.md) |
 | T-222 | Seed the new panels, extend the contract tests, update docs and screenshots | P6 | T-218, T-219, T-220, T-221 | validated | 2026-10-27 | [T-222.md](T-222.md) |
+| T-223 | Generate a one-file project status page from the repository | P4 | none | validated | 2026-10-27 | [T-223.md](T-223.md) |

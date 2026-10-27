@@ -47,6 +47,8 @@
     "check:i18n": "bun scripts/i18n-check.mjs",
     "build:site": "bun scripts/build-site.mjs",
     "check:site": "bun scripts/check-sitemap.mjs",
+    "status": "bun scripts/gen-status.mjs",
+    "check:status": "bun scripts/gen-status.mjs --check",
     "check:live": "bun scripts/diff-against-live.mjs",
     "bench:locomo": "bun bench/locomo-retrieval.mjs",
     "bench:claude-mem": "bun bench/claude-mem-baseline.mjs",
