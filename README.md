@@ -87,24 +87,24 @@ the instruction file each tool already reads. What has and has not been checked:
 | Check | Result |
 |---|---|
 | MCP server against the official MCP SDK client | Passes (protocol versions 2025-11-25 to 2024-11-05) |
-| Config formats for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI, Windsurf, OpenCode | Written from official docs fetched 2026-10-26 and tested against fixtures. **Not tested on a real install.** |
+| Config formats for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI, Windsurf, OpenCode | Written from official docs fetched 2026-10-26 and tested against fixtures. The real CLI listed the aletheia MCP server for Claude Code, Command Code, Codex CLI and OpenCode on 2026-10-27; Cursor, Gemini CLI and Windsurf are **Not tested on a real install.** |
 | Claude Desktop MCP config | Documented and merge-tested against a fixture; not opened in the app |
 | Rules files: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursor/rules/*.mdc`, `.windsurf/rules/*.md`, Copilot, Aider | Written and tested in temp folders (`docs/verification/rules-targets.md`) |
-| Any of the above **on a real install of that tool** | **Not tested yet.** Reports welcome. |
+| Any of the above **on a real install of that tool** | MCP config was read back by the real CLI for Claude Code, Command Code, Codex CLI and OpenCode on 2026-10-27; no hook or session ran inside any tool. |
 | Automatic capture through a tool's hooks | Built for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf. Each installed hook command is exercised end to end in a temp HOME with a recorded payload; none has been run inside the tool. OpenCode is MCP+rules. |
 
 <!-- gen:tools -->
 | Tool | Level | Verification | Hook events installed |
 |---|---|---|---|
-| claude-code | full | config written from docs, not tested on a real install | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| command-code | full | config written from docs, not tested on a real install | SessionStart, PostToolUse, Stop |
+| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks not run | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| command-code | full | MCP connection 1.88.1 on 2026-10-27; hooks not run | SessionStart, PostToolUse, Stop |
 | cursor | full | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
-| codex | full | config written from docs, not tested on a real install | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| codex | full | MCP connection 0.130.0 on 2026-10-27; hooks not run | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
 | gemini-cli | full | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
 | windsurf | full | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
-| opencode | mcp+rules | config written from docs, not tested on a real install | none (MCP and rules only) |
+| opencode | mcp+rules | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |
 
-_Generated from src/hub/install.mjs via `aletheia install --list`. A row says tested on a real install only when that column says so; today none do._
+_Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection only when the real CLI listed the server; hooks have not been run inside any tool._
 <!-- /gen:tools -->
 
 ## Measured numbers
@@ -226,7 +226,7 @@ All settings are environment variables. The defaults are safe for a single-user 
 
 This list is the honest half of the README.
 
-- No config has been run inside its host application. "Config written from docs, not tested on a real install."
+- MCP config was listed by the real CLI for Claude Code, Command Code, Codex CLI and OpenCode on 2026-10-27; no hook or session ran inside a host. Cursor, Gemini CLI and Windsurf remain "config written from docs, not tested on a real install."
 - CI runs on Linux and macOS. The benchmark runs on Linux only. Windows is not supported yet and not tested.
 - Answer accuracy is not measured. Recall@5 is retrieval, not whether an answer was correct.
 - The 1B-model extraction run failed; facts from our own extractor were measured with the rule extractor only.

@@ -44,9 +44,10 @@ describe("T-071: every installer has one generic uninstall and doctor path", () 
     const { home } = setup();
     const rows = listInstallers({ home });
     for (const id of ["claude-code", "command-code", "cursor", "codex", "gemini-cli", "windsurf", "opencode"]) expect(rows.some((row) => row.id === id)).toBe(true);
+    const mcpVerified = new Set(["claude-code", "command-code", "codex", "opencode"]);
     for (const row of rows) {
       expect(["full", "mcp+rules", "rules-only"]).toContain(row.capabilities);
-      expect(row.verification).toBe("from-docs-only");
+      expect(row.verification).toBe(mcpVerified.has(row.id) ? "mcp-verified" : "from-docs-only");
       expect(row.evidence.length).toBeGreaterThan(10);
       expect(row.installed).toBe(false);
     }
@@ -55,6 +56,7 @@ describe("T-071: every installer has one generic uninstall and doctor path", () 
     expect(text).toContain("command-code");
     expect(text).toContain("full");
     expect(text).toContain("from-docs-only");
+    expect(text).toContain("mcp-verified");
     expect(text).toContain("note  claude-code:");
   });
 

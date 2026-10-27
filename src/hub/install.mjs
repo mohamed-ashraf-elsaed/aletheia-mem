@@ -15,7 +15,7 @@ export const MANIFEST_VERSION = 2;
 export const HOOK_MARKER = "aletheia-managed";
 export const SERVER_NAME = "aletheia";
 export const CAPABILITIES = ["full", "mcp+rules", "rules-only"];
-export const VERIFICATION = ["tested-on-real-install", "from-docs-only"];
+export const VERIFICATION = ["tested-on-real-install", "from-docs-only", "mcp-verified"];
 
 const quote = (value) => (/^[A-Za-z0-9_./:@%+=-]+$/.test(value) ? value : `'${String(value).replace(/'/g, `'\\''`)}'`);
 
@@ -233,8 +233,10 @@ export const INSTALLERS = [
     id: "claude-code",
     name: "Claude Code",
     capabilities: "full",
-    verification: "from-docs-only",
-    evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); no real session run",
+    verification: "mcp-verified",
+    toolVersion: "2.1.312",
+    verifiedOn: "2026-10-27",
+    evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); MCP server listed by Claude Code 2.1.312 on 2026-10-27; hooks not run",
     detection: [".claude"],
     notes: ["The hook shape was checked against a real installed plugin; a real Claude Code session has not been run here."],
     events: ["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop", "SessionEnd"],
@@ -256,8 +258,10 @@ export const INSTALLERS = [
     id: "command-code",
     name: "Command Code",
     capabilities: "full",
-    verification: "from-docs-only",
-    evidence: "bundled CLI reference generated from commandcode.ai/docs plus real files and CLI 1.88.0 (2026-10-26); no real session run",
+    verification: "mcp-verified",
+    toolVersion: "1.88.1",
+    verifiedOn: "2026-10-27",
+    evidence: "bundled CLI reference generated from commandcode.ai/docs plus real files (2026-10-26); MCP server listed by Command Code 1.88.1 on 2026-10-27; hooks not run",
     detection: [".commandcode"],
     notes: [
       "Command Code has no UserPromptSubmit hook: user prompts are not captured.",
@@ -317,8 +321,10 @@ export const INSTALLERS = [
     id: "codex",
     name: "Codex CLI",
     capabilities: "full",
-    verification: "from-docs-only",
-    evidence: "https://developers.openai.com/codex/hooks, /codex/config-reference and /codex/agent-configuration/agents-md fetched 2026-10-26; Codex 0.130.0 present, no hook run by Codex",
+    verification: "mcp-verified",
+    toolVersion: "0.130.0",
+    verifiedOn: "2026-10-27",
+    evidence: "https://developers.openai.com/codex/hooks, /codex/config-reference and /codex/agent-configuration/agents-md fetched 2026-10-26; MCP server listed by Codex 0.130.0 on 2026-10-27; hooks not run",
     detection: [".codex"],
     notes: [
       "Codex requires non-managed hooks to be reviewed once with /hooks before they run.",
@@ -431,8 +437,10 @@ export const INSTALLERS = [
     id: "opencode",
     name: "OpenCode",
     capabilities: "mcp+rules",
-    verification: "from-docs-only",
-    evidence: "https://opencode.ai/docs/mcp-servers/ and /docs/rules/ fetched 2026-10-26; the plugin page does not document the event payloads, so no capture plugin ships",
+    verification: "mcp-verified",
+    toolVersion: "1.18.33",
+    verifiedOn: "2026-10-27",
+    evidence: "https://opencode.ai/docs/mcp-servers/ and /docs/rules/ fetched 2026-10-26; MCP server listed by OpenCode 1.18.33 on 2026-10-27; hooks not run (mcp+rules only)",
     detection: [".config/opencode"],
     notes: [
       "OpenCode ships as mcp+rules only. Its plugin system exists, but the official plugin page does not document the event payload fields, so this installer does not write a plugin.",

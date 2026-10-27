@@ -32,7 +32,7 @@ describe("T-068: OpenCode installer (mcp+rules)", () => {
     const ctx = setup();
     const plan = installerFor("opencode").plan(ctx.env);
     expect(plan.capabilities).toBe("mcp+rules");
-    expect(plan.verification).toBe("from-docs-only");
+    expect(plan.verification).toBe("mcp-verified");
     expect(plan.steps.map((step) => step.kind)).toEqual(["mcp", "rules"]);
     expect(plan.notes.join(" ")).toContain("event payload");
     expect(existsSync(configPath(ctx.home))).toBe(false);

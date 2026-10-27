@@ -68,13 +68,15 @@ export function renderTools(format = "md", installers = INSTALLERS) {
   const rows = installers.map((installer) => [
     installer.id,
     installer.capabilities,
-    installer.verification === "tested-on-real-install"
-      ? "tested on a real install"
-      : "config written from docs, not tested on a real install",
+    installer.verification === "mcp-verified"
+      ? `MCP connection ${installer.toolVersion} on ${installer.verifiedOn}; hooks not run`
+      : installer.verification === "tested-on-real-install"
+        ? "tested on a real install"
+        : "config written from docs, not tested on a real install",
     installer.events?.length ? installer.events.join(", ") : "none (MCP and rules only)",
   ]);
   const lines = [table(format, headers, rows)];
-  lines.push(note(format, "Generated from src/hub/install.mjs via `aletheia install --list`. A row says tested on a real install only when that column says so; today none do."));
+  lines.push(note(format, "Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection only when the real CLI listed the server; hooks have not been run inside any tool."));
   return lines.join("\n\n");
 }
 

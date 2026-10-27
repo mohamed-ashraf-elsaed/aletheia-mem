@@ -54,7 +54,7 @@ describe("T-062: Codex CLI installer and hooks", () => {
     const ctx = setup();
     const plan = installerFor("codex").plan(ctx.env);
     expect(plan.capabilities).toBe("full");
-    expect(plan.verification).toBe("from-docs-only");
+    expect(plan.verification).toBe("mcp-verified");
     expect(plan.steps.map((step) => step.kind)).toEqual(["mcp", "hooks", "rules"]);
     expect(plan.steps.every((step) => step.changed)).toBe(true);
     expect(plan.notes.join(" ")).toContain("/hooks");

@@ -32,11 +32,15 @@ describe("gen-tables", () => {
     expect(markdown).toContain("UNVERIFIED");
   });
 
-  test("the tool table says not tested on a real install for every current host", () => {
+  test("the tool table marks MCP connections verified by the real CLI and leaves the rest from-docs-only", () => {
     const markdown = renderTools("md");
     for (const tool of ["claude-code", "command-code", "cursor", "codex", "gemini-cli", "windsurf", "opencode"]) {
       expect(markdown).toContain(`| ${tool} |`);
     }
+    expect(markdown).toContain("MCP connection 2.1.312 on 2026-10-27; hooks not run");
+    expect(markdown).toContain("MCP connection 1.88.1 on 2026-10-27; hooks not run");
+    expect(markdown).toContain("MCP connection 0.130.0 on 2026-10-27; hooks not run");
+    expect(markdown).toContain("MCP connection 1.18.33 on 2026-10-27; hooks not run");
     expect(markdown).toContain("config written from docs, not tested on a real install");
     expect(markdown).not.toContain("| tested on a real install |");
   });
