@@ -6,7 +6,8 @@ import { HubStore } from "../src/hub/store.mjs";
 import { sessionDetail, workOverview } from "../src/hub/work.mjs";
 import { makeFixture } from "./fixture.mjs";
 
-const NOW = Date.UTC(2026, 9, 26, 12, 0, 0);
+// Anchor the fixture to real time so the route's own `now` matches the seeded window on any day.
+const NOW = Date.now();
 const at = (minutes) => NOW - minutes * 60_000;
 const fx = makeFixture();
 let seeded;

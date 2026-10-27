@@ -13,9 +13,15 @@ import { nearDuplicates } from "./dedupe.mjs";
 import { INSTALLERS, doctor } from "./install.mjs";
 import { spoolPath, spoolRead } from "./hooks/shared.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "./rules-sync.mjs";
+import { suggestRules } from "./rule-suggest.mjs";
+import { decideSuggestion, decidedCounts, learningRun, recordLearningRun, replaceRule, toggleRule } from "./rules-decide.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "./tools.mjs";
 import { sessionDetail, workOverview } from "./work.mjs";
-import { goalAction, proposeGoals } from "./goals.mjs";
+import { goalAction } from "./goals.mjs";
+import { proposeGoalsRollup } from "./goals-rollup.mjs";
+import { proposeRequests, requestAction, requestDetail } from "./requests.mjs";
+import { buildStory } from "./story.mjs";
+import { economics } from "./economics.mjs";
 import { SyncStore } from "./sync/store.mjs";
 import { pageInfo, pagingOf, slicePage, whenOf } from "./paging.mjs";
 import { auditPage, dismissedPage, reviewRows, ruleSuggestionsPage, searchPage, sessionsPage } from "./lists.mjs";
@@ -350,7 +356,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       if (pathname === "/v1/work/goals" && method === "GET") {
         const q = qs(url);
         const paging = pagingOf(q);
-        const all = proposeGoals(hub, { project: q.project || null, minSessions: q.minSessions, limit: 500 });
+        const all = proposeGoalsRollup(hub, { project: q.project || null, minSessions: q.minSessions, limit: 500, maxGapHours: q.maxGapHours, activeMinutes: q.activeMinutes });
         const goals = slicePage(all.goals ?? [], paging);
         return h.json({ ...all, goals, ...pageInfo({ total: (all.goals ?? []).length, ...paging, count: goals.length }) });
       }
@@ -359,6 +365,26 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
         const paging = pagingOf(q);
         const out = sessionsPage(hub, { ...paging, project: q.project || null, state: ["in_progress", "finished"].includes(q.state) ? q.state : null, since: whenOf(q.since), until: whenOf(q.until, { end: true }), q: q.q || null });
         return h.json({ ...out, ...pageInfo({ total: out.total, ...paging, count: out.items.length }) });
+      }
+      if (pathname === "/v1/work/requests" && method === "GET") {
+        const q = qs(url);
+        return h.json(proposeRequests(hub, {
+          project: q.project || null,
+          maxGapHours: q.maxGapHours,
+          activeMinutes: q.activeMinutes,
+          limit: q.limit,
+          filter: q.filter,
+          sort: q.sort,
+          group: q.group,
+        }));
+      }
+      if ((m = /^\/v1\/work\/requests\/([a-f0-9]{16})$/.exec(pathname)) && method === "GET") {
+        const detail = requestDetail(hub, { requestId: m[1], project: qs(url).project || null });
+        return detail ? h.json({ request: detail }) : h.json({ error: "No request has that id." }, 404);
+      }
+      if (pathname === "/v1/work/story" && method === "GET") {
+        const q = qs(url);
+        return h.json(buildStory(hub, { project: q.project || null, maxGapHours: q.maxGapHours, activeMinutes: q.activeMinutes, limit: q.limit }));
       }
       if ((m = /^\/v1\/work\/session\/(.+)$/.exec(pathname)) && method === "GET") {
         let id;
@@ -422,6 +448,10 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
         const b = await readJson(request);
         return h.json({ context: hub.context({ project: b.project, limit: b.limit ?? 20, maxChars: b.maxChars ?? 6000, tool: b.tool ?? tool, scope: b.scope === "all" ? "all" : "current" }) });
       }
+      if (pathname === "/v1/context/economics" && method === "GET") {
+        const q = qs(url);
+        return h.json(economics(hub, { project: q.project || null, limit: q.limit }));
+      }
       if (pathname === "/v1/events" && method === "POST") {
         const b = await readJson(request);
         const proj = b.project ?? (b.payload?.cwd ? projectKeyForPath(b.payload.cwd) : b.cwd ? projectKeyForPath(b.cwd) : "default");
@@ -473,6 +503,30 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       const r = hub.rules.add({ then: b.then, when: b.when, scopeTier: b.scopeTier, scopeName: b.scopeName, tools: b.tools, source: "you" });
       return h.json({ ...r, rule: hub.rules.get(r.id) }, r.created ? 201 : 200);
     }
+
+    // ---- T-172: decide flow, on/off toggle, replacement history and the last learning run ----
+    if (pathname === "/api/hub/rules/learning-run" && method === "GET") return h.json({ learningRun: learningRun(hub) });
+    if (pathname === "/api/hub/rules/learning-run" && method === "POST") {
+      const result = suggestRules(hub, { project: qs(url).project || null });
+      const run = recordLearningRun(hub, { found: result.proposed + result.skipped, proposed: result.proposed, errors: 0 });
+      return h.json({ learningRun: run, result });
+    }
+    if ((m = /^\/api\/hub\/rules\/([\w-]+)\/toggle$/.exec(pathname)) && method === "POST") {
+      const b = await readJson(request);
+      need(b && typeof b.enabled === "boolean", "enabled must be a boolean.");
+      const rule = toggleRule(hub, m[1], { enabled: b.enabled, actor: "ui" });
+      return rule ? h.json({ rule }) : h.json({ error: "That rule does not exist." }, 404);
+    }
+    if ((m = /^\/api\/hub\/rules\/([\w-]+)\/replace$/.exec(pathname)) && method === "POST") {
+      const b = await readJson(request);
+      try {
+        const result = replaceRule(hub, m[1], { then: b.then, when: b.when ?? "", scopeTier: b.scopeTier, scopeName: b.scopeName, actor: "ui" });
+        return result ? h.json(result) : h.json({ error: "That rule does not exist." }, 404);
+      } catch (error) {
+        throw new BadRequest(error instanceof Error ? error.message : String(error));
+      }
+    }
+
     if ((m = /^\/api\/hub\/rules\/([\w-]+)$/.exec(pathname))) {
       if (method === "PATCH") { const r = hub.rules.update(m[1], await readJson(request)); return r ? h.json(r) : h.json({ error: "That rule does not exist." }, 404); }
       if (method === "DELETE") return hub.rules.remove(m[1]) ? h.json({ deleted: true }) : h.json({ error: "That rule does not exist." }, 404);
@@ -660,25 +714,26 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       const q = qs(url);
       const paging = pagingOf(q);
       const out = ruleSuggestionsPage(hub, { ...paging, project: q.project || null, status: q.status || null, q: q.q || null, sort: q.sort || "newest" });
-      return h.json({ ...out, ...pageInfo({ total: out.total, ...paging, count: out.items.length }) });
+      return h.json({ ...decidedCounts(hub), ...out, ...pageInfo({ total: out.total, ...paging, count: out.items.length }) });
     }
     if ((m = /^\/api\/hub\/rule-suggestions\/(\d+)$/.exec(pathname)) && method === "POST") {
       const b = await readJson(request);
-      need(["accept", "dismiss", "restore"].includes(b.action), "action must be accept, dismiss or restore.");
+      need(["accept", "approve", "edit", "dismiss", "reject", "restore"].includes(b.action), "action must be accept, approve, edit, dismiss, reject or restore.");
       const row = hub.db.prepare("SELECT * FROM rule_suggestions WHERE id = ?").get(Number(m[1]));
       need(row, "That rule suggestion does not exist.", 404);
-      let ruleId = null;
-      if (b.action === "accept") {
-        const scopeTier = row.project && row.project !== "default" ? "project" : "everywhere";
-        ruleId = hub.rules.add({ then: row.text, when: row.when_text, scopeTier, scopeName: scopeTier === "project" ? row.project : "Everywhere", source: "suggested" }).id;
+      if (b.action === "restore") {
+        hub.db.prepare("UPDATE rule_suggestions SET status = 'pending' WHERE id = ?").run(row.id);
+        const pending = hub.db.prepare("SELECT * FROM review_queue WHERE item_type = 'rule' AND item_id = ? AND status = 'pending'").get(row.id);
+        if (!pending) hub.addReview({ itemType: "rule", itemId: row.id, reason: "rule_suggestion", proposedBy: "extractor" });
+        hub.audit("ui", "rule_suggestion.restore", { id: row.id });
+        return h.json({ id: row.id, status: "pending", ruleId: null });
       }
-      const status = b.action === "accept" ? "accepted" : b.action === "dismiss" ? "dismissed" : "pending";
-      hub.db.prepare("UPDATE rule_suggestions SET status = ? WHERE id = ?").run(status, row.id);
-      const pending = hub.db.prepare("SELECT * FROM review_queue WHERE item_type = 'rule' AND item_id = ? AND status = 'pending'").get(row.id);
-      if (pending) hub.resolveReview(pending.id, { status: b.action === "accept" ? "accepted" : b.action === "dismiss" ? "rejected" : "pending", actor: "ui" });
-      else if (b.action === "restore") hub.addReview({ itemType: "rule", itemId: row.id, reason: "rule_suggestion", proposedBy: "extractor" });
-      hub.audit("ui", `rule_suggestion.${b.action}`, { id: row.id, ruleId });
-      return h.json({ id: row.id, status, ruleId });
+      const action = b.action === "accept" ? "approve" : b.action === "dismiss" ? "reject" : b.action;
+      try {
+        return h.json(decideSuggestion(hub, Number(m[1]), { action, text: b.text ?? null, actor: "ui" }));
+      } catch (error) {
+        throw new BadRequest(error instanceof Error ? error.message : String(error));
+      }
     }
 
     // ---- T-138: installer status from doctor data, read only ----
@@ -689,6 +744,16 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       const b = await readJson(request);
       try {
         return h.json(goalAction(hub, m[1], { action: b.action, actor: "ui" }));
+      } catch (error) {
+        throw new BadRequest(error instanceof Error ? error.message : String(error));
+      }
+    }
+
+    // T-152: requests are computed, so the only write is a reversible dismiss/restore of a request id.
+    if ((m = /^\/api\/hub\/requests\/([a-f0-9]{16})$/.exec(pathname)) && method === "POST") {
+      const b = await readJson(request);
+      try {
+        return h.json(requestAction(hub, m[1], { action: b.action, actor: "ui" }));
       } catch (error) {
         throw new BadRequest(error instanceof Error ? error.message : String(error));
       }

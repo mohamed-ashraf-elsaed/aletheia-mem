@@ -126,6 +126,24 @@ verification is the same: read the project's source or its current documentation
 
 Rows 3, 4, 10, 15, 25, 27, 28, 30, 37, 39, 40 and 41 in section 21.2 carry the same caveat.
 
+## Request layer, story and economics (2026-10-27)
+
+These are chosen rules and unmeasured behaviour in T-152 and T-165 to T-173. Each was tested only on a seeded
+database, never on real owner history.
+
+| # | Item | State | What would verify it |
+|---:|---|---|---|
+| 46 | Request grouping "close in time" (default 24 h) | A chosen threshold; no real sessions were grouped to check it | Run it on a real store and compare the cards with the owner's own view |
+| 47 | Progress formula (share of sessions ended or summarised) | A chosen rule; no memory review backs it | Compare with the owner's reading of the same requests |
+| 48 | ETA pace (mean gap between session starts) | An approximation; no delivered ETA was checked against the real ship date | Record a request to completion and compare `eta` with the real end |
+| 49 | Rule strength bands (Light 1-2, Steady 3-4, Strong 5+) | A chosen band; not measured against how the owner decides | Ask the owner to label suggestions and compare |
+| 50 | Per-observation work tokens | `null` by design: the usage ledger is per extraction call, not per observation | Store a real per-observation usage link first |
+| 51 | Savings percent | Derived from `fact_usage` input + output only; not a measured reduction | Measure a real before/after context session |
+| 52 | "What came out of it" detector | Tested on synthetic tool events (`test/artifacts.test.mjs`); no real host output was read for this task | Read real Claude Code, Command Code and Codex tool events |
+| 53 | Build story quality | Rule-based only; no model was run, so no prose quality is claimed | A model-written story (not part of this task) |
+| 54 | UI wiring of the new routes | Not done; `public/**` was not changed | A later UI prompt |
+| 55 | Sample JSON in [32](../32-requests.md) | Produced from a seeded temp database on 2026-10-27; no real user data | Regenerate from a real store and compare |
+
 ## UI study (2026-10-27)
 
 | Item | Why UNVERIFIED | What would verify it |

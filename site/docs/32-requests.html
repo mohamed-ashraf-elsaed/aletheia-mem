@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>32. Requests, goals, story and economics · Aletheia docs</title>
+<meta name="description" content="Status: implemented, 2026-10-27. This page describes the code that exists: src/hub/requests.mjs, goals-rollup.mjs, artifacts.mjs, story.mjs, economics.mjs, rule-suggest.mjs, rul...">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/32-requests.html">
+<link rel="icon" type="image/png" sizes="64x64" href="../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"32. Requests, goals, story and economics","description":"Status: implemented, 2026-10-27. This page describes the code that exists: src/hub/requests.mjs, goals-rollup.mjs, artifacts.mjs, story.mjs, economics.mjs, rule-suggest.mjs, rul...","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/32-requests.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="32-requests-goals-story-and-economics">32. Requests, goals, story and economics</h1>
+<p>Status: implemented, 2026-10-27. This page describes the code that exists: <code>src/hub/requests.mjs</code>, <code>goals-rollup.mjs</code>, <code>artifacts.mjs</code>, <code>story.mjs</code>, <code>economics.mjs</code>, <code>rule-suggest.mjs</code>, <code>rules-decide.mjs</code>. Every number comes from a stored row. An empty store returns empty arrays and <code>empty: true</code>; there are no placeholder counts. The rule-based path needs no model. The UI is not wired yet (backend only).</p>
+<h2 id="321-requests-t-152">32.1 Requests (T-152)</h2>
+<p>A request is a group of sessions in one project that share a goal and are close in time. The goal is the owner's own imperative prompt (<code>goals.imperativeTopic</code>); sessions with no imperative prompt share a <code>no-goal</code> key. Within a (project, goal) group, sessions become separate requests when the gap since the previous session exceeds <code>maxGapHours</code> (default 24).</p>
+<p>Status is derived from rows, in this order:</p>
+<div class="tablewrap"><table><thead><tr><th>Status</th><th>Rule</th></tr></thead><tbody><tr><td><code>Working</code></td><td>the latest session is not ended and its last activity is within <code>activeMinutes</code> (default 5)</td></tr><tr><td><code>Shipped</code></td><td>the latest session has a recorded session-end event</td></tr><tr><td><code>Waiting on you</code></td><td>not ended, and the latest activity is a prompt (the owner spoke last)</td></tr><tr><td><code>Idle</code></td><td>none of the above</td></tr></tbody></table></div>
+<p>Each request also carries <code>stage</code> (the goal object), <code>startedAt</code>, <code>runningTimeMs</code>, session/prompt/tool counts and <code>evidence</code> (session, prompt and tool ids). <code>requestDetail</code> adds <code>whereThisCameFrom</code>: sessions, the owner's prompts and source facts.</p>
+<p>Dismiss and restore write an id to <code>work.requests.dismissed</code> (settings); nothing is deleted.</p>
+<h2 id="322-progress-and-eta-t-166">32.2 Progress and ETA (T-166)</h2>
+<p><code>progress</code> is the share of a request's sessions that ended or produced a summary, capped at 99 unless the request is <code>Shipped</code> (then 100). <code>progressEvidence</code> lists the completed session ids, fact ids and summary ids.</p>
+<p><code>eta</code> is reported only when the request is not shipped, has at least two sessions with distinct starts, has at least one completed session, and has remaining sessions. The pace is the mean gap between consecutive session starts. Otherwise <code>eta</code> is <code>null</code> and <code>etaEvidence</code> is <code>null</code>.</p>
+<h2 id="323-what-came-out-of-it-t-167">32.3 What came out of it (T-167)</h2>
+<p><code>artifacts.detectArtifacts</code> is conservative: a commit needs a <code>commit &lt;sha&gt;</code> lead-in, a full 40-hex sha, or a bracketed <code>[branch sha]</code>; a PR needs a GitHub pull URL or <code>pull request #N</code>; a branch needs a <code>git push ... origin</code> lead-in or a feat/fix/chore-style name. Each request carries <code>cameOutOfIt</code> (the findings, with <code>evidenceId</code>, <code>source</code>, <code>sessionId</code> and <code>at</code>) and <code>outcome</code> counts.</p>
+<h2 id="324-goals-roll-up-t-168">32.4 Goals roll-up (T-168)</h2>
+<p><code>proposeGoalsRollup</code> links each request to the goal whose topic key and project match. A goal is:</p>
+<div class="tablewrap"><table><thead><tr><th>Status</th><th>Rule</th></tr></thead><tbody><tr><td><code>Nothing on it</code></td><td>no linked request</td></tr><tr><td><code>Moving</code></td><td>a linked request is Working, Waiting on you or Shipped</td></tr><tr><td><code>Stalled</code></td><td>linked requests exist, all idle</td></tr></tbody></table></div>
+<p>It adds <code>aggregateProgress</code> (mean of the linked requests' progress), <code>requests</code>, request counts and <code>whatCameOutOfIt</code> (merged artifacts). <code>noGoal</code> holds requests serving none of the goals. <code>openAsks</code> splits non-shipped goals into <code>beingWorked</code> (Moving) and <code>nothingWorking</code> (Stalled or no request).</p>
+<h2 id="325-build-story-t-169">32.5 Build story (T-169)</h2>
+<p><code>buildStory</code> returns counts (shipped, working, waiting on you, idle), a velocity object with <code>perWeek</code> (ISO week -&gt; shipped count from stored dates), <code>averageDaysToShip</code>, and <code>learned</code>: repeated corrections in the owner's prompts, grouped by rule text with <code>timesSeen</code>, <code>latestAt</code> and dated quotes.</p>
+<h2 id="326-context-economics-t-170">32.6 Context economics (T-170)</h2>
+<p><code>economics</code> lists context memories (kind observation, summary or note) with <code>readTokens</code> from one documented counter, <code>estimateTokens: ceil(text.length / 4)</code>. Per-observation <code>workTokens</code> is <code>null</code>, labelled &quot;usage is recorded per extraction call, not per observation&quot;. Totals take work tokens from <code>fact_usage</code> input + output, or <code>null</code> with &quot;no usage record&quot;. Savings is only computed when work tokens exist and exceed zero.</p>
+<h2 id="327-rule-strength-and-decide-flow-t-171-t-172">32.7 Rule strength and decide flow (T-171, T-172)</h2>
+<p>Each suggestion stores <code>times_seen</code>, <code>latest_at_epoch</code> and dated rows in <code>rule_suggestion_quotes</code>. Strength is documented in code: <code>Light</code> at 1-2, <code>Steady</code> at 3-4, <code>Strong</code> at 5+. <code>listSuggestions</code> returns <code>timesSeen</code>, <code>strength</code>, <code>latestAt</code>, <code>quotes</code> and <code>moreQuotes</code> (quotes beyond the first two).</p>
+<p>The decide flow approves, edits-then-approves or rejects a suggestion, returns decided counts, toggles an active rule on or off, records the last learning run, and records <code>replaced_by</code> / <code>replaced_at_epoch</code> when one rule replaces another. Nothing here deletes a suggestion or a rule.</p>
+<h2 id="328-query-params-t-173">32.8 Query params (T-173)</h2>
+<p><code>GET /v1/work/requests</code> accepts <code>filter</code> (<code>all</code>, <code>needs-you</code>, <code>shipped</code>), <code>sort</code> (<code>needs-you</code>, <code>newest</code>, <code>most-progress</code>) and <code>group</code> (<code>agent</code>, <code>tool</code>). <code>counts</code> always describes the whole set: <code>all</code>, <code>needsYou</code>, <code>shipped</code>, <code>working</code>, <code>idle</code>, <code>waitingOnYou</code>, <code>total</code>. <code>group</code> returns <code>groups</code> buckets keyed by the request's latest tool.</p>
+<h2 id="329-routes">32.9 Routes</h2>
+<div class="tablewrap"><table><thead><tr><th>Route</th><th>Method</th><th>What</th></tr></thead><tbody><tr><td><code>/v1/work/requests</code></td><td>GET</td><td>the request list; <code>?project=&amp;filter=&amp;sort=&amp;group=&amp;maxGapHours=&amp;activeMinutes=&amp;limit=</code></td></tr><tr><td><code>/v1/work/requests/:id</code></td><td>GET</td><td>one request plus <code>whereThisCameFrom</code>; 404 for an unknown or dismissed id</td></tr><tr><td><code>/api/hub/requests/:id</code></td><td>POST</td><td>`{action: &quot;dismiss&quot; \</td><td>&quot;restore&quot;}` (reversible)</td></tr><tr><td><code>/v1/work/goals</code></td><td>GET</td><td>the goals roll-up</td></tr><tr><td><code>/v1/work/story</code></td><td>GET</td><td>counts, velocity and learned habits</td></tr><tr><td><code>/v1/context/economics</code></td><td>GET</td><td>per-observation read tokens and work tokens</td></tr><tr><td><code>/api/hub/rule-suggestions</code></td><td>GET</td><td>suggestions with strength, quotes, decided counts</td></tr><tr><td><code>/api/hub/rule-suggestions/:id</code></td><td>POST</td><td>`{action: &quot;approve&quot; \</td><td>&quot;edit&quot; \</td><td>&quot;reject&quot; \</td><td>&quot;restore&quot;, text?}`</td></tr><tr><td><code>/api/hub/rules/:id/toggle</code></td><td>POST</td><td><code>{enabled: boolean}</code></td></tr><tr><td><code>/api/hub/rules/:id/replace</code></td><td>POST</td><td><code>{then, when?, scopeTier?, scopeName?}</code></td></tr><tr><td><code>/api/hub/rules/learning-run</code></td><td>GET, POST</td><td>read, or run <code>suggestRules</code> and record the run</td></tr></tbody></table></div>
+<p>CLI: <code>aletheia context economics [--project p] [--limit n]</code>.</p>
+<h2 id="3210-real-sample-seeded-temp-database-2026-10-27">32.10 Real sample (seeded temp database, 2026-10-27)</h2>
+<p>The seed has five requests in project <code>shop</code>: one Working, one Shipped (with a commit, PR and branch), one Idle and two Waiting on you. <code>GET /v1/work/requests?project=shop</code> (abbreviated):</p>
+<pre><code class="language-json">{
+  &quot;project&quot;: &quot;shop&quot;,
+  &quot;filter&quot;: &quot;all&quot;,
+  &quot;sort&quot;: &quot;newest&quot;,
+  &quot;group&quot;: null,
+  &quot;counts&quot;: { &quot;all&quot;: 5, &quot;needsYou&quot;: 2, &quot;shipped&quot;: 1, &quot;working&quot;: 1, &quot;idle&quot;: 1, &quot;waitingOnYou&quot;: 2, &quot;total&quot;: 5 },
+  &quot;requests&quot;: [
+    {
+      &quot;id&quot;: &quot;02a99a159fe3462b&quot;, &quot;project&quot;: &quot;shop&quot;, &quot;tool&quot;: &quot;claude-code&quot;,
+      &quot;goalKey&quot;: &quot;build retry button&quot;, &quot;status&quot;: &quot;Shipped&quot;, &quot;progress&quot;: 100, &quot;eta&quot;: null,
+      &quot;cameOutOfIt&quot;: [
+        { &quot;kind&quot;: &quot;pull&quot;, &quot;value&quot;: &quot;#42&quot;, &quot;number&quot;: 42, &quot;url&quot;: &quot;https://github.com/acme/shop/pull/42&quot;, &quot;evidenceId&quot;: 4, &quot;sessionId&quot;: &quot;s1&quot; },
+        { &quot;kind&quot;: &quot;commit&quot;, &quot;value&quot;: &quot;abc1234&quot;, &quot;sha&quot;: &quot;abc1234&quot;, &quot;evidenceId&quot;: 2, &quot;sessionId&quot;: &quot;s1&quot; },
+        { &quot;kind&quot;: &quot;branch&quot;, &quot;value&quot;: &quot;feat/retry-button&quot;, &quot;name&quot;: &quot;feat/retry-button&quot;, &quot;evidenceId&quot;: 3, &quot;sessionId&quot;: &quot;s1&quot; }
+      ],
+      &quot;outcome&quot;: { &quot;commits&quot;: 1, &quot;pulls&quot;: 1, &quot;branches&quot;: 1 }
+    }
+  ],
+  &quot;empty&quot;: false
+}</code></pre>
+<p><code>GET /v1/work/requests/:id</code> adds <code>whereThisCameFrom.sessions[]</code>, each with <code>prompts[]</code> and <code>facts[]</code> (ids and times).</p>
+<p><code>GET /v1/work/goals?project=shop</code> (abbreviated):</p>
+<pre><code class="language-json">{
+  &quot;goals&quot;: [
+    { &quot;object&quot;: &quot;onboarding guide&quot;, &quot;status&quot;: &quot;Moving&quot;, &quot;aggregateProgress&quot;: 0, &quot;requestCount&quot;: 1 },
+    { &quot;object&quot;: &quot;retry button checkout&quot;, &quot;status&quot;: &quot;Moving&quot;, &quot;aggregateProgress&quot;: 100, &quot;requestCount&quot;: 1 },
+    { &quot;object&quot;: &quot;retry latency&quot;, &quot;status&quot;: &quot;Stalled&quot;, &quot;aggregateProgress&quot;: 0, &quot;requestCount&quot;: 1 }
+  ],
+  &quot;noGoal&quot;: { &quot;count&quot;: 2 },
+  &quot;openAsks&quot;: { &quot;total&quot;: 2, &quot;beingWorked&quot;: [ { &quot;object&quot;: &quot;onboarding guide&quot; } ], &quot;nothingWorking&quot;: [ { &quot;object&quot;: &quot;retry latency&quot; } ] }
+}</code></pre>
+<p><code>GET /v1/work/story?project=shop</code>:</p>
+<pre><code class="language-json">{
+  &quot;counts&quot;: { &quot;shipped&quot;: 1, &quot;working&quot;: 1, &quot;waitingOnYou&quot;: 2, &quot;idle&quot;: 1, &quot;total&quot;: 5 },
+  &quot;velocity&quot;: { &quot;totalShipped&quot;: 1, &quot;averageDaysToShip&quot;: 0, &quot;perWeek&quot;: [ { &quot;week&quot;: &quot;2026-W44&quot;, &quot;shipped&quot;: 1 } ] },
+  &quot;learned&quot;: [
+    { &quot;text&quot;: &quot;Use pnpm, not npm&quot;, &quot;timesSeen&quot;: 2, &quot;latestAt&quot;: &quot;2026-10-26T11:15:00.000Z&quot;,
+      &quot;quotes&quot;: [ { &quot;text&quot;: &quot;Use pnpm, not npm.&quot;, &quot;at&quot;: &quot;2026-10-26T10:35:00.000Z&quot; } ] }
+  ]
+}</code></pre>
+<p><code>GET /v1/context/economics?project=shop</code> (abbreviated):</p>
+<pre><code class="language-json">{
+  &quot;counter&quot;: &quot;estimateTokens: ceil(text.length / 4)&quot;,
+  &quot;observations&quot;: [
+    { &quot;id&quot;: 17, &quot;kind&quot;: &quot;observation&quot;, &quot;readTokens&quot;: 28, &quot;workTokens&quot;: null, &quot;workTokensSource&quot;: &quot;usage is recorded per extraction call, not per observation&quot; }
+  ],
+  &quot;totals&quot;: { &quot;observations&quot;: 2, &quot;readTokens&quot;: 45, &quot;workTokens&quot;: 1500, &quot;workTokensSource&quot;: &quot;fact_usage input + output tokens&quot;, &quot;savingsPercent&quot;: 97 }
+}</code></pre>
+<p><code>GET /api/hub/rule-suggestions?project=shop</code> (abbreviated):</p>
+<pre><code class="language-json">{
+  &quot;total&quot;: 1, &quot;decided&quot;: 0, &quot;pending&quot;: 1,
+  &quot;items&quot;: [
+    { &quot;id&quot;: 1, &quot;text&quot;: &quot;Use pnpm, not npm&quot;, &quot;timesSeen&quot;: 2, &quot;strength&quot;: &quot;Light&quot;,
+      &quot;latestAt&quot;: &quot;2026-10-26T11:15:00.000Z&quot;, &quot;moreQuotes&quot;: 0,
+      &quot;quotes&quot;: [ { &quot;text&quot;: &quot;No, use pnpm instead of npm.&quot;, &quot;at&quot;: &quot;2026-10-26T11:15:00.000Z&quot;, &quot;sessionId&quot;: &quot;s2&quot; } ] }
+  ]
+}</code></pre>
+<p><code>GET /api/hub/rules/learning-run</code>:</p>
+<pre><code class="language-json">{ &quot;learningRun&quot;: { &quot;at&quot;: &quot;2026-10-27T10:10:44.419Z&quot;, &quot;found&quot;: 2, &quot;proposed&quot;: 1, &quot;errors&quot;: 0 } }</code></pre>
+<p><code>GET /v1/work/requests?project=shop&amp;filter=needs-you&amp;sort=most-progress&amp;group=tool</code> (abbreviated):</p>
+<pre><code class="language-json">{
+  &quot;filter&quot;: &quot;needs-you&quot;, &quot;sort&quot;: &quot;most-progress&quot;, &quot;group&quot;: &quot;tool&quot;,
+  &quot;requests&quot;: [ { &quot;id&quot;: &quot;c7f3fad4a28d22a2&quot;, &quot;status&quot;: &quot;Waiting on you&quot;, &quot;progress&quot;: 0 } ],
+  &quot;groups&quot;: [ { &quot;key&quot;: &quot;claude-code&quot;, &quot;count&quot;: 1 }, { &quot;key&quot;: &quot;codex&quot;, &quot;count&quot;: 1 } ]
+}</code></pre>
+<h2 id="3211-what-is-not-done">32.11 What is not done</h2>
+<ul><li><strong>UI wiring.</strong> No <code>public/**</code> file was changed. The Work, Goals and Rules tabs still render the T-143/T-144 shapes. A later prompt wires these routes.</li><li><strong>A model-written story.</strong> The build story is rule-based. No model was run, so no prose quality is claimed.</li><li><strong>Measured thresholds.</strong> The progress formula, the 24 h request gap, the ETA pace and the rule strength bands are chosen rules, not measured against owner behaviour. See <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/tasks/unverified.md">tasks/unverified.md</a>.</li><li><strong>Per-observation work tokens.</strong> The usage ledger is per extraction call, so per-observation work tokens are <code>null</code>.</li></ul>
+<h2 id="3212-sources">32.12 Sources</h2>
+<ul><li>The task files T-152 and T-165 to T-173 for the acceptance criteria.</li><li><a href="26-memory-pipeline.html">26-memory-pipeline.md</a> for the store and the worker.</li><li><code>aletheia-private/claude-mem-gap-report.md</code> for the gap list (read-only). No external URL was fetched for this page.</li></ul>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>

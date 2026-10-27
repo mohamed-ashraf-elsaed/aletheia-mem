@@ -409,6 +409,52 @@ The Codex layout was read from two real rollouts on this machine (2026-10-26): `
 cwd, `response_item`/`message` carries `user`/`assistant` text, and developer messages are skipped. No live
 Claude Code, Command Code or Codex session was watched while it was being written.
 
+## 13. Requests, goals, story and economics (NOT RUN BY AUTHOR)
+
+`test/requests.test.mjs`, `test/requests-progress.test.mjs`, `test/artifacts.test.mjs`,
+`test/goals-rollup.test.mjs`, `test/story.test.mjs`, `test/economics.test.mjs`, `test/rule-strength.test.mjs`,
+`test/rules-decide.test.mjs` and `test/work-query.test.mjs` cover these on a seeded temporary database. No real owner
+history was used, and the UI is not wired, so this is a backend check only.
+
+**NOT RUN BY AUTHOR.** With a seeded hub (see `test/requests.test.mjs` for the seed), start a server on a free
+loopback port with a temporary HOME and data dir:
+
+```bash
+HOME=$(mktemp -d) ALETHEIA_DATA_DIR=$(mktemp -d) ALETHEIA_HUB_DB=/tmp/requests.db \
+  ALETHEIA_PORT=38883 bun bin/aletheia-server.mjs
+```
+
+From another shell:
+
+```bash
+curl -s 'http://127.0.0.1:38883/v1/work/requests?project=shop&filter=needs-you&sort=most-progress&group=tool'
+curl -s 'http://127.0.0.1:38883/v1/work/goals?project=shop'
+curl -s 'http://127.0.0.1:38883/v1/work/story?project=shop'
+curl -s 'http://127.0.0.1:38883/v1/context/economics?project=shop'
+curl -s 'http://127.0.0.1:38883/api/hub/rule-suggestions?project=shop'
+```
+
+Expected on a seeded store with five requests:
+
+- `counts` is `{all:5, needsYou:2, shipped:1, working:1, idle:1, waitingOnYou:2, total:5}`.
+- The Shipped request has a `cameOutOfIt` list with a commit, a PR URL and a branch, each with an `evidenceId`.
+- `goals` has three goals (two `Moving`, one `Stalled`), a `noGoal` count of 2, and `openAsks` split into
+  `beingWorked` and `nothingWorking`.
+- `economics.totals.workTokens` is the `fact_usage` input + output (1500 in the sample) or `null` with
+  "no usage record"; per-observation `workTokens` is `null` with its label.
+- Each rule suggestion carries `timesSeen`, `strength`, `latestAt` and `quotes`; `total`/`decided`/`pending` are
+  the decision counts.
+
+The CLI prints the same economics JSON:
+
+```bash
+aletheia context economics --project shop
+```
+
+An empty store returns empty arrays and `empty: true` on every route. `POST /api/hub/rule-suggestions/:id` with
+`{"action":"edit","text":"..."}` approves the edited text; `POST /api/hub/rules/:id/toggle` with `{"enabled":false}`
+turns a rule off; `POST /api/hub/rules/:id/replace` sets `replacedBy` and `replacedAtEpoch` on the old rule.
+
 ## What the automated tests already cover
 
 `test/install-claude.test.mjs`, `test/claude-hooks.test.mjs` and `test/e2e-capture.test.mjs` cover: the dry run,

@@ -187,7 +187,16 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-149 | Raise the sync E2EE scrypt cost to the OWASP minimum | P6 | T-117 | validated | 2026-10-26 | [T-149.md](T-149.md) |
 | T-150 | Work tab polish (prompts, session-end, goals, 375px) | P6 | T-143, T-144 | validated | 2026-10-26 | [T-150.md](T-150.md) |
 | T-151 | Add an auto-start service (systemd user unit and launchd plist) | P3 | none | validated | 2026-10-26 | [T-151.md](T-151.md) |
-| T-152 | Add the build story (group sessions into requests with progress) | P6 | T-142, T-143, T-150 | todo | — | [T-152.md](T-152.md) |
+| T-152 | Group sessions into requests with status, stage and detail | P6 | T-142, T-143, T-150 | validated | 2026-10-26 | [T-152.md](T-152.md) |
+| T-165 | Add a temp-dir test helper and fix the migration test leak | P0 | none | validated | 2026-10-26 | [T-165.md](T-165.md) |
+| T-166 | Add progress and ETA per request from stored rows | P6 | T-152 | validated | 2026-10-26 | [T-166.md](T-166.md) |
+| T-167 | Detect commit, PR and branch references in tool events | P6 | T-152 | validated | 2026-10-26 | [T-167.md](T-167.md) |
+| T-168 | Roll up goals with request links, status and open asks | P6 | T-152 | validated | 2026-10-26 | [T-168.md](T-168.md) |
+| T-169 | Add the build story with counts, velocity and learned habits | P6 | T-152 | validated | 2026-10-26 | [T-169.md](T-169.md) |
+| T-170 | Add context economics (per-observation read and work tokens) | P6 | T-019 | validated | 2026-10-26 | [T-170.md](T-170.md) |
+| T-171 | Add rule strength and evidence (times seen, dated quotes) | P6 | T-035 | validated | 2026-10-26 | [T-171.md](T-171.md) |
+| T-172 | Add the rule decide flow API | P6 | T-072, T-171 | validated | 2026-10-26 | [T-172.md](T-172.md) |
+| T-173 | Add work list query params (filter, sort, group) | P6 | T-152 | validated | 2026-10-26 | [T-173.md](T-173.md) |
 | T-200 | Study claude-mem's viewer and derive Aletheia's design tokens | P6 | none | validated | 2026-10-26 | [T-200.md](T-200.md) |
 | T-201 | Add DOM-free UI logic: pager, time, highlight, hash params, Region machine | P6 | T-200 | validated | 2026-10-26 | [T-201.md](T-201.md) |
 | T-202 | Add a safe Markdown renderer | P6 | T-200 | validated | 2026-10-26 | [T-202.md](T-202.md) |

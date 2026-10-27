@@ -217,5 +217,28 @@ address is refused unless the rule sets `allowPrivate`. A name that does not res
 `/v1/sync/revoke`; `quota.hit` when a push hits a quota; `extraction.failed` and `queue.depth` from the
 extraction worker. An alert store or delivery failure never takes the server or the queue down.
 
+## 3.7 Requests, goals, story and economics (T-152, T-165 to T-173)
+
+The universal `/v1` API also answers the Work views. These routes are read-only except for dismiss/restore and the
+rule decide actions. Every number comes from a stored row; an empty store returns empty arrays and `empty: true`.
+Full field descriptions and real samples are in [32-requests.md](32-requests.md).
+
+| Route | Method | What |
+|---|---|---|
+| `/v1/work/requests` | GET | request list; `?project=&filter=all\|needs-you\|shipped&sort=needs-you\|newest\|most-progress&group=agent\|tool` |
+| `/v1/work/requests/:id` | GET | one request plus where it came from (sessions, prompts, facts) |
+| `/v1/work/story` | GET | shipped / working / waiting counts, shipping velocity, learned habits |
+| `/v1/work/goals` | GET | goal roll-up: Stalled / Moving / Nothing on it, aggregate progress, no-goal bucket, open asks |
+| `/v1/context/economics` | GET | per-observation read tokens and work tokens |
+| `/api/hub/requests/:id` | POST | `{action: "dismiss" \| "restore"}` |
+| `/api/hub/rule-suggestions` | GET | suggestions with strength, dated quotes and decided counts |
+| `/api/hub/rule-suggestions/:id` | POST | `{action: "approve" \| "edit" \| "reject" \| "restore", text?}` |
+| `/api/hub/rules/:id/toggle` | POST | `{enabled: boolean}` |
+| `/api/hub/rules/:id/replace` | POST | `{then, when?, scopeTier?, scopeName?}`; the old rule gets `replacedBy` and `replacedAtEpoch` |
+| `/api/hub/rules/learning-run` | GET, POST | read the last learning run, or run `suggestRules` and record it |
+
+The CLI equivalents: `aletheia context economics [--project p] [--limit n]` and `aletheia rules suggest`.
+
+
 
 

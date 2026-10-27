@@ -1,6 +1,7 @@
 // Paged list queries for the UI (T-203). Each function takes the store and returns { rows or items, total } for one
 // page. Orders always end with a unique id so consecutive pages never overlap or skip a row. Nothing here writes.
 import { slicePage } from "./paging.mjs";
+import { ruleStrength } from "./rule-suggest.mjs";
 
 const iso = (epoch) => (Number.isFinite(epoch) ? new Date(epoch).toISOString() : null);
 const oneLine = (text) => String(text ?? "").replace(/\s+/g, " ").trim();
@@ -92,7 +93,17 @@ export function ruleSuggestionsPage(hub, { limit, offset, project = null, status
   const rows = hub.db.prepare(`SELECT * FROM rule_suggestions ${clause} ORDER BY ${order} LIMIT ? OFFSET ?`).all(...params, limit, offset);
   return {
     total,
-    items: rows.map((row) => ({ id: row.id, project: row.project, text: row.text, when: row.when_text, confidence: row.confidence, status: row.status, sourceType: row.source_type, createdAt: iso(row.created_at_epoch) })),
+    items: rows.map((row) => {
+      const quotes = hub.db.prepare("SELECT id, text, at_epoch, source_type, source_id, session_id FROM rule_suggestion_quotes WHERE suggestion_id = ? ORDER BY at_epoch DESC, id DESC").all(row.id);
+      const timesSeen = Number(row.times_seen ?? quotes.length) || 1;
+      return {
+        id: row.id, project: row.project, text: row.text, when: row.when_text, confidence: row.confidence, status: row.status,
+        sourceType: row.source_type, createdAt: iso(row.created_at_epoch),
+        timesSeen, strength: ruleStrength(timesSeen), latestAt: iso(row.latest_at_epoch ?? Math.max(0, ...quotes.map((quote) => quote.at_epoch))),
+        quotes: quotes.map((quote) => ({ id: quote.id, text: quote.text, at: iso(quote.at_epoch), sourceType: quote.source_type, sourceId: quote.source_id, sessionId: quote.session_id ?? null })),
+        moreQuotes: Math.max(0, quotes.length - 2),
+      };
+    }),
   };
 }
 
