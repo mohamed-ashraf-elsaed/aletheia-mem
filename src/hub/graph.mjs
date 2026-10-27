@@ -26,7 +26,7 @@ export function graphWalk(store, { seeds = [], project = null, maxHops = 2, maxF
   const placeholders = (n) => Array.from({ length: n }, () => "?").join(",");
 
   for (let hop = 1; hop <= maxHops; hop++) {
-    if (Date.now() - started > deadlineMs) {
+    if (Date.now() - started >= deadlineMs) {
       out.trace.push(`graph: timeout at hop ${hop}`);
       break;
     }
