@@ -18,7 +18,7 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%28tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
 
 **الحالة: ألفا.** محرك الذاكرة والمثبّتات تعمل في الاختبارات. لم يُفتح أي تطبيق مضيف بعد بإعدادات مولّدة، ودقة الإجابات غير مقيسة. تعمل CI على Linux وmacOS؛ نظام Windows غير مدعوم بعد ولم يُختبر.
 

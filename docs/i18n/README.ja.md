@@ -16,7 +16,7 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%28tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
 
 **状態: アルファ。** メモリエンジンとインストーラーはテストで動作します。生成された設定でホストアプリを開いたことはまだなく、回答の正確さは測定していません。CI は Linux と macOS で動作します。Windows は未対応で、未検証です。
 

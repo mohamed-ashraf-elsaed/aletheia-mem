@@ -16,7 +16,7 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%28tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
 
 **Statut : alpha.** Le moteur de mémoire et les installateurs fonctionnent dans les tests. Aucune application hôte n'a encore été ouverte avec une configuration générée, et la précision des réponses n'est pas mesurée. La CI tourne sous Linux et macOS ; Windows n'est pas encore pris en charge et n'est pas testé.
 

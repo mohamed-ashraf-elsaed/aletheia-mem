@@ -16,7 +16,7 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%28tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
 
 **상태: 알파.** 메모리 엔진과 설치 프로그램은 테스트에서 동작합니다. 아직 생성된 설정으로 호스트 앱을 열어 본 적이 없고, 답변 정확도는 측정되지 않았습니다. CI는 Linux와 macOS에서 실행되며, Windows는 아직 지원되지 않고 테스트되지 않았습니다.
 

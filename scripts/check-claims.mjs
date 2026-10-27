@@ -17,7 +17,7 @@ export const ALLOWED_SHIELDS = [
   /^https:\/\/img\.shields\.io\/npm\/v\/aletheia-mem$/,
   /^https:\/\/img\.shields\.io\/badge\/status-alpha-orange$/,
   /^https:\/\/img\.shields\.io\/badge\/bun-%3E%3D1\.1-black$/,
-  /^https:\/\/img\.shields\.io\/badge\/platform-linux%20%28tested%29-lightgrey$/,
+  /^https:\/\/img\.shields\.io\/badge\/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey$/,
 ];
 
 // The npm version badge reads the registry's latest version, so it states a real value, not a typed one.
