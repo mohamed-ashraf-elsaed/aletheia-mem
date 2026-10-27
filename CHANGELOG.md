@@ -6,6 +6,20 @@ history.
 
 ## [Unreleased]
 
+### Added
+
+- A graph retrieval channel and entity pages, off by default behind a flag. On a synthetic test it found related
+  memories that keyword search missed; it has not been measured on real data.
+- Rule-based entity summaries and belief tracking. No model is used.
+- A file-read gate and a smart outline for files.
+
+### Changed
+
+- Search is faster at 50,000 memories: project-scoped p95 fell from 67.5 ms to 32.7 ms on a synthetic test, and
+  all-projects p95 is 58.6 ms. On the real LoCoMo set, Recall@5 did not change.
+- `fact_history` and `GET /v1/facts` accept `as_of` as epoch milliseconds as well as ISO 8601.
+- The README lists all 12 MCP tools.
+
 ## [0.1.3] - 2026-10-27
 
 ### Added
@@ -15,6 +29,10 @@ history.
 - `work_state_write` and `work_state_read` MCP tools for named to-do lists per project.
 - Folder context files and a connector verification status in the tools view and in doctor.
 - `glama.json`, so the Glama listing can be claimed.
+- A settings page in the Tools tab, with a settings API that validates every value and never returns the API key.
+- A live feed, session pages and a context preview in the app.
+- Query and result caching for search.
+- Rule-based query expansion, round-level indexing, and `since` and `until` filters on search.
 
 ### Changed
 
