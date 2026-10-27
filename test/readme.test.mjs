@@ -2,7 +2,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { checkBadges, findTypedCounts } from "../scripts/check-claims.mjs";
+import { checkBadges, findTypedCounts, renderClaims } from "../scripts/check-claims.mjs";
 
 const root = join(import.meta.dir, "..");
 const readme = readFileSync(join(root, "README.md"), "utf8");
@@ -19,6 +19,15 @@ describe("README claims", () => {
 
   test("no test, star or download count is typed by hand", () => {
     expect(findTypedCounts(readme)).toEqual([]);
+  });
+
+  test("the generated test count is the same with or without maintainer-only files", () => {
+    const fullCheckout = renderClaims({ ran: 1286, passed: 1286, failed: 0 });
+    const freshClone = renderClaims({ ran: 1286, passed: 1267, failed: 0 });
+    expect(fullCheckout).toBe(freshClone);
+    expect(fullCheckout).toContain("1,286 tests");
+    expect(fullCheckout).toContain("0 failures");
+    expect(fullCheckout).not.toMatch(/pass/);
   });
 
   test("no host is claimed as working without a real-install test", () => {

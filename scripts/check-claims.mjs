@@ -87,9 +87,10 @@ export function parseTestCounts(output) {
 export const withCommas = (value) => String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
 export function renderClaims(counts) {
-  const skipped = Number.isFinite(counts.ran) ? Math.max(0, counts.ran - counts.passed - counts.failed) : 0;
-  const tail = skipped ? `, ${withCommas(skipped)} skipped` : "";
-  return `**${withCommas(counts.passed)} tests pass** — ${withCommas(counts.passed)} pass, ${withCommas(counts.failed)} fail${tail} (run \`bun test\`).`;
+  // The total test count is the same in a full checkout and a fresh clone; the pass/skip split is not
+  // (maintainer-only tests skip when their private files are absent). Claim only the machine-independent facts.
+  const total = Number.isFinite(counts.ran) ? counts.ran : counts.passed;
+  return `**${withCommas(total)} tests** — ${withCommas(counts.failed)} failures (run \`bun test\`).`;
 }
 
 export function claimsBlockState(text) {
