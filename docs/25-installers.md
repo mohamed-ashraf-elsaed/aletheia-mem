@@ -225,9 +225,6 @@ load it. `test/manifests.test.mjs` checks the JSON, the paths and the hook comma
 
 | Host | File | What it declares | Source (fetched 2026-10-26) |
 |---|---|---|---|
-| Claude Code | `.claude-plugin/plugin.json` | metadata, an inline `mcpServers.aletheia` (`bun ${CLAUDE_PLUGIN_ROOT}/bin/mcp.mjs`), `SessionStart` and `Stop` hooks running `bin/aletheia.mjs hook claude-code ...` | <https://code.claude.com/docs/en/plugins/manifest-reference> |
-| Codex | `.codex-plugin/plugin.json` | metadata and `SessionStart`/`Stop` hooks running `bin/aletheia.mjs hook codex ...` | <https://developers.openai.com/plugins/build/plugins> |
-| Qoder | `.qoder-plugin/plugin.json` | metadata only | <https://docs.qoder.com/cli/plugins-reference> |
 | Gemini CLI | `gemini-extension.json` | metadata and an `mcpServers.aletheia` entry using `${extensionPath}/bin/mcp.mjs` and `cwd: ${extensionPath}` | <https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/extensions/reference.md> |
 
 What was not written, and why:

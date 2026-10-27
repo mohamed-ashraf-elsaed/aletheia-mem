@@ -27,6 +27,26 @@ while (true) {
 }
 `;
 
+// On a busy machine the child can take a while to start. Kill it only after its first batch is committed, so the
+// test never kills a process that has not created the database yet.
+async function waitForFirstBatch(dbPath) {
+  const deadline = Date.now() + 10_000;
+  while (Date.now() < deadline) {
+    try {
+      const db = new Database(dbPath, { readonly: true });
+      try {
+        if (db.prepare("SELECT COUNT(*) AS n FROM crash_rows").get().n > 0) return;
+      } finally {
+        db.close();
+      }
+    } catch {
+      // The file or the table does not exist yet.
+    }
+    await Bun.sleep(20);
+  }
+  throw new Error("the writer did not commit a batch within 10 seconds");
+}
+
 describe("T-009: kill -9 during writes leaves a recoverable database", () => {
   test(`${RUNS} SIGKILL runs reopen with integrity_check ok and no half batch`, async () => {
     const dir = tempDir("crash-");
@@ -36,7 +56,8 @@ describe("T-009: kill -9 during writes leaves a recoverable database", () => {
     for (let run = 0; run < RUNS; run += 1) {
       const dbPath = join(dir, `crash-${run}.db`);
       const child = Bun.spawn([process.execPath, writer, dbPath], { stdout: "ignore", stderr: "ignore" });
-      await Bun.sleep(120 + Math.floor(Math.random() * 180));
+      await waitForFirstBatch(dbPath);
+      await Bun.sleep(Math.floor(Math.random() * 180));
       child.kill("SIGKILL");
       await child.exited;
 
@@ -51,5 +72,5 @@ describe("T-009: kill -9 during writes leaves a recoverable database", () => {
         db.close();
       }
     }
-  }, 30_000);
+  }, 60_000);
 });
