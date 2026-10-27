@@ -6,6 +6,8 @@ history.
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-10-27
+
 ### Changed
 
 - The npm package now ships code and licence files only. Version 0.1.1 also shipped the whole `docs/` tree by mistake.
