@@ -26,6 +26,7 @@ single Bun process with a SQLite file (`sync.db`). Binds to loopback by default;
 | `/v1/sync/compact` | POST | `admin` | run compaction |
 | `/v1/sync/purge` | POST | `admin` | purge one entity everywhere |
 | `/v1/sync/audit` | GET | `admin` | append-only audit log |
+| `/v1/audit/export` | GET | `admin` | stream the audit log as JSONL (default) or CSV (`?from=&to=&format=`) |
 | `/v1/sync/e2ee` | GET | any valid token | the account's wrapped E2EE keys (for a newly joined device) |
 
 Push returns one result per op: `applied`, `duplicate`, or `rejected` with a reason. One bad op never
@@ -92,6 +93,14 @@ self-contained heads.
 - Per-token ops/day and bytes/day quotas are local settings, off by default. A write quota never blocks reads.
 - The audit table is append-only and stores ids and counts, never payloads or secrets.
 - The hub binds to loopback by default.
+
+### Audit export
+
+`GET /v1/audit/export` (admin token) and `aletheia audit export` read that same table and render it as JSONL
+(default) or CSV, with an inclusive `?from=`/`?to=` date range (epoch ms or ISO). Each row carries the action,
+the actor (token id or device id), the target (`detail`) and the timestamp, and never a payload or a secret.
+The export is tested loopback-only in `test/audit-export.test.mjs`; TLS is delegated to a reverse proxy or
+tunnel, and no real remote client has been run against it.
 
 ## 29.6 End-to-end encryption (optional, T-117)
 

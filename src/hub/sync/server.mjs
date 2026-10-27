@@ -3,6 +3,7 @@
 // Binds to loopback by default; a non-loopback bind requires `behindTls` and prints a warning.
 // Also serves the private remote MCP endpoint at /mcp when `hubDb` is given (T-107).
 import { dirname, join } from "node:path";
+import { epochOrNull, exportAudit } from "../audit-export.mjs";
 import { AlertStore, startAlertDelivery } from "../alerts.mjs";
 import { createMcpHttpHandler, loopbackOriginsOnly, WRITE_TOOLS } from "../mcp-http.mjs";
 import { HubStore } from "../store.mjs";
@@ -202,6 +203,22 @@ export function createSyncRoutes({ store, team = null, alerts = null, getPeer = 
       const auditDenied = authDenied(token, ["admin"]);
       if (auditDenied) return json({ error: "An admin token is required." }, auditDenied);
       return json({ audit: store.auditLog(accountForToken, Number(url.searchParams.get("limit") ?? 100)) });
+    }
+
+    if (pathname === "/v1/audit/export" && method === "GET") {
+      const exportDenied = authDenied(token, ["admin"]);
+      if (exportDenied) return json({ error: "An admin token is required." }, exportDenied);
+      const from = url.searchParams.get("from");
+      const to = url.searchParams.get("to");
+      const format = url.searchParams.get("format") ?? "jsonl";
+      if (from != null && epochOrNull(from) == null) return json({ error: "from must be an epoch ms or ISO date." }, 400);
+      if (to != null && epochOrNull(to) == null) return json({ error: "to must be an epoch ms or ISO date." }, 400);
+      if (!["jsonl", "csv"].includes(format)) return json({ error: "format must be jsonl or csv." }, 400);
+      const exported = exportAudit(store, accountForToken, { from, to, format });
+      return new Response(exported.body, {
+        status: 200,
+        headers: { "Content-Type": exported.contentType, "Content-Disposition": `attachment; filename="${exported.filename}"`, "Cache-Control": "no-store" },
+      });
     }
 
     if (pathname === "/v1/sync/compact" && method === "POST") {

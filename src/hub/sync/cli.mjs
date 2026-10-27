@@ -3,6 +3,7 @@
 import { SyncStore } from "./store.mjs";
 import { SyncClient } from "./client.mjs";
 import { mergeOps, replicaContentHash } from "./engine.mjs";
+import { exportAudit } from "../audit-export.mjs";
 
 const die = (message) => {
   const error = new Error(message);
@@ -304,6 +305,16 @@ export function readAudit(config, limit) {
   const store = hubStore(config);
   try {
     return store.auditLog(1, limit);
+  } finally {
+    store.close();
+  }
+}
+
+/** `aletheia audit export` renders the sync audit log as JSONL (default) or CSV with a date range. */
+export function exportAuditLog(config, { from = null, to = null, format = "jsonl" } = {}) {
+  const store = hubStore(config);
+  try {
+    return exportAudit(store, store.ensureAccount().id, { from, to, format });
   } finally {
     store.close();
   }
