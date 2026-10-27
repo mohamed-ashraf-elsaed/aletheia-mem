@@ -27,3 +27,5 @@ jobs:
         run: bun scripts/i18n-check.mjs
       - name: Docs site and sitemap agree
         run: bun scripts/build-site.mjs && bun scripts/check-sitemap.mjs
+      - name: Status page is current
+        run: bun scripts/gen-status.mjs --check
