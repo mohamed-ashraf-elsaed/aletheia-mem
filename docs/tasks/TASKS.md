@@ -223,3 +223,5 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-222 | Seed the new panels, extend the contract tests, update docs and screenshots | P6 | T-218, T-219, T-220, T-221 | validated | 2026-10-27 | [T-222.md](T-222.md) |
 | T-223 | Generate a one-file project status page from the repository | P4 | none | validated | 2026-10-27 | [T-223.md](T-223.md) |
 | T-224 | Keyboard and small-screen walk of Requests, Goals, Story, Suggested rules and Economics | P4 | none | validated | 2026-10-27 | [T-224.md](T-224.md) |
+| T-225 | Add the release process: docs/releasing.md, release.mjs --prepare and --verify, tag workflow | P4 | none | validated | 2026-10-27 | [T-225.md](T-225.md) |
+| T-226 | Brand the npm package page: README top block, real badges, metadata checks | P4 | T-225 | validated | 2026-10-27 | [T-226.md](T-226.md) |

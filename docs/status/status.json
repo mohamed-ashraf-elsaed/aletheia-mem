@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-27T15:36:09.835Z",
-  "commit": "31e6e48",
+  "generatedAt": "2026-10-27T15:45:48.035Z",
+  "commit": "d328c17",
   "tasks": [
     {
       "id": "T-001",
@@ -11053,16 +11053,133 @@
       "blocked": false,
       "dependents": [],
       "stale": []
+    },
+    {
+      "id": "T-225",
+      "title": "Add the release process: docs/releasing.md, release.mjs --prepare and --verify, tag workflow",
+      "status": "validated",
+      "phase": "P4",
+      "depsRaw": "none",
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 128,
+      "acceptanceTicked": 5,
+      "acceptanceTotal": 5,
+      "acceptance": [
+        {
+          "done": true,
+          "text": "`--prepare` refuses a dirty tree, a branch other than main, a version not greater than package.json or the CHANGELOG, and empty notes."
+        },
+        {
+          "done": true,
+          "text": "`--prepare` bumps package.json and moves Unreleased into a dated section without committing or tagging."
+        },
+        {
+          "done": true,
+          "text": "`--verify` checks version equality, the tag, required pack files, unpacked size (12 MB), absolute README image URLs and no relative link in the first 60 README lines."
+        },
+        {
+          "done": true,
+          "text": "The workflow runs on `v*` tags, publishes only when configured, and the setup is documented in comments."
+        },
+        {
+          "done": true,
+          "text": "No npm publish, tag, push or release was made."
+        }
+      ],
+      "validation": "bun test test/release.test.mjs",
+      "lastHistory": "- 2026-10-27: validated - the validation command passed and its output is in Evidence.",
+      "history": [
+        "- 2026-10-27: todo, created.",
+        "- 2026-10-27: doing",
+        "- 2026-10-27: validated - the validation command passed and its output is in Evidence."
+      ],
+      "files": [
+        "docs/releasing.md",
+        "scripts/release.mjs",
+        ".github/workflows/release.yml",
+        "test/release.test.mjs",
+        "CHANGELOG.md"
+      ],
+      "ownerSteps": [],
+      "deps": [],
+      "blockedBy": [],
+      "eligible": false,
+      "blocked": false,
+      "dependents": [
+        "T-226"
+      ],
+      "stale": []
+    },
+    {
+      "id": "T-226",
+      "title": "Brand the npm package page: README top block, real badges, metadata checks",
+      "status": "validated",
+      "phase": "P4",
+      "depsRaw": "T-225",
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 153,
+      "acceptanceTicked": 5,
+      "acceptanceTotal": 5,
+      "acceptance": [
+        {
+          "done": true,
+          "text": "Every image in the README is an absolute https URL; the top images map to existing local files."
+        },
+        {
+          "done": true,
+          "text": "The badge row has the npm version badge and no hand-typed counts; `bun scripts/check-claims.mjs` passes."
+        },
+        {
+          "done": true,
+          "text": "The install block says Bun is required and names `aletheia-server` and `http://127.0.0.1:37790`."
+        },
+        {
+          "done": true,
+          "text": "package.json carries description, keywords, homepage, bugs, repository, engines, bin and files; no dependencies."
+        },
+        {
+          "done": true,
+          "text": "`docs/tasks/unverified.md` lists what to look at on npmjs.com after publishing."
+        }
+      ],
+      "validation": "bun test test/readme-top.test.mjs test/readme.test.mjs",
+      "lastHistory": "- 2026-10-27: validated - the validation command passed and its output is in Evidence.",
+      "history": [
+        "- 2026-10-27: todo, created.",
+        "- 2026-10-27: doing",
+        "- 2026-10-27: validated - the validation command passed and its output is in Evidence."
+      ],
+      "files": [
+        "README.md",
+        "scripts/check-claims.mjs",
+        "test/readme-top.test.mjs",
+        "docs/tasks/unverified.md",
+        "docs/tasks/TASKS.md"
+      ],
+      "ownerSteps": [],
+      "deps": [
+        {
+          "id": "T-225",
+          "status": "validated"
+        }
+      ],
+      "blockedBy": [],
+      "eligible": false,
+      "blocked": false,
+      "dependents": [],
+      "stale": []
     }
   ],
   "taskCounts": {
-    "validated": 128,
+    "validated": 130,
     "implemented": 0,
     "doing": 0,
     "failed": 0,
     "todo": 53
   },
-  "taskTotal": 181,
+  "taskTotal": 183,
   "phases": {
     "P0": {
       "total": 18,
@@ -11097,8 +11214,8 @@
       "todo": 6
     },
     "P4": {
-      "total": 14,
-      "validated": 11,
+      "total": 16,
+      "validated": 13,
       "implemented": 0,
       "doing": 0,
       "failed": 0,
@@ -15188,7 +15305,7 @@
       "file": "docs/a11y-walk-requests.md",
       "title": "Keyboard and small-screen walk: Requests, Goals, Story, Suggested rules, Economics",
       "bytes": 5774,
-      "lastCommit": "n/a",
+      "lastCommit": "2026-10-27",
       "linkedFromReadme": false,
       "linkedFromIndex": false,
       "linkedFromOtherDocs": 0,
@@ -15225,6 +15342,16 @@
       "orphan": true
     },
     {
+      "file": "docs/releasing.md",
+      "title": "Releasing",
+      "bytes": 3822,
+      "lastCommit": "n/a",
+      "linkedFromReadme": false,
+      "linkedFromIndex": false,
+      "linkedFromOtherDocs": 0,
+      "orphan": true
+    },
+    {
       "file": "docs/ui-design.md",
       "title": "Aletheia UI design",
       "bytes": 9305,
@@ -15247,8 +15374,8 @@
   ],
   "links": {
     "broken": [],
-    "local": 1239,
-    "external": 975
+    "local": 1230,
+    "external": 988
   },
   "verification": {
     "unverified": [
@@ -15901,9 +16028,74 @@
             "claim": false
           }
         ]
+      },
+      {
+        "section": "npm package page and release (2026-10-27, T-225, T-226)",
+        "items": [
+          {
+            "n": "1",
+            "item": "The npm page shows the new README top block (version 0.1.1 or later; 0.1.0 still has the old README)",
+            "verify": "Not checked. Files prepared from the npm and GitHub documentation as understood; no page was loaded.",
+            "claim": false
+          },
+          {
+            "n": "2",
+            "item": "The centred logo renders. `docs/assets/logo.png` is a PNG served from raw.githubusercontent.com through npm's image proxy.",
+            "verify": "Not checked.",
+            "claim": false
+          },
+          {
+            "n": "3",
+            "item": "The two WebP screenshots render. Whether npm's image proxy serves `.webp` is not confirmed.",
+            "verify": "Not checked.",
+            "claim": false
+          },
+          {
+            "n": "4",
+            "item": "Badges render (npm version, licence, Test workflow, last commit, stars, open issues, status, Bun, platform). The Test badge needs the workflow to have run on `main`.",
+            "verify": "Not checked.",
+            "claim": false
+          },
+          {
+            "n": "5",
+            "item": "Centred HTML (`<p align>`, `<div align>`, `<h1 align>`) and the markdown badges inside `<div align=\"center\">` render as written. npm sanitises HTML; which attributes it keeps was not checked.",
+            "verify": "Not checked.",
+            "claim": false
+          },
+          {
+            "n": "6",
+            "item": "The `~~~bash` install block renders as a code block.",
+            "verify": "Not checked.",
+            "claim": false
+          },
+          {
+            "n": "7",
+            "item": "The sidebar shows the homepage, repository, issues link, keywords and the Apache-2.0 licence, and \"Install\" shows `npm i aletheia-mem`.",
+            "verify": "Not checked.",
+            "claim": false
+          },
+          {
+            "n": "8",
+            "item": "The README translations were not re-translated for the new top block. `bun scripts/i18n-check.mjs --update` recorded the new English hash only, so it no longer proves the translations match. The translation test now ignores the new npm badge.",
+            "verify": "Translations still describe the old top block.",
+            "claim": false
+          },
+          {
+            "n": "9",
+            "item": "`.github/workflows/release.yml` has never run. Trusted publishing, the `NPM_TOKEN` path, `npm install -g npm@latest` and `gh release create --verify-tag` are untested.",
+            "verify": "Not run: no tag was pushed.",
+            "claim": false
+          },
+          {
+            "n": "10",
+            "item": "The GitHub social preview. `docs/assets/social.png` (1280 x 640) already exists and was not regenerated. Setting it is a repository setting.",
+            "verify": "Not set by this task.",
+            "claim": false
+          }
+        ]
       }
     ],
-    "unverifiedCount": 100,
+    "unverifiedCount": 110,
     "researchLogUnverified": {
       "total": 27,
       "bySection": [
@@ -16183,8 +16375,8 @@
     ]
   },
   "checks": {
-    "staticTestFiles": 121,
-    "staticTestCalls": 1099,
+    "staticTestFiles": 123,
+    "staticTestCalls": 1125,
     "lastRecordedRun": {
       "source": "docs/tasks/run-report.md",
       "date": null,
@@ -16237,17 +16429,37 @@
   },
   "git": {
     "available": true,
-    "branch": "main",
-    "head": "31e6e48",
+    "branch": "worktree-agent-a02fa058132388323",
+    "head": "d328c17",
     "ahead": 0,
     "behind": 0,
-    "uncommitted": 16,
+    "uncommitted": 29,
     "uncommittedDocs": [
-      "docs/a11y-walk-requests.md",
-      "docs/tasks/T-224.md",
-      "docs/tasks/TASKS.md"
+      "docs/i18n/.translation-state.json",
+      "docs/i18n/README.ar.md",
+      "docs/i18n/README.de.md",
+      "docs/i18n/README.es.md",
+      "docs/i18n/README.fr.md",
+      "docs/i18n/README.hi.md",
+      "docs/i18n/README.ja.md",
+      "docs/i18n/README.ko.md",
+      "docs/i18n/README.pt-br.md",
+      "docs/i18n/README.ru.md",
+      "docs/i18n/README.zh.md",
+      "docs/tasks/TASKS.md",
+      "docs/tasks/unverified.md"
     ],
     "commits": [
+      {
+        "sha": "d328c17",
+        "date": "2026-10-27",
+        "subject": "chore: bring the requests accessibility walk into main"
+      },
+      {
+        "sha": "ab9474f",
+        "date": "2026-10-27",
+        "subject": "a11y: keyboard and 375 px walk of requests, goals, story, suggested rules and economics (T-224)"
+      },
       {
         "sha": "31e6e48",
         "date": "2026-10-27",
@@ -16312,22 +16524,12 @@
         "sha": "bd0cfeb",
         "date": "2026-10-27",
         "subject": "chore(npm): prepare the package for publishing (T-080)"
-      },
-      {
-        "sha": "77711d5",
-        "date": "2026-10-27",
-        "subject": "feat(cli): report host, port and permissions in aletheia doctor (T-073)"
-      },
-      {
-        "sha": "1e09b4b",
-        "date": "2026-10-27",
-        "subject": "ci: run tests on Linux, macOS and Windows (T-014)"
       }
     ],
     "worktrees": [
-      "/home/mashraf/Projects/aletheia-mem                                           31e6e48 [main]",
-      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-aba78cdc0bd0d914c ab9474f [worktree-agent-aba78cdc0bd0d914c]",
-      "/home/mashraf/Projects/aletheia-next                                          98848c6 [feat/after-v010]"
+      "/home/mashraf/Projects/aletheia-mem                                           d328c17 [main]",
+      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-a02fa058132388323 d328c17 [worktree-agent-a02fa058132388323] locked",
+      "/home/mashraf/Projects/aletheia-next                                          495ca7f [feat/after-v010]"
     ]
   },
   "ci": [
@@ -16389,6 +16591,35 @@
       "label": "declared, not run"
     },
     {
+      "file": ".github/workflows/release.yml",
+      "name": "Release",
+      "triggers": [
+        "push:",
+        "tags:",
+        "- \"v*\""
+      ],
+      "jobs": [
+        {
+          "id": "release",
+          "runsOn": "ubuntu-latest",
+          "matrix": [
+            "bun-version: 1.3.10"
+          ],
+          "runs": [
+            "bun test",
+            "bun scripts/release.mjs --verify --tag \"$GITHUB_REF_NAME\"",
+            "|",
+            "gh release view \"$GITHUB_REF_NAME\" >/dev/null 2>&1 || gh release create \"$GITHUB_REF_NAME\" --generate-notes --verify-tag"
+          ],
+          "uses": [
+            "actions/checkout@v7",
+            "oven-sh/setup-bun@v2"
+          ]
+        }
+      ],
+      "label": "declared, not run"
+    },
+    {
       "file": ".github/workflows/test.yml",
       "name": "Test",
       "triggers": [
@@ -16433,15 +16664,15 @@
       },
       "scripts": {
         "files": 21,
-        "lines": 2796
+        "lines": 2932
       },
       "test": {
-        "files": 127,
-        "lines": 17983
+        "files": 129,
+        "lines": 18251
       },
       "docs": {
-        "files": 272,
-        "lines": 34623
+        "files": 275,
+        "lines": 34836
       }
     },
     "routes": [

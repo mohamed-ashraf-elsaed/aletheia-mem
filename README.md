@@ -1,10 +1,13 @@
-<p align="center"><img src="docs/assets/logo.png" alt="Aletheia: a network brain with a stack of memory layers" width="320"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/mohamed-ashraf-elsaed/aletheia-mem/main/docs/assets/logo.png" alt="Aletheia: a network brain with a stack of memory layers" width="280"></p>
 
-# Aletheia
+<h1 align="center">Aletheia</h1>
 
-**A free, local memory and rules hub for AI coding tools.**
+<p align="center"><strong>A free, local memory and rules hub for AI coding tools.</strong><br>One store on your machine. Any tool reads it over MCP, REST or the CLI.</p>
 
-[![Licence](https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem)](LICENSE)
+<div align="center">
+
+[![npm version](https://img.shields.io/npm/v/aletheia-mem)](https://www.npmjs.com/package/aletheia-mem)
+[![Licence](https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/LICENSE)
 [![Tests](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml/badge.svg)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml)
 [![Last commit](https://img.shields.io/github/last-commit/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/commits/main)
 [![Stars](https://img.shields.io/github/stars/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/stargazers)
@@ -13,10 +16,24 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%28tested%29-lightgrey)
 
+</div>
+
+Install and run. Bun 1.1 or newer is required; the CLI runs on Bun, not Node.
+
+~~~bash
+npm install -g aletheia-mem
+aletheia-server
+# open http://127.0.0.1:37790
+~~~
+
+<p align="center"><img src="https://raw.githubusercontent.com/mohamed-ashraf-elsaed/aletheia-mem/main/docs/screenshots/memory-dark.webp" alt="The Memory tab: search, edit, pin and export what Aletheia stored" width="48%"> <img src="https://raw.githubusercontent.com/mohamed-ashraf-elsaed/aletheia-mem/main/docs/screenshots/work-dark.webp" alt="The Work tab: captured sessions, facts and goals" width="48%"></p>
+
+<p align="center"><a href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/">Docs site</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/06-frontend.md">Frontend guide</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues">Issues</a></p>
+
 **Status: alpha.** The memory engine and the installers work in tests. No host has been opened with a generated
 config yet, and answer accuracy is not measured. CI runs on Linux and macOS; Windows is not supported yet and not tested.
 
-[English](README.md) · [中文](docs/i18n/README.zh.md) · [Español](docs/i18n/README.es.md) · [Português (Brasil)](docs/i18n/README.pt-br.md) · [日本語](docs/i18n/README.ja.md) · [Deutsch](docs/i18n/README.de.md) · [Français](docs/i18n/README.fr.md) · [한국어](docs/i18n/README.ko.md) · [हिन्दी](docs/i18n/README.hi.md) · [العربية](docs/i18n/README.ar.md) · [Русский](docs/i18n/README.ru.md).
+[English](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/README.md) · [中文](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.zh.md) · [Español](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.es.md) · [Português (Brasil)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.pt-br.md) · [日本語](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ja.md) · [Deutsch](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.de.md) · [Français](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.fr.md) · [한국어](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ko.md) · [हिन्दी](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.hi.md) · [العربية](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ar.md) · [Русский](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ru.md).
 Machine translations live in `docs/i18n/`; English is canonical. No translation has had native review.
 
 ## What it is
