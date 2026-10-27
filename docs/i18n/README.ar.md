@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 402d73a4d5cae600f1b0817037b0efd9b283a42a9c829b894e7ba628e20f3434
+> Source: [README.md](../../README.md) · source-sha256: 312e083d5fdf3ad4aa86214480bb6f224381591f8ee5fb4aaff739c97a066ddd
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -140,11 +140,28 @@ _Competitor cells are copied from each project's own public documentation, fetch
 
 | Interface | Where | Use |
 |---|---|---|
-| MCP (stdio) | `bun bin/mcp.mjs` | `search`, `timeline`, `get_observations`, `save_memory`, `session_start_context`, `list_rules`, `add_rule` |
+| MCP (stdio) | `bun bin/mcp.mjs` | the 12 MCP tools below (read and write) |
 | MCP (HTTP) | sync hub `/mcp` | the same tools with a bearer token and per-token scope |
 | REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, any language; optional `ALETHEIA_API_KEY` bearer key |
 | CLI | `bin/aletheia.mjs` | hooks, shell, cron, sync |
 | Files | rules sync | each tool's own instruction file |
+
+### MCP tools
+
+| Tool | Purpose | Access |
+|---|---|---|
+| `search` | Search shared memory | read |
+| `timeline` | Show context around a memory | read |
+| `get_observations` | Get full memory text by id | read |
+| `save_memory` | Save a memory | write |
+| `session_start_context` | Load session start context | read |
+| `fact_history` | Show how a fact changed | read |
+| `list_rules` | List standing rules | read |
+| `add_rule` | Add a standing rule | write |
+| `dismiss_memory` | Dismiss a memory | write |
+| `restore_memory` | Restore a dismissed memory | write |
+| `work_state_write` | Write a work-state list | write |
+| `work_state_read` | Read a work-state list | read |
 
 ## الإعدادات
 
