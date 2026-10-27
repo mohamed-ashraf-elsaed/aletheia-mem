@@ -193,3 +193,4 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-167 | Detect commit, PR and branch references in tool events | P6 | T-152 | validated | 2026-10-26 | [T-167.md](T-167.md) |
 | T-168 | Roll up goals with request links, status and open asks | P6 | T-152 | validated | 2026-10-26 | [T-168.md](T-168.md) |
 | T-169 | Add the build story with counts, velocity and learned habits | P6 | T-152 | validated | 2026-10-26 | [T-169.md](T-169.md) |
+| T-170 | Add context economics (per-observation read and work tokens) | P6 | T-019 | validated | 2026-10-26 | [T-170.md](T-170.md) |

@@ -19,6 +19,7 @@ import { goalAction } from "./goals.mjs";
 import { proposeGoalsRollup } from "./goals-rollup.mjs";
 import { proposeRequests, requestAction, requestDetail } from "./requests.mjs";
 import { buildStory } from "./story.mjs";
+import { economics } from "./economics.mjs";
 import { SyncStore } from "./sync/store.mjs";
 import { AlertStore, deliverDue, extractionFailures, queueDepth } from "./alerts.mjs";
 import { applyErase, erasePlan, loadEraseKey, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } from "./erasure.mjs";
@@ -408,6 +409,10 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       if (pathname === "/v1/context" && method === "POST") {
         const b = await readJson(request);
         return h.json({ context: hub.context({ project: b.project, limit: b.limit ?? 20, maxChars: b.maxChars ?? 6000, tool: b.tool ?? tool, scope: b.scope === "all" ? "all" : "current" }) });
+      }
+      if (pathname === "/v1/context/economics" && method === "GET") {
+        const q = qs(url);
+        return h.json(economics(hub, { project: q.project || null, limit: q.limit }));
       }
       if (pathname === "/v1/events" && method === "POST") {
         const b = await readJson(request);

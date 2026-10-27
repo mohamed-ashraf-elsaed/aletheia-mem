@@ -2,6 +2,7 @@
 // aletheia: the command line for the shared memory hub. Works without the server running.
 //   aletheia capture --tool <name> [--project p]          read one hook payload (JSON) on stdin, store it (secrets redacted)
 //   aletheia context [--project p] [--tool t]             print session-start context for any tool
+//   aletheia context economics [--project p] [--limit n]   per-observation read and work tokens
 //   aletheia search <query> [--project p] [--scope all] [--explain] [--semantic]
 //   aletheia embed [--limit n]                          write fact and memory vectors when the runtime is installed
 //   aletheia save <text> [--project p] [--type t] [--pin] save a memory
@@ -436,7 +437,13 @@ async function main() {
         if (memory) hub.add(memory, { actor: memory.tool });
         return;
       }
-      case "context": return out(hub.context({ project: flags.project ?? projectKeyForPath(process.cwd()), tool: flags.tool, limit: Number(flags.limit) || 20, scope: flags.scope === "all" ? "all" : "current" }));
+      case "context": {
+        if (pos[0] === "economics") {
+          const { economics } = await import("../src/hub/economics.mjs");
+          return out(economics(hub, { project: flags.project ?? projectKeyForPath(process.cwd()), limit: Number(flags.limit) || 50 }));
+        }
+        return out(hub.context({ project: flags.project ?? projectKeyForPath(process.cwd()), tool: flags.tool, limit: Number(flags.limit) || 20, scope: flags.scope === "all" ? "all" : "current" }));
+      }
       case "search": {
         const asOf = typeof flags["as-of"] === "string" ? Date.parse(flags["as-of"]) : null;
         if (flags["as-of"] && !Number.isFinite(asOf)) return die("--as-of needs a date, for example 2026-01-31.");
