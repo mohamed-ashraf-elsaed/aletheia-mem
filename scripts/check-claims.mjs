@@ -13,11 +13,14 @@ export const ALLOWED_SHIELDS = [
   /^https:\/\/img\.shields\.io\/github\/last-commit\/[^/]+\/[^/]+$/,
   /^https:\/\/img\.shields\.io\/github\/stars\/[^/]+\/[^/]+$/,
   /^https:\/\/img\.shields\.io\/github\/issues\/[^/]+\/[^/]+$/,
+  /^https:\/\/img\.shields\.io\/npm\/v\/aletheia-mem$/,
   /^https:\/\/img\.shields\.io\/badge\/status-alpha-orange$/,
   /^https:\/\/img\.shields\.io\/badge\/bun-%3E%3D1\.1-black$/,
   /^https:\/\/img\.shields\.io\/badge\/platform-linux%20%28tested%29-lightgrey$/,
 ];
 
+// The npm version badge reads the registry's latest version, so it states a real value, not a typed one.
+const NPM_VERSION_BADGE = /^https:\/\/img\.shields\.io\/npm\/v\/aletheia-mem$/;
 const FORBIDDEN_BADGE = /(npm|coverage|downloads?|release|scorecard|docker|discord|sponsor)/i;
 
 export function withoutComments(text) {
@@ -51,7 +54,7 @@ export function checkBadges(text, root = DEFAULT_ROOT) {
   const badges = [...text.matchAll(/!?\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/g)].map((match) => match[1]);
   for (const url of badges) {
     if (!/shields\.io|badge\.svg/.test(url)) continue;
-    if (FORBIDDEN_BADGE.test(url)) {
+    if (FORBIDDEN_BADGE.test(url) && !NPM_VERSION_BADGE.test(url)) {
       problems.push(`forbidden badge: ${url}`);
       continue;
     }

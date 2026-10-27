@@ -173,3 +173,21 @@ database, never on real owner history.
 | Its error and offline states | The server stayed up, so no failure was produced. | Stop the worker and reload. |
 | Its behaviour at 768 px and 1920 px | Only the default window (about 920 px) and 375 px were captured. | Resize and capture. |
 | Its long-list handling | The Work page showed five cards, so pagination or virtualization never triggered. | Seed a large store and scroll. |
+
+## npm package page and release (2026-10-27, T-225, T-226)
+
+None of these can be checked until a real publish. After the owner publishes 0.1.1, open
+<https://www.npmjs.com/package/aletheia-mem> and look at each row.
+
+| # | Item | State | What would verify it |
+|---:|---|---|---|
+| 1 | The npm page shows the new README top block (version 0.1.1 or later; 0.1.0 still has the old README) | Not checked. Files prepared from the npm and GitHub documentation as understood; no page was loaded. | Load the page after publish and hard-refresh. |
+| 2 | The centred logo renders. `docs/assets/logo.png` is a PNG served from raw.githubusercontent.com through npm's image proxy. | Not checked. | The logo shows at about 280 px wide and is not a broken-image icon. If broken: confirm the raw URL opens in a private window (the repository must be public and the file on `main`), then check the URL in the README matches the path exactly. |
+| 3 | The two WebP screenshots render. Whether npm's image proxy serves `.webp` is not confirmed. | Not checked. | Both screenshots show side by side. If WebP is broken: add PNG copies of `memory-dark` and `work-dark` under `docs/screenshots/`, switch the two README URLs, ship the fix as the next patch. |
+| 4 | Badges render (npm version, licence, Test workflow, last commit, stars, open issues, status, Bun, platform). The Test badge needs the workflow to have run on `main`. | Not checked. | Every badge shows a value, not "invalid" or "not found". The npm version badge shows the new version once the registry lists it (it can lag by minutes). |
+| 5 | Centred HTML (`<p align>`, `<div align>`, `<h1 align>`) and the markdown badges inside `<div align="center">` render as written. npm sanitises HTML; which attributes it keeps was not checked. | Not checked. | The title, pitch, badges and link row are centred. If not, replace the HTML with plain markdown in the next patch; the content stays valid. |
+| 6 | The `~~~bash` install block renders as a code block. | Not checked. | The three lines show as code. |
+| 7 | The sidebar shows the homepage, repository, issues link, keywords and the Apache-2.0 licence, and "Install" shows `npm i aletheia-mem`. | Not checked. | Read the right-hand column of the page. |
+| 8 | The README translations were not re-translated for the new top block. `bun scripts/i18n-check.mjs --update` recorded the new English hash only, so it no longer proves the translations match. The translation test now ignores the new npm badge. | Translations still describe the old top block. | A translator or a reviewed machine pass of the ten files in `docs/i18n/`. |
+| 9 | `.github/workflows/release.yml` has never run. Trusted publishing, the `NPM_TOKEN` path, `npm install -g npm@latest` and `gh release create --verify-tag` are untested. | Not run: no tag was pushed. | Push the first tag after setting up either option in the workflow's header comment, and read the run. |
+| 10 | The GitHub social preview. `docs/assets/social.png` (1280 x 640) already exists and was not regenerated. Setting it is a repository setting. | Not set by this task. | Owner: Settings, General, Social preview, upload `docs/assets/social.png`. |

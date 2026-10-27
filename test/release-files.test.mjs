@@ -40,8 +40,8 @@ describe("release files", () => {
     expect(text).not.toContain("softprops/action-gh-release");
   });
 
-  test("no release workflow or tag is created", () => {
-    expect(existsSync(join(root, ".github", "workflows", "release.yml"))).toBe(false);
+  test("the only release workflow is the tag-triggered release.yml (T-225)", () => {
+    expect(existsSync(join(root, ".github", "workflows", "release.yml"))).toBe(true);
     expect(existsSync(join(root, ".github", "workflows", "npm-publish.yml"))).toBe(false);
   });
 });

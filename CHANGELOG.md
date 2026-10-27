@@ -6,6 +6,19 @@ history and the validated tasks in [docs/tasks/TASKS.md](docs/tasks/TASKS.md).
 
 ## [Unreleased]
 
+### Added
+
+- `docs/releasing.md`: versioning policy, the release sequence with the owner-only steps marked, and rollback notes.
+- `scripts/release.mjs --prepare <version>` bumps `package.json` and dates the CHANGELOG section; `--verify` checks
+  versions, the tag, tarball contents and size, and that README images are absolute https URLs.
+- `.github/workflows/release.yml`: on a `v*` tag it tests, verifies, publishes to npm only when trusted publishing
+  or `NPM_TOKEN` is set up, and creates the GitHub release.
+
+### Changed
+
+- README top block redone for the npm package page: centred logo, npm version badge, install and run lines, two
+  screenshots and a link row, all with absolute URLs. The ten translations were not re-translated for it.
+
 ## [0.1.0] - 2026-10-27
 
 First public release, published to npm as `aletheia-mem@0.1.0`. CI runs on Linux and macOS; Windows is not supported yet.

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Releasing · Aletheia docs</title>
+<meta name="description" content="How a new version of aletheia-mem reaches npm and GitHub. Steps marked Owner need the owner's npm login or GitHub rights. Agents prepare files and run checks; they never publish...">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/releasing.html">
+<link rel="icon" type="image/png" sizes="64x64" href="../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Releasing","description":"How a new version of aletheia-mem reaches npm and GitHub. Steps marked Owner need the owner's npm login or GitHub rights. Agents prepare files and run checks; they never publish...","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/releasing.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="releasing">Releasing</h1>
+<p>How a new version of <code>aletheia-mem</code> reaches npm and GitHub. Steps marked <strong>Owner</strong> need the owner's npm login or GitHub rights. Agents prepare files and run checks; they never publish, tag or push.</p>
+<h2 id="versioning">Versioning</h2>
+<p>The project uses <a href="https://semver.org/spec/v2.0.0.html">semantic versioning</a> in the 0.x range.</p>
+<ul><li><strong>Patch</strong> (0.1.0 to 0.1.1): fixes and documentation.</li><li><strong>Minor</strong> (0.1.x to 0.2.0): new features.</li><li><strong>Breaking change</strong> (also a minor bump while the version is 0.x, called out in the CHANGELOG under &quot;Changed&quot; or &quot;Removed&quot;): removing or renaming an API route, changing a CLI flag or command, or changing the database schema in a way an older database cannot be read without migration.</li><li>1.0.0 is not planned yet.</li></ul>
+<h2 id="release-sequence">Release sequence</h2>
+<ol><li><strong>Prepare.</strong> On <code>main</code> with a clean tree, write the release notes under <code>## [Unreleased]</code> in <code>CHANGELOG.md</code>, then run:</li></ol>
+<pre><code class="language-bash">   bun scripts/release.mjs --prepare 0.1.1</code></pre>
+<p>It refuses on a dirty tree, a branch other than <code>main</code>, a version that is not greater than the one in <code>package.json</code> and the CHANGELOG, or empty notes. It bumps <code>package.json</code> and moves the notes into <code>## [0.1.1] - &lt;date&gt;</code>. It does not commit. Review the diff and commit it: <code>git commit -am &quot;release: 0.1.1&quot;</code>.</p>
+<ol><li><strong>Run all checks.</strong> <code>bun test</code>, <code>bun scripts/check-tasks.mjs</code>, <code>bun scripts/gen-tables.mjs --check</code>, <code>bun scripts/i18n-check.mjs</code>, <code>bun scripts/check-claims.mjs</code>, <code>bun scripts/check-docs-links.mjs</code>, <code>bun scripts/audit-deps.mjs</code>, <code>bun scripts/build-site.mjs</code>, <code>bun scripts/gen-status.mjs --check</code>, and <code>bun scripts/release.mjs --verify</code>. The last one checks that the versions agree, the tag is free, the tarball has the required files and is under 12 MB unpacked, README images are absolute https URLs, and the first 60 README lines hold no relative link.</li><li><strong>Owner: push.</strong> <code>git push origin main</code>. Wait for the Test workflow to turn green.</li><li><strong>Owner: publish.</strong> <code>npm publish --access public</code>. Publishing needs the owner's npm login and a one-time code (2FA on writes). A granular access token limited to this package, with the bypass-2FA option, works for automation (see the setup comment in <code>.github/workflows/release.yml</code>). A new version can take a few minutes to appear; <code>npx aletheia-mem</code> can fail with a not-found error until it does. This happened with 0.1.0.</li><li><strong>Owner: tag after the publish works.</strong> Tagging first would leave a tag for a version that never shipped.</li></ol>
+<pre><code class="language-bash">   git tag -a v0.1.1 -m &quot;aletheia-mem 0.1.1&quot;
+   git push origin v0.1.1</code></pre>
+<p>The tag push starts <code>.github/workflows/release.yml</code>. It tests, verifies, publishes only if trusted publishing or <code>NPM_TOKEN</code> is set up (otherwise it skips that step), and creates the GitHub release. If you published by hand in step 4, the workflow's publish step would fail with &quot;version already exists&quot;; leave trusted publishing and <code>NPM_TOKEN</code> unset until you want the workflow to publish.</p>
+<ol><li><strong>Owner: GitHub release.</strong> If the workflow did not make one: <code>gh release create v0.1.1 --generate-notes</code>.</li><li><strong>Smoke test.</strong> In a clean directory, after the version is visible:</li></ol>
+<pre><code class="language-bash">   cd &quot;$(mktemp -d)&quot; &amp;&amp; npx aletheia-mem@0.1.1 --version</code></pre>
+<p>Then open <code>https://www.npmjs.com/package/aletheia-mem</code> and check the page (see <code>docs/tasks/unverified.md</code>).</p>
+<h2 id="rollback">Rollback</h2>
+<ul><li>Never unpublish after 72 hours; npm refuses it, and it breaks anyone who depends on the version.</li><li>A bad release: <code>npm deprecate aletheia-mem@0.1.1 &quot;broken: use 0.1.2&quot;</code> (owner). The version stays installable and shows the warning.</li><li>Ship the fix as the next patch (<code>--prepare 0.1.2</code>). Never re-publish the same version number; npm does not allow it.</li><li>Delete a wrong tag only if the version never reached npm: <code>git tag -d vX.Y.Z</code> and <code>git push origin :refs/tags/vX.Y.Z</code>.</li></ul>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>

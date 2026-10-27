@@ -12,7 +12,7 @@ describe("README claims", () => {
     const result = checkBadges(readme, root);
     expect(result.problems).toEqual([]);
     expect(result.badges.length).toBeGreaterThanOrEqual(5);
-    expect(readme).not.toMatch(/shields\.io\/npm/);
+    expect(readme).not.toMatch(/shields\.io\/npm\/(?!v\/aletheia-mem\))/);
     expect(readme).not.toMatch(/shields\.io\/.*coverage/);
     expect(readme).not.toMatch(/shields\.io\/.*downloads/);
   });

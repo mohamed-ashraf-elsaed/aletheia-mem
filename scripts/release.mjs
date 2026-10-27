@@ -1,25 +1,158 @@
 #!/usr/bin/env bun
-// Prepare-only release check: verify the npm tarball contents without publishing.
-//   bun scripts/release.mjs
-// Publishing itself is an owner step; see docs/tasks/T-080.md.
-import { join } from "node:path";
+// Release helper. Never publishes, tags or pushes; those are owner steps (docs/releasing.md).
+//   bun scripts/release.mjs                      pack check only (required files are in the tarball)
+//   bun scripts/release.mjs --prepare <version>  bump package.json, move CHANGELOG Unreleased into a dated section
+//   bun scripts/release.mjs --verify [--tag vX.Y.Z]  checks to run before publishing, and in CI on a tag
+// RELEASE_ROOT overrides the repository root (tests use a temp fixture).
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 
-const root = join(import.meta.dir, "..");
-const REQUIRED = ["bin/aletheia.mjs", "src/hub/store.mjs", "docs/dependencies.md", "NOTICE.md"];
+export const REQUIRED = ["bin/aletheia.mjs", "src/hub/store.mjs", "docs/dependencies.md", "NOTICE.md"];
+export const MAX_UNPACKED_MB = 12;
+export const README_TOP_LINES = 60;
+const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
 
-const proc = Bun.spawn([process.execPath, "pm", "pack", "--dry-run"], { cwd: root, stdout: "pipe", stderr: "pipe" });
-const [stdout, stderr, exitCode] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
-
-if (exitCode !== 0) {
-  console.error(`pack failed (exit ${exitCode})`);
-  if (stderr.trim()) console.error(stderr.trim());
-  process.exit(1);
+export function compareVersions(a, b) {
+  const [x, y] = [a, b].map((v) => SEMVER.exec(v).slice(1).map(Number));
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] - y[i];
+  return 0;
 }
 
-const missing = REQUIRED.filter((path) => !stdout.includes(path));
-if (missing.length) {
-  console.error(`pack missing required paths: ${missing.join(", ")}`);
-  process.exit(1);
+export function topChangelogRelease(changelog) {
+  return /^## \[(\d+\.\d+\.\d+)\]/m.exec(changelog)?.[1] ?? null;
 }
 
-console.log(`pack ok: ${REQUIRED.length} required paths present`);
+export function unreleasedBody(changelog) {
+  const match = /^## \[Unreleased\][^\n]*\n([\s\S]*?)(?=^## \[)/m.exec(changelog);
+  return match ? match[1].trim() : "";
+}
+
+export function moveUnreleased(changelog, version, date) {
+  const body = unreleasedBody(changelog);
+  const pattern = /^## \[Unreleased\][^\n]*\n[\s\S]*?(?=^## \[)/m;
+  return changelog.replace(pattern, `## [Unreleased]\n\n## [${version}] - ${date}\n\n${body}\n\n`);
+}
+
+/** Image URLs in README markdown and HTML, with their line numbers. */
+export function imageRefs(readme) {
+  const refs = [];
+  readme.split("\n").forEach((line, i) => {
+    for (const m of line.matchAll(/!\[[^\]]*\]\(\s*<?([^)\s>]+)/g)) refs.push({ line: i + 1, url: m[1] });
+    for (const m of line.matchAll(/<(?:img|source)\b[^>]*?\bsrc(?:set)?\s*=\s*["']([^"']+)["']/gi)) refs.push({ line: i + 1, url: m[1] });
+  });
+  return refs;
+}
+
+/** Links (markdown and HTML) in the first `n` lines that are not absolute https or mailto. */
+export function relativeLinks(readme, n = README_TOP_LINES) {
+  const hits = [];
+  readme.split("\n").slice(0, n).forEach((line, i) => {
+    const urls = [
+      ...[...line.matchAll(/\]\(\s*<?([^)\s>]+)/g)].map((m) => m[1]),
+      ...[...line.matchAll(/\b(?:href|src)\s*=\s*["']([^"']+)["']/gi)].map((m) => m[1]),
+    ];
+    for (const url of urls) if (!/^(https:\/\/|mailto:)/.test(url) && !url.startsWith("#")) hits.push({ line: i + 1, url });
+  });
+  return hits;
+}
+
+async function run(cmd, cwd) {
+  const proc = Bun.spawn(cmd, { cwd, stdout: "pipe", stderr: "pipe" });
+  const [out, err, code] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
+  return { out, err, code };
+}
+
+export async function packCheck(root) {
+  const { out, err, code } = await run([process.execPath, "pm", "pack", "--dry-run"], root);
+  if (code !== 0) return { problems: [`pack failed (exit ${code})${err.trim() ? `: ${err.trim()}` : ""}`], out: "" };
+  const problems = [];
+  const missing = REQUIRED.filter((path) => !out.includes(path));
+  if (missing.length) problems.push(`pack missing required paths: ${missing.join(", ")}`);
+  return { problems, out };
+}
+
+export function unpackedMb(packOutput) {
+  const m = /Unpacked size:\s*([\d.]+)\s*(B|KB|MB|GB)/i.exec(packOutput);
+  if (!m) return null;
+  return Number(m[1]) * { B: 1e-6, KB: 1e-3, MB: 1, GB: 1e3 }[m[2].toUpperCase()];
+}
+
+export async function prepare(root, version, { date = new Date().toISOString().slice(0, 10) } = {}) {
+  if (!SEMVER.test(version)) return [`version must look like 1.2.3, got "${version}"`];
+  const problems = [];
+  const dirty = await run(["git", "status", "--porcelain"], root);
+  if (dirty.code !== 0) return [`git status failed: ${dirty.err.trim()}`];
+  if (dirty.out.trim()) problems.push("working tree is not clean; commit or discard changes first");
+  const branch = await run(["git", "rev-parse", "--abbrev-ref", "HEAD"], root);
+  if (branch.out.trim() !== "main") problems.push(`must run on main, not "${branch.out.trim()}"`);
+  const pkgText = readFileSync(join(root, "package.json"), "utf8");
+  const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
+  const current = JSON.parse(pkgText).version;
+  const top = topChangelogRelease(changelog);
+  for (const [name, v] of [["package.json", current], ["CHANGELOG", top]]) {
+    if (v && compareVersions(version, v) <= 0) problems.push(`version ${version} is not greater than ${v} in ${name}`);
+  }
+  if (!unreleasedBody(changelog)) problems.push("CHANGELOG [Unreleased] is empty; write the release notes first");
+  if (problems.length) return problems;
+  writeFileSync(join(root, "package.json"), pkgText.replace(/("version"\s*:\s*)"[^"]+"/, `$1"${version}"`));
+  writeFileSync(join(root, "CHANGELOG.md"), moveUnreleased(changelog, version, date));
+  return [];
+}
+
+export async function verify(root, { tag = null } = {}) {
+  const problems = [];
+  const pkg = JSON.parse(readFileSync(join(root, "package.json"), "utf8"));
+  const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
+  const top = topChangelogRelease(changelog);
+  if (top !== pkg.version) problems.push(`package.json version ${pkg.version} does not equal the top CHANGELOG release ${top}`);
+  if (tag) {
+    if (tag !== `v${pkg.version}`) problems.push(`tag ${tag} does not match package.json version v${pkg.version}`);
+  } else {
+    const exists = await run(["git", "rev-parse", "-q", "--verify", `refs/tags/v${pkg.version}`], root);
+    if (exists.code === 0) problems.push(`tag v${pkg.version} already exists`);
+  }
+  const pack = await packCheck(root);
+  problems.push(...pack.problems);
+  if (pack.out) {
+    const mb = unpackedMb(pack.out);
+    if (mb === null) problems.push("could not read the unpacked size from the pack output");
+    else if (mb > MAX_UNPACKED_MB) problems.push(`unpacked size ${mb.toFixed(2)} MB is over the ${MAX_UNPACKED_MB} MB limit`);
+  }
+  const readmePath = join(root, "README.md");
+  if (!existsSync(readmePath)) problems.push("README.md is missing");
+  else {
+    const readme = readFileSync(readmePath, "utf8");
+    for (const ref of imageRefs(readme)) {
+      if (!/^https:\/\//.test(ref.url)) problems.push(`README line ${ref.line}: image URL is not absolute https (npm renders the README from the tarball): ${ref.url}`);
+    }
+    for (const link of relativeLinks(readme)) problems.push(`README line ${link.line}: relative link in the first ${README_TOP_LINES} lines: ${link.url}`);
+  }
+  return problems;
+}
+
+async function main() {
+  const root = process.env.RELEASE_ROOT ? resolve(process.env.RELEASE_ROOT) : join(import.meta.dir, "..");
+  const args = process.argv.slice(2);
+  const fail = (problems) => {
+    for (const p of problems) console.error(`release: ${p}`);
+    process.exit(1);
+  };
+  if (args[0] === "--prepare") {
+    const problems = await prepare(root, args[1] ?? "", args[2] === "--date" ? { date: args[3] } : {});
+    if (problems.length) fail(problems);
+    console.log(`prepared ${args[1]}: package.json and CHANGELOG updated, nothing committed. Next: review the diff, run the checks, commit.`);
+    return;
+  }
+  if (args[0] === "--verify") {
+    const i = args.indexOf("--tag");
+    const problems = await verify(root, { tag: i >= 0 ? args[i + 1] : null });
+    if (problems.length) fail(problems);
+    console.log("verify ok: version, changelog, tag, pack contents, size and README links");
+    return;
+  }
+  const pack = await packCheck(root);
+  if (pack.problems.length) fail(pack.problems);
+  console.log(`pack ok: ${REQUIRED.length} required paths present`);
+}
+
+if (import.meta.main) await main();

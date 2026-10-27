@@ -1,0 +1,44 @@
+name: Release
+# Runs when the owner pushes a tag such as v0.1.1. Push the tag only after the checks pass on main.
+#
+# Owner one-time setup (nothing here publishes until one of these is done):
+#   Option A, npm trusted publishing (no stored secret): on npmjs.com open the package, Settings,
+#     Trusted Publisher, add GitHub Actions with this repository and the workflow file release.yml.
+#     Then set the repository variable NPM_TRUSTED_PUBLISHING to true (Settings, Variables).
+#     Trusted publishing needs a recent npm; the step below installs npm@latest.
+#   Option B, a token: create a granular access token on npmjs.com, limited to the package aletheia-mem,
+#     read and write, with the option that bypasses 2FA for writes. Store it as the repository secret NPM_TOKEN.
+# With neither, the publish step is skipped and the run only tests, verifies and makes the GitHub release.
+on:
+  push:
+    tags:
+      - "v*"
+permissions:
+  contents: write
+  id-token: write
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    env:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+      - name: Test suite
+        run: bun test
+      - name: Verify release files for this tag
+        run: bun scripts/release.mjs --verify --tag "$GITHUB_REF_NAME"
+      - name: Publish to npm
+        if: ${{ env.NPM_TOKEN != '' || vars.NPM_TRUSTED_PUBLISHING == 'true' }}
+        run: |
+          npm install -g npm@latest
+          if [ -n "$NODE_AUTH_TOKEN" ]; then echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" > "$HOME/.npmrc"; fi
+          npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag
