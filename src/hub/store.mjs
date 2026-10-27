@@ -74,7 +74,9 @@ CREATE TABLE IF NOT EXISTS rules (
   tools TEXT,
   source TEXT NOT NULL DEFAULT 'you',
   created_at_epoch INTEGER NOT NULL,
-  updated_at_epoch INTEGER NOT NULL
+  updated_at_epoch INTEGER NOT NULL,
+  replaced_by TEXT,
+  replaced_at_epoch INTEGER
 );
 CREATE VIRTUAL TABLE IF NOT EXISTS memories_vocab USING fts5vocab(memories_fts, 'row');
 CREATE TABLE IF NOT EXISTS memory_vectors (
@@ -402,8 +404,19 @@ export class HubStore {
     this.ensureScopeColumns();
     this.ensureRuleSuggestions();
     this.ensureRuleStrength();
+    this.ensureRuleReplacement();
     this.ensureDismissals();
     this.ensureSessionEnd();
+  }
+
+  /** Add the T-172 rule-replacement history columns to databases created before they existed. Idempotent. */
+  ensureRuleReplacement() {
+    if (this.setting("schema.rule_replacement", false)) return false;
+    const columns = this.db.prepare("PRAGMA table_info(rules)").all().map((column) => column.name);
+    if (!columns.includes("replaced_by")) this.db.exec("ALTER TABLE rules ADD COLUMN replaced_by TEXT");
+    if (!columns.includes("replaced_at_epoch")) this.db.exec("ALTER TABLE rules ADD COLUMN replaced_at_epoch INTEGER");
+    this.setSetting("schema.rule_replacement", true);
+    return true;
   }
 
   /** Add the T-123 dismissal table to databases created before it existed. Idempotent, recorded once. */
@@ -1445,7 +1458,7 @@ export class HubStore {
 
   get rules() {
     const db = this.db;
-    const shape = (r) => r && { id: r.id, scopeTier: r.scope_tier, scopeName: r.scope_name, when: r.when_text, then: r.then_text, enabled: !!r.enabled, tools: r.tools ? parse(r.tools) : null, source: r.source, createdAtEpoch: r.created_at_epoch, updatedAtEpoch: r.updated_at_epoch };
+    const shape = (r) => r && { id: r.id, scopeTier: r.scope_tier, scopeName: r.scope_name, when: r.when_text, then: r.then_text, enabled: !!r.enabled, tools: r.tools ? parse(r.tools) : null, source: r.source, createdAtEpoch: r.created_at_epoch, updatedAtEpoch: r.updated_at_epoch, replacedBy: r.replaced_by ?? null, replacedAtEpoch: r.replaced_at_epoch ?? null };
     const audit = (a, d) => this.audit("ui", a, d);
     return {
       list: () => db.prepare("SELECT * FROM rules ORDER BY enabled DESC, scope_tier, scope_name, created_at_epoch").all().map(shape),

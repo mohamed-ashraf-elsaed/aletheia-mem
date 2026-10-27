@@ -13,7 +13,8 @@ import { nearDuplicates } from "./dedupe.mjs";
 import { INSTALLERS, doctor } from "./install.mjs";
 import { spoolPath, spoolRead } from "./hooks/shared.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "./rules-sync.mjs";
-import { listSuggestions } from "./rule-suggest.mjs";
+import { listSuggestions, suggestRules } from "./rule-suggest.mjs";
+import { decideSuggestion, decidedCounts, learningRun, recordLearningRun, replaceRule, toggleRule } from "./rules-decide.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "./tools.mjs";
 import { sessionDetail, workOverview } from "./work.mjs";
 import { goalAction } from "./goals.mjs";
@@ -460,6 +461,30 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       const r = hub.rules.add({ then: b.then, when: b.when, scopeTier: b.scopeTier, scopeName: b.scopeName, tools: b.tools, source: "you" });
       return h.json({ ...r, rule: hub.rules.get(r.id) }, r.created ? 201 : 200);
     }
+
+    // ---- T-172: decide flow, on/off toggle, replacement history and the last learning run ----
+    if (pathname === "/api/hub/rules/learning-run" && method === "GET") return h.json({ learningRun: learningRun(hub) });
+    if (pathname === "/api/hub/rules/learning-run" && method === "POST") {
+      const result = suggestRules(hub, { project: qs(url).project || null });
+      const run = recordLearningRun(hub, { found: result.proposed + result.skipped, proposed: result.proposed, errors: 0 });
+      return h.json({ learningRun: run, result });
+    }
+    if ((m = /^\/api\/hub\/rules\/([\w-]+)\/toggle$/.exec(pathname)) && method === "POST") {
+      const b = await readJson(request);
+      need(b && typeof b.enabled === "boolean", "enabled must be a boolean.");
+      const rule = toggleRule(hub, m[1], { enabled: b.enabled, actor: "ui" });
+      return rule ? h.json({ rule }) : h.json({ error: "That rule does not exist." }, 404);
+    }
+    if ((m = /^\/api\/hub\/rules\/([\w-]+)\/replace$/.exec(pathname)) && method === "POST") {
+      const b = await readJson(request);
+      try {
+        const result = replaceRule(hub, m[1], { then: b.then, when: b.when ?? "", scopeTier: b.scopeTier, scopeName: b.scopeName, actor: "ui" });
+        return result ? h.json(result) : h.json({ error: "That rule does not exist." }, 404);
+      } catch (error) {
+        throw new BadRequest(error instanceof Error ? error.message : String(error));
+      }
+    }
+
     if ((m = /^\/api\/hub\/rules\/([\w-]+)$/.exec(pathname))) {
       if (method === "PATCH") { const r = hub.rules.update(m[1], await readJson(request)); return r ? h.json(r) : h.json({ error: "That rule does not exist." }, 404); }
       if (method === "DELETE") return hub.rules.remove(m[1]) ? h.json({ deleted: true }) : h.json({ error: "That rule does not exist." }, 404);
@@ -626,25 +651,26 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
     if (pathname === "/api/hub/rule-suggestions" && method === "GET") {
       const q = qs(url);
       const rows = listSuggestions(hub, { project: q.project, status: q.status, limit: Number(q.limit) || 100 });
-      return h.json({ items: rows.map((row) => ({ id: row.id, project: row.project, text: row.text, when: row.when_text, confidence: row.confidence, status: row.status, sourceType: row.source_type, createdAt: iso(row.created_at_epoch), timesSeen: row.timesSeen, strength: row.strength, latestAt: row.latestAt, quotes: row.quotes, moreQuotes: row.moreQuotes })) });
+      return h.json({ ...decidedCounts(hub), items: rows.map((row) => ({ id: row.id, project: row.project, text: row.text, when: row.when_text, confidence: row.confidence, status: row.status, sourceType: row.source_type, createdAt: iso(row.created_at_epoch), timesSeen: row.timesSeen, strength: row.strength, latestAt: row.latestAt, quotes: row.quotes, moreQuotes: row.moreQuotes })) });
     }
     if ((m = /^\/api\/hub\/rule-suggestions\/(\d+)$/.exec(pathname)) && method === "POST") {
       const b = await readJson(request);
-      need(["accept", "dismiss", "restore"].includes(b.action), "action must be accept, dismiss or restore.");
+      need(["accept", "approve", "edit", "dismiss", "reject", "restore"].includes(b.action), "action must be accept, approve, edit, dismiss, reject or restore.");
       const row = hub.db.prepare("SELECT * FROM rule_suggestions WHERE id = ?").get(Number(m[1]));
       need(row, "That rule suggestion does not exist.", 404);
-      let ruleId = null;
-      if (b.action === "accept") {
-        const scopeTier = row.project && row.project !== "default" ? "project" : "everywhere";
-        ruleId = hub.rules.add({ then: row.text, when: row.when_text, scopeTier, scopeName: scopeTier === "project" ? row.project : "Everywhere", source: "suggested" }).id;
+      if (b.action === "restore") {
+        hub.db.prepare("UPDATE rule_suggestions SET status = 'pending' WHERE id = ?").run(row.id);
+        const pending = hub.db.prepare("SELECT * FROM review_queue WHERE item_type = 'rule' AND item_id = ? AND status = 'pending'").get(row.id);
+        if (!pending) hub.addReview({ itemType: "rule", itemId: row.id, reason: "rule_suggestion", proposedBy: "extractor" });
+        hub.audit("ui", "rule_suggestion.restore", { id: row.id });
+        return h.json({ id: row.id, status: "pending", ruleId: null });
       }
-      const status = b.action === "accept" ? "accepted" : b.action === "dismiss" ? "dismissed" : "pending";
-      hub.db.prepare("UPDATE rule_suggestions SET status = ? WHERE id = ?").run(status, row.id);
-      const pending = hub.db.prepare("SELECT * FROM review_queue WHERE item_type = 'rule' AND item_id = ? AND status = 'pending'").get(row.id);
-      if (pending) hub.resolveReview(pending.id, { status: b.action === "accept" ? "accepted" : b.action === "dismiss" ? "rejected" : "pending", actor: "ui" });
-      else if (b.action === "restore") hub.addReview({ itemType: "rule", itemId: row.id, reason: "rule_suggestion", proposedBy: "extractor" });
-      hub.audit("ui", `rule_suggestion.${b.action}`, { id: row.id, ruleId });
-      return h.json({ id: row.id, status, ruleId });
+      const action = b.action === "accept" ? "approve" : b.action === "dismiss" ? "reject" : b.action;
+      try {
+        return h.json(decideSuggestion(hub, Number(m[1]), { action, text: b.text ?? null, actor: "ui" }));
+      } catch (error) {
+        throw new BadRequest(error instanceof Error ? error.message : String(error));
+      }
     }
 
     // ---- T-138: installer status from doctor data, read only ----
