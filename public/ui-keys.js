@@ -65,7 +65,7 @@ export function openPalette(ctx) {
   let seq = 0;
   let layer = null;
 
-  const run = (command) => { layer.close(null); later(() => command.run(), 0); };
+  const run = (command) => { clearTimeout(timer); layer.close(null); later(() => command.run(), 0); };
   const paint = () => {
     rows.forEach((row, index) => { row.el.classList.toggle("is-active", index === active); row.el.setAttribute("aria-selected", String(index === active)); });
     if (rows[active]) input.setAttribute("aria-activedescendant", rows[active].el.getAttribute("id")); else input.removeAttribute("aria-activedescendant");
