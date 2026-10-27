@@ -349,7 +349,7 @@ describe("T-224: findings from the keyboard and small-screen walk", () => {
     const link = estimated("Progress");
     expect(link.getAttribute("aria-label")).toBe("Progress: estimated");
     expect(link.textContent).toBe("estimated");
-    expect(link.getAttribute("href")).toContain("unverified.md");
+    expect(link.getAttribute("href")).toContain("docs/32-requests.md");
   });
 
   test("the estimated link and the artifact link are 40 px targets on a narrow screen", () => {

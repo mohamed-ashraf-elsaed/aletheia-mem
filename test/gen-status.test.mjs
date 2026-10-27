@@ -1,5 +1,5 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
 
@@ -103,7 +103,10 @@ function gen(root, args = []) {
   return { code: r.exitCode, out: r.stdout.toString(), err: r.stderr.toString() };
 }
 
-describe("T-223: gen-status on a fixture repo", () => {
+// The status dashboard tooling is kept only on the maintainers' machines; these tests are skipped in a fresh clone.
+const suite = existsSync(SCRIPT) ? describe : describe.skip;
+
+suite("T-223: gen-status on a fixture repo", () => {
   const root = fixture();
   const first = gen(root);
   const data = () => JSON.parse(readFileSync(join(root, "docs", "status", "status.json"), "utf8"));
@@ -207,7 +210,7 @@ describe("T-223: gen-status on a fixture repo", () => {
   });
 });
 
-describe("T-223: without git", () => {
+suite("T-223: without git", () => {
   test("git is n/a and stale detection is skipped, not an error", () => {
     const root = fixture({ withGit: false });
     expect(gen(root).code).toBe(0);

@@ -65,7 +65,7 @@ describe("T-220: suggestion strength and evidence", () => {
     expect(card.textContent).toContain("Use pnpm, not npm.");
     expect(card.textContent).toContain("More quotes (2)");
     expect(card.textContent).toContain("Please use pnpm.");
-    expect(card.querySelector(".ui-estimate").getAttribute("href")).toContain("docs/tasks/unverified.md");
+    expect(card.querySelector(".ui-estimate").getAttribute("href")).toContain("docs/32-requests.md");
   });
   test("Approve posts approve and Undo restores and turns the new rule off", async () => {
     const calls = install([

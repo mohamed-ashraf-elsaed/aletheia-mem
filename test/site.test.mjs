@@ -28,10 +28,13 @@ describe("docs site", () => {
   });
 
   test("there is one page per top-level document", () => {
-    const docs = readdirSync(join(root, "docs")).filter((name) => name.endsWith(".md") && !name.startsWith("_"));
+    // Count only tracked documents: private files may sit on a maintainer's disk but are never published.
+    const tracked = Bun.spawnSync(["git", "ls-files", "docs"], { cwd: root, stdout: "pipe", stderr: "pipe" });
+    const trackedNames = tracked.exitCode === 0 ? new Set(new TextDecoder().decode(tracked.stdout).split("\n").filter(Boolean)) : null;
+    const docs = readdirSync(join(root, "docs")).filter((name) => name.endsWith(".md") && !name.startsWith("_") && (!trackedNames || trackedNames.has(`docs/${name}`)));
     const pages = readdirSync(join(site, "docs")).filter((name) => name.endsWith(".html") && name !== "index.html");
     expect(pages.length).toBe(docs.length);
-    for (const name of ["01-architecture.html", "20-claude-mem-feature-matrix.html", "29-sync.html", "30-remote-mcp.html", "manual-test.html"]) {
+    for (const name of ["01-architecture.html", "25-installers.html", "29-sync.html", "30-remote-mcp.html", "32-requests.html"]) {
       expect(existsSync(join(site, "docs", name))).toBe(true);
     }
   });

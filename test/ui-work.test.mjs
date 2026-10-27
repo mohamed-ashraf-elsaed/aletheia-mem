@@ -118,7 +118,7 @@ describe("T-218: the overview", () => {
     await flush();
     const links = dom.getElementById("ui-work").querySelectorAll(".ui-estimate");
     expect(links.length).toBeGreaterThan(1);
-    for (const link of links) expect(link.getAttribute("href")).toContain("docs/tasks/unverified.md");
+    for (const link of links) expect(link.getAttribute("href")).toContain("docs/32-requests.md");
     W.stopWorkRefresh();
   });
   test("Accept on a review item hides it, posts, and Undo reopens it", async () => {

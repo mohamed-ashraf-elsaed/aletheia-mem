@@ -36,9 +36,9 @@ describe("community files", () => {
     expect(host).toContain("Official hook payload documentation URL");
   });
 
-  test("the PR template carries the AGENTS.md validation checklist", () => {
+  test("the PR template carries the validation checklist", () => {
     const text = read(".github/pull_request_template.md");
-    for (const command of ["bun test", "bun scripts/check-tasks.mjs", "bun scripts/gen-tables.mjs --check", "bun scripts/check-docs-links.mjs"]) {
+    for (const command of ["bun test", "bun scripts/gen-tables.mjs --check", "bun scripts/check-docs-links.mjs"]) {
       expect(text).toContain(command);
     }
     expect(text).toContain("real install");

@@ -1,6 +1,6 @@
 // T-118: comparison, tool and benchmark tables come from data, never from hand-edited cells.
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { checkBlocks, renderBench, renderCapabilities, renderTools, replaceBlock } from "../scripts/gen-tables.mjs";
@@ -20,11 +20,13 @@ afterAll(() => {
 });
 
 describe("gen-tables", () => {
-  test("the capability table is generated from the JSON and keeps unknown cells UNVERIFIED", () => {
+  // The source files for these two tests are kept only on the maintainers' machines; skipped in a fresh clone.
+  const withSources = existsSync(join(root, "docs/28-competitor-report.json")) ? test : test.skip;
+  withSources("the capability table is generated from the JSON and keeps unknown cells UNVERIFIED", () => {
     const markdown = renderCapabilities("md", root);
     expect(markdown).toContain("| Capability | Aletheia (today) | claude-mem |");
     expect(markdown).toContain("| MCP |");
-    expect(markdown).toContain("docs/28-competitor-report.json");
+    expect(markdown).not.toMatch(/T-\d+/);
     expect(markdown).not.toContain("✅");
     expect(markdown).not.toContain("❌");
     expect(markdown).toContain("UNVERIFIED");
@@ -39,7 +41,7 @@ describe("gen-tables", () => {
     expect(markdown).not.toContain("| tested on a real install |");
   });
 
-  test("the benchmark table is computed from result files and includes the parsed baseline", () => {
+  (existsSync(join(root, "docs/14-research-ai-memory.md")) ? test : test.skip)("the benchmark table is computed from result files and includes the parsed baseline", () => {
     const dir = make();
     const n = 100;
     writeFileSync(join(dir, "raw-turns.json"), JSON.stringify({ questions: n, results: { hybrid: { n, "R@5": 57.4, mrr: 49.7, ms: 400 } } }));

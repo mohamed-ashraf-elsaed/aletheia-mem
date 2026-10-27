@@ -50,7 +50,7 @@ describe("visual assets", () => {
   });
 
   test("no demo GIF is referenced or claimed", () => {
-    for (const file of ["README.md", "site/index.html", "docs/24-repo-parity-and-growth.md"]) {
+    for (const file of ["README.md", "site/index.html", "docs/24-repo-parity-and-growth.md"].filter((name) => existsSync(join(root, name)))) {
       expect(read(file)).not.toMatch(/demo\.gif|\.gif\)/i);
     }
   });

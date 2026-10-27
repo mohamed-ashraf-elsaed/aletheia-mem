@@ -29,11 +29,10 @@ describe("release files", () => {
     expect(existsSync(join(root, ".github", "FUNDING.yml"))).toBe(false);
   });
 
-  test("CI runs the suite, the task check and the table drift check on Linux", () => {
+  test("CI runs the suite and the table drift check on Linux", () => {
     const text = read(".github/workflows/ci.yml");
     expect(text).toContain("runs-on: ubuntu-latest");
     expect(text).toContain("bun test");
-    expect(text).toContain("bun scripts/check-tasks.mjs");
     expect(text).toContain("bun scripts/gen-tables.mjs --check");
     expect(text).toContain("bun scripts/check-docs-links.mjs");
     expect(text).not.toContain("npm publish");

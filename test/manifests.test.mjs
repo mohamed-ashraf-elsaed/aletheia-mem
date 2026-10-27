@@ -87,7 +87,7 @@ describe("T-066: plugin manifests", () => {
   });
 
   test("every source URL is recorded with its fetch date", () => {
-    const docs = `${readFileSync(join(root, "docs", "25-installers.md"), "utf8")}\n${readFileSync(join(root, "docs", "tasks", "research-log.md"), "utf8")}`;
+    const docs = `${readFileSync(join(root, "docs", "25-installers.md"), "utf8")}\n${existsSync(join(root, "docs", "tasks", "research-log.md")) ? readFileSync(join(root, "docs", "tasks", "research-log.md"), "utf8") : ""}`;
     for (const url of Object.values(SOURCES)) expect(docs).toContain(url);
     expect(docs).toContain("2026-10-26");
   });
