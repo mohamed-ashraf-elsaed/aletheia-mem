@@ -12,9 +12,11 @@ import { normalizeLanguage } from "./language.mjs";
 import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVector, unpackVector } from "./retrieval.mjs";
 import { epochOrIso } from "./paging.mjs";
 import { graphWalk } from "./graph.mjs";
+import { redact } from "./redact.mjs";
 
 const SCHEMA_VERSION = 3; // 3: episodes, observations, facts, entities, keys, links, queue and usage
 
+export const EVIDENCE_KINDS = ["memory", "fact", "episode", "suggestion"];
 export const KINDS = ["observation", "summary", "prompt", "note", "event"];
 export const TYPES = ["bugfix", "feature", "refactor", "change", "discovery", "decision", "note", "gotcha", "event"];
 export const BUNDLE_VERSION = 1;
@@ -413,6 +415,7 @@ export class HubStore {
     this.ensureRuleSuggestions();
     this.ensureRuleStrength();
     this.ensureRuleReplacement();
+    this.ensureRuleEvidence();
     this.ensureDismissals();
     this.ensureSessionEnd();
     this.ensureMemoryFiles();
@@ -426,6 +429,31 @@ export class HubStore {
     if (!columns.includes("replaced_by")) this.db.exec("ALTER TABLE rules ADD COLUMN replaced_by TEXT");
     if (!columns.includes("replaced_at_epoch")) this.db.exec("ALTER TABLE rules ADD COLUMN replaced_at_epoch INTEGER");
     this.setSetting("schema.rule_replacement", true);
+    return true;
+  }
+
+  /**
+   * Evidence behind a rule and the date it was last confirmed. A rule_evidence row points at a memory, fact, episode or
+   * approved suggestion; old rules simply have none. last_confirmed_epoch starts at the rule's creation date.
+   * Idempotent: safe on a database that already has either part.
+   */
+  ensureRuleEvidence() {
+    if (this.setting("schema.rule_evidence", false)) return false;
+    const columns = this.db.prepare("PRAGMA table_info(rules)").all().map((column) => column.name);
+    if (!columns.includes("last_confirmed_epoch")) this.db.exec("ALTER TABLE rules ADD COLUMN last_confirmed_epoch INTEGER");
+    this.db.exec("UPDATE rules SET last_confirmed_epoch = created_at_epoch WHERE last_confirmed_epoch IS NULL");
+    this.db.exec(`CREATE TABLE IF NOT EXISTS rule_evidence (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      rule_id TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      ref_id INTEGER NOT NULL,
+      at_epoch INTEGER NOT NULL,
+      quote TEXT,
+      session_id TEXT,
+      UNIQUE(rule_id, kind, ref_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_rule_evidence_rule ON rule_evidence(rule_id);`);
+    this.setSetting("schema.rule_evidence", true);
     return true;
   }
 
@@ -1581,24 +1609,28 @@ export class HubStore {
 
   get rules() {
     const db = this.db;
-    const shape = (r) => r && { id: r.id, scopeTier: r.scope_tier, scopeName: r.scope_name, when: r.when_text, then: r.then_text, enabled: !!r.enabled, tools: r.tools ? parse(r.tools) : null, source: r.source, createdAtEpoch: r.created_at_epoch, updatedAtEpoch: r.updated_at_epoch, replacedBy: r.replaced_by ?? null, replacedAtEpoch: r.replaced_at_epoch ?? null };
+    const shape = (r) => r && { id: r.id, scopeTier: r.scope_tier, scopeName: r.scope_name, when: r.when_text, then: r.then_text, enabled: !!r.enabled, tools: r.tools ? parse(r.tools) : null, source: r.source, createdAtEpoch: r.created_at_epoch, updatedAtEpoch: r.updated_at_epoch, replacedBy: r.replaced_by ?? null, replacedAtEpoch: r.replaced_at_epoch ?? null, lastConfirmedEpoch: r.last_confirmed_epoch ?? r.created_at_epoch };
     const audit = (a, d) => this.audit("ui", a, d);
     return {
       list: () => db.prepare("SELECT * FROM rules ORDER BY enabled DESC, scope_tier, scope_name, created_at_epoch").all().map(shape),
       get: (id) => shape(db.prepare("SELECT * FROM rules WHERE id = ?").get(id)),
-      add: ({ then, when = "", scopeTier = "everywhere", scopeName = "Everywhere", tools = null, source = "you", enabled = true }) => {
+      add: ({ then, when = "", scopeTier = "everywhere", scopeName = "Everywhere", tools = null, source = "you", enabled = true, evidence = [] }) => {
         const text = String(then ?? "").trim();
         if (!text) throw new RangeError("Write the rule before saving it.");
         if (text.length > 800) throw new RangeError("A rule is at most 800 characters.");
         if (!["everywhere", "project", "situation"].includes(scopeTier)) throw new RangeError("scopeTier must be everywhere, project or situation.");
         if (scopeTier !== "everywhere" && !String(scopeName).trim()) throw new RangeError("Name the project or situation this rule is for.");
         const dup = db.prepare("SELECT id FROM rules WHERE lower(then_text) = lower(?) AND when_text = ? AND scope_tier = ? AND scope_name = ?").get(text, String(when).trim(), scopeTier, scopeTier === "everywhere" ? "Everywhere" : String(scopeName).trim());
-        if (dup) return { id: dup.id, created: false };
+        if (dup) {
+          this.rules.addEvidence(dup.id, evidence);
+          return { id: dup.id, created: false };
+        }
         const id = `r_${sha256(`${Date.now()}${Math.random()}${text}`).slice(0, 10)}`;
         const now = Date.now();
-        db.prepare("INSERT INTO rules (id, scope_tier, scope_name, when_text, then_text, enabled, tools, source, created_at_epoch, updated_at_epoch) VALUES (?,?,?,?,?,?,?,?,?,?)")
-          .run(id, scopeTier, scopeTier === "everywhere" ? "Everywhere" : String(scopeName).trim(), String(when).trim(), text, enabled ? 1 : 0, tools && tools.length ? JSON.stringify(tools) : null, source, now, now);
-        audit("rule.add", { id });
+        db.prepare("INSERT INTO rules (id, scope_tier, scope_name, when_text, then_text, enabled, tools, source, created_at_epoch, updated_at_epoch, last_confirmed_epoch) VALUES (?,?,?,?,?,?,?,?,?,?,?)")
+          .run(id, scopeTier, scopeTier === "everywhere" ? "Everywhere" : String(scopeName).trim(), String(when).trim(), text, enabled ? 1 : 0, tools && tools.length ? JSON.stringify(tools) : null, source, now, now, now);
+        this.rules.addEvidence(id, evidence);
+        audit("rule.add", { id, evidence: Array.isArray(evidence) ? evidence.length : 0 });
         return { id, created: true };
       },
       update: (id, patch) => {
@@ -1614,12 +1646,42 @@ export class HubStore {
         audit("rule.update", { id, fields: Object.keys(patch) });
         return this.rules.get(id);
       },
+      /** Link evidence rows to a rule: [{kind: memory|fact|episode|suggestion, id, atEpoch?, quote?, sessionId?}]. Duplicates are ignored. */
+      addEvidence: (id, evidence = []) => {
+        let added = 0;
+        const insert = db.prepare("INSERT OR IGNORE INTO rule_evidence (rule_id, kind, ref_id, at_epoch, quote, session_id) VALUES (?,?,?,?,?,?)");
+        for (const item of Array.isArray(evidence) ? evidence : []) {
+          const ref = Number(item?.id);
+          if (!EVIDENCE_KINDS.includes(item?.kind) || !Number.isSafeInteger(ref) || ref <= 0) throw new RangeError(`Evidence needs a kind (${EVIDENCE_KINDS.join(", ")}) and a numeric id.`);
+          const at = Number.isFinite(item.atEpoch) ? item.atEpoch : this.evidenceDate(item.kind, ref) ?? Date.now();
+          added += insert.run(id, item.kind, ref, at, item.quote ? clean(redact(String(item.quote)), 300) : null, item.sessionId ? clean(item.sessionId, 200) : null).changes;
+        }
+        return added;
+      },
+      evidence: (id) => db.prepare("SELECT kind, ref_id AS id, at_epoch, quote, session_id FROM rule_evidence WHERE rule_id = ? ORDER BY at_epoch DESC, id DESC").all(id),
+      /** Say "this rule is still right": last_confirmed_epoch becomes now. Never changes the rule itself. */
+      confirm: (id, { actor = "ui", now = Date.now(), restore = null } = {}) => {
+        const cur = db.prepare("SELECT * FROM rules WHERE id = ?").get(id);
+        if (!cur) return null;
+        const previous = cur.last_confirmed_epoch ?? cur.created_at_epoch;
+        const at = restore != null ? Math.min(Math.max(Number(restore), cur.created_at_epoch), now) : now;
+        db.prepare("UPDATE rules SET last_confirmed_epoch = ? WHERE id = ?").run(at, id);
+        this.audit(actor, restore != null ? "rule.confirm.undo" : "rule.confirm", { id, previous, at });
+        return { ...this.rules.get(id), previousConfirmedEpoch: previous };
+      },
       remove: (id) => {
         const info = db.prepare("DELETE FROM rules WHERE id = ?").run(id);
         if (info.changes) audit("rule.delete", { id });
         return info.changes > 0;
       },
     };
+  }
+
+  /** The date an evidence row stands for: when the memory, fact or episode was made. */
+  evidenceDate(kind, id) {
+    const table = { memory: ["memories", "created_at_epoch"], fact: ["facts", "recorded_at_epoch"], episode: ["episodes", "created_at_epoch"], suggestion: ["rule_suggestions", "created_at_epoch"] }[kind];
+    if (!table) return null;
+    return this.db.prepare(`SELECT ${table[1]} AS at FROM ${table[0]} WHERE id = ?`).get(Number(id))?.at ?? null;
   }
 
   // ---- settings, audit --------------------------------------------------------------------------------

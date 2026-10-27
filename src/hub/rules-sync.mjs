@@ -91,14 +91,33 @@ export function syncTool(rules, toolId, { scope = "project", projectDir, home, d
   return result;
 }
 
+/**
+ * Like parseRulesFromText, for the managed block only, and each rule also carries the 1-based `line` it sits on in the
+ * file. A file without the managed markers yields null (it is not ours to compare).
+ */
+export function parseManagedRulesWithLines(text) {
+  const start = text.indexOf(MARK_BEGIN);
+  const end = text.indexOf(MARK_END);
+  if (start === -1 || end <= start) return null;
+  const firstLine = text.slice(0, start + MARK_BEGIN.length).split("\n").length; // line holding the begin marker
+  const found = parseBody(text.slice(start + MARK_BEGIN.length, end), firstLine);
+  return found;
+}
+
 /** Pull rules out of an existing file: bullet lines (`- ...` or `* ...`) inside the managed block, else the whole file. */
 export function parseRulesFromText(text) {
   const start = text.indexOf(MARK_BEGIN);
   const end = text.indexOf(MARK_END);
   const body = start !== -1 && end > start ? text.slice(start + MARK_BEGIN.length, end) : text.replace(/^---[\s\S]*?---\n/, "");
+  return parseBody(body, 0).map(({ line, ...rule }) => rule);
+}
+
+function parseBody(body, firstLine) {
   const found = [];
   let scope = { tier: "everywhere", name: "Everywhere" };
-  for (const raw of body.split("\n")) {
+  const lines = body.split("\n");
+  for (let index = 0; index < lines.length; index += 1) {
+    const raw = lines[index];
     const heading = /^##\s+(.+)$/.exec(raw);
     if (heading) {
       const h = heading[1].trim();
@@ -111,7 +130,8 @@ export function parseRulesFromText(text) {
     const text1 = bullet[1];
     if (text1.length < 4 || text1.length > 800 || /^\[.\]\s*$/.test(text1)) continue;
     const when = /^When\s+(.+?):\s+(.+)$/.exec(text1);
-    found.push(when ? { when: when[1], then: when[2], scopeTier: scope.tier, scopeName: scope.name } : { when: "", then: text1, scopeTier: scope.tier, scopeName: scope.name });
+    const line = firstLine + index;
+    found.push(when ? { when: when[1], then: when[2], scopeTier: scope.tier, scopeName: scope.name, line } : { when: "", then: text1, scopeTier: scope.tier, scopeName: scope.name, line });
   }
   return found;
 }

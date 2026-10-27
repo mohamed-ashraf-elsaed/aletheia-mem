@@ -42,3 +42,15 @@ export function epochOrIso(value) {
 export const pageInfo = ({ total, limit, offset, count }) => ({ total, limit, offset, hasMore: offset + count < total });
 
 export const slicePage = (items, { limit, offset }) => items.slice(offset, offset + limit);
+
+/**
+ * "Older than N days" as an `until` bound: the epoch N whole days before `now`, or null when N is absent or not a
+ * positive number. Combine with an explicit until by taking the earlier of the two (`earlierOf`).
+ */
+export function olderThanCutoff(days, { now = Date.now() } = {}) {
+  if (days == null || days === "") return null;
+  const n = Number(days);
+  return Number.isFinite(n) && n > 0 ? now - Math.floor(n) * 86_400_000 : null;
+}
+
+export const earlierOf = (a, b) => (Number.isFinite(a) && Number.isFinite(b) ? Math.min(a, b) : Number.isFinite(a) ? a : Number.isFinite(b) ? b : null);

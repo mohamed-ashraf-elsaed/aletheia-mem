@@ -217,6 +217,21 @@ are both drift, each with the file and line or the rule id. Each finding has a f
 The check is a warning, not a gate: `rules sync` still runs. `--json` returns `{findings, checked}`. A file
 without the managed-block markers is skipped, so a user's own CLAUDE.md/AGENTS.md text is never compared.
 
+Stale rules are reported too: `stale_rule` is a warning with the fix hint "confirm or retire", raised when a rule's
+evidence went stale or nobody confirmed it within the review window (`rules.reviewDays`, default 90). It is a flag:
+the rule stays enabled and `rules sync` still writes it. See [docs/03](03-http-api.md) for the reasons.
+
+`aletheia rules confirm <id>` records that a rule is still right (its last-confirmed date becomes now) and writes an
+audit row. `aletheia rules retire <id>` turns a rule off without deleting it. `aletheia rules list [--stale]
+[--older-than N]` prints each rule with its date, source and a `[re-check: ...]` marker.
+
+## Where the tools disagree
+
+`aletheia rules diff [--dir path] [--tools a,b] [--json]` (and `GET /api/hub/rules/diff`) compares each tool's managed
+block with the store. Per file it lists rules only in the store (with the rule id), rules only in the file (with the
+line), and rules whose wording differs (store text, file text and line), then a count of tools out of sync. It never
+writes. A file without the managed-block markers is reported as not compared. The Rules page shows the same count.
+
 ## Plugin manifests
 
 Written 2026-10-26 from the official pages below. Every manifest carries `"x-aletheia-verification":

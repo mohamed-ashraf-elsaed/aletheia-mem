@@ -14,6 +14,8 @@ import { INSTALLERS, doctor } from "./install.mjs";
 import { spoolPath, spoolRead } from "./hooks/shared.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "./rules-sync.mjs";
 import { suggestRules } from "./rule-suggest.mjs";
+import { checkEvidenceInput, describeRule, describeRules, evidenceFromSuggestion, reviewDays } from "./rule-evidence.mjs";
+import { diffRules, diffTargets } from "./rule-diff.mjs";
 import { decideSuggestion, decidedCounts, learningRun, recordLearningRun, replaceRule, toggleRule } from "./rules-decide.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById, verificationStatus } from "./tools.mjs";
 import { sessionDetail, workOverview } from "./work.mjs";
@@ -24,7 +26,7 @@ import { buildStory } from "./story.mjs";
 import { economics } from "./economics.mjs";
 import { SyncStore } from "./sync/store.mjs";
 import { wrapUntrusted } from "./untrusted.mjs";
-import { epochOrIso, pageInfo, pagingOf, slicePage, whenOf } from "./paging.mjs";
+import { earlierOf, epochOrIso, olderThanCutoff, pageInfo, pagingOf, slicePage, whenOf } from "./paging.mjs";
 import { auditPage, dismissedPage, reviewRows, ruleSuggestionsPage, searchPage, sessionsPage } from "./lists.mjs";
 import { AlertStore, deliverDue, extractionFailures, queueDepth } from "./alerts.mjs";
 import { applyErase, erasePlan, loadEraseKey, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } from "./erasure.mjs";
@@ -410,9 +412,9 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
         const b = await readJson(request);
         need(typeof b.query === "string" && b.query.trim(), "query is required.");
         const scope = b.scope === "all" ? "all" : "current";
-        if (b.offset != null || b.paged === true) {
+        if (b.offset != null || b.paged === true || b.older_than_days != null) {
           const paging = pagingOf(b);
-          const page = searchPage(hub, { query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, scope, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, since: whenOf(b.since), until: whenOf(b.until, { end: true }), order: b.order, mix: b.mix === true, ...paging });
+          const page = searchPage(hub, { query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, scope, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, since: whenOf(b.since), until: earlierOf(whenOf(b.until, { end: true }), olderThanCutoff(b.older_than_days)), order: b.order, mix: b.mix === true, ...paging });
           const detail = page.total === 0 ? hub.searchDetailed({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: 1, scope }) : { reason: null };
           return h.json({
             ...page,
@@ -511,7 +513,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       const status = q.status === "dismissed" ? "dismissed" : "current";
       const out = hub.list({
         project: q.project, kind: q.kind, type: q.type, tool: q.tool, pinned: q.pinned === "1", q: q.q, ...paging,
-        since: whenOf(q.since), until: whenOf(q.until, { end: true }), sort: q.sort || "default", rowScope: q.scope || null, dismissedOnly: status === "dismissed",
+        since: whenOf(q.since), until: earlierOf(whenOf(q.until, { end: true }), olderThanCutoff(q.older_than_days)), sort: q.sort || "default", rowScope: q.scope || null, dismissedOnly: status === "dismissed",
       });
       return h.json({ ...out, ...pageInfo({ total: out.total, ...paging, count: out.items.length }), status });
     }
@@ -533,11 +535,35 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       return h.json(hub.mergeProjects(b.from, b.into));
     }
 
-    if (pathname === "/api/hub/rules" && method === "GET") return h.json({ rules: hub.rules.list() });
+    // Rules carry their dates, evidence and a computed re-check flag. ?stale=1 keeps flagged rules; ?older_than_days=N keeps
+    // rules last confirmed more than N days ago. A flag never disables or removes a rule.
+    if (pathname === "/api/hub/rules" && method === "GET") {
+      const q = qs(url);
+      return h.json({ rules: describeRules(hub, { stale: q.stale === "1" || q.stale === "true" ? true : null, olderThanDays: q.older_than_days ?? null }), reviewDays: reviewDays(hub) });
+    }
     if (pathname === "/api/hub/rules" && method === "POST") {
       const b = await readJson(request);
-      const r = hub.rules.add({ then: b.then, when: b.when, scopeTier: b.scopeTier, scopeName: b.scopeName, tools: b.tools, source: "you" });
-      return h.json({ ...r, rule: hub.rules.get(r.id) }, r.created ? 201 : 200);
+      let evidence;
+      try { evidence = checkEvidenceInput(hub, b.evidence); } catch (error) { throw new BadRequest(error instanceof Error ? error.message : String(error)); }
+      const r = hub.rules.add({ then: b.then, when: b.when, scopeTier: b.scopeTier, scopeName: b.scopeName, tools: b.tools, source: "you", evidence });
+      return h.json({ ...r, rule: describeRule(hub, r.id) }, r.created ? 201 : 200);
+    }
+    // Where each tool's managed block and the store disagree. Read-only: never writes a file.
+    if (pathname === "/api/hub/rules/diff" && method === "GET") {
+      const q = qs(url);
+      const ids = typeof q.tools === "string" && q.tools.trim() ? q.tools.split(",").map((id) => id.trim()).filter(Boolean) : null;
+      for (const id of ids ?? []) need(toolById(id), `Unknown tool: ${id}`);
+      const dir = q.projectDir ? absDir(q.projectDir) : null;
+      const files = diffTargets({ toolIds: ids, dir, home: config.home });
+      return h.json(diffRules({ rules: hub.rules.list(), files }));
+    }
+    // Confirm: "this rule is still right". Sets last_confirmed_epoch to now and writes an audit row. `restore` (an epoch
+    // from an earlier response) puts the previous date back, which is how the Undo works.
+    if ((m = /^\/api\/hub\/rules\/([\w-]+)\/confirm$/.exec(pathname)) && method === "POST") {
+      const b = await readJson(request).catch(() => ({}));
+      need(b?.restore == null || Number.isFinite(Number(b.restore)), "restore must be an epoch in milliseconds.");
+      const done = hub.rules.confirm(m[1], { actor: "ui", restore: b?.restore ?? null });
+      return done ? h.json({ rule: describeRule(hub, m[1]), previousConfirmedEpoch: done.previousConfirmedEpoch }) : h.json({ error: "That rule does not exist." }, 404);
     }
 
     // ---- T-172: decide flow, on/off toggle, replacement history and the last learning run ----
@@ -738,7 +764,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
         const suggestionStatus = b.action === "accept" ? "accepted" : b.action === "reject" ? "dismissed" : "pending";
         if (b.action === "accept") {
           const scopeTier = suggestion.project && suggestion.project !== "default" ? "project" : "everywhere";
-          hub.rules.add({ then: suggestion.text, when: suggestion.when_text, scopeTier, scopeName: scopeTier === "project" ? suggestion.project : "Everywhere", source: "suggested" });
+          hub.rules.add({ then: suggestion.text, when: suggestion.when_text, scopeTier, scopeName: scopeTier === "project" ? suggestion.project : "Everywhere", source: "suggested", evidence: evidenceFromSuggestion(hub, suggestion.id) });
         }
         hub.db.prepare("UPDATE rule_suggestions SET status = ? WHERE id = ?").run(suggestionStatus, suggestion.id);
         hub.audit("ui", `rule_suggestion.${b.action}`, { id: suggestion.id });

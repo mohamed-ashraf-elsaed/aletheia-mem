@@ -1274,6 +1274,91 @@
         }
       }
     },
+    "/api/hub/rules": {
+      "get": {
+        "summary": "GET /api/hub/rules",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "rules",
+                    "reviewDays"
+                  ],
+                  "properties": {
+                    "rules": {},
+                    "reviewDays": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/rules/diff": {
+      "get": {
+        "summary": "GET /api/hub/rules/diff",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/rules/diff",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "files",
+                    "outOfSync",
+                    "checked"
+                  ],
+                  "properties": {
+                    "files": {},
+                    "outOfSync": {},
+                    "checked": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/rules/{id}/confirm": {
+      "post": {
+        "summary": "POST /api/hub/rules/{id}/confirm",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/rules/{id}/confirm",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/hub/rules/learning-run": {
       "get": {
         "summary": "GET /api/hub/rules/learning-run",

@@ -10,6 +10,11 @@ import { chipFilter, filterBar, hideCard, segmentFilter, selectFilter, textFilte
 import { queryString } from "./memory-views.js";
 
 const ruleTitle = (rule) => (rule.when ? `When ${rule.when}: ${rule.then}` : rule.then);
+const dayOf = (epoch) => (Number.isFinite(epoch) ? new Date(epoch).toISOString().slice(0, 10) : "unknown date");
+const evidenceRow = (item) => h("div", { class: "ui-fact-source", dir: "auto" },
+  h("span", { class: "ui-meta" }, `${item.kind} #${item.id} · ${dayOf(item.at_epoch)}`),
+  item.quote ? ` · ${item.quote}` : null,
+  item.session_id ? h("span", { class: "ui-meta" }, ` · session ${item.session_id}`) : null);
 const scopeLabel = (rule) => (rule.scopeTier === "everywhere" ? "everywhere" : `${rule.scopeTier}: ${rule.scopeName}`);
 
 // ---- rule list and the add and edit dialogs ---------------------------------------------------------------
@@ -20,12 +25,35 @@ function ruleCard(rule, ctx) {
   const render = () => swap(card,
     h("div", { class: "ui-item-head" },
       h("p", { class: "ui-item-title", dir: "auto" }, ruleTitle(rule)),
-      h("div", { class: "ui-row" }, badge(rule.enabled ? "on" : "off", rule.enabled ? "success" : "warning"))),
-    h("div", { class: "ui-meta" }, badge(scopeLabel(rule)), rule.tools?.length ? badge(`only ${rule.tools.join(", ")}`) : badge("all tools"), h("span", {}, `source: ${rule.source}`), rule.replaced_by ? badge(`replaced by ${rule.replaced_by}`) : null),
+      h("div", { class: "ui-row" }, rule.stale ? badge("Re-check", "warning") : null, badge(rule.enabled ? "on" : "off", rule.enabled ? "success" : "warning"))),
+    h("div", { class: "ui-meta" }, badge(scopeLabel(rule)), rule.tools?.length ? badge(`only ${rule.tools.join(", ")}`) : badge("all tools"), rule.replaced_by || rule.replacedBy ? badge(`replaced by ${rule.replaced_by ?? rule.replacedBy}`) : null),
+    h("div", { class: "ui-meta" },
+      h("span", {}, `added ${dayOf(rule.createdAtEpoch ?? rule.created_at_epoch)}`),
+      h("span", {}, `source: ${rule.source}`),
+      h("span", {}, `last confirmed ${dayOf(rule.last_confirmed_epoch)}`),
+      h("span", {}, `${rule.evidence?.length ?? 0} evidence`)),
+    rule.stale ? h("div", { class: "ui-reasons", role: "note" }, ...(rule.reasons ?? []).map((reason) => h("p", { class: "ui-meta", "data-code": reason.code }, reason.message))) : null,
+    rule.evidence?.length ? disclosure({ summary: `Evidence (${rule.evidence.length})`, content: h("div", { class: "ui-quotes" }, ...rule.evidence.map(evidenceRow)) }) : null,
     h("div", { class: "ui-acts" },
+      button({ label: "Confirm", size: "sm", icon: "check", onClick: () => confirm() }),
+      rule.stale && rule.enabled ? button({ label: "Retire", size: "sm", icon: "eye-off", onClick: () => retire() }) : null,
       button({ label: rule.enabled ? "Turn off" : "Turn on", size: "sm", icon: rule.enabled ? "eye-off" : "check", onClick: () => toggle() }),
       button({ label: "Edit", size: "sm", icon: "edit", onClick: () => edit() }),
       button({ label: "Replace", size: "sm", icon: "undo", onClick: () => replace() })));
+  // Confirm says "this rule is still right". It only moves the last-confirmed date; the Re-check flag clears with it,
+  // and Undo puts the earlier date back.
+  const confirm = () => {
+    const before = { stale: rule.stale, reasons: rule.reasons, last_confirmed_epoch: rule.last_confirmed_epoch, age_days: rule.age_days };
+    const post = (body) => api(`/api/hub/rules/${rule.id}/confirm`, { method: "POST", body });
+    return optimistic({
+      apply: () => { Object.assign(rule, { stale: false, reasons: [], last_confirmed_epoch: Date.now(), age_days: 0 }); render(); },
+      rollback: () => { Object.assign(rule, before); render(); },
+      request: async () => { const result = await post({}); if (result?.rule) Object.assign(rule, result.rule); },
+      done: "Rule confirmed. It is unchanged; only its last-confirmed date moved.",
+      undo: () => post({ restore: before.last_confirmed_epoch }),
+      failure: "Could not confirm this rule.",
+    }).then((ok) => { if (ok) ctx.changed?.({ soft: true }); return ok; });
+  };
   const patch = (body) => api(`/api/hub/rules/${rule.id}`, { method: "PATCH", body });
   // T-172: the on/off write has its own route and keeps the same optimistic Undo.
   const setEnabled = (enabled) => api(`/api/hub/rules/${rule.id}/toggle`, { method: "POST", body: { enabled } });
@@ -39,6 +67,18 @@ function ruleCard(rule, ctx) {
       undo: () => setEnabled(!next),
       reapply: () => { rule.enabled = !next; render(); },
       failure: "Could not change this rule.",
+    }).then((ok) => { if (ok) ctx.changed?.(); return ok; });
+  };
+  // Retire is the existing turn-off path (kept, not deleted) with wording for a rule that went stale.
+  const retire = () => {
+    const back = { enabled: rule.enabled };
+    return optimistic({
+      apply: () => { rule.enabled = false; render(); },
+      rollback: () => { rule.enabled = back.enabled; render(); },
+      request: () => setEnabled(false),
+      done: "Rule retired. It is turned off and kept, not deleted.",
+      undo: () => setEnabled(true),
+      failure: "Could not retire this rule.",
     }).then((ok) => { if (ok) ctx.changed?.(); return ok; });
   };
   const replace = () => {
@@ -112,19 +152,32 @@ export function rulesView(ctx) {
   const needle = h("input", { type: "search", class: "ui-input", placeholder: "Filter rules…", "aria-label": "Filter rules", dir: "auto" });
   const show = { value: "all" };
   let all = [];
+  const syncLine = h("p", { class: "ui-meta", role: "status", hidden: true });
+  const staleLine = h("p", { class: "ui-meta", role: "status", hidden: true });
   const listEl = h("div", { class: "ui-list-rows" });
   const draw = () => {
     const text = needle.value.trim().toLowerCase();
-    const rows = all.filter((rule) => (show.value === "all" || (show.value === "on") === rule.enabled) && (!text || `${ruleTitle(rule)} ${scopeLabel(rule)}`.toLowerCase().includes(text)));
+    const staleCount = all.filter((rule) => rule.stale).length;
+    staleLine.hidden = !staleCount;
+    staleLine.textContent = staleCount ? `${staleCount} rule${staleCount === 1 ? "" : "s"} to re-check. Flagged rules stay on and keep syncing until you retire them.` : "";
+    const rows = all.filter((rule) => (show.value === "all" || (show.value === "recheck" ? rule.stale : (show.value === "on") === rule.enabled)) && (!text || `${ruleTitle(rule)} ${scopeLabel(rule)}`.toLowerCase().includes(text)));
     swap(listEl, rows.length ? rows.map((rule) => ruleCard(rule, ctx)) : emptyState({ title: "No rule matches", text: "Clear the filter to see every rule.", compact: true, art: "rules" }));
   };
   needle.addEventListener("input", draw);
-  const status = segmented({ label: "Show", value: "all", options: [{ value: "all", label: "All" }, { value: "on", label: "On" }, { value: "off", label: "Off" }], onChange: (value) => { show.value = value; draw(); } });
+  const status = segmented({ label: "Show", value: "all", options: [{ value: "all", label: "All" }, { value: "on", label: "On" }, { value: "off", label: "Off" }, { value: "recheck", label: "Re-check" }], onChange: (value) => { show.value = value; draw(); } });
+  // How many tools' managed blocks differ from these rules. Read-only; a failed lookup just leaves the line hidden.
+  const loadSync = async () => {
+    try {
+      const report = await api("/api/hub/rules/diff");
+      syncLine.hidden = !report.outOfSync;
+      syncLine.textContent = report.outOfSync ? `${report.outOfSync} tool${report.outOfSync === 1 ? "" : "s"} out of sync with these rules. Open Write to tools to preview the difference.` : "";
+    } catch { syncLine.hidden = true; }
+  };
   const reg = region({
     load: async () => (await api("/api/hub/rules")).rules,
     skeleton: () => skeleton({ kind: "card", count: 3 }),
     empty: () => emptyState({ title: "No rules yet", text: "A rule is something you want every AI tool to follow. Write it once here, then write it into each tool's instruction file. You can also import the rules your tools already have.", art: "rules", actions: [button({ label: "Add a rule", variant: "primary", icon: "plus", onClick: () => ctx.addRule() }), button({ label: "Import from a tool", href: "#/rules/import" })] }),
-    render: (rules) => { all = rules; ctx.counts?.({ rules: rules.length }); draw(); return h("div", {}, h("div", { class: "ui-filterrow ui-paged-toolbar" }, h("div", { class: "ui-filter ui-filter-grow" }, needle), h("div", { class: "ui-filter" }, h("span", { class: "ui-filter-label" }, "Show"), status)), listEl); },
+    render: (rules) => { all = rules; ctx.counts?.({ rules: rules.length }); draw(); loadSync(); return h("div", {}, syncLine, staleLine, h("div", { class: "ui-filterrow ui-paged-toolbar" }, h("div", { class: "ui-filter ui-filter-grow" }, needle), h("div", { class: "ui-filter" }, h("span", { class: "ui-filter-label" }, "Show"), status)), listEl); },
   });
   reg.dispose = () => {};
   const wrap = h("div", {}, reg);

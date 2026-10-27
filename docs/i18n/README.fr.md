@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: a134eb68c2fb9012e1418b40ca14bc38780abbef55781c749a34af0708dad3f4
+> Source: [README.md](../../README.md) · source-sha256: 4f62c98f2ff9f83f945dfa66205924f6f83137adcb71fd489eafd16e3c6aa546
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -138,7 +138,7 @@ Les deux sont auto-hébergés et gratuits ; aucun n'est testé entre deux machin
 
 | Interface | Where | Use |
 |---|---|---|
-| MCP (stdio) | `bun bin/mcp.mjs` | the 12 MCP tools below (read and write) |
+| MCP (stdio) | `bun bin/mcp.mjs` | the 13 MCP tools below (read and write) |
 | MCP (HTTP) | sync hub `/mcp` | the same tools with a bearer token and per-token scope |
 | REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, any language; optional `ALETHEIA_API_KEY` bearer key |
 | CLI | `bin/aletheia.mjs` | hooks, shell, cron, sync |
@@ -156,6 +156,7 @@ Les deux sont auto-hébergés et gratuits ; aucun n'est testé entre deux machin
 | `fact_history` | Show how a fact changed | read |
 | `list_rules` | List standing rules | read |
 | `add_rule` | Add a standing rule | write |
+| `confirm_rule` | Confirm a rule is still right | write |
 | `dismiss_memory` | Dismiss a memory | write |
 | `restore_memory` | Restore a dismissed memory | write |
 | `work_state_write` | Write a work-state list | write |

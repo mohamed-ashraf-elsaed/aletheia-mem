@@ -15,7 +15,7 @@ a bearer token from the sync account (the same tokens T-104/T-108 manage), with 
 | Token scope | What it can call |
 |---|---|
 | `mcp`, `read` | the read tools only: search, timeline, get_observations, session_start_context, list_rules |
-| `sync`, `admin` | all tools, including save_memory, add_rule, dismiss_memory, restore_memory |
+| `sync`, `admin` | all tools, including save_memory, add_rule, confirm_rule, dismiss_memory, restore_memory |
 
 A token with named projects can only read those projects and only write into them. An empty project list means
 every project. Every `tools/call` writes one append-only audit row (`action = mcp.call`) with the tool name, the

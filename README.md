@@ -35,7 +35,7 @@ aletheia-server
 config yet, and answer accuracy is not measured. CI runs on Linux and macOS; Windows is not supported yet and not tested.
 
 <!-- claims:begin -->
-**1,343 tests** — 0 failures (run `bun test`).
+**1,386 tests** — 0 failures (run `bun test`).
 <!-- claims:end -->
 
 [English](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/README.md) · [中文](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.zh.md) · [Español](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.es.md) · [Português (Brasil)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.pt-br.md) · [日本語](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ja.md) · [Deutsch](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.de.md) · [Français](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.fr.md) · [한국어](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ko.md) · [हिन्दी](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.hi.md) · [العربية](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ar.md) · [Русский](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ru.md).
@@ -177,7 +177,7 @@ Both are self-hosted and free; neither is tested across two real machines.
 
 | Interface | Where | Use |
 |---|---|---|
-| MCP (stdio) | `bun bin/mcp.mjs` | the 12 MCP tools below (read and write) |
+| MCP (stdio) | `bun bin/mcp.mjs` | the 13 MCP tools below (read and write) |
 | MCP (HTTP) | sync hub `/mcp` | the same tools with a bearer token and per-token scope |
 | REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, any language; optional `ALETHEIA_API_KEY` bearer key |
 | CLI | `bin/aletheia.mjs` | hooks, shell, cron, sync |
@@ -195,6 +195,7 @@ Both are self-hosted and free; neither is tested across two real machines.
 | `fact_history` | Show how a fact changed | read |
 | `list_rules` | List standing rules | read |
 | `add_rule` | Add a standing rule | write |
+| `confirm_rule` | Confirm a rule is still right | write |
 | `dismiss_memory` | Dismiss a memory | write |
 | `restore_memory` | Restore a dismissed memory | write |
 | `work_state_write` | Write a work-state list | write |

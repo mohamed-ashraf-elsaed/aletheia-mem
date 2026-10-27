@@ -33,6 +33,7 @@ export const TOOL_DEFS = [
         limit: num("Maximum rows to return, 1 to 100. Default 20."),
         since: str("Only results at or after this time: ISO 8601 date or date-time, or epoch milliseconds."),
         until: str("Only results at or before this time: ISO 8601 date or date-time, or epoch milliseconds. A bare date includes that whole day."),
+        older_than_days: num("Only results created more than this many days ago, for finding old memories to review or dismiss. Combine with until: the earlier bound wins."),
         order: { type: "string", enum: ["relevance", "date_desc", "date_asc"], description: "Result order. Default relevance." },
         offset: num("Number of rows to skip, for paging through the index. Default 0."),
       },
@@ -57,7 +58,7 @@ export const TOOL_DEFS = [
   {
     name: "get_observations",
     title: "Get full memory text by id",
-    description: `Fetch the full text of memories by id: title, project, tool, time, narrative, facts and files. Use it last, after search or timeline picked the ids, and pass all ids in one call. Read-only. Unknown or out-of-scope ids are skipped; if none match it returns "No memory has those ids." ${UNTRUSTED}`,
+    description: `Fetch the full text of memories by id: title, project, time, source (tool, session and origin), narrative, facts and the files it touched. Use it last, after search or timeline picked the ids, and pass all ids in one call. Read-only. Unknown or out-of-scope ids are skipped; if none match it returns "No memory has those ids." ${UNTRUSTED}`,
     annotations: annotate("Get full memory text by id", { readOnly: true, idempotent: true }),
     inputSchema: {
       type: "object",
@@ -117,14 +118,14 @@ export const TOOL_DEFS = [
   {
     name: "list_rules",
     title: "List standing rules",
-    description: "List the owner's enabled standing rules, one per line as \"When <situation>: <rule>  [scope]\" where scope is everywhere or the project or situation name. Read-only and takes no arguments. Run it before add_rule to avoid duplicates; session_start_context already includes these rules. Returns \"No rules yet.\" when there are none.",
+    description: "List the owner's enabled standing rules, one per line as \"When <situation>: <rule>  [scope]\" followed by its date added, source and last-confirmed date. A rule whose evidence went stale or that nobody confirmed within the review window ends with a \"[re-check: reason]\" marker: it is only a flag, the rule stays enabled. Read-only, takes no arguments. Run it before add_rule to avoid duplicates; use confirm_rule on a flagged rule that is still right. Returns \"No rules yet.\" when there are none.",
     annotations: annotate("List standing rules", { readOnly: true, idempotent: true }),
     inputSchema: { type: "object", properties: {} },
   },
   {
     name: "add_rule",
     title: "Add a standing rule",
-    description: "Add one standing rule that the owner wants every connected tool to follow. Use only when the owner asked for a rule; check list_rules first. An identical rule is not added twice. The owner then syncs rules to tools from the Rules page. Use save_memory for a one-off fact instead. Returns \"Rule saved (id).\" or \"That rule already exists (id).\"; text over 800 characters is rejected.",
+    description: "Add one standing rule that the owner wants every connected tool to follow. Use only when the owner asked for a rule; check list_rules first. An identical rule is not added twice. Pass the ids of the memories or facts the rule rests on so it can be flagged for re-check when they go stale. The owner then syncs rules to tools from the Rules page. Use save_memory for a one-off fact instead. Returns \"Rule saved (id).\" or \"That rule already exists (id).\"; text over 800 characters is rejected.",
     annotations: annotate("Add a standing rule", { readOnly: false, destructive: false, idempotent: true }),
     inputSchema: {
       type: "object",
@@ -133,8 +134,23 @@ export const TOOL_DEFS = [
         when: str("Optional situation in which the rule applies. Default: always."),
         scopeTier: { type: "string", enum: ["everywhere", "project", "situation"], description: "Where the rule applies. Default everywhere." },
         scopeName: str("Name of the project or situation. Required when scopeTier is project or situation."),
+        evidence_memory_ids: { type: "array", items: { type: "number" }, description: "Optional ids of memories this rule is based on, as shown by search. Stored as the rule's evidence; unknown ids are an error." },
+        evidence_fact_ids: { type: "array", items: { type: "number" }, description: "Optional ids of facts this rule is based on, as shown by search or fact_history. Stored as the rule's evidence; unknown ids are an error." },
       },
       required: ["then"],
+    },
+  },
+  {
+    name: "confirm_rule",
+    title: "Confirm a rule is still right",
+    description: "Record that the owner re-checked one standing rule and it is still right: its last-confirmed date becomes now, which clears a review-overdue flag from list_rules. Nothing else changes, and the rule is never disabled, edited or deleted. Safe to repeat. Use it only after the owner agreed the rule still holds; to stop following a rule, the owner turns it off in the Rules page. Returns a confirmation with the date, or an error when the id is unknown.",
+    annotations: annotate("Confirm a rule is still right", { readOnly: false, destructive: false, idempotent: true }),
+    inputSchema: {
+      type: "object",
+      properties: {
+        id: str("Rule id as shown by the Rules page or aletheia rules list, for example r_1a2b3c4d5e. Required."),
+      },
+      required: ["id"],
     },
   },
   {
