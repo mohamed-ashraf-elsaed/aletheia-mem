@@ -456,6 +456,13 @@ describe("HTTP: hub routes, /v1 and the UI", () => {
     expect((await send("/v1/search", {})).status).toBe(400);
     expect((await send("/v1/events", { payload: { tool_name: "TodoWrite" } })).json()).resolves.toMatchObject({ stored: false });
   });
+  test("/api/hub/context is the unwrapped read API, /v1/context is wrapped", async () => {
+    const hubContext = await (await get("/api/hub/context?project=shop")).json();
+    expect(hubContext.context).toContain("Use idempotency keys");
+    expect(hubContext.context).not.toContain("<aletheia-memory>");
+    const v1Context = await (await send("/v1/context", { project: "shop" })).json();
+    expect(v1Context.context).toContain("<aletheia-memory>");
+  });
   test("memory CRUD, filters and projects", async () => {
     const created = await (await send("/api/hub/memories", { title: "Note A", text: "hello world", project: "docs" })).json();
     expect(created.created).toBe(true);

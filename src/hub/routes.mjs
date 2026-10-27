@@ -593,6 +593,9 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       need(isAbsolute(path), "path must be absolute.");
       return h.json(importClaudeMem(hub, path, { includePrompts: b.includePrompts !== false, project: b.project || null }));
     }
+    // Deliberately unwrapped: this is the Hub's own JSON read API (the UI renders the markdown as text),
+    // not a model-injection path. /v1/context and the CLI wrap with wrapUntrusted; this route returns the
+    // raw markdown so callers that display it do not see the <aletheia-memory> wrapper.
     if (pathname === "/api/hub/context" && method === "GET") {
       const q = qs(url);
       return h.json({ context: hub.context({ project: q.project, limit: Number(q.limit) || 20, tool: q.tool }) });
