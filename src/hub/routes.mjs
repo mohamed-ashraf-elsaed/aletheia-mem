@@ -23,6 +23,7 @@ import { proposeRequests, requestAction, requestDetail } from "./requests.mjs";
 import { buildStory } from "./story.mjs";
 import { economics } from "./economics.mjs";
 import { SyncStore } from "./sync/store.mjs";
+import { wrapUntrusted } from "./untrusted.mjs";
 import { pageInfo, pagingOf, slicePage, whenOf } from "./paging.mjs";
 import { auditPage, dismissedPage, reviewRows, ruleSuggestionsPage, searchPage, sessionsPage } from "./lists.mjs";
 import { AlertStore, deliverDue, extractionFailures, queueDepth } from "./alerts.mjs";
@@ -446,7 +447,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       }
       if (pathname === "/v1/context" && method === "POST") {
         const b = await readJson(request);
-        return h.json({ context: hub.context({ project: b.project, limit: b.limit ?? 20, maxChars: b.maxChars ?? 6000, tool: b.tool ?? tool, scope: b.scope === "all" ? "all" : "current" }) });
+        return h.json({ context: wrapUntrusted(hub.context({ project: b.project, limit: b.limit ?? 20, maxChars: b.maxChars ?? 6000, tool: b.tool ?? tool, scope: b.scope === "all" ? "all" : "current" })) });
       }
       if (pathname === "/v1/context/economics" && method === "GET") {
         const q = qs(url);

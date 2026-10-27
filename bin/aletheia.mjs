@@ -442,7 +442,8 @@ async function main() {
           const { economics } = await import("../src/hub/economics.mjs");
           return out(economics(hub, { project: flags.project ?? projectKeyForPath(process.cwd()), limit: Number(flags.limit) || 50 }));
         }
-        return out(hub.context({ project: flags.project ?? projectKeyForPath(process.cwd()), tool: flags.tool, limit: Number(flags.limit) || 20, scope: flags.scope === "all" ? "all" : "current" }));
+        const { wrapUntrusted } = await import("../src/hub/untrusted.mjs");
+        return out(wrapUntrusted(hub.context({ project: flags.project ?? projectKeyForPath(process.cwd()), tool: flags.tool, limit: Number(flags.limit) || 20, scope: flags.scope === "all" ? "all" : "current" })));
       }
       case "search": {
         const asOf = typeof flags["as-of"] === "string" ? Date.parse(flags["as-of"]) : null;

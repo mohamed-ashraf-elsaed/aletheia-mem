@@ -2,6 +2,7 @@
 // the shared memory. Tools follow the token-efficient 3-layer pattern: search (index) -> timeline (context)
 // -> get_observations (full text for chosen ids only).
 import { projectKeyForPath } from "../readmodel/project.mjs";
+import { wrapUntrusted } from "./untrusted.mjs";
 import { redact } from "./capture.mjs";
 
 // Newest first. Per the spec: answer with the client's version if supported, else with our latest.
@@ -20,6 +21,7 @@ export const TOOL_DEFS = [
   { name: "restore_memory", description: "Undo a dismissal. The item appears in search and context again.", inputSchema: { type: "object", properties: { type: { type: "string", enum: ["memory", "observation", "fact", "episode"] }, id: { type: "number" } }, required: ["id"] } },
 ];
 
+const recalled = (t) => text(wrapUntrusted(t));
 const text = (t) => ({ content: [{ type: "text", text: t }] });
 const fail = (t) => ({ content: [{ type: "text", text: t }], isError: true });
 
@@ -61,7 +63,7 @@ export function callTool(name, args = {}, ctx) {
           const reason = detailed.reason ? (REASON[detailed.reason] ?? "filtered") : (allowed ? "filtered" : "");
           return text(`No matches. ${reason}`.trim());
         }
-        return text([...factLines, memoryIndex].filter(Boolean).join("\n"));
+        return recalled([...factLines, memoryIndex].filter(Boolean).join("\n"));
       }
       case "timeline": {
         const denied = scopedProject(args.project);
@@ -70,12 +72,12 @@ export function callTool(name, args = {}, ctx) {
         if (!t.anchor) return text("Nothing to anchor on.");
         const items = t.items.filter((m) => !allowed || allowed(m.project));
         if (!items.length || !items.some((m) => m.id === t.anchor)) return text("Nothing to anchor on.");
-        return text(items.map((m) => `${m.id === t.anchor ? "→" : " "} #${m.id} ${new Date(m.created_at_epoch).toISOString().slice(0, 16)} [${m.type}] ${m.title}`).join("\n"));
+        return recalled(items.map((m) => `${m.id === t.anchor ? "→" : " "} #${m.id} ${new Date(m.created_at_epoch).toISOString().slice(0, 16)} [${m.type}] ${m.title}`).join("\n"));
       }
       case "get_observations": {
         if (!Array.isArray(args.ids) || !args.ids.length) return fail("ids is required (an array of numbers).");
         const rows = store.getMany(args.ids).filter((row) => !allowed || allowed(row.project));
-        return text(rows.length ? rows.map(fmtFull).join("\n\n---\n\n") : "No memory has those ids.");
+        return rows.length ? recalled(rows.map(fmtFull).join("\n\n---\n\n")) : text("No memory has those ids.");
       }
       case "save_memory": {
         if (typeof args.text !== "string" || !args.text.trim()) return fail("text is required.");
@@ -90,7 +92,7 @@ export function callTool(name, args = {}, ctx) {
         const denied = scopedProject(args.project);
         if (denied) return denied;
         const project = allowed ? (args.project ?? ctx.projects[0]) : args.project ?? (ctx.cwd ? projectKeyForPath(ctx.cwd) : undefined);
-        return text(store.context({ project, limit: args.limit ?? 20, tool: ctx.tool }));
+        return recalled(store.context({ project, limit: args.limit ?? 20, tool: ctx.tool }));
       }
       case "list_rules": {
         const rules = store.rules.list().filter((r) => r.enabled);
