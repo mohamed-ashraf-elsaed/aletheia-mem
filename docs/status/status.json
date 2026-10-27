@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-27T15:18:36.843Z",
-  "commit": "ad633d4",
+  "generatedAt": "2026-10-27T15:24:39.578Z",
+  "commit": "ff41a9a",
   "tasks": [
     {
       "id": "T-001",
@@ -4565,6 +4565,10 @@
       "blocked": false,
       "dependents": [],
       "stale": [
+        {
+          "file": "CHANGELOG.md",
+          "lastCommit": "2026-10-27"
+        },
         {
           "file": ".github/workflows/ci.yml",
           "lastCommit": "2026-10-27"
@@ -11287,7 +11291,7 @@
     },
     {
       "id": "T-085",
-      "text": "T-085 validated 2026-10-26; changed later: .github/workflows/ci.yml (2026-10-27)"
+      "text": "T-085 validated 2026-10-26; changed later: CHANGELOG.md (2026-10-27), .github/workflows/ci.yml (2026-10-27)"
     },
     {
       "id": "T-086",
@@ -15833,17 +15837,11 @@
             "item": "Its long-list handling",
             "verify": "Seed a large store and scroll.",
             "claim": false
-          },
-          {
-            "n": "56",
-            "item": "56",
-            "verify": "The English README now says CI runs on Linux and macOS and Windows is unsupported (2026-10-27). The 10 translations were hash-updated but those two sentences were not re-translated, so they may still say \"Linux only\".",
-            "claim": false
           }
         ]
       }
     ],
-    "unverifiedCount": 101,
+    "unverifiedCount": 100,
     "researchLogUnverified": {
       "total": 27,
       "bySection": [
@@ -16178,15 +16176,22 @@
   "git": {
     "available": true,
     "branch": "main",
-    "head": "ad633d4",
-    "ahead": 0,
+    "head": "ff41a9a",
+    "ahead": 1,
     "behind": 0,
-    "uncommitted": 3,
-    "uncommittedDocs": [
-      "docs/tasks/T-080.md",
-      "docs/tasks/unverified.md"
-    ],
+    "uncommitted": 1,
+    "uncommittedDocs": [],
     "commits": [
+      {
+        "sha": "ff41a9a",
+        "date": "2026-10-27",
+        "subject": "Translate new CI-support sentences in all 10 READMEs"
+      },
+      {
+        "sha": "3cd426f",
+        "date": "2026-10-27",
+        "subject": "docs: record the v0.1.0 npm publish, verify the npx smoke test, add the changelog entry"
+      },
       {
         "sha": "ad633d4",
         "date": "2026-10-27",
@@ -16251,20 +16256,13 @@
         "sha": "050bffb",
         "date": "2026-10-27",
         "subject": "feat(tasks): add run-report script (T-002)"
-      },
-      {
-        "sha": "251c2ba",
-        "date": "2026-10-27",
-        "subject": "feat(ci): add dependency and licence audit (T-012)"
-      },
-      {
-        "sha": "87766a9",
-        "date": "2026-10-27",
-        "subject": "feat(status): one-file project status page generated from the repo files"
       }
     ],
     "worktrees": [
-      "/home/mashraf/Projects/aletheia-mem ad633d4 [main]"
+      "/home/mashraf/Projects/aletheia-mem                                           ff41a9a [main]",
+      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-a5f33ab6a8a2df6e4 ff41a9a [worktree-agent-a5f33ab6a8a2df6e4]",
+      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-aba78cdc0bd0d914c 3cd426f [worktree-agent-aba78cdc0bd0d914c] locked",
+      "/home/mashraf/Projects/aletheia-next                                          3cd426f [feat/after-v010]"
     ]
   },
   "ci": [
@@ -16378,7 +16376,7 @@
       },
       "docs": {
         "files": 270,
-        "lines": 34461
+        "lines": 34460
       }
     },
     "routes": [
