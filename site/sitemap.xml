@@ -5,39 +5,13 @@
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/01-architecture.html</loc><lastmod>2026-10-26</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/02-data-model.html</loc><lastmod>2026-10-26</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/03-http-api.html</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/04-read-model.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/05-refresh-pipeline.html</loc><lastmod>2026-10-26</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/06-frontend.html</loc><lastmod>2026-10-27</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/07-operations.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/08-findings.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/09-verification.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/10-rebuild-guide.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/11-feature-inventory.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/12-universal-memory-product.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/14-research-ai-memory.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/15-product-spec.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/16-target-architecture.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/17-tech-tasks.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/18-benchmark-plan.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/20-claude-mem-feature-matrix.html</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/21-competitor-landscape.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/22-improve-the-numbers.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/23-memory-building.html</loc><lastmod>2026-10-26</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/24-repo-parity-and-growth.html</loc><lastmod>2026-10-27</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/25-installers.html</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/26-memory-pipeline.html</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/27-free-paid-parity.html</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/28-competitor-report.html</loc><lastmod>2026-10-26</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/29-sync.html</loc><lastmod>2026-10-27</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/30-remote-mcp.html</loc><lastmod>2026-10-26</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/31-team.html</loc><lastmod>2026-10-27</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/32-requests.html</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/a11y-walk-requests.html</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/announcement.html</loc><lastmod>2026-10-27</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/claude-desktop.html</loc><lastmod>2026-10-26</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/dependencies.html</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/manual-test.html</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/releasing.html</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/ui-design.html</loc><lastmod>2026-10-27</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/ui-study.html</loc><lastmod>2026-10-27</lastmod></url>
 </urlset>

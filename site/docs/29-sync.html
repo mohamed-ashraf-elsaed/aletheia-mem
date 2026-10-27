@@ -77,9 +77,8 @@ aletheia sync join https://&lt;assigned-host&gt;.trycloudflare.com &lt;code&gt;<
 <p>claude-mem's hub appends to a per-user log and refuses the whole batch when any op is refused (&quot;any refusal rolls back all of it&quot;, <code>store.ts</code>). Users got stuck for days on a stale or conflicting op: issue 4086 and issue 3964. Aletheia answers per op, so one bad op never blocks the rest.</p>
 <p>claude-mem couples every push to its closed &quot;projection&quot; catching up (<code>projected_seq</code>), which caused 33-hour 500/429 outages (issue 4191) and a stuck <code>projected_seq</code> (issue 4198). Aletheia's hub is its own store, so there is no second system to lag.</p>
 <p>claude-mem stores op bodies in clear text on the hub; the schema file says retention, rotation and compaction are out of scope. Aletheia runs redaction before send, adds tombstones with compaction and purge, keeps payloads off the audit table, and offers the optional E2EE mode in §29.6 for accounts that enable it.</p>
-<p>Sources are in <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/research/A1-claude-mem-paid.md">research/A1-claude-mem-paid.md</a> and its dated source table.</p>
 <h2 id="2911-sources">29.11 Sources</h2>
-<ul><li><a href="27-free-paid-parity.html">27-free-paid-parity.md</a> and <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/research/A1-claude-mem-paid.md">research/A1-claude-mem-paid.md</a>.</li><li>The task files T-102, T-103, T-104, T-108 and T-117, and the sync tests.</li></ul>
+<ul><li>The sync tests in <code>test/</code>.</li></ul>
 </article>
 <footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
 </main>

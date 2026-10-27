@@ -38,7 +38,7 @@ Returns the whole page state. Top-level fields, in order:
 | `recentActivity` | `Activity[]` (<=160) | Newest first, each with `agentGroupId`. |
 | `goals` | `Goals \| null` | Current goals; gains `alignedAt`. |
 | `goalHistory` | `Goals[]` | Past months, newest first. |
-| `rules`, `ruleScopes`, `rulesLearning` | | My Rules ([04](04-read-model.md#rules)). |
+| `rules`, `ruleScopes`, `rulesLearning` | | My Rules. |
 | `humanRequests` | `Request[]` | One card per human request, newest first. |
 | `unlinkedWork` | `Item[]` | Work items that could not be tied to a human request, each with `reason`. |
 | `coverage` | object | Counts and limits (`workRows`, `workLimit`, `linkedWork`, `ownerWork`, `unattributedWork`, `observations`, `observationLimit`, `summaries`, `livePresenceAvailable:false`, `summaryMethod`, `fullHistoryUrl:"/viewer"`). |
@@ -135,7 +135,7 @@ flow with no meaning here.
 ## 3.3 Behaviour not guaranteed identical
 
 The exact wording of validation errors (the original uses zod) and the 404 HTML body are reproduced from
-observation, not from source. See [08-findings.md](08-findings.md).
+observation, not from source.
 
 ## 3.4 Team mode (T-112)
 

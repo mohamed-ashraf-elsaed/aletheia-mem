@@ -36,7 +36,7 @@ body:
     attributes:
       label: Before submitting
       options:
-        - label: I read the task list in docs/tasks/TASKS.md; this is not already planned or rejected.
+        - label: I searched the open and closed issues; this is not already planned or rejected.
           required: true
         - label: I did not include secrets, private text or a vendor number without a source URL and date.
           required: true

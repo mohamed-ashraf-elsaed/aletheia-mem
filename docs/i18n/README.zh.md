@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 96cd23aedab759442b76286834cc3c14adcd8d9332907ac3e646bdadf5b4590c
+> Source: [README.md](../../README.md) · source-sha256: a54f6f3ec3c173caef02960fcaeadc82b280da8dcdd4f6eecedb5b42ce0849e7
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -92,16 +92,16 @@ _Generated from src/hub/install.mjs via `aletheia install --list`. A row says te
 | Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
 | Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
-_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (docs/14 §14.6, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
+_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
 <!-- /gen:bench -->
 
 这样读这张表：
 
 - **Recall@5 是检索指标。** 它问的是正确证据是否出现在前五个结果中，并不判断答案是否正确。
-- **答案准确率尚未测量。** 目前没有阅读器或评判器测试框架（T-051）。
+- **答案准确率尚未测量。** 目前没有阅读器或评判器测试框架。
 - **当双方获得相同的抽取事实时，差距不是 2 倍。** 速度差异大于质量差异。
 - **第一次本地抽取运行失败了。** Ollama `llama3.2:1b` 能回答一个简单调用，但 `facts-v1` 提示在两轮窗口上运行 4 分 41 秒后返回 HTTP 500。该次运行没有抽取到任何事实。
-- **我们的规则抽取器没有复现事实带来的增益。** 它添加了 1,672 条事实，把 Recall@5 从 57.3% 提高到 57.7%；数据集自带的事实在相同条件下提高了 7.3 分。方法、原始文件和负面结果：[docs/22](../../docs/22-improve-the-numbers.md)。
+- **我们的规则抽取器没有复现事实带来的增益。** 它添加了 1,672 条事实，把 Recall@5 从 57.3% 提高到 57.7%；数据集自带的事实在相同条件下提高了 7.3 分。方法、原始文件和负面结果：[bench/results](../../bench/results/)。
 
 ## 它如何比较
 
@@ -111,20 +111,20 @@ _Retrieval only: Recall@5 asks whether the gold evidence is in the top five resu
 | Local-first | yes | yes | yes OSS | partial (Graphiti only) | yes self-host | yes |
 | Free | yes | yes OSS | yes OSS | partial (Graphiti free) | yes OSS | yes OSS |
 | No account | yes | yes local | yes OSS | yes Graphiti | yes self-host | yes |
-| MCP | yes stdio + HTTP (T-067, T-107) | yes | yes | partial (reference servers) | yes | yes |
+| MCP | yes stdio + HTTP | yes | yes | partial (reference servers) | yes | yes |
 | REST | yes `/v1` | yes worker API | yes | yes | yes | partial |
 | CLI | yes | yes `npx` | partial | no | partial | yes |
 | Rules sync to tool files | yes 9 targets | no | no | no | no | partial (AGENTS.md) |
 | Import/export between tools | partial (own bundle + claude-mem) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
-| Hook capture | yes six hosts, fixture-tested; no host opened (T-140) | yes | no | no | no | partial |
+| Hook capture | yes six hosts, fixture-tested; no host opened | yes | no | no | no | partial |
 | Vector search | partial (optional ONNX) | yes Chroma | yes | yes | yes | yes |
-| Graph / entity memory | partial (entity rows exist; graph retrieval T-048) | no | yes | yes | UNVERIFIED | yes wikilinks |
-| Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query T-026) | partial (dates) | yes | yes | yes | partial |
-| Team sharing | partial (self-hosted sync and devices; team mode T-112) | partial (paid) | yes paid | yes paid | yes paid | no |
+| Graph / entity memory | partial (entity rows exist; graph retrieval) | no | yes | yes | UNVERIFIED | yes wikilinks |
+| Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query) | partial (dates) | yes | yes | yes | partial |
+| Team sharing | partial (self-hosted sync and devices; team mode) | partial (paid) | yes paid | yes paid | yes paid | no |
 | Benchmark published and reproducible | partial (retrieval yes; answer no) | no | vendor only | vendor only | vendor only | no |
 | Languages supported | 11 (English + 10 machine translations; no native review) | 29 modes, 32 READMEs | SDK | SDK | SDK | SDK |
 
-_Generated from docs/28-competitor-report.json (rows copied from docs/21-competitor-landscape.md, fetched 2026-10-26). Aletheia cells updated 2026-10-26 from validated tasks; see docs/20 and docs/25. Cells the source did not state read UNVERIFIED._
+_Competitor cells are copied from each project's own public documentation, fetched 2026-10-26. Aletheia cells were updated 2026-10-26 from tested features; installer sources are in `docs/25-installers.md`. Cells the source did not state read UNVERIFIED._
 <!-- /gen:capabilities -->
 
 ## 同步与远程 MCP
@@ -132,7 +132,7 @@ _Generated from docs/28-competitor-report.json (rows copied from docs/21-competi
 两者都是自托管且免费；都还没有在两台真实机器之间测试过。
 
 - **Aletheia Sync** 是一个只追加的操作日志，每个操作一个结果，支持设备配对、墓碑、压缩、清除和作用域令牌。可选的端到端加密在设备上加密载荷后再发送；**它不隐藏元数据**，例如设备 ID、操作类型、实体 ID、时间和密文大小。未加密账户的载荷在中心以明文保存。只在回环环境测试过。[docs/29](../../docs/29-sync.md)
-- **远程 MCP** 通过 MCP Streamable HTTP 传输提供读取工具（使用 `sync` 或 `admin` 令牌时也包括写入工具）。每次调用都需要持有者令牌，受速率限制，并写入只追加审计行。TLS 交给反向代理或隧道；OAuth 尚未构建（T-111）。[docs/30](../../docs/30-remote-mcp.md)
+- **远程 MCP** 通过 MCP Streamable HTTP 传输提供读取工具（使用 `sync` 或 `admin` 令牌时也包括写入工具）。每次调用都需要持有者令牌，受速率限制，并写入只追加审计行。TLS 交给反向代理或隧道；OAuth 尚未构建。[docs/30](../../docs/30-remote-mcp.md)
 
 ## 接口
 
@@ -161,13 +161,12 @@ _Generated from docs/28-competitor-report.json (rows copied from docs/21-competi
 | `ALETHEIA_PROVIDERS` | empty | Ordered fallback chain, for example `ollama,openai`. |
 | `ALETHEIA_OPENAI_BASE_URL`, `_API_KEY`, `_MODEL` | OpenRouter URL, empty, empty | For `openai` and human copy. |
 | `ALETHEIA_OUTPUT_LANGUAGE` | empty | Language for extracted facts and summaries. |
-| `ALETHEIA_BUG_COMPAT` | off | `1` reproduces the original's empty observation half ([F1](../../docs/08-findings.md)). |
+| `ALETHEIA_BUG_COMPAT` | off | `1` reproduces the original's empty observation half. |
 | `ALETHEIA_TOOL`, `ALETHEIA_CWD` | | MCP server: names the calling tool and default project. |
 
 ## 限制与未验证声明
 
-这份清单是 README 诚实的一半。每一项都记录在
-[docs/tasks/unverified.md](../../docs/tasks/unverified.md)。
+这份清单是 README 诚实的一半。
 
 - 没有任何配置在宿主应用内运行过。“配置根据文档编写，未在真实安装中测试。”
 - CI 在 Linux 和 macOS 上运行。基准测试只在 Linux 上运行。Windows 暂不支持，也未测试。
@@ -197,24 +196,16 @@ docs/           the documents
 
 ## 文档
 
-1. [架构](../../docs/01-architecture.md) · 2. [数据模型](../../docs/02-data-model.md) · 3. [HTTP API](../../docs/03-http-api.md)
-   · 4. [读模型](../../docs/04-read-model.md) · 5. [刷新流水线](../../docs/05-refresh-pipeline.md)
-   · 6. [前端](../../docs/06-frontend.md) · 7. [运维](../../docs/07-operations.md)
-   · 8. [发现](../../docs/08-findings.md) · 9. [验证](../../docs/09-verification.md)
-   · 10. [重建指南](../../docs/10-rebuild-guide.md)
-2. [与 claude-mem 的功能清单](../../docs/11-feature-inventory.md) · [产品](../../docs/12-universal-memory-product.md)
-3. [研究与测量结果](../../docs/14-research-ai-memory.md) · [产品规格](../../docs/15-product-spec.md)
-   · [目标架构](../../docs/16-target-architecture.md) · [技术任务](../../docs/17-tech-tasks.md)
-   · [基准计划](../../docs/18-benchmark-plan.md)
-4. [功能矩阵](../../docs/20-claude-mem-feature-matrix.md) · [竞品全景](../../docs/21-competitor-landscape.md)
-   · [改进数字](../../docs/22-improve-the-numbers.md) · [记忆构建](../../docs/23-memory-building.md)
-5. [仓库对齐](../../docs/24-repo-parity-and-growth.md) · [安装器](../../docs/25-installers.md)
-   · [记忆流水线](../../docs/26-memory-pipeline.md) · [免费付费对齐](../../docs/27-free-paid-parity.md)
-6. [竞品报告](../../docs/28-competitor-report.md) · [同步](../../docs/29-sync.md) · [远程 MCP](../../docs/30-remote-mcp.md)
+1. [架构](../../docs/01-architecture.md) · [数据模型](../../docs/02-data-model.md) · [HTTP API](../../docs/03-http-api.md)
+   · [前端](../../docs/06-frontend.md) · [运维](../../docs/07-operations.md)
+2. [安装器](../../docs/25-installers.md) · [同步](../../docs/29-sync.md) · [远程 MCP](../../docs/30-remote-mcp.md)
+   · [Team mode](../../docs/31-team.md) · [Requests and goals](../../docs/32-requests.md)
+3. [Dependencies and licences](../../docs/dependencies.md) · [Claude Desktop](../../docs/claude-desktop.md)
+   · [Rules targets](../../docs/verification/rules-targets.md)
 
 ## 贡献
 
-最有用的贡献是来自真实安装的报告：打开一个 issue，写明工具、版本、你运行的命令以及工具做了什么。参见 [CONTRIBUTING.md](../../CONTRIBUTING.md) 和 [docs/tasks/TASKS.md](../../docs/tasks/TASKS.md) 中的任务系统。提交 PR 前运行 `bun test`、`bun scripts/check-tasks.mjs` 和 `bun scripts/gen-tables.mjs --check`。新增运行时依赖需要说明理由。
+最有用的贡献是来自真实安装的报告：打开一个 issue，写明工具、版本、你运行的命令以及工具做了什么。参见 [CONTRIBUTING.md](../../CONTRIBUTING.md)。提交 PR 前运行 `bun test` 和 `bun scripts/gen-tables.mjs --check`。新增运行时依赖需要说明理由。
 
 ## 许可证
 

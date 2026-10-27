@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 96cd23aedab759442b76286834cc3c14adcd8d9332907ac3e646bdadf5b4590c
+> Source: [README.md](../../README.md) · source-sha256: a54f6f3ec3c173caef02960fcaeadc82b280da8dcdd4f6eecedb5b42ce0849e7
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -92,16 +92,16 @@ LoCoMo で、出荷時の claude-mem 15.2.0 とこのプロジェクトを比較
 | Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
 | Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
-_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (docs/14 §14.6, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
+_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
 <!-- /gen:bench -->
 
 表は次のように読みます:
 
 - **Recall@5 は検索の指標です。** 正しい根拠が上位 5 件に入ったかを問うもので、回答が正しかったかは判断しません。
-- **回答の正確さは未測定です。** 読み手や判定器のハーネスはまだありません（T-051）。
+- **回答の正確さは未測定です。** 読み手や判定器のハーネスはまだありません。
 - **両方が同じ抽出済み事実を受け取ると、差は 2 倍ではありません。** 速度差のほうが品質差より大きいです。
 - **最初のローカル抽出実行は失敗しました。** Ollama `llama3.2:1b` は簡単な呼び出しには答えましたが、2 ターンの窓に対する `facts-v1` プロンプトは 4 分 41 秒後に HTTP 500 を返しました。その実行から事実は抽出されていません。
-- **私たちのルール抽出器は事実による利得を再現していません。** 1,672 件の事実を追加し、Recall@5 を 57.3% から 57.7% に動かしました。データセット自身の事実は 7.3 ポイント追加しました。方法、生ファイル、否定的な結果: [docs/22](../../docs/22-improve-the-numbers.md)。
+- **私たちのルール抽出器は事実による利得を再現していません。** 1,672 件の事実を追加し、Recall@5 を 57.3% から 57.7% に動かしました。データセット自身の事実は 7.3 ポイント追加しました。方法、生ファイル、否定的な結果: [bench/results](../../bench/results/)。
 
 ## 比較
 
@@ -111,20 +111,20 @@ _Retrieval only: Recall@5 asks whether the gold evidence is in the top five resu
 | Local-first | yes | yes | yes OSS | partial (Graphiti only) | yes self-host | yes |
 | Free | yes | yes OSS | yes OSS | partial (Graphiti free) | yes OSS | yes OSS |
 | No account | yes | yes local | yes OSS | yes Graphiti | yes self-host | yes |
-| MCP | yes stdio + HTTP (T-067, T-107) | yes | yes | partial (reference servers) | yes | yes |
+| MCP | yes stdio + HTTP | yes | yes | partial (reference servers) | yes | yes |
 | REST | yes `/v1` | yes worker API | yes | yes | yes | partial |
 | CLI | yes | yes `npx` | partial | no | partial | yes |
 | Rules sync to tool files | yes 9 targets | no | no | no | no | partial (AGENTS.md) |
 | Import/export between tools | partial (own bundle + claude-mem) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
-| Hook capture | yes six hosts, fixture-tested; no host opened (T-140) | yes | no | no | no | partial |
+| Hook capture | yes six hosts, fixture-tested; no host opened | yes | no | no | no | partial |
 | Vector search | partial (optional ONNX) | yes Chroma | yes | yes | yes | yes |
-| Graph / entity memory | partial (entity rows exist; graph retrieval T-048) | no | yes | yes | UNVERIFIED | yes wikilinks |
-| Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query T-026) | partial (dates) | yes | yes | yes | partial |
-| Team sharing | partial (self-hosted sync and devices; team mode T-112) | partial (paid) | yes paid | yes paid | yes paid | no |
+| Graph / entity memory | partial (entity rows exist; graph retrieval) | no | yes | yes | UNVERIFIED | yes wikilinks |
+| Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query) | partial (dates) | yes | yes | yes | partial |
+| Team sharing | partial (self-hosted sync and devices; team mode) | partial (paid) | yes paid | yes paid | yes paid | no |
 | Benchmark published and reproducible | partial (retrieval yes; answer no) | no | vendor only | vendor only | vendor only | no |
 | Languages supported | 11 (English + 10 machine translations; no native review) | 29 modes, 32 READMEs | SDK | SDK | SDK | SDK |
 
-_Generated from docs/28-competitor-report.json (rows copied from docs/21-competitor-landscape.md, fetched 2026-10-26). Aletheia cells updated 2026-10-26 from validated tasks; see docs/20 and docs/25. Cells the source did not state read UNVERIFIED._
+_Competitor cells are copied from each project's own public documentation, fetched 2026-10-26. Aletheia cells were updated 2026-10-26 from tested features; installer sources are in `docs/25-installers.md`. Cells the source did not state read UNVERIFIED._
 <!-- /gen:capabilities -->
 
 ## 同期とリモート MCP
@@ -132,7 +132,7 @@ _Generated from docs/28-competitor-report.json (rows copied from docs/21-competi
 どちらもセルフホストで無料です。どちらも 2 台の実機では検証していません。
 
 - **Aletheia Sync** は追記専用の操作ログで、操作ごとの結果、デバイスペアリング、墓標、圧縮、パージ、スコープ付きトークンを持ちます。任意のエンドツーエンド暗号化は、送信前にデバイス上でペイロードを暗号化します。**メタデータは隠しません**（デバイス ID、操作種別、エンティティ ID、時刻、暗号文の長さなど）。暗号化しないアカウントはハブ上で平文のペイロードを保持します。ループバックでのみ検証済みです。[docs/29](../../docs/29-sync.md)
-- **リモート MCP** は読み取りツール（`sync` または `admin` トークンでは書き込みツールも）を MCP Streamable HTTP トランスポートで提供します。各呼び出しにはベアラートークンが必要で、レート制限され、追記専用の監査行に記録されます。TLS はリバースプロキシまたはトンネルに任せます。OAuth は未実装です（T-111）。[docs/30](../../docs/30-remote-mcp.md)
+- **リモート MCP** は読み取りツール（`sync` または `admin` トークンでは書き込みツールも）を MCP Streamable HTTP トランスポートで提供します。各呼び出しにはベアラートークンが必要で、レート制限され、追記専用の監査行に記録されます。TLS はリバースプロキシまたはトンネルに任せます。OAuth は未実装です。[docs/30](../../docs/30-remote-mcp.md)
 
 ## インターフェース
 
@@ -161,13 +161,12 @@ _Generated from docs/28-competitor-report.json (rows copied from docs/21-competi
 | `ALETHEIA_PROVIDERS` | empty | Ordered fallback chain, for example `ollama,openai`. |
 | `ALETHEIA_OPENAI_BASE_URL`, `_API_KEY`, `_MODEL` | OpenRouter URL, empty, empty | For `openai` and human copy. |
 | `ALETHEIA_OUTPUT_LANGUAGE` | empty | Language for extracted facts and summaries. |
-| `ALETHEIA_BUG_COMPAT` | off | `1` reproduces the original's empty observation half ([F1](../../docs/08-findings.md)). |
+| `ALETHEIA_BUG_COMPAT` | off | `1` reproduces the original's empty observation half. |
 | `ALETHEIA_TOOL`, `ALETHEIA_CWD` | | MCP server: names the calling tool and default project. |
 
 ## 制限と未検証の主張
 
-この一覧は README の正直な半分です。各項目は
-[docs/tasks/unverified.md](../../docs/tasks/unverified.md) で追跡されています。
+この一覧は README の正直な半分です。
 
 - どの設定もホストアプリ内では実行されていません。「設定はドキュメントから書き、実インストールでは未検証」です。
 - CI は Linux と macOS で動作します。ベンチマークは Linux のみです。Windows は未対応で、未検証です。
@@ -197,24 +196,16 @@ docs/           the documents
 
 ## ドキュメント
 
-1. [アーキテクチャ](../../docs/01-architecture.md) · 2. [データモデル](../../docs/02-data-model.md) · 3. [HTTP API](../../docs/03-http-api.md)
-   · 4. [読み取りモデル](../../docs/04-read-model.md) · 5. [更新パイプライン](../../docs/05-refresh-pipeline.md)
-   · 6. [フロントエンド](../../docs/06-frontend.md) · 7. [運用](../../docs/07-operations.md)
-   · 8. [知見](../../docs/08-findings.md) · 9. [検証](../../docs/09-verification.md)
-   · 10. [再構築ガイド](../../docs/10-rebuild-guide.md)
-2. [claude-mem との機能一覧](../../docs/11-feature-inventory.md) · [製品](../../docs/12-universal-memory-product.md)
-3. [研究と測定結果](../../docs/14-research-ai-memory.md) · [製品仕様](../../docs/15-product-spec.md)
-   · [目標アーキテクチャ](../../docs/16-target-architecture.md) · [技術タスク](../../docs/17-tech-tasks.md)
-   · [ベンチマーク計画](../../docs/18-benchmark-plan.md)
-4. [機能マトリクス](../../docs/20-claude-mem-feature-matrix.md) · [競合の全体像](../../docs/21-competitor-landscape.md)
-   · [数値を改善する](../../docs/22-improve-the-numbers.md) · [メモリ構築](../../docs/23-memory-building.md)
-5. [リポジトリの parity](../../docs/24-repo-parity-and-growth.md) · [インストーラー](../../docs/25-installers.md)
-   · [メモリパイプライン](../../docs/26-memory-pipeline.md) · [無料と有料の parity](../../docs/27-free-paid-parity.md)
-6. [競合レポート](../../docs/28-competitor-report.md) · [同期](../../docs/29-sync.md) · [リモート MCP](../../docs/30-remote-mcp.md)
+1. [アーキテクチャ](../../docs/01-architecture.md) · [データモデル](../../docs/02-data-model.md) · [HTTP API](../../docs/03-http-api.md)
+   · [フロントエンド](../../docs/06-frontend.md) · [運用](../../docs/07-operations.md)
+2. [インストーラー](../../docs/25-installers.md) · [同期](../../docs/29-sync.md) · [リモート MCP](../../docs/30-remote-mcp.md)
+   · [Team mode](../../docs/31-team.md) · [Requests and goals](../../docs/32-requests.md)
+3. [Dependencies and licences](../../docs/dependencies.md) · [Claude Desktop](../../docs/claude-desktop.md)
+   · [Rules targets](../../docs/verification/rules-targets.md)
 
 ## 貢献
 
-最も役立つ貢献は実インストールからの報告です。ツール、そのバージョン、実行したコマンド、ツールが何をしたかを issue に書いてください。[CONTRIBUTING.md](../../CONTRIBUTING.md) と [docs/tasks/TASKS.md](../../docs/tasks/TASKS.md) のタスクシステムも参照してください。プルリクエストの前に `bun test`、`bun scripts/check-tasks.mjs`、`bun scripts/gen-tables.mjs --check` を実行してください。新しいランタイム依存には理由が必要です。
+最も役立つ貢献は実インストールからの報告です。ツール、そのバージョン、実行したコマンド、ツールが何をしたかを issue に書いてください。[CONTRIBUTING.md](../../CONTRIBUTING.md) を参照してください。プルリクエストの前に `bun test`、`bun scripts/gen-tables.mjs --check` を実行してください。新しいランタイム依存には理由が必要です。
 
 ## ライセンス
 

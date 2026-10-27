@@ -63,7 +63,7 @@ The page never calls anything else for its main view. It downloads one JSON docu
    activity head (max id and count of five tables, `PRAGMA data_version`), ledger file mtimes. If none
    changed, it returns the cached view.
 2. If they changed, inside one read transaction it re-folds work state (when that changed), runs
-   `readActivityRows` (bounded SQL, section 4 of [04-read-model.md](04-read-model.md)), builds the agent view,
+   `readActivityRows` (bounded SQL), builds the agent view,
    and hashes every raw row each request cites.
 3. `goalLinks()` attaches, to each request, the goals the alignment step linked it to.
 4. The service adds, per request, a content fingerprint and the review state (checked or not).

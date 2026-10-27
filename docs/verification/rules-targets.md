@@ -31,5 +31,4 @@ launch). "Real tool read" means the tool loaded the file; none of those were run
 
 ## Not done
 
-No tool was launched to confirm it read the file. That needs a manual pass per tool; see
-[docs/manual-test.md](../manual-test.md). Copilot and Aider formats were not re-fetched.
+No tool was launched to confirm it read the file. That needs a manual pass per tool. Copilot and Aider formats were not re-fetched.

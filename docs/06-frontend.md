@@ -25,7 +25,7 @@ Screens (real captures of the running app on seeded demo data, labelled `?demo=1
 | File | What it holds |
 |---|---|
 | `public/index.html` | The shell: header, tab links, search, theme switch, status strip, four page containers, live regions. No inline script or style. |
-| `public/ui-theme.css`, `public/ui-theme-init.js`, `public/ui-theme.js` | Design tokens, and the Auto, Dark, Light switch saved in `localStorage` (`aletheia.theme`). See [ui-design.md](ui-design.md). |
+| `public/ui-theme.css`, `public/ui-theme-init.js`, `public/ui-theme.js` | Design tokens, and the Auto, Dark, Light switch saved in `localStorage` (`aletheia.theme`). |
 | `public/ui-components.css`, `public/ui-components.js` | The component library: buttons, toasts, dialogs, drawer, tabs, segmented control, switch, tooltip, popover, cards, stat tiles, skeletons, progress, empty and error states, pager, code block, Markdown view, timeline, chip filters, clamped text, disclosure. |
 | `public/ui-brand.js`, `public/ui-icons.js`, `public/ui-motion.js` | The brain mark and loader, the tab icon in three states, inline SVG icons, Web Animations helpers. |
 | `public/ui-pure.js`, `public/ui-core.js`, `public/ui-status-model.js` | DOM-free logic: pager maths, relative time, highlight, URL hash state, the Region state machine, poll backoff, the nine status indicators, routes. |
@@ -132,8 +132,7 @@ ALETHEIA_DATA_DIR=/tmp/aletheia-demo/data HOME=/tmp/aletheia-demo/home ALETHEIA_
 ```
 
 `?demo=1` shows a banner saying the data is made up. `bun scripts/measure-api.mjs http://127.0.0.1:37891` times the list routes.
-Tests: `bun test test/ui-*.test.mjs test/pagination.test.mjs test/seed-demo.test.mjs`. Measured numbers are in
-[ui-design.md](ui-design.md#measured-performance).
+Tests: `bun test test/ui-*.test.mjs test/pagination.test.mjs test/seed-demo.test.mjs`.
 
 ## 6.9 Requests, goals, story and economics
 
@@ -158,7 +157,7 @@ memory. A per-observation work token value is `null` by design, so the row print
 sentence; zero is never substituted.
 
 Every value that is a chosen rule rather than a measurement carries an "estimated" link to
-[tasks/unverified.md](tasks/unverified.md#request-layer-story-and-economics-2026-10-27): request grouping, progress,
+[docs/32 section 32.12](32-requests.md#3212-what-is-not-done): request grouping, progress,
 ETA, goal progress, rule strength bands and read tokens.
 
 ## 6.10 The classic viewer (optional)

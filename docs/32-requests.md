@@ -221,18 +221,17 @@ The UI is wired; no new tab was added. The existing modules changed shape:
 | `POST /api/hub/rules/:id/replace` | Rules tab: Replace, which says the old rule is kept |
 
 Progress, ETA, request grouping, goal progress, rule strength and read tokens carry an "estimated" link to
-[tasks/unverified.md](tasks/unverified.md#request-layer-story-and-economics-2026-10-27). The request route has no
+[section 32.12](#3212-what-is-not-done). The request route has no
 `offset`, so the Work tab offers a page size and the server's counts, not a pager that would repeat the same rows.
 
 ## 32.12 What is not done
 
 - **A model-written story.** The build story is rule-based. No model was run, so no prose quality is claimed.
-- **Measured thresholds.** The progress formula, the 24 h request gap, the ETA pace and the rule strength bands are
-  chosen rules, not measured against owner behaviour. See [tasks/unverified.md](tasks/unverified.md).
+- **Measured thresholds.** Request grouping (the 24 h gap), progress, ETA pace, goal progress, rule strength bands
+  and read tokens are chosen rules, not measured against owner behaviour. Every page that prints one labels it
+  "estimated" and links here.
 - **Per-observation work tokens.** The usage ledger is per extraction call, so per-observation work tokens are `null`.
 
 ## 32.13 Sources
 
-- The task files T-152, T-165 to T-173 and T-218 to T-222 for the acceptance criteria and the UI wiring.
-- [26-memory-pipeline.md](26-memory-pipeline.md) for the store and the worker.
-- `aletheia-private/claude-mem-gap-report.md` for the gap list (read-only). No external URL was fetched for this page.
+- The modules named at the top of this page and their tests in `test/`. No external URL was fetched for this page.

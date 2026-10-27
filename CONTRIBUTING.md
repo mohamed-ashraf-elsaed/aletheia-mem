@@ -11,4 +11,4 @@ The most useful contribution right now is a **report from a real install** of a 
 (Cursor, Gemini CLI, Codex CLI, Windsurf, OpenCode, Claude Code): did `aletheia connect <tool> --write` work, and
 did the tool then see the memory? Open an issue with the tool, its version and the result.
 
-Open items are in [docs/17-tech-tasks.md](docs/17-tech-tasks.md).
+Open work is in the [issue tracker](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues).

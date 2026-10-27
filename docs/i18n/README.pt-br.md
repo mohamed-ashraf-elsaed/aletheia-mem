@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 96cd23aedab759442b76286834cc3c14adcd8d9332907ac3e646bdadf5b4590c
+> Source: [README.md](../../README.md) · source-sha256: a54f6f3ec3c173caef02960fcaeadc82b280da8dcdd4f6eecedb5b42ce0849e7
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -92,16 +92,16 @@ No LoCoMo, claude-mem 15.2.0 como distribuído contra este projeto. **São núme
 | Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
 | Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
-_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (docs/14 §14.6, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
+_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
 <!-- /gen:bench -->
 
 Leia a tabela assim:
 
 - **Recall@5 é recuperação.** Pergunta se a evidência correta está entre os cinco primeiros resultados. Não julga se uma resposta estava certa.
-- **A precisão das respostas não está medida.** Ainda não há uma bancada de leitura ou julgamento (T-051).
+- **A precisão das respostas não está medida.** Ainda não há uma bancada de leitura ou julgamento.
 - **A diferença não é 2×** quando os dois sistemas recebem os mesmos fatos extraídos. A diferença de velocidade é maior que a de qualidade.
 - **A primeira execução de extração local falhou.** O Ollama `llama3.2:1b` respondeu a uma chamada trivial, mas o prompt `facts-v1` em uma janela de dois turnos devolveu HTTP 500 após 4 min 41 s. Nenhum fato foi extraído dessa execução.
-- **Nosso extrator de regras não reproduz o ganho dos fatos.** Ele adicionou 1.672 fatos e moveu o Recall@5 de 57,3% para 57,7%; os fatos do próprio conjunto adicionaram 7,3 pontos. Método, arquivos brutos e o resultado negativo: [docs/22](../../docs/22-improve-the-numbers.md).
+- **Nosso extrator de regras não reproduz o ganho dos fatos.** Ele adicionou 1.672 fatos e moveu o Recall@5 de 57,3% para 57,7%; os fatos do próprio conjunto adicionaram 7,3 pontos. Método, arquivos brutos e o resultado negativo: [bench/results](../../bench/results/).
 
 ## Como se compara
 
@@ -111,20 +111,20 @@ Leia a tabela assim:
 | Local-first | yes | yes | yes OSS | partial (Graphiti only) | yes self-host | yes |
 | Free | yes | yes OSS | yes OSS | partial (Graphiti free) | yes OSS | yes OSS |
 | No account | yes | yes local | yes OSS | yes Graphiti | yes self-host | yes |
-| MCP | yes stdio + HTTP (T-067, T-107) | yes | yes | partial (reference servers) | yes | yes |
+| MCP | yes stdio + HTTP | yes | yes | partial (reference servers) | yes | yes |
 | REST | yes `/v1` | yes worker API | yes | yes | yes | partial |
 | CLI | yes | yes `npx` | partial | no | partial | yes |
 | Rules sync to tool files | yes 9 targets | no | no | no | no | partial (AGENTS.md) |
 | Import/export between tools | partial (own bundle + claude-mem) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
-| Hook capture | yes six hosts, fixture-tested; no host opened (T-140) | yes | no | no | no | partial |
+| Hook capture | yes six hosts, fixture-tested; no host opened | yes | no | no | no | partial |
 | Vector search | partial (optional ONNX) | yes Chroma | yes | yes | yes | yes |
-| Graph / entity memory | partial (entity rows exist; graph retrieval T-048) | no | yes | yes | UNVERIFIED | yes wikilinks |
-| Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query T-026) | partial (dates) | yes | yes | yes | partial |
-| Team sharing | partial (self-hosted sync and devices; team mode T-112) | partial (paid) | yes paid | yes paid | yes paid | no |
+| Graph / entity memory | partial (entity rows exist; graph retrieval) | no | yes | yes | UNVERIFIED | yes wikilinks |
+| Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query) | partial (dates) | yes | yes | yes | partial |
+| Team sharing | partial (self-hosted sync and devices; team mode) | partial (paid) | yes paid | yes paid | yes paid | no |
 | Benchmark published and reproducible | partial (retrieval yes; answer no) | no | vendor only | vendor only | vendor only | no |
 | Languages supported | 11 (English + 10 machine translations; no native review) | 29 modes, 32 READMEs | SDK | SDK | SDK | SDK |
 
-_Generated from docs/28-competitor-report.json (rows copied from docs/21-competitor-landscape.md, fetched 2026-10-26). Aletheia cells updated 2026-10-26 from validated tasks; see docs/20 and docs/25. Cells the source did not state read UNVERIFIED._
+_Competitor cells are copied from each project's own public documentation, fetched 2026-10-26. Aletheia cells were updated 2026-10-26 from tested features; installer sources are in `docs/25-installers.md`. Cells the source did not state read UNVERIFIED._
 <!-- /gen:capabilities -->
 
 ## Sincronização e MCP remoto
@@ -132,7 +132,7 @@ _Generated from docs/28-competitor-report.json (rows copied from docs/21-competi
 Ambos são auto-hospedados e gratuitos; nenhum foi testado entre duas máquinas reais.
 
 - **Aletheia Sync** é um log de operações somente de acréscimo com um resultado por operação, pareamento de dispositivos, lápides, compactação, purga e tokens com escopo. A criptografia ponta a ponta opcional criptografa as cargas no dispositivo antes do envio; **ela não esconde metadados** como id do dispositivo, tipo de operação, id da entidade, horário ou tamanho do texto cifrado. Contas sem criptografia mantêm as cargas em texto claro no hub. Testado apenas em loopback. [docs/29](../../docs/29-sync.md)
-- **MCP remoto** serve as ferramentas de leitura (e, com um token `sync` ou `admin`, as de escrita) pelo transporte MCP Streamable HTTP. Cada chamada exige um token de portador, tem limite de taxa e grava uma linha de auditoria somente de acréscimo. O TLS fica a cargo de um proxy reverso ou túnel; OAuth não foi construído (T-111). [docs/30](../../docs/30-remote-mcp.md)
+- **MCP remoto** serve as ferramentas de leitura (e, com um token `sync` ou `admin`, as de escrita) pelo transporte MCP Streamable HTTP. Cada chamada exige um token de portador, tem limite de taxa e grava uma linha de auditoria somente de acréscimo. O TLS fica a cargo de um proxy reverso ou túnel; OAuth não foi construído. [docs/30](../../docs/30-remote-mcp.md)
 
 ## Interfaces
 
@@ -161,13 +161,12 @@ Todas as configurações são variáveis de ambiente. Os padrões são seguros p
 | `ALETHEIA_PROVIDERS` | empty | Ordered fallback chain, for example `ollama,openai`. |
 | `ALETHEIA_OPENAI_BASE_URL`, `_API_KEY`, `_MODEL` | OpenRouter URL, empty, empty | For `openai` and human copy. |
 | `ALETHEIA_OUTPUT_LANGUAGE` | empty | Language for extracted facts and summaries. |
-| `ALETHEIA_BUG_COMPAT` | off | `1` reproduces the original's empty observation half ([F1](../../docs/08-findings.md)). |
+| `ALETHEIA_BUG_COMPAT` | off | `1` reproduces the original's empty observation half. |
 | `ALETHEIA_TOOL`, `ALETHEIA_CWD` | | MCP server: names the calling tool and default project. |
 
 ## Limites e afirmações não verificadas
 
-Esta lista é a metade honesta do README. Cada item é acompanhado em
-[docs/tasks/unverified.md](../../docs/tasks/unverified.md).
+Esta lista é a metade honesta do README.
 
 - Nenhuma configuração foi executada dentro do aplicativo anfitrião. “Configuração escrita a partir da documentação, não testada em uma instalação real.”
 - A CI roda no Linux e no macOS. O benchmark roda apenas no Linux. O Windows ainda não é suportado e não foi testado.
@@ -197,24 +196,16 @@ docs/           the documents
 
 ## Documentos
 
-1. [Arquitetura](../../docs/01-architecture.md) · 2. [Modelo de dados](../../docs/02-data-model.md) · 3. [API HTTP](../../docs/03-http-api.md)
-   · 4. [Modelo de leitura](../../docs/04-read-model.md) · 5. [Pipeline de atualização](../../docs/05-refresh-pipeline.md)
-   · 6. [Frontend](../../docs/06-frontend.md) · 7. [Operações](../../docs/07-operations.md)
-   · 8. [Descobertas](../../docs/08-findings.md) · 9. [Verificação](../../docs/09-verification.md)
-   · 10. [Guia de reconstrução](../../docs/10-rebuild-guide.md)
-2. [Inventário de recursos contra o claude-mem](../../docs/11-feature-inventory.md) · [Produto](../../docs/12-universal-memory-product.md)
-3. [Pesquisa e resultados medidos](../../docs/14-research-ai-memory.md) · [Especificação](../../docs/15-product-spec.md)
-   · [Arquitetura alvo](../../docs/16-target-architecture.md) · [Tarefas técnicas](../../docs/17-tech-tasks.md)
-   · [Plano de benchmark](../../docs/18-benchmark-plan.md)
-4. [Matriz de recursos](../../docs/20-claude-mem-feature-matrix.md) · [Panorama de concorrentes](../../docs/21-competitor-landscape.md)
-   · [Melhorar os números](../../docs/22-improve-the-numbers.md) · [Construção de memória](../../docs/23-memory-building.md)
-5. [Paridade do repositório](../../docs/24-repo-parity-and-growth.md) · [Instaladores](../../docs/25-installers.md)
-   · [Pipeline de memória](../../docs/26-memory-pipeline.md) · [Paridade gratuito/pago](../../docs/27-free-paid-parity.md)
-6. [Relatório de concorrentes](../../docs/28-competitor-report.md) · [Sincronização](../../docs/29-sync.md) · [MCP remoto](../../docs/30-remote-mcp.md)
+1. [Arquitetura](../../docs/01-architecture.md) · [Modelo de dados](../../docs/02-data-model.md) · [API HTTP](../../docs/03-http-api.md)
+   · [Frontend](../../docs/06-frontend.md) · [Operações](../../docs/07-operations.md)
+2. [Instaladores](../../docs/25-installers.md) · [Sincronização](../../docs/29-sync.md) · [MCP remoto](../../docs/30-remote-mcp.md)
+   · [Team mode](../../docs/31-team.md) · [Requests and goals](../../docs/32-requests.md)
+3. [Dependencies and licences](../../docs/dependencies.md) · [Claude Desktop](../../docs/claude-desktop.md)
+   · [Rules targets](../../docs/verification/rules-targets.md)
 
 ## Contribuir
 
-A contribuição mais útil é um relatório de uma instalação real: abra um issue com a ferramenta, sua versão, o comando que você rodou e o que a ferramenta fez. Veja [CONTRIBUTING.md](../../CONTRIBUTING.md) e o sistema de tarefas em [docs/tasks/TASKS.md](../../docs/tasks/TASKS.md). Rode `bun test`, `bun scripts/check-tasks.mjs` e `bun scripts/gen-tables.mjs --check` antes de um pull request. Uma nova dependência de execução precisa de uma razão.
+A contribuição mais útil é um relatório de uma instalação real: abra um issue com a ferramenta, sua versão, o comando que você rodou e o que a ferramenta fez. Veja [CONTRIBUTING.md](../../CONTRIBUTING.md). Rode `bun test` e `bun scripts/gen-tables.mjs --check` antes de um pull request. Uma nova dependência de execução precisa de uma razão.
 
 ## Licença
 

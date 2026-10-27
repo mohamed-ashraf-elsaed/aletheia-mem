@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 96cd23aedab759442b76286834cc3c14adcd8d9332907ac3e646bdadf5b4590c
+> Source: [README.md](../../README.md) · source-sha256: a54f6f3ec3c173caef02960fcaeadc82b280da8dcdd4f6eecedb5b42ce0849e7
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -92,16 +92,16 @@ LoCoMo पर, जैसा भेजा जाता है वैसा claude
 | Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
 | Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
-_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (docs/14 §14.6, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
+_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
 <!-- /gen:bench -->
 
 तालिका इस तरह पढ़ें:
 
 - **Recall@5 रिट्रीवल है।** यह पूछता है कि सही साक्ष्य शीर्ष पाँच परिणामों में है या नहीं। यह नहीं बताता कि उत्तर सही था या नहीं।
-- **उत्तर की सटीकता मापी नहीं गई है।** अभी कोई रीडर या जज हार्नेस नहीं है (T-051)।
+- **उत्तर की सटीकता मापी नहीं गई है।** अभी कोई रीडर या जज हार्नेस नहीं है।
 - **जब दोनों सिस्टम को समान निकाले गए तथ्य मिलते हैं तो अंतर 2× नहीं है।** गति का अंतर गुणवत्ता के अंतर से बड़ा है।
 - **पहला लोकल एक्सट्रैक्शन रन विफल रहा।** Ollama `llama3.2:1b` ने एक सामान्य कॉल का उत्तर दिया, लेकिन दो-टर्न विंडो पर `facts-v1` प्रॉम्प्ट 4 मिनट 41 सेकंड बाद HTTP 500 लौटाया। उस रन से कोई तथ्य नहीं निकला।
-- **हमारा नियम एक्सट्रैक्टर तथ्यों का लाभ दोहराता नहीं है।** इसने 1,672 तथ्य जोड़े और Recall@5 को 57.3% से 57.7% किया; डेटासेट के अपने तथ्यों ने 7.3 अंक जोड़े। विधि, कच्ची फ़ाइलें और नकारात्मक परिणाम: [docs/22](../../docs/22-improve-the-numbers.md)।
+- **हमारा नियम एक्सट्रैक्टर तथ्यों का लाभ दोहराता नहीं है।** इसने 1,672 तथ्य जोड़े और Recall@5 को 57.3% से 57.7% किया; डेटासेट के अपने तथ्यों ने 7.3 अंक जोड़े। विधि, कच्ची फ़ाइलें और नकारात्मक परिणाम: [bench/results](../../bench/results/)।
 
 ## इसकी तुलना
 
@@ -111,20 +111,20 @@ _Retrieval only: Recall@5 asks whether the gold evidence is in the top five resu
 | Local-first | yes | yes | yes OSS | partial (Graphiti only) | yes self-host | yes |
 | Free | yes | yes OSS | yes OSS | partial (Graphiti free) | yes OSS | yes OSS |
 | No account | yes | yes local | yes OSS | yes Graphiti | yes self-host | yes |
-| MCP | yes stdio + HTTP (T-067, T-107) | yes | yes | partial (reference servers) | yes | yes |
+| MCP | yes stdio + HTTP | yes | yes | partial (reference servers) | yes | yes |
 | REST | yes `/v1` | yes worker API | yes | yes | yes | partial |
 | CLI | yes | yes `npx` | partial | no | partial | yes |
 | Rules sync to tool files | yes 9 targets | no | no | no | no | partial (AGENTS.md) |
 | Import/export between tools | partial (own bundle + claude-mem) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
-| Hook capture | yes six hosts, fixture-tested; no host opened (T-140) | yes | no | no | no | partial |
+| Hook capture | yes six hosts, fixture-tested; no host opened | yes | no | no | no | partial |
 | Vector search | partial (optional ONNX) | yes Chroma | yes | yes | yes | yes |
-| Graph / entity memory | partial (entity rows exist; graph retrieval T-048) | no | yes | yes | UNVERIFIED | yes wikilinks |
-| Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query T-026) | partial (dates) | yes | yes | yes | partial |
-| Team sharing | partial (self-hosted sync and devices; team mode T-112) | partial (paid) | yes paid | yes paid | yes paid | no |
+| Graph / entity memory | partial (entity rows exist; graph retrieval) | no | yes | yes | UNVERIFIED | yes wikilinks |
+| Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query) | partial (dates) | yes | yes | yes | partial |
+| Team sharing | partial (self-hosted sync and devices; team mode) | partial (paid) | yes paid | yes paid | yes paid | no |
 | Benchmark published and reproducible | partial (retrieval yes; answer no) | no | vendor only | vendor only | vendor only | no |
 | Languages supported | 11 (English + 10 machine translations; no native review) | 29 modes, 32 READMEs | SDK | SDK | SDK | SDK |
 
-_Generated from docs/28-competitor-report.json (rows copied from docs/21-competitor-landscape.md, fetched 2026-10-26). Aletheia cells updated 2026-10-26 from validated tasks; see docs/20 and docs/25. Cells the source did not state read UNVERIFIED._
+_Competitor cells are copied from each project's own public documentation, fetched 2026-10-26. Aletheia cells were updated 2026-10-26 from tested features; installer sources are in `docs/25-installers.md`. Cells the source did not state read UNVERIFIED._
 <!-- /gen:capabilities -->
 
 ## सिंक और रिमोट MCP
@@ -132,7 +132,7 @@ _Generated from docs/28-competitor-report.json (rows copied from docs/21-competi
 दोनों स्व-होस्टेड और मुफ़्त हैं; दोनों दो असली मशीनों पर परीक्षण नहीं हुए हैं।
 
 - **Aletheia Sync** एक केवल-जोड़ने वाला ऑपरेशन लॉग है जिसमें प्रति ऑपरेशन एक परिणाम, डिवाइस पेयरिंग, टॉम्बस्टोन, कम्पैक्शन, पर्ज और स्कोप वाले टोकन हैं। वैकल्पिक एंड-टू-एंड एन्क्रिप्शन भेजने से पहले डिवाइस पर पेलोड एन्क्रिप्ट करता है; **यह मेटाडेटा नहीं छिपाता** जैसे डिवाइस id, ऑपरेशन प्रकार, एंटिटी id, समय या सिफरटेक्स्ट का आकार। बिना एन्क्रिप्शन वाले खाते हब पर सादे पेलोड रखते हैं। केवल लूपबैक पर परीक्षण। [docs/29](../../docs/29-sync.md)
-- **रिमोट MCP** पढ़ने वाले टूल (और `sync` या `admin` टोकन के साथ लिखने वाले टूल) MCP Streamable HTTP ट्रांसपोर्ट पर देता है। हर कॉल के लिए बियरर टोकन चाहिए, दर सीमा लागू है, और हर कॉल केवल-जोड़ने वाली ऑडिट पंक्ति में लिखा जाता है। TLS रिवर्स प्रॉक्सी या टनल को सौंपा गया है; OAuth नहीं बना है (T-111)। [docs/30](../../docs/30-remote-mcp.md)
+- **रिमोट MCP** पढ़ने वाले टूल (और `sync` या `admin` टोकन के साथ लिखने वाले टूल) MCP Streamable HTTP ट्रांसपोर्ट पर देता है। हर कॉल के लिए बियरर टोकन चाहिए, दर सीमा लागू है, और हर कॉल केवल-जोड़ने वाली ऑडिट पंक्ति में लिखा जाता है। TLS रिवर्स प्रॉक्सी या टनल को सौंपा गया है; OAuth नहीं बना है। [docs/30](../../docs/30-remote-mcp.md)
 
 ## इंटरफ़ेस
 
@@ -161,13 +161,12 @@ _Generated from docs/28-competitor-report.json (rows copied from docs/21-competi
 | `ALETHEIA_PROVIDERS` | empty | Ordered fallback chain, for example `ollama,openai`. |
 | `ALETHEIA_OPENAI_BASE_URL`, `_API_KEY`, `_MODEL` | OpenRouter URL, empty, empty | For `openai` and human copy. |
 | `ALETHEIA_OUTPUT_LANGUAGE` | empty | Language for extracted facts and summaries. |
-| `ALETHEIA_BUG_COMPAT` | off | `1` reproduces the original's empty observation half ([F1](../../docs/08-findings.md)). |
+| `ALETHEIA_BUG_COMPAT` | off | `1` reproduces the original's empty observation half. |
 | `ALETHEIA_TOOL`, `ALETHEIA_CWD` | | MCP server: names the calling tool and default project. |
 
 ## सीमाएँ और असत्यापित दावे
 
-यह सूची README का ईमानदार आधा हिस्सा है। हर आइटम
-[docs/tasks/unverified.md](../../docs/tasks/unverified.md) में दर्ज है।
+यह सूची README का ईमानदार आधा हिस्सा है।
 
 - कोई भी कॉन्फ़िग उसके होस्ट ऐप के अंदर नहीं चलाई गई। "कॉन्फ़िग दस्तावेज़ों से लिखी गई, असली इंस्टॉल पर परीक्षण नहीं हुआ।"
 - CI Linux और macOS पर चलता है। बेंचमार्क केवल Linux पर चलता है। Windows अभी समर्थित नहीं है और उसका परीक्षण नहीं हुआ।
@@ -197,24 +196,16 @@ docs/           the documents
 
 ## दस्तावेज़
 
-1. [आर्किटेक्चर](../../docs/01-architecture.md) · 2. [डेटा मॉडल](../../docs/02-data-model.md) · 3. [HTTP API](../../docs/03-http-api.md)
-   · 4. [रीड मॉडल](../../docs/04-read-model.md) · 5. [रिफ़्रेश पाइपलाइन](../../docs/05-refresh-pipeline.md)
-   · 6. [फ़्रंटएंड](../../docs/06-frontend.md) · 7. [संचालन](../../docs/07-operations.md)
-   · 8. [निष्कर्ष](../../docs/08-findings.md) · 9. [सत्यापन](../../docs/09-verification.md)
-   · 10. [पुनर्निर्माण गाइड](../../docs/10-rebuild-guide.md)
-2. [claude-mem के मुकाबले सुविधा सूची](../../docs/11-feature-inventory.md) · [उत्पाद](../../docs/12-universal-memory-product.md)
-3. [शोध और मापे गए परिणाम](../../docs/14-research-ai-memory.md) · [उत्पाद विनिर्देश](../../docs/15-product-spec.md)
-   · [लक्ष्य आर्किटेक्चर](../../docs/16-target-architecture.md) · [तकनीकी कार्य](../../docs/17-tech-tasks.md)
-   · [बेंचमार्क योजना](../../docs/18-benchmark-plan.md)
-4. [सुविधा मैट्रिक्स](../../docs/20-claude-mem-feature-matrix.md) · [प्रतिस्पर्धी परिदृश्य](../../docs/21-competitor-landscape.md)
-   · [आंकड़े सुधारें](../../docs/22-improve-the-numbers.md) · [मेमोरी निर्माण](../../docs/23-memory-building.md)
-5. [रिपॉज़िटरी समानता](../../docs/24-repo-parity-and-growth.md) · [इंस्टॉलर](../../docs/25-installers.md)
-   · [मेमोरी पाइपलाइन](../../docs/26-memory-pipeline.md) · [मुफ़्त/भुगतान समानता](../../docs/27-free-paid-parity.md)
-6. [प्रतिस्पर्धी रिपोर्ट](../../docs/28-competitor-report.md) · [सिंक](../../docs/29-sync.md) · [रिमोट MCP](../../docs/30-remote-mcp.md)
+1. [आर्किटेक्चर](../../docs/01-architecture.md) · [डेटा मॉडल](../../docs/02-data-model.md) · [HTTP API](../../docs/03-http-api.md)
+   · [फ़्रंटएंड](../../docs/06-frontend.md) · [संचालन](../../docs/07-operations.md)
+2. [इंस्टॉलर](../../docs/25-installers.md) · [सिंक](../../docs/29-sync.md) · [रिमोट MCP](../../docs/30-remote-mcp.md)
+   · [Team mode](../../docs/31-team.md) · [Requests and goals](../../docs/32-requests.md)
+3. [Dependencies and licences](../../docs/dependencies.md) · [Claude Desktop](../../docs/claude-desktop.md)
+   · [Rules targets](../../docs/verification/rules-targets.md)
 
 ## योगदान
 
-सबसे उपयोगी योगदान असली इंस्टॉल की रिपोर्ट है: टूल, उसका संस्करण, आपने जो कमांड चलाया और टूल ने क्या किया, यह एक इश्यू में लिखें। [CONTRIBUTING.md](../../CONTRIBUTING.md) और [docs/tasks/TASKS.md](../../docs/tasks/TASKS.md) की टास्क प्रणाली देखें। पुल रिक्वेस्ट से पहले `bun test`, `bun scripts/check-tasks.mjs` और `bun scripts/gen-tables.mjs --check` चलाएँ। नई रनटाइम निर्भरता के लिए कारण चाहिए।
+सबसे उपयोगी योगदान असली इंस्टॉल की रिपोर्ट है: टूल, उसका संस्करण, आपने जो कमांड चलाया और टूल ने क्या किया, यह एक इश्यू में लिखें। [CONTRIBUTING.md](../../CONTRIBUTING.md) देखें। पुल रिक्वेस्ट से पहले `bun test` और `bun scripts/gen-tables.mjs --check` चलाएँ। नई रनटाइम निर्भरता के लिए कारण चाहिए।
 
 ## लाइसेंस
 

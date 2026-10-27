@@ -84,10 +84,10 @@
 </tbody>
 </table>
 
-<p class="note">Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (docs/14 §14.6, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with <code>bun scripts/compare-bench.mjs</code>.</p>
+<p class="note">Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with <code>bun scripts/compare-bench.mjs</code>.</p>
 <!-- /gen:bench -->
   </div>
-  <div class="note"><strong>Read this before comparing.</strong> Recall@5 is retrieval, not answer accuracy. The gap is real but not 2× when both sides see the same extracted facts. At 50,000 memories our keyword search takes 71 to 104 ms (median), which misses our own 50 ms target. Method, baselines and the mistakes we made and fixed are in <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/14-research-ai-memory.md">the research doc</a>.</div>
+  <div class="note"><strong>Read this before comparing.</strong> Recall@5 is retrieval, not answer accuracy. The gap is real but not 2× when both sides see the same extracted facts. At 50,000 memories our keyword search takes 71 to 104 ms (median), which misses our own 50 ms target. Method, baselines and the raw result files are in <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/tree/main/bench/results">bench/results</a>.</div>
 </section>
 
 <section id="tools">
@@ -131,7 +131,7 @@ bun bin/aletheia.mjs connect cursor                                             
 <section id="faq">
   <h2>FAQ</h2>
   <details><summary>Is it really free?</summary><p>Yes. Apache-2.0, no account, no hosted tier, no telemetry. Optional LLM features call the model you configure, and only then.</p></details>
-  <details><summary>How is it different from claude-mem?</summary><p>claude-mem is also open source (Apache-2.0) and has far more features, including per-tool installers, a live viewer and a smart file reader. Aletheia is smaller and tool-neutral: one store for any tool, rules sync, and migration both ways. The <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/11-feature-inventory.md">feature inventory</a> lists exactly what is missing.</p></details>
+  <details><summary>How is it different from claude-mem?</summary><p>claude-mem is also open source (Apache-2.0) and has far more features, including per-tool installers, a live viewer and a smart file reader. Aletheia is smaller and tool-neutral: one store for any tool, rules sync, and migration both ways. The README lists what is missing under <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/README.md#limits-and-unverified-claims">Limits and unverified claims</a>.</p></details>
   <details><summary>Does it replace claude-mem?</summary><p>No. It runs beside it on its own port and never writes to claude-mem's database.</p></details>
   <details><summary>Where is my data?</summary><p>In <code>~/.aletheia/hub.db</code> on your machine. Nothing leaves it unless you turn on an LLM provider or share an export.</p></details>
   <details><summary>Does it work with my tool?</summary><p>If your tool speaks MCP or reads an instruction file, probably. See the table above for what is tested. The honest answer for a real install is "not tested yet".</p></details>

@@ -226,9 +226,6 @@ claude-mem stores op bodies in clear text on the hub; the schema file says reten
 compaction are out of scope. Aletheia runs redaction before send, adds tombstones with compaction and purge,
 keeps payloads off the audit table, and offers the optional E2EE mode in §29.6 for accounts that enable it.
 
-Sources are in [research/A1-claude-mem-paid.md](research/A1-claude-mem-paid.md) and its dated source table.
-
 ## 29.11 Sources
 
-- [27-free-paid-parity.md](27-free-paid-parity.md) and [research/A1-claude-mem-paid.md](research/A1-claude-mem-paid.md).
-- The task files T-102, T-103, T-104, T-108 and T-117, and the sync tests.
+- The sync tests in `test/`.
