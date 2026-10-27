@@ -413,6 +413,7 @@ export class HubStore {
     this.ensureRuleReplacement();
     this.ensureDismissals();
     this.ensureSessionEnd();
+    this.ensureMemoryFiles();
   }
 
   /** Add the T-172 rule-replacement history columns to databases created before they existed. Idempotent. */
@@ -438,6 +439,46 @@ export class HubStore {
     CREATE INDEX IF NOT EXISTS idx_dismissals_time ON dismissals(at_epoch);`);
     this.setSetting("schema.dismissals", true);
     return true;
+  }
+
+  /** Add the T-036 memory_files table and backfill it from the JSON files column. Idempotent, recorded once. */
+  ensureMemoryFiles() {
+    if (this.setting("schema.memory_files", false)) return false;
+    this.db.exec(`CREATE TABLE IF NOT EXISTS memory_files (
+      memory_id INTEGER NOT NULL REFERENCES memories(id) ON DELETE CASCADE,
+      path TEXT NOT NULL,
+      PRIMARY KEY(memory_id, path)
+    );
+    CREATE INDEX IF NOT EXISTS idx_memory_files_path ON memory_files(path);`);
+    const insert = this.db.prepare("INSERT OR IGNORE INTO memory_files (memory_id, path) VALUES (?, ?)");
+    this.db.exec("BEGIN");
+    try {
+      for (const row of this.db.prepare("SELECT id, files FROM memories WHERE files IS NOT NULL AND files != ''").all()) {
+        for (const path of parse(row.files)) insert.run(row.id, path);
+      }
+      this.db.exec("COMMIT");
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+    this.setSetting("schema.memory_files", true);
+    return true;
+  }
+
+  /** Index one memory's file paths. Exact strings; a suffix query is a separate opt-in in the search filters. */
+  indexFiles(memoryId, files) {
+    const stmt = this.db.prepare("INSERT OR IGNORE INTO memory_files (memory_id, path) VALUES (?, ?)");
+    for (const path of files) stmt.run(memoryId, path);
+  }
+
+  /** Build the file filter for a search/list. Exact by default; suffix is opt-in. */
+  fileClause(file, suffix = false) {
+    if (!file) return null;
+    if (suffix) {
+      const escaped = String(file).replace(/[\\%_]/g, "\\$&");
+      return { sql: "m.id IN (SELECT memory_id FROM memory_files WHERE path LIKE ? ESCAPE '\\')", param: `%${escaped}` };
+    }
+    return { sql: "m.id IN (SELECT memory_id FROM memory_files WHERE path = ?)", param: String(file) };
   }
 
   /** Add the T-035 suggestion table to databases created before it existed. */
@@ -688,9 +729,12 @@ export class HubStore {
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
       .run(project, input.scope === "global" ? "global" : "project", kind, clean(input.type, 40) || (kind === "event" ? "event" : "note"), title, clean(input.subtitle, 400), narrative, json(input.facts), json(input.concepts), json(input.files),
         clean(input.tool, 60) || "unknown", clean(input.sessionId ?? input.session_id, 200), input.pinned ? 1 : 0, clean(input.origin, 200), hash, at, at);
+    const memoryId = Number(info.lastInsertRowid);
+    const files = Array.isArray(input.files) ? [...new Set(input.files.map(String).map((path) => path.trim()).filter(Boolean))] : [];
+    if (files.length) this.indexFiles(memoryId, files);
     this.statsCache = null;
-    if (actor !== "import" && audit) this.audit(actor, "memory.add", { id: Number(info.lastInsertRowid), kind, tool: input.tool ?? "unknown" });
-    return { id: Number(info.lastInsertRowid), created: true };
+    if (actor !== "import" && audit) this.audit(actor, "memory.add", { id: memoryId, kind, tool: input.tool ?? "unknown" });
+    return { id: memoryId, created: true };
   }
 
   get(id) {
@@ -715,10 +759,15 @@ export class HubStore {
       pinned: patch.pinned !== undefined ? (patch.pinned ? 1 : 0) : cur.pinned,
       facts: patch.facts !== undefined ? json(patch.facts) : cur.facts,
       concepts: patch.concepts !== undefined ? json(patch.concepts) : cur.concepts,
+      files: patch.files !== undefined ? json(patch.files) : cur.files,
     };
     this.db
-      .prepare("UPDATE memories SET title=?, subtitle=?, narrative=?, type=?, project=?, pinned=?, facts=?, concepts=?, updated_at_epoch=? WHERE id=?")
-      .run(next.title, next.subtitle, next.narrative, next.type, next.project, next.pinned, next.facts, next.concepts, Date.now(), id);
+      .prepare("UPDATE memories SET title=?, subtitle=?, narrative=?, type=?, project=?, pinned=?, facts=?, concepts=?, files=?, updated_at_epoch=? WHERE id=?")
+      .run(next.title, next.subtitle, next.narrative, next.type, next.project, next.pinned, next.facts, next.concepts, next.files, Date.now(), id);
+    if (patch.files !== undefined) {
+      this.db.prepare("DELETE FROM memory_files WHERE memory_id = ?").run(Number(id));
+      this.indexFiles(Number(id), parse(next.files));
+    }
     this.statsCache = null;
     this.audit(actor, "memory.update", { id, fields: Object.keys(patch) });
     return this.get(id);
@@ -1231,7 +1280,7 @@ export class HubStore {
   }
 
   /** Newest first. Filters: project, kind, type, tool, pinned, q (full text), before (epoch), limit, offset. */
-  list({ project, kind, type, tool, pinned, q, limit = 50, offset = 0, scope = "current", includeDismissed = false, since = null, until = null, sort = "default", rowScope = null, dismissedOnly = false } = {}) {
+  list({ project, kind, type, tool, pinned, q, limit = 50, offset = 0, scope = "current", includeDismissed = false, since = null, until = null, sort = "default", rowScope = null, dismissedOnly = false, file = null, fileSuffix = false } = {}) {
     const where = [];
     const params = [];
     const match = ftsQuery(q);
@@ -1240,6 +1289,8 @@ export class HubStore {
     if (match) { where.push("memories_fts MATCH ?"); params.push(match); }
     if (project && scope !== "all") { where.push(this.hasGlobal("memories") ? "(m.project = ? OR m.scope = 'global')" : "m.project = ?"); params.push(project); }
     for (const [col, val] of [["kind", kind], ["type", type], ["tool", tool]]) if (val) { where.push(`m.${col} = ?`); params.push(val); }
+    const fileFilter = this.fileClause(file, fileSuffix);
+    if (fileFilter) { where.push(fileFilter.sql); params.push(fileFilter.param); }
     if (pinned) where.push("m.pinned = 1");
     if (rowScope === "global" || rowScope === "project") { where.push("m.scope = ?"); params.push(rowScope); }
     if (Number.isFinite(since)) { where.push("m.created_at_epoch >= ?"); params.push(since); }
@@ -1262,8 +1313,32 @@ export class HubStore {
    * Natural-language queries work: ANY content word may match and BM25 ranks (see retrieval.mjs). When `queryVec` is
    * given and memories have vectors, keyword and semantic rankings are fused with reciprocal rank fusion.
    */
-  search({ query, project, kind, type, tool, limit = 20, queryVec = null, scope = "current" } = {}) {
-    return this.ranked({ query, project, kind, type, tool, limit, queryVec, scope }).map((m) => ({ id: m.id, kind: m.kind, type: m.type, title: m.title, project: m.project, tool: m.tool, pinned: m.pinned, at: new Date(m.created_at_epoch).toISOString() }));
+  search({ query, project, kind, type, tool, limit = 20, queryVec = null, scope = "current", file = null, fileSuffix = false } = {}) {
+    return this.ranked({ query, project, kind, type, tool, limit, queryVec, scope, file, fileSuffix }).map((m) => ({ id: m.id, kind: m.kind, type: m.type, title: m.title, project: m.project, tool: m.tool, pinned: m.pinned, at: new Date(m.created_at_epoch).toISOString() }));
+  }
+
+  /** "What touched this file": memories whose files list contains the exact path. A suffix match is opt-in. */
+  byFile({ file, project, suffix = false, limit = 50, scope = "current" } = {}) {
+    if (!file) return { total: 0, items: [] };
+    const where = [];
+    const params = [];
+    if (suffix) {
+      where.push("f.path LIKE ? ESCAPE '\\'");
+      params.push(`%${String(file).replace(/[\\%_]/g, "\\$&")}`);
+    } else {
+      where.push("f.path = ?");
+      params.push(String(file));
+    }
+    if (project && scope !== "all") {
+      where.push(this.hasGlobal("memories") ? "(m.project = ? OR m.scope = 'global')" : "m.project = ?");
+      params.push(project);
+    }
+    if (this.hasDismissals("memory")) where.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = m.id)");
+    const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
+    const lim = Math.min(Math.max(Number(limit) || 50, 1), 500);
+    const total = this.db.prepare(`SELECT COUNT(*) AS n FROM memory_files f JOIN memories m ON m.id = f.memory_id ${clause}`).get(...params).n;
+    const rows = this.db.prepare(`SELECT m.* FROM memory_files f JOIN memories m ON m.id = f.memory_id ${clause} ORDER BY m.created_at_epoch DESC, m.id DESC LIMIT ?`).all(...params, lim);
+    return { total, items: rows.map((r) => this.row(r)) };
   }
 
   /** The index's own (stemmed) form of a word, via SQLite's tokenizer so it matches what is stored. Cached. */
@@ -1316,7 +1391,7 @@ export class HubStore {
   }
 
   /** Full rows, best first. Same ranking as search(). */
-  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false, scope = "current", cap = 200, since = null, until = null } = {}) {
+  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false, scope = "current", cap = 200, since = null, until = null, file = null, fileSuffix = false } = {}) {
     const filters = [];
     const params = [];
     if (project && scope !== "all") {
@@ -1326,6 +1401,8 @@ export class HubStore {
       params.push(project);
     }
     for (const [col, val] of [["kind", kind], ["type", type], ["tool", tool]]) if (val) { filters.push(`m.${col} = ?`); params.push(val); }
+    const fileFilter = this.fileClause(file, fileSuffix);
+    if (fileFilter) { filters.push(fileFilter.sql); params.push(fileFilter.param); }
     if (this.hasDismissals("memory")) filters.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = m.id)");
     if (Number.isFinite(since)) { filters.push("m.created_at_epoch >= ?"); params.push(since); }
     if (Number.isFinite(until)) { filters.push("m.created_at_epoch <= ?"); params.push(until); }

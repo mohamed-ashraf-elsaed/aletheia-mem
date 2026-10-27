@@ -12,7 +12,7 @@ export const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "202
 
 const str = { type: "string" };
 export const TOOL_DEFS = [
-  { name: "search", description: "Step 1. Search shared memory. Returns a compact index of ids and titles (cheap). Then call timeline or get_observations for the ones that matter. since/until are ISO dates or epoch ms; order is relevance, date_desc or date_asc; offset pages the index.", inputSchema: { type: "object", properties: { query: str, project: str, type: str, kind: str, limit: { type: "number" }, since: str, until: str, order: str, offset: { type: "number" } }, required: ["query"] } },
+  { name: "search", description: "Step 1. Search shared memory by words or by file. Returns a compact index of ids and titles (cheap). Then call timeline or get_observations for the ones that matter. Pass file to ask what touched an exact path; file_suffix opts into a suffix match. since/until are ISO dates or epoch ms; order is relevance, date_desc or date_asc; offset pages the index.", inputSchema: { type: "object", properties: { query: str, file: str, file_suffix: { type: "boolean" }, project: str, type: str, kind: str, limit: { type: "number" }, since: str, until: str, order: str, offset: { type: "number" } } } },
   { name: "timeline", description: "Step 2. What happened around a memory (anchor id) or the best match for a query, in time order.", inputSchema: { type: "object", properties: { anchor: { type: "number" }, query: str, project: str, before: { type: "number" }, after: { type: "number" } } } },
   { name: "get_observations", description: "Step 3. Full text of memories by id. Always batch ids; fetch only what step 1 and 2 selected.", inputSchema: { type: "object", properties: { ids: { type: "array", items: { type: "number" } } }, required: ["ids"] } },
   { name: "save_memory", description: "Save something worth remembering across sessions and tools (a decision, a gotcha, a convention, a fix).", inputSchema: { type: "object", properties: { title: str, text: str, project: str, type: { type: "string", enum: ["decision", "gotcha", "bugfix", "feature", "refactor", "change", "discovery", "note"] }, pinned: { type: "boolean" } }, required: ["text"] } },
@@ -54,6 +54,14 @@ export function callTool(name, args = {}, ctx) {
   try {
     switch (name) {
       case "search": {
+        if (typeof args.file === "string" && args.file.trim()) {
+          const denied = scopedProject(args.project);
+          if (denied) return denied;
+          const pickProject = allowed ? (args.project ?? (ctx.projects.length === 1 ? ctx.projects[0] : undefined)) : args.project;
+          const { items } = store.byFile({ file: args.file.trim(), project: pickProject, suffix: args.file_suffix === true, limit: args.limit ?? 20 });
+          if (!items.length) return text(`No memories touch ${args.file_suffix === true ? "that suffix" : "that file"}.`);
+          return recalled(items.map((m) => `#${m.id} ${new Date(m.created_at_epoch).toISOString().slice(0, 10)} [${m.type}] ${m.title}  (${m.project}, ${m.tool})`).join("\n"));
+        }
         if (typeof args.query !== "string" || !args.query.trim()) return fail("query is required.");
         const paging = pagingOf({ limit: args.limit, offset: args.offset }, { limit: 20 });
         const order = ["relevance", "date_desc", "date_asc"].includes(args.order) ? args.order : "relevance";
