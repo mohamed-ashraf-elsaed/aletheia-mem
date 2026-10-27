@@ -18,7 +18,7 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%28tested%29-lightgrey)
 
-**Statut : alpha.** Le moteur de mémoire et les installateurs fonctionnent dans les tests. Aucune application hôte n'a encore été ouverte avec une configuration générée, et la précision des réponses n'est pas mesurée. La CI ne tourne que sous Linux ; macOS et Windows ne sont pas testés.
+**Statut : alpha.** Le moteur de mémoire et les installateurs fonctionnent dans les tests. Aucune application hôte n'a encore été ouverte avec une configuration générée, et la précision des réponses n'est pas mesurée. La CI tourne sous Linux et macOS ; Windows n'est pas encore pris en charge et n'est pas testé.
 
 Les traductions automatiques se trouvent dans `docs/i18n/` ; la version anglaise fait référence. Aucune traduction n'a été relue par un locuteur natif.
 
@@ -170,7 +170,7 @@ Cette liste est la moitié honnête du README. Chaque élément est suivi dans
 [docs/tasks/unverified.md](../../docs/tasks/unverified.md).
 
 - Aucune configuration n'a été exécutée dans son application hôte. « Configuration écrite d'après la documentation, non testée sur une installation réelle. »
-- La CI et le benchmark tournent uniquement sous Linux. macOS et Windows ne sont pas testés.
+- La CI tourne sous Linux et macOS. Le benchmark tourne uniquement sous Linux. Windows n'est pas encore pris en charge et n'est pas testé.
 - La précision des réponses n'est pas mesurée. Recall@5 est la récupération, pas si une réponse était correcte.
 - L'exécution d'extraction avec le modèle 1B a échoué ; les faits de notre extracteur n'ont été mesurés qu'avec l'extracteur de règles.
 - La synchronisation et le chiffrement de bout en bout sont testés avec des répertoires temporaires et un hub en boucle locale. Aucun tunnel réel ni second hôte n'a été utilisé.

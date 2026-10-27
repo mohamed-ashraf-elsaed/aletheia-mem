@@ -18,7 +18,7 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%28tested%29-lightgrey)
 
-**Status: Alpha.** Die Gedächtnis-Engine und die Installer funktionieren in Tests. Noch wurde keine Host-Anwendung mit einer erzeugten Konfiguration geöffnet, und die Antwortgenauigkeit ist nicht gemessen. Die CI läuft nur unter Linux; macOS und Windows sind ungetestet.
+**Status: Alpha.** Die Gedächtnis-Engine und die Installer funktionieren in Tests. Noch wurde keine Host-Anwendung mit einer erzeugten Konfiguration geöffnet, und die Antwortgenauigkeit ist nicht gemessen. Die CI läuft unter Linux und macOS; Windows wird noch nicht unterstützt und ist ungetestet.
 
 Maschinelle Übersetzungen liegen in `docs/i18n/`; das englische Original ist maßgeblich. Keine Übersetzung wurde von einem Muttersprachler geprüft.
 
@@ -170,7 +170,7 @@ Diese Liste ist die ehrliche Hälfte der README. Jeder Punkt wird in
 [docs/tasks/unverified.md](../../docs/tasks/unverified.md) verfolgt.
 
 - Keine Konfiguration wurde in ihrer Host-Anwendung ausgeführt. „Konfiguration aus der Dokumentation geschrieben, nicht in einer echten Installation getestet.“
-- CI und Benchmark laufen nur unter Linux. macOS und Windows sind ungetestet.
+- Die CI läuft unter Linux und macOS. Der Benchmark läuft nur unter Linux. Windows wird noch nicht unterstützt und ist ungetestet.
 - Die Antwortgenauigkeit ist nicht gemessen. Recall@5 ist Abruf, nicht ob eine Antwort richtig war.
 - Der Extraktionslauf mit dem 1B-Modell ist fehlgeschlagen; die Fakten unseres Extraktors wurden nur mit dem Regelextraktor gemessen.
 - Sync und E2EE sind nur mit temporären Datenverzeichnissen und einem Loopback-Hub getestet. Es wurde kein echter Tunnel und kein zweiter Host verwendet.

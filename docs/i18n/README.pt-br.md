@@ -18,7 +18,7 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%28tested%29-lightgrey)
 
-**Status: alfa.** O motor de memória e os instaladores funcionam nos testes. Nenhum programa anfitrião foi aberto com uma configuração gerada, e a precisão das respostas não está medida. A CI roda apenas no Linux; macOS e Windows não foram testados.
+**Status: alfa.** O motor de memória e os instaladores funcionam nos testes. Nenhum programa anfitrião foi aberto com uma configuração gerada, e a precisão das respostas não está medida. A CI roda no Linux e no macOS; o Windows ainda não é suportado e não foi testado.
 
 As traduções automáticas ficam em `docs/i18n/`; a versão em inglês é a canônica. Nenhuma tradução passou por revisão de um falante nativo.
 
@@ -170,7 +170,7 @@ Esta lista é a metade honesta do README. Cada item é acompanhado em
 [docs/tasks/unverified.md](../../docs/tasks/unverified.md).
 
 - Nenhuma configuração foi executada dentro do aplicativo anfitrião. “Configuração escrita a partir da documentação, não testada em uma instalação real.”
-- A CI e o benchmark rodam apenas no Linux. macOS e Windows não foram testados.
+- A CI roda no Linux e no macOS. O benchmark roda apenas no Linux. O Windows ainda não é suportado e não foi testado.
 - A precisão das respostas não está medida. Recall@5 é recuperação, não se a resposta estava certa.
 - A execução de extração com o modelo de 1B falhou; os fatos do nosso extrator foram medidos apenas com o extrator de regras.
 - A sincronização e a criptografia ponta a ponta foram testadas com diretórios temporários e um hub em loopback. Não foi usado um túnel real nem um segundo host.

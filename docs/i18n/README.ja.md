@@ -18,7 +18,7 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%28tested%29-lightgrey)
 
-**状態: アルファ。** メモリエンジンとインストーラーはテストで動作します。生成された設定でホストアプリを開いたことはまだなく、回答の正確さは測定していません。CI は Linux のみで、macOS と Windows は未検証です。
+**状態: アルファ。** メモリエンジンとインストーラーはテストで動作します。生成された設定でホストアプリを開いたことはまだなく、回答の正確さは測定していません。CI は Linux と macOS で動作します。Windows は未対応で、未検証です。
 
 機械翻訳は `docs/i18n/` にあります。英語版が正典です。ネイティブ話者によるレビューは受けていません。
 
@@ -170,7 +170,7 @@ _Generated from docs/28-competitor-report.json (rows copied from docs/21-competi
 [docs/tasks/unverified.md](../../docs/tasks/unverified.md) で追跡されています。
 
 - どの設定もホストアプリ内では実行されていません。「設定はドキュメントから書き、実インストールでは未検証」です。
-- CI とベンチマークは Linux のみです。macOS と Windows は未検証です。
+- CI は Linux と macOS で動作します。ベンチマークは Linux のみです。Windows は未対応で、未検証です。
 - 回答の正確さは未測定です。Recall@5 は検索であり、回答が正しかったかではありません。
 - 10 億パラメータモデルでの抽出実行は失敗しました。私たちの抽出器の事実はルール抽出器でのみ測定しています。
 - 同期と E2EE は一時データディレクトリとループバックハブでのみ検証しています。実際のトンネルや 2 台目のホストは使っていません。

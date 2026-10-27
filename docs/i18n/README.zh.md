@@ -18,7 +18,7 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%28tested%29-lightgrey)
 
-**状态：alpha。** 记忆引擎和安装器已通过测试。还没有任何宿主被真正打开并加载生成的配置，答案准确率尚未测量。CI 只在 Linux 上运行；macOS 和 Windows 尚未测试。
+**状态：alpha。** 记忆引擎和安装器已通过测试。还没有任何宿主被真正打开并加载生成的配置，答案准确率尚未测量。CI 在 Linux 和 macOS 上运行；Windows 暂不支持，也未测试。
 
 机器翻译位于 `docs/i18n/`；英文版为准。没有任何翻译经过母语者审校。
 
@@ -170,7 +170,7 @@ _Generated from docs/28-competitor-report.json (rows copied from docs/21-competi
 [docs/tasks/unverified.md](../../docs/tasks/unverified.md)。
 
 - 没有任何配置在宿主应用内运行过。“配置根据文档编写，未在真实安装中测试。”
-- CI 和基准测试只在 Linux 上运行。macOS 和 Windows 尚未测试。
+- CI 在 Linux 和 macOS 上运行。基准测试只在 Linux 上运行。Windows 暂不支持，也未测试。
 - 答案准确率尚未测量。Recall@5 是检索，不是答案是否正确。
 - 10 亿参数模型的抽取运行失败了；我们自己的抽取器只用规则抽取器测量过。
 - 同步和端到端加密只用临时数据目录和回环中心测试过。没有使用真实隧道或第二台主机。

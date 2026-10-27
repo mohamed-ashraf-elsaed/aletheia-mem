@@ -173,4 +173,3 @@ database, never on real owner history.
 | Its error and offline states | The server stayed up, so no failure was produced. | Stop the worker and reload. |
 | Its behaviour at 768 px and 1920 px | Only the default window (about 920 px) and 375 px were captured. | Resize and capture. |
 | Its long-list handling | The Work page showed five cards, so pagination or virtualization never triggered. | Seed a large store and scroll. |
-| 56 | README translations of the CI-support lines | The English README now says CI runs on Linux and macOS and Windows is unsupported (2026-10-27). The 10 translations were hash-updated but those two sentences were not re-translated, so they may still say "Linux only". | A translator pass over the CI sentence in each docs/i18n/README.*.md |
