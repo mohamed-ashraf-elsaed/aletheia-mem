@@ -30,6 +30,7 @@ import { AlertStore, deliverDue, extractionFailures, queueDepth } from "./alerts
 import { applyErase, erasePlan, loadEraseKey, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } from "./erasure.mjs";
 import { teamRequest } from "./team-api.mjs";
 import { TeamStore } from "./team.mjs";
+import { readSettings, writeSettings } from "./settings.mjs";
 
 const MAX_BODY = 8 * 1024 * 1024;
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml" };
@@ -495,6 +496,12 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
     }
 
     // ================= /api/hub: the Hub UI =================
+    if (pathname === "/api/hub/settings" && method === "GET") return h.json({ settings: readSettings(hub) });
+    if (pathname === "/api/hub/settings" && method === "PUT") {
+      const result = writeSettings(hub, await readJson(request));
+      need(!result.errors.length, result.errors.map((error) => error.error).join(" "), 400);
+      return h.json({ settings: readSettings(hub), saved: result.saved });
+    }
     if (pathname === "/api/hub/overview" && method === "GET") {
       return h.json({ stats: hub.stats(), projects: hub.projects(), tools: detectTools(config.home), claudeMem: { path: config.sourceDb, exists: existsSync(config.sourceDb) }, dataDir: config.dataDir, provider: config.provider, apiKeyRequired: !!config.apiKey, mcp: { command: argv() } });
     }

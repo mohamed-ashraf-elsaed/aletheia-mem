@@ -36,6 +36,7 @@ export const SUBVIEWS = {
     { id: "checks", label: "Checks" },
     { id: "activity", label: "Activity" },
     { id: "context", label: "Context" },
+    { id: "settings", label: "Settings" },
   ],
 };
 

@@ -44,6 +44,7 @@ const ROUTES = [
   [/^\/api\/hub\/team$/, () => json({ teams: [{ id: "t1", name: ARABIC, role: "editor", projects: ["shop"] }] })],
   [/^\/api\/hub\/mcp-links/, () => json({ links: [{ id: 1, scope: "mcp", name: "laptop", projects: [], revoked: false }] })],
   [/^\/api\/hub\/audit/, () => json({ audit: [{ id: 1, at_epoch: Date.now(), actor: "ui", action: "memory.add", detail: { id: 1 } }], total: 1 })],
+  [/^\/api\/hub\/settings/, () => json({ settings: [{ key: "provider", label: "Provider", kind: "string", secret: false, value: "none" }, { key: "apiKey", label: "API key", kind: "string", secret: true, value: "••••••••", set: true }] })],
   [/^\/v1\/work\/sessions/, () => json({ items: [{ id: "s1", project: "shop", tool: "cursor", firstAt: NOW, lastAt: NOW, promptCount: 1, toolCount: 1, state: "finished", lastPrompt: ARABIC, summary: { text: "sum", at: NOW }, factCount: 1, href: "#/work/session/s1?project=shop" }], total: 1 })],
   [/^\/v1\/work\/goals/, () => json({ goals: [{ id: "0123456789abcdef", label: ARABIC, object: ARABIC, status: "Moving", aggregateProgress: 50, requestCount: 1, workingCount: 1, waitingCount: 0, shippedCount: 0, count: 2, sessionCount: 2, projects: ["shop"], lastSeen: NOW, pinned: false, requests: [{ id: "0123456789abcdef", title: ARABIC, status: "Working", progress: 50 }], whatCameOutOfIt: [{ kind: "commit", value: "abc1234", evidenceId: 2 }], quotes: [{ id: 1, at: NOW, project: "shop", text: "q" }] }], dismissedGoals: [], noGoal: { count: 0, requests: [] }, openAsks: { total: 1, beingWorked: [{ object: ARABIC, count: 2, sessionCount: 2 }], nothingWorking: [] }, total: 1 })],
   [/^\/v1\/work\/requests\/[a-f0-9]{16}/, () => json({ request: { id: "0123456789abcdef", project: "shop", tool: "cursor", title: ARABIC, status: "Waiting on you", progress: 50, progressEvidence: { sessionCount: 2, completedSessions: 1, completedSessionIds: ["s1"], factIds: [1], summaryIds: [] }, eta: NOW, etaEvidence: { paceMs: 1800000, remainingSessions: 1 }, cameOutOfIt: [{ kind: "pull", value: "#42", url: "https://github.com/acme/shop/pull/42", evidenceId: 4 }], whereThisCameFrom: { promptCount: 1, factCount: 1, sessions: [{ sessionId: "s1", project: "shop", firstAt: NOW, lastAt: NOW, ended: NOW, prompts: [{ id: 1, text: ARABIC, at: NOW }], facts: [fact(1)] }] } } })],
@@ -204,7 +205,7 @@ describe("T-214: names, roles and tab order on every page", () => {
   const cases = [
     ["memory", "ui-memory", (r) => mods.memory.renderMemory(r), ["memories", "facts", "review", "dismissed", "economics", "search"]],
     ["rules", "ui-rules", (r) => mods.rules.renderRules(r), ["rules", "suggestions", "sync", "import"]],
-    ["tools", "ui-tools", (r) => mods.tools.renderTools(r), ["tools", "devices", "access", "alerts", "team", "checks", "activity", "context"]],
+    ["tools", "ui-tools", (r) => mods.tools.renderTools(r), ["tools", "devices", "access", "alerts", "team", "checks", "activity", "context", "settings"]],
   ];
   for (const [tab, id, render, subs] of cases) {
     for (const sub of subs) {

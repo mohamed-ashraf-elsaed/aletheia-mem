@@ -6,6 +6,7 @@ import { button } from "../ui-components.js";
 import { byId, h, state, swap } from "../ui-dom.js";
 import { contextView } from "../ui-context.js";
 import { tabFrame } from "../ui-frame.js";
+import { settingsView } from "./settings.js";
 import { accessView, activityView, checksView, devicesView, toolsView } from "./tools-views.js";
 import { alertsView, teamView } from "./tools-team.js";
 
@@ -26,7 +27,7 @@ function build() {
     tab: "tools",
     title: "Tools",
     lede: "The AI tools Aletheia captures from, the devices it syncs with, and a record of what changed.",
-    build: (sub) => ({ tools: toolsView, devices: devicesView, access: accessView, alerts: alertsView, team: teamView, checks: checksView, activity: activityView, context: contextView }[sub] ?? toolsView)(ctx),
+    build: (sub) => ({ tools: toolsView, devices: devicesView, access: accessView, alerts: alertsView, team: teamView, checks: checksView, activity: activityView, context: contextView, settings: settingsView }[sub] ?? toolsView)(ctx),
   });
   made.project = state.project;
   frame = made;
