@@ -1313,8 +1313,8 @@ export class HubStore {
    * Natural-language queries work: ANY content word may match and BM25 ranks (see retrieval.mjs). When `queryVec` is
    * given and memories have vectors, keyword and semantic rankings are fused with reciprocal rank fusion.
    */
-  search({ query, project, kind, type, tool, limit = 20, queryVec = null, scope = "current", file = null, fileSuffix = false } = {}) {
-    return this.ranked({ query, project, kind, type, tool, limit, queryVec, scope, file, fileSuffix }).map((m) => ({ id: m.id, kind: m.kind, type: m.type, title: m.title, project: m.project, tool: m.tool, pinned: m.pinned, at: new Date(m.created_at_epoch).toISOString() }));
+  search({ query, project, kind, type, tool, limit = 20, queryVec = null, scope = "current", file = null, fileSuffix = false, since = null, until = null } = {}) {
+    return this.ranked({ query, project, kind, type, tool, limit, queryVec, scope, file, fileSuffix, since, until }).map((m) => ({ id: m.id, kind: m.kind, type: m.type, title: m.title, project: m.project, tool: m.tool, pinned: m.pinned, at: new Date(m.created_at_epoch).toISOString() }));
   }
 
   /** "What touched this file": memories whose files list contains the exact path. A suffix match is opt-in. */
