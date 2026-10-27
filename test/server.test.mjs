@@ -230,7 +230,8 @@ describe("events", () => {
     const reader = res.body.getReader();
     let text = "";
     const deadline = Date.now() + 5000;
-    while (!text.includes("event: work-view") && Date.now() < deadline) {
+    // Read until the whole data line has arrived: the event name and its data can come in separate chunks.
+    while (!/event: work-view\ndata: .*\n/.test(text) && Date.now() < deadline) {
       const { value, done } = await reader.read();
       if (done) break;
       text += new TextDecoder().decode(value);
