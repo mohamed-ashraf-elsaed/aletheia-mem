@@ -447,6 +447,32 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
         need(Array.isArray(b.ids), "ids must be an array.");
         return h.json({ observations: hub.getMany(b.ids) });
       }
+      if (pathname === "/v1/facts" && method === "GET") {
+        const q = qs(url);
+        need(typeof q.subject === "string" && q.subject.trim(), "subject is required.");
+        const subject = q.subject.trim();
+        const project = q.project || null;
+        const predicate = q.predicate || null;
+        const history = q.history === "1" || q.history === "true" || q.include_superseded === "1" || q.include_superseded === "true";
+        const asOf = q.as_of ?? q.asOf ?? null;
+        let items;
+        let at = null;
+        if (asOf != null) {
+          at = typeof asOf === "string" ? Date.parse(asOf) : Number(asOf);
+          need(Number.isFinite(at), "as_of must be an ISO date or epoch ms.");
+          items = hub.factsAsOf(at, { project, subject, predicate }).map((fact) => hub.factHit(fact));
+        } else if (history) {
+          items = hub.factsHistory({ project, subject, predicate }).map((fact) => hub.factHit(fact));
+        } else {
+          items = hub.factsCurrent({ project, subject, predicate }).map((fact) => hub.factHit(fact));
+        }
+        const reason = items.length
+          ? null
+          : history ? `No facts found for subject "${subject}".`
+          : at != null ? `No fact for subject "${subject}" was valid at ${new Date(at).toISOString()}.`
+          : `No active facts found for subject "${subject}".`;
+        return h.json({ subject, project, predicate, asOf: asOf ?? null, history, total: items.length, reason, items });
+      }
       if (pathname === "/v1/context" && method === "POST") {
         const b = await readJson(request);
         return h.json({ context: wrapUntrusted(hub.context({ project: b.project, limit: b.limit ?? 20, maxChars: b.maxChars ?? 6000, tool: b.tool ?? tool, scope: b.scope === "all" ? "all" : "current" })) });

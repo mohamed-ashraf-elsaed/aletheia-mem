@@ -17,6 +17,7 @@ export const TOOL_DEFS = [
   { name: "get_observations", description: "Step 3. Full text of memories by id. Always batch ids; fetch only what step 1 and 2 selected.", inputSchema: { type: "object", properties: { ids: { type: "array", items: { type: "number" } } }, required: ["ids"] } },
   { name: "save_memory", description: "Save something worth remembering across sessions and tools (a decision, a gotcha, a convention, a fix).", inputSchema: { type: "object", properties: { title: str, text: str, project: str, type: { type: "string", enum: ["decision", "gotcha", "bugfix", "feature", "refactor", "change", "discovery", "note"] }, pinned: { type: "boolean" } }, required: ["text"] } },
   { name: "session_start_context", description: "Pinned and recent memories plus standing rules for a project. Call at the start of a session.", inputSchema: { type: "object", properties: { project: str, limit: { type: "number" } } } },
+  { name: "fact_history", description: "The history of a fact subject: what was believed and when. Current facts by default; include_superseded adds the older rows; as_of returns the fact valid at that ISO date or epoch ms.", inputSchema: { type: "object", properties: { subject: str, project: str, predicate: str, as_of: str, include_superseded: { type: "boolean" } }, required: ["subject"] } },
   { name: "list_rules", description: "The owner's standing rules.", inputSchema: { type: "object", properties: {} } },
   { name: "add_rule", description: "Add a standing rule the owner wants every tool to follow. Only when the owner asked for it.", inputSchema: { type: "object", properties: { then: str, when: str, scopeTier: { type: "string", enum: ["everywhere", "project", "situation"] }, scopeName: str }, required: ["then"] } },
   { name: "dismiss_memory", description: "Hide a memory, observation or fact from search and context without deleting it. Reversible with restore_memory.", inputSchema: { type: "object", properties: { type: { type: "string", enum: ["memory", "observation", "fact", "episode"] }, id: { type: "number" }, reason: str }, required: ["id"] } },
@@ -84,6 +85,26 @@ export function callTool(name, args = {}, ctx) {
         if (!Array.isArray(args.ids) || !args.ids.length) return fail("ids is required (an array of numbers).");
         const rows = store.getMany(args.ids).filter((row) => !allowed || allowed(row.project));
         return rows.length ? recalled(rows.map(fmtFull).join("\n\n---\n\n")) : text("No memory has those ids.");
+      }
+      case "fact_history": {
+        if (typeof args.subject !== "string" || !args.subject.trim()) return fail("subject is required.");
+        const denied = scopedProject(args.project);
+        if (denied) return denied;
+        const subject = args.subject.trim();
+        const project = args.project ?? null;
+        const predicate = args.predicate ?? null;
+        let rows;
+        if (args.as_of != null) {
+          const at = Date.parse(String(args.as_of));
+          if (!Number.isFinite(at)) return fail("as_of must be an ISO date or epoch ms.");
+          rows = store.factsAsOf(at, { project, subject, predicate }).map((fact) => store.factHit(fact));
+        } else if (args.include_superseded === true) {
+          rows = store.factsHistory({ project, subject, predicate }).map((fact) => store.factHit(fact));
+        } else {
+          rows = store.factsCurrent({ project, subject, predicate }).map((fact) => store.factHit(fact));
+        }
+        if (!rows.length) return text(`No facts found for subject "${subject}".`);
+        return recalled(rows.map((fact) => `#${fact.id} [${fact.status}] ${fact.text}${fact.validFrom || fact.validTo ? ` (${(fact.validFrom ?? "?").slice(0, 10)} → ${(fact.validTo ?? "now").slice(0, 10)})` : ""}`).join("\n"));
       }
       case "save_memory": {
         if (typeof args.text !== "string" || !args.text.trim()) return fail("text is required.");
