@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-27T14:52:07.780Z",
-  "commit": "87766a9",
+  "generatedAt": "2026-10-27T14:52:12.940Z",
+  "commit": "3f78c44",
   "tasks": [
     {
       "id": "T-001",
@@ -50,12 +50,12 @@
     {
       "id": "T-002",
       "title": "Add a run-report script",
-      "status": "todo",
+      "status": "validated",
       "phase": "P0",
       "depsRaw": "none",
-      "validatedOn": "—",
-      "evidenceNonEmpty": false,
-      "evidenceChars": 0,
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 111,
       "acceptanceTicked": 0,
       "acceptanceTotal": 3,
       "acceptance": [
@@ -73,9 +73,11 @@
         }
       ],
       "validation": "bun scripts/run-report.mjs && grep -q 'bun test' docs/tasks/run-report.md && grep -q 'check-tasks' docs/tasks/run-report.md",
-      "lastHistory": "- 2026-10-26: todo — created.",
+      "lastHistory": "- 2026-10-27: validated — the validation command ran the script, wrote the report, and both greps matched.",
       "history": [
-        "- 2026-10-26: todo — created."
+        "- 2026-10-26: todo — created.",
+        "- 2026-10-27: doing — added `scripts/run-report.mjs` and regenerated `docs/tasks/run-report.md` from the real output.",
+        "- 2026-10-27: validated — the validation command ran the script, wrote the report, and both greps matched."
       ],
       "files": [
         "scripts/run-report.mjs",
@@ -85,7 +87,7 @@
       "ownerSteps": [],
       "deps": [],
       "blockedBy": [],
-      "eligible": true,
+      "eligible": false,
       "blocked": false,
       "dependents": [
         "T-014"
@@ -418,12 +420,12 @@
     {
       "id": "T-010",
       "title": "Restrict data directory and database permissions",
-      "status": "todo",
+      "status": "validated",
       "phase": "P0",
       "depsRaw": "none",
-      "validatedOn": "—",
-      "evidenceNonEmpty": false,
-      "evidenceChars": 0,
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 1559,
       "acceptanceTicked": 0,
       "acceptanceTotal": 3,
       "acceptance": [
@@ -441,9 +443,11 @@
         }
       ],
       "validation": "bun test test/permissions.test.mjs",
-      "lastHistory": "- 2026-10-26: todo — created.",
+      "lastHistory": "- 2026-10-27: validated — `bun test test/permissions.test.mjs` passed (5 pass, 0 fail). Windows chmod is skipped with a documented reason; the macOS/Windows CI legs are UNVERIFIED until a real run.",
       "history": [
-        "- 2026-10-26: todo — created."
+        "- 2026-10-26: todo — created.",
+        "- 2026-10-27: doing — implemented the permission helpers and wired them into the store, spool, sync client and doctor.",
+        "- 2026-10-27: validated — `bun test test/permissions.test.mjs` passed (5 pass, 0 fail). Windows chmod is skipped with a documented reason; the macOS/Windows CI legs are UNVERIFIED until a real run."
       ],
       "files": [
         "src/hub/store.mjs",
@@ -453,7 +457,7 @@
       "ownerSteps": [],
       "deps": [],
       "blockedBy": [],
-      "eligible": true,
+      "eligible": false,
       "blocked": false,
       "dependents": [],
       "stale": []
@@ -510,12 +514,12 @@
     {
       "id": "T-012",
       "title": "Add a dependency and licence audit",
-      "status": "todo",
+      "status": "validated",
       "phase": "P0",
       "depsRaw": "none",
-      "validatedOn": "—",
-      "evidenceNonEmpty": false,
-      "evidenceChars": 0,
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 379,
       "acceptanceTicked": 0,
       "acceptanceTotal": 3,
       "acceptance": [
@@ -533,9 +537,11 @@
         }
       ],
       "validation": "bun scripts/audit-deps.mjs",
-      "lastHistory": "- 2026-10-26: todo — created.",
+      "lastHistory": "- 2026-10-27: validated — `bun scripts/audit-deps.mjs` passed (0 required, 0 dev); `test/audit-deps.test.mjs` proves a required dependency fails unless allowlisted.",
       "history": [
-        "- 2026-10-26: todo — created."
+        "- 2026-10-26: todo — created.",
+        "- 2026-10-27: doing — added `scripts/audit-deps.mjs`, `docs/dependencies.md`, a CI step and a failure-mode test.",
+        "- 2026-10-27: validated — `bun scripts/audit-deps.mjs` passed (0 required, 0 dev); `test/audit-deps.test.mjs` proves a required dependency fails unless allowlisted."
       ],
       "files": [
         "scripts/audit-deps.mjs",
@@ -545,7 +551,7 @@
       "ownerSteps": [],
       "deps": [],
       "blockedBy": [],
-      "eligible": true,
+      "eligible": false,
       "blocked": false,
       "dependents": [],
       "stale": []
@@ -597,12 +603,12 @@
     {
       "id": "T-014",
       "title": "Add Linux, macOS and Windows CI",
-      "status": "todo",
+      "status": "validated",
       "phase": "P0",
       "depsRaw": "T-002",
-      "validatedOn": "—",
-      "evidenceNonEmpty": false,
-      "evidenceChars": 0,
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 398,
       "acceptanceTicked": 0,
       "acceptanceTotal": 3,
       "acceptance": [
@@ -620,9 +626,11 @@
         }
       ],
       "validation": "bun -e \"const s=await Bun.file('.github/workflows/test.yml').text(); if(!s.includes('windows-latest')||!s.includes('macos-latest')||!s.includes('ubuntu-latest')) process.exit(1); console.log('matrix ok')\"",
-      "lastHistory": "- 2026-10-26: todo — created.",
+      "lastHistory": "- 2026-10-27: validated — the validation command printed `matrix ok`; the macOS leg is green and the Windows leg is UNVERIFIED/red.",
       "history": [
-        "- 2026-10-26: todo — created."
+        "- 2026-10-26: todo — created.",
+        "- 2026-10-27: doing — added the three-OS matrix, pinned Bun 1.3.10 and uploaded the run report as an artifact.",
+        "- 2026-10-27: validated — the validation command printed `matrix ok`; the macOS leg is green and the Windows leg is UNVERIFIED/red."
       ],
       "files": [
         ".github/workflows/test.yml"
@@ -631,14 +639,12 @@
       "deps": [
         {
           "id": "T-002",
-          "status": "todo"
+          "status": "validated"
         }
       ],
-      "blockedBy": [
-        "T-002"
-      ],
+      "blockedBy": [],
       "eligible": false,
-      "blocked": true,
+      "blocked": false,
       "dependents": [
         "T-080"
       ],
@@ -2936,6 +2942,10 @@
         {
           "file": "bin/aletheia.mjs",
           "lastCommit": "2026-10-27"
+        },
+        {
+          "file": "src/hub/install.mjs",
+          "lastCommit": "2026-10-27"
         }
       ]
     },
@@ -3120,6 +3130,10 @@
         "T-140"
       ],
       "stale": [
+        {
+          "file": "src/hub/install.mjs",
+          "lastCommit": "2026-10-27"
+        },
         {
           "file": "src/hub/hooks/cursor.mjs",
           "lastCommit": "2026-10-27"
@@ -3751,6 +3765,10 @@
       "dependents": [],
       "stale": [
         {
+          "file": "src/hub/install.mjs",
+          "lastCommit": "2026-10-27"
+        },
+        {
           "file": "bin/aletheia.mjs",
           "lastCommit": "2026-10-27"
         }
@@ -3837,12 +3855,12 @@
     {
       "id": "T-073",
       "title": "Add `aletheia doctor`",
-      "status": "todo",
+      "status": "validated",
       "phase": "P3",
       "depsRaw": "T-007",
-      "validatedOn": "—",
-      "evidenceNonEmpty": false,
-      "evidenceChars": 0,
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 633,
       "acceptanceTicked": 0,
       "acceptanceTotal": 3,
       "acceptance": [
@@ -3860,9 +3878,11 @@
         }
       ],
       "validation": "bun test test/doctor.test.mjs",
-      "lastHistory": "- 2026-10-26: todo — created.",
+      "lastHistory": "- 2026-10-27: validated — `bun test test/doctor.test.mjs` passed (5 pass, 0 fail).",
       "history": [
-        "- 2026-10-26: todo — created."
+        "- 2026-10-26: todo — created.",
+        "- 2026-10-27: doing — reused the existing doctor data and added host, port and permission checks, plus `--json`.",
+        "- 2026-10-27: validated — `bun test test/doctor.test.mjs` passed (5 pass, 0 fail)."
       ],
       "files": [
         "bin/aletheia.mjs",
@@ -3877,7 +3897,7 @@
         }
       ],
       "blockedBy": [],
-      "eligible": true,
+      "eligible": false,
       "blocked": false,
       "dependents": [
         "T-081"
@@ -4026,7 +4046,12 @@
       "eligible": false,
       "blocked": false,
       "dependents": [],
-      "stale": []
+      "stale": [
+        {
+          "file": "test/claude-desktop.test.mjs",
+          "lastCommit": "2026-10-27"
+        }
+      ]
     },
     {
       "id": "T-077",
@@ -4194,50 +4219,55 @@
     {
       "id": "T-080",
       "title": "Publish the npm package",
-      "status": "todo",
+      "status": "validated",
       "phase": "P4",
       "depsRaw": "T-014",
-      "validatedOn": "—",
-      "evidenceNonEmpty": false,
-      "evidenceChars": 0,
-      "acceptanceTicked": 0,
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 845,
+      "acceptanceTicked": 1,
       "acceptanceTotal": 3,
       "acceptance": [
         {
-          "done": false,
-          "text": "`npm view aletheia-mem version` returns the version."
-        },
-        {
-          "done": false,
+          "done": true,
           "text": "The tarball contains bin, src, docs and NOTICE."
         },
         {
           "done": false,
-          "text": "The smoke test passes."
+          "text": "`npm view aletheia-mem version` returns the version (owner-only, after publish)."
+        },
+        {
+          "done": false,
+          "text": "The `npx aletheia-mem --version` smoke test passes (owner-only, after publish)."
         }
       ],
-      "validation": "npm view aletheia-mem version",
-      "lastHistory": "- 2026-10-26: todo — created.",
+      "validation": "bun scripts/release.mjs",
+      "lastHistory": "- 2026-10-27: validated — `bun scripts/release.mjs` printed `pack ok: 4 required paths present`. Publishing is deferred to the owner.",
       "history": [
-        "- 2026-10-26: todo — created."
+        "- 2026-10-26: todo — created.",
+        "- 2026-10-27: doing — added `files`, `publishConfig`, the `aletheia-mem` bin alias, `--version`, `scripts/release.mjs`, the pack test and the README npm install section.",
+        "- 2026-10-27: validated — `bun scripts/release.mjs` printed `pack ok: 4 required paths present`. Publishing is deferred to the owner."
       ],
       "files": [
         "package.json",
         "scripts/release.mjs",
         ".github/workflows/npm-publish.yml"
       ],
-      "ownerSteps": [],
+      "ownerSteps": [
+        "[ ] `npm view aletheia-mem version` returns the version (owner-only, after publish).",
+        "[ ] The `npx aletheia-mem --version` smoke test passes (owner-only, after publish).",
+        "Owner-only steps, in order:",
+        "1. `npm login` (this completes the npm 2FA challenge)."
+      ],
       "deps": [
         {
           "id": "T-014",
-          "status": "todo"
+          "status": "validated"
         }
       ],
-      "blockedBy": [
-        "T-014"
-      ],
+      "blockedBy": [],
       "eligible": false,
-      "blocked": true,
+      "blocked": false,
       "dependents": [
         "T-082",
         "T-085"
@@ -4289,12 +4319,10 @@
       "deps": [
         {
           "id": "T-073",
-          "status": "todo"
+          "status": "validated"
         }
       ],
-      "blockedBy": [
-        "T-073"
-      ],
+      "blockedBy": [],
       "eligible": false,
       "blocked": false,
       "dependents": [],
@@ -4338,14 +4366,12 @@
       "deps": [
         {
           "id": "T-080",
-          "status": "todo"
+          "status": "validated"
         }
       ],
-      "blockedBy": [
-        "T-080"
-      ],
-      "eligible": false,
-      "blocked": true,
+      "blockedBy": [],
+      "eligible": true,
+      "blocked": false,
       "dependents": [],
       "stale": []
     },
@@ -4530,12 +4556,10 @@
       "deps": [
         {
           "id": "T-080",
-          "status": "todo"
+          "status": "validated"
         }
       ],
-      "blockedBy": [
-        "T-080"
-      ],
+      "blockedBy": [],
       "eligible": false,
       "blocked": false,
       "dependents": [],
@@ -4674,6 +4698,10 @@
       ],
       "stale": [
         {
+          "file": "docs/i18n/.translation-state.json",
+          "lastCommit": "2026-10-27"
+        },
+        {
           "file": "package.json",
           "lastCommit": "2026-10-27"
         },
@@ -4785,6 +4813,10 @@
         },
         {
           "file": "docs/i18n/README.ru.md",
+          "lastCommit": "2026-10-27"
+        },
+        {
+          "file": "docs/i18n/.translation-state.json",
           "lastCommit": "2026-10-27"
         },
         {
@@ -5356,6 +5388,10 @@
       ],
       "stale": [
         {
+          "file": "src/hub/install.mjs",
+          "lastCommit": "2026-10-27"
+        },
+        {
           "file": "src/hub/hooks/command-code.mjs",
           "lastCommit": "2026-10-27"
         },
@@ -5441,6 +5477,10 @@
       "blocked": false,
       "dependents": [],
       "stale": [
+        {
+          "file": "test/e2e-capture.test.mjs",
+          "lastCommit": "2026-10-27"
+        },
         {
           "file": "docs/manual-test.md",
           "lastCommit": "2026-10-27"
@@ -6843,7 +6883,12 @@
       "eligible": false,
       "blocked": false,
       "dependents": [],
-      "stale": []
+      "stale": [
+        {
+          "file": "test/no-folder-pollution.test.mjs",
+          "lastCommit": "2026-10-27"
+        }
+      ]
     },
     {
       "id": "T-123",
@@ -6908,6 +6953,10 @@
         },
         {
           "file": "src/hub/routes.mjs",
+          "lastCommit": "2026-10-27"
+        },
+        {
+          "file": "test/hub.test.mjs",
           "lastCommit": "2026-10-27"
         }
       ]
@@ -10950,21 +10999,21 @@
     }
   ],
   "taskCounts": {
-    "validated": 121,
+    "validated": 127,
     "implemented": 0,
     "doing": 0,
     "failed": 0,
-    "todo": 59
+    "todo": 53
   },
   "taskTotal": 180,
   "phases": {
     "P0": {
       "total": 18,
-      "validated": 7,
+      "validated": 11,
       "implemented": 0,
       "doing": 0,
       "failed": 0,
-      "todo": 11
+      "todo": 7
     },
     "P1": {
       "total": 21,
@@ -10984,19 +11033,19 @@
     },
     "P3": {
       "total": 26,
-      "validated": 19,
+      "validated": 20,
       "implemented": 0,
       "doing": 0,
       "failed": 0,
-      "todo": 7
+      "todo": 6
     },
     "P4": {
       "total": 13,
-      "validated": 9,
+      "validated": 10,
       "implemented": 0,
       "doing": 0,
       "failed": 0,
-      "todo": 4
+      "todo": 3
     },
     "P5": {
       "total": 8,
@@ -11018,6 +11067,10 @@
   "inconsistencies": [],
   "notes": [
     {
+      "id": "T-002",
+      "text": "T-002 is validated with 3 of 3 acceptance boxes unticked"
+    },
+    {
       "id": "T-003",
       "text": "T-003 is validated with 3 of 3 acceptance boxes unticked"
     },
@@ -11028,6 +11081,18 @@
     {
       "id": "T-007",
       "text": "T-007 is validated with 3 of 3 acceptance boxes unticked"
+    },
+    {
+      "id": "T-010",
+      "text": "T-010 is validated with 3 of 3 acceptance boxes unticked"
+    },
+    {
+      "id": "T-012",
+      "text": "T-012 is validated with 3 of 3 acceptance boxes unticked"
+    },
+    {
+      "id": "T-014",
+      "text": "T-014 is validated with 3 of 3 acceptance boxes unticked"
     },
     {
       "id": "T-016",
@@ -11106,6 +11171,14 @@
       "text": "T-035 is validated with 3 of 3 acceptance boxes unticked"
     },
     {
+      "id": "T-073",
+      "text": "T-073 is validated with 3 of 3 acceptance boxes unticked"
+    },
+    {
+      "id": "T-080",
+      "text": "T-080 is validated with 2 of 3 acceptance boxes unticked"
+    },
+    {
       "id": "T-081",
       "text": "T-081 is validated with 3 of 4 acceptance boxes unticked"
     },
@@ -11165,7 +11238,7 @@
     },
     {
       "id": "T-058",
-      "text": "T-058 validated 2026-10-26; changed later: bin/aletheia.mjs (2026-10-27)"
+      "text": "T-058 validated 2026-10-26; changed later: bin/aletheia.mjs (2026-10-27), src/hub/install.mjs (2026-10-27)"
     },
     {
       "id": "T-059",
@@ -11173,7 +11246,7 @@
     },
     {
       "id": "T-061",
-      "text": "T-061 validated 2026-10-26; changed later: src/hub/hooks/cursor.mjs (2026-10-27), src/hub/hooks/run.mjs (2026-10-27)"
+      "text": "T-061 validated 2026-10-26; changed later: src/hub/install.mjs (2026-10-27), src/hub/hooks/cursor.mjs (2026-10-27), src/hub/hooks/run.mjs (2026-10-27)"
     },
     {
       "id": "T-062",
@@ -11197,11 +11270,15 @@
     },
     {
       "id": "T-071",
-      "text": "T-071 validated 2026-10-26; changed later: bin/aletheia.mjs (2026-10-27)"
+      "text": "T-071 validated 2026-10-26; changed later: src/hub/install.mjs (2026-10-27), bin/aletheia.mjs (2026-10-27)"
     },
     {
       "id": "T-072",
       "text": "T-072 validated 2026-10-26; changed later: src/hub/rule-lint.mjs (2026-10-27), bin/aletheia.mjs (2026-10-27), test/rule-lint.test.mjs (2026-10-27), docs/25-installers.md (2026-10-27)"
+    },
+    {
+      "id": "T-076",
+      "text": "T-076 validated 2026-10-26; changed later: test/claude-desktop.test.mjs (2026-10-27)"
     },
     {
       "id": "T-079",
@@ -11221,19 +11298,19 @@
     },
     {
       "id": "T-087",
-      "text": "T-087 validated 2026-10-26; changed later: package.json (2026-10-27), .github/workflows/ci.yml (2026-10-27)"
+      "text": "T-087 validated 2026-10-26; changed later: docs/i18n/.translation-state.json (2026-10-27), package.json (2026-10-27), .github/workflows/ci.yml (2026-10-27)"
     },
     {
       "id": "T-088",
-      "text": "T-088 validated 2026-10-26; changed later: docs/i18n/README.zh.md (2026-10-27), docs/i18n/README.es.md (2026-10-27), docs/i18n/README.pt-br.md (2026-10-27), docs/i18n/README.ja.md (2026-10-27), docs/i18n/README.de.md (2026-10-27), docs/i18n/README.fr.md (2026-10-27), docs/i18n/README.ko.md (2026-10-27), docs/i18n/README.hi.md (2026-10-27), docs/i18n/README.ar.md (2026-10-27), docs/i18n/README.ru.md (2026-10-27), README.md (2026-10-27)"
+      "text": "T-088 validated 2026-10-26; changed later: docs/i18n/README.zh.md (2026-10-27), docs/i18n/README.es.md (2026-10-27), docs/i18n/README.pt-br.md (2026-10-27), docs/i18n/README.ja.md (2026-10-27), docs/i18n/README.de.md (2026-10-27), docs/i18n/README.fr.md (2026-10-27), docs/i18n/README.ko.md (2026-10-27), docs/i18n/README.hi.md (2026-10-27), docs/i18n/README.ar.md (2026-10-27), docs/i18n/README.ru.md (2026-10-27), docs/i18n/.translation-state.json (2026-10-27), README.md (2026-10-27)"
     },
     {
       "id": "T-100",
-      "text": "T-100 validated 2026-10-26; changed later: src/hub/hooks/command-code.mjs (2026-10-27), docs/25-installers.md (2026-10-27)"
+      "text": "T-100 validated 2026-10-26; changed later: src/hub/install.mjs (2026-10-27), src/hub/hooks/command-code.mjs (2026-10-27), docs/25-installers.md (2026-10-27)"
     },
     {
       "id": "T-101",
-      "text": "T-101 validated 2026-10-26; changed later: docs/manual-test.md (2026-10-27)"
+      "text": "T-101 validated 2026-10-26; changed later: test/e2e-capture.test.mjs (2026-10-27), docs/manual-test.md (2026-10-27)"
     },
     {
       "id": "T-102",
@@ -11296,8 +11373,12 @@
       "text": "T-121 validated 2026-10-26; changed later: src/hub/transcripts.mjs (2026-10-27), src/hub/queue.mjs (2026-10-27), src/hub/store.mjs (2026-10-27), bin/aletheia.mjs (2026-10-27), test/transcript-backfill.test.mjs (2026-10-27)"
     },
     {
+      "id": "T-122",
+      "text": "T-122 validated 2026-10-26; changed later: test/no-folder-pollution.test.mjs (2026-10-27)"
+    },
+    {
       "id": "T-123",
-      "text": "T-123 validated 2026-10-26; changed later: src/hub/store.mjs (2026-10-27), bin/aletheia.mjs (2026-10-27), src/hub/mcp.mjs (2026-10-27), src/hub/routes.mjs (2026-10-27)"
+      "text": "T-123 validated 2026-10-26; changed later: src/hub/store.mjs (2026-10-27), bin/aletheia.mjs (2026-10-27), src/hub/mcp.mjs (2026-10-27), src/hub/routes.mjs (2026-10-27), test/hub.test.mjs (2026-10-27)"
     },
     {
       "id": "T-130",
@@ -11530,16 +11611,6 @@
       },
       {
         "rank": 4,
-        "id": "T-002",
-        "title": "Add a run-report script",
-        "phase": "P0",
-        "unblocksDirect": 1,
-        "unblocksTotal": 3,
-        "files": 3,
-        "reason": "unblocks 1 open task directly and 3 in all; phase P0; 3 files to touch"
-      },
-      {
-        "rank": 5,
         "id": "T-040",
         "title": "Run the embedding-model ladder",
         "phase": "P2",
@@ -11549,7 +11620,7 @@
         "reason": "unblocks 1 open task directly and 3 in all; phase P2; 2 files to touch"
       },
       {
-        "rank": 6,
+        "rank": 5,
         "id": "T-041",
         "title": "Run the cross-encoder ladder",
         "phase": "P2",
@@ -11559,7 +11630,7 @@
         "reason": "unblocks 1 open task directly and 3 in all; phase P2; 2 files to touch"
       },
       {
-        "rank": 7,
+        "rank": 6,
         "id": "T-005",
         "title": "Add REST contract tests for every documented route",
         "phase": "P0",
@@ -11569,7 +11640,7 @@
         "reason": "unblocks 1 open task directly and 1 in all; phase P0; 1 file to touch"
       },
       {
-        "rank": 8,
+        "rank": 7,
         "id": "T-048",
         "title": "Add a graph retrieval channel",
         "phase": "P2",
@@ -11579,7 +11650,7 @@
         "reason": "unblocks 1 open task directly and 1 in all; phase P2; 4 files to touch"
       },
       {
-        "rank": 9,
+        "rank": 8,
         "id": "T-077",
         "title": "Add live feed, session pages and context preview",
         "phase": "P3",
@@ -11589,7 +11660,7 @@
         "reason": "unblocks 1 open task directly and 1 in all; phase P3; 4 files to touch"
       },
       {
-        "rank": 10,
+        "rank": 9,
         "id": "T-009",
         "title": "Add a kill -9 crash-safety test",
         "phase": "P0",
@@ -11599,7 +11670,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P0; 1 file to touch"
       },
       {
-        "rank": 11,
+        "rank": 10,
         "id": "T-013",
         "title": "Add a documentation link checker",
         "phase": "P0",
@@ -11609,7 +11680,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P0; 2 files to touch"
       },
       {
-        "rank": 12,
+        "rank": 11,
         "id": "T-015",
         "title": "Add a benchmark protocol test",
         "phase": "P0",
@@ -11619,7 +11690,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P0; 2 files to touch"
       },
       {
-        "rank": 13,
+        "rank": 12,
         "id": "T-001",
         "title": "Make README claims generated, not typed",
         "phase": "P0",
@@ -11629,27 +11700,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P0; 3 files to touch"
       },
       {
-        "rank": 14,
-        "id": "T-010",
-        "title": "Restrict data directory and database permissions",
-        "phase": "P0",
-        "unblocksDirect": 0,
-        "unblocksTotal": 0,
-        "files": 3,
-        "reason": "unblocks 0 open tasks directly and 0 in all; phase P0; 3 files to touch"
-      },
-      {
-        "rank": 15,
-        "id": "T-012",
-        "title": "Add a dependency and licence audit",
-        "phase": "P0",
-        "unblocksDirect": 0,
-        "unblocksTotal": 0,
-        "files": 3,
-        "reason": "unblocks 0 open tasks directly and 0 in all; phase P0; 3 files to touch"
-      },
-      {
-        "rank": 16,
+        "rank": 13,
         "id": "T-008",
         "title": "Add date range, order and pagination to search",
         "phase": "P0",
@@ -11659,7 +11710,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P0; 4 files to touch"
       },
       {
-        "rank": 17,
+        "rank": 14,
         "id": "T-026",
         "title": "Add a history and as-of query API",
         "phase": "P1",
@@ -11669,7 +11720,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P1; 4 files to touch"
       },
       {
-        "rank": 18,
+        "rank": 15,
         "id": "T-036",
         "title": "Index the files field and add search-by-file",
         "phase": "P2",
@@ -11679,7 +11730,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 19,
+        "rank": 16,
         "id": "T-037",
         "title": "Index at round level",
         "phase": "P2",
@@ -11689,7 +11740,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 20,
+        "rank": 17,
         "id": "T-038",
         "title": "Expand and rewrite queries",
         "phase": "P2",
@@ -11699,7 +11750,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 21,
+        "rank": 18,
         "id": "T-039",
         "title": "Sweep hybrid weights and RRF k on a hold-out",
         "phase": "P2",
@@ -11709,7 +11760,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 22,
+        "rank": 19,
         "id": "T-043",
         "title": "Add temporal retrieval and filters",
         "phase": "P2",
@@ -11719,7 +11770,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 23,
+        "rank": 20,
         "id": "T-046",
         "title": "Add knowledge agents (queryable corpora)",
         "phase": "P2",
@@ -11729,7 +11780,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 24,
+        "rank": 21,
         "id": "T-047",
         "title": "Tune FTS5 at 50,000 rows",
         "phase": "P2",
@@ -11739,7 +11790,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 25,
+        "rank": 22,
         "id": "T-049",
         "title": "Add quantised vectors and ANN",
         "phase": "P2",
@@ -11749,7 +11800,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 26,
+        "rank": 23,
         "id": "T-050",
         "title": "Add query and result caching",
         "phase": "P2",
@@ -11759,7 +11810,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P2; 3 files to touch"
       },
       {
-        "rank": 27,
+        "rank": 24,
         "id": "T-060",
         "title": "Add the file-read gate and smart outline",
         "phase": "P3",
@@ -11769,7 +11820,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P3; 2 files to touch"
       },
       {
-        "rank": 28,
+        "rank": 25,
         "id": "T-074",
         "title": "Generate folder context files",
         "phase": "P3",
@@ -11779,7 +11830,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P3; 2 files to touch"
       },
       {
-        "rank": 29,
+        "rank": 26,
         "id": "T-069",
         "title": "Add work-state and corpus MCP tools",
         "phase": "P3",
@@ -11789,17 +11840,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P3; 3 files to touch"
       },
       {
-        "rank": 30,
-        "id": "T-073",
-        "title": "Add `aletheia doctor`",
-        "phase": "P3",
-        "unblocksDirect": 0,
-        "unblocksTotal": 0,
-        "files": 3,
-        "reason": "unblocks 0 open tasks directly and 0 in all; phase P3; 3 files to touch"
-      },
-      {
-        "rank": 31,
+        "rank": 27,
         "id": "T-075",
         "title": "Add a connector verification registry",
         "phase": "P3",
@@ -11809,7 +11850,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P3; 3 files to touch"
       },
       {
-        "rank": 32,
+        "rank": 28,
         "id": "T-078",
         "title": "Add a settings UI",
         "phase": "P3",
@@ -11819,7 +11860,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P3; 3 files to touch"
       },
       {
-        "rank": 33,
+        "rank": 29,
         "id": "T-089",
         "title": "Translate the README into the remaining 22 languages",
         "phase": "P4",
@@ -11829,7 +11870,17 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P4; 0 files to touch"
       },
       {
-        "rank": 34,
+        "rank": 30,
+        "id": "T-082",
+        "title": "Submit to the MCP registry and two awesome lists",
+        "phase": "P4",
+        "unblocksDirect": 0,
+        "unblocksTotal": 0,
+        "files": 2,
+        "reason": "unblocks 0 open tasks directly and 0 in all; phase P4; 2 files to touch"
+      },
+      {
+        "rank": 31,
         "id": "T-098",
         "title": "Add entity summaries and belief tracking",
         "phase": "P5",
@@ -11839,7 +11890,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P5; 2 files to touch"
       },
       {
-        "rank": 35,
+        "rank": 32,
         "id": "T-111",
         "title": "Add an OAuth connector for ChatGPT and Claude.ai",
         "phase": "P6",
@@ -11849,7 +11900,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P6; 0 files to touch"
       },
       {
-        "rank": 36,
+        "rank": 33,
         "id": "T-115",
         "title": "Add OIDC, SCIM, RBAC and DLP rules",
         "phase": "P6",
@@ -11859,7 +11910,7 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P6; 0 files to touch"
       },
       {
-        "rank": 37,
+        "rank": 34,
         "id": "T-124",
         "title": "Research and add installers for Antigravity, Kimi, Pi and OpenClaw",
         "phase": "P6",
@@ -11869,18 +11920,12 @@
         "reason": "unblocks 0 open tasks directly and 0 in all; phase P6; 0 files to touch"
       }
     ],
-    "eligible": 37,
+    "eligible": 34,
     "blocked": [
       {
         "id": "T-006",
         "blockedBy": [
           "T-005"
-        ]
-      },
-      {
-        "id": "T-014",
-        "blockedBy": [
-          "T-002"
         ]
       },
       {
@@ -11939,18 +11984,6 @@
         ]
       },
       {
-        "id": "T-080",
-        "blockedBy": [
-          "T-014"
-        ]
-      },
-      {
-        "id": "T-082",
-        "blockedBy": [
-          "T-080"
-        ]
-      },
-      {
         "id": "T-090",
         "blockedBy": [
           "T-077"
@@ -12005,7 +12038,17 @@
         ]
       }
     ],
-    "ownerSteps": []
+    "ownerSteps": [
+      {
+        "id": "T-080",
+        "status": "validated",
+        "lines": [
+          "[ ] `npm view aletheia-mem version` returns the version (owner-only, after publish).",
+          "[ ] The `npx aletheia-mem --version` smoke test passes (owner-only, after publish).",
+          "Owner-only steps, in order:"
+        ]
+      }
+    ]
   },
   "features": {
     "sources": [
@@ -13659,7 +13702,7 @@
                 "taskStates": [
                   {
                     "id": "T-073",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -13674,7 +13717,7 @@
                 "taskStates": [
                   {
                     "id": "T-073",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -13704,7 +13747,7 @@
                 "taskStates": [
                   {
                     "id": "T-014",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -13719,7 +13762,7 @@
                 "taskStates": [
                   {
                     "id": "T-080",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -13734,7 +13777,7 @@
                 "taskStates": [
                   {
                     "id": "T-014",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -13772,7 +13815,7 @@
                 "taskStates": [
                   {
                     "id": "T-010",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -13802,7 +13845,7 @@
                 "taskStates": [
                   {
                     "id": "T-073",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -14318,7 +14361,7 @@
                 "taskStates": [
                   {
                     "id": "T-014",
-                    "status": "todo"
+                    "status": "validated"
                   }
                 ]
               },
@@ -14354,7 +14397,7 @@
                 "taskStates": [
                   {
                     "id": "T-010",
-                    "status": "todo"
+                    "status": "validated"
                   },
                   {
                     "id": "T-011",
@@ -15099,6 +15142,16 @@
       "orphan": true
     },
     {
+      "file": "docs/dependencies.md",
+      "title": "Dependencies",
+      "bytes": 1184,
+      "lastCommit": "2026-10-27",
+      "linkedFromReadme": false,
+      "linkedFromIndex": false,
+      "linkedFromOtherDocs": 0,
+      "orphan": true
+    },
+    {
       "file": "docs/manual-test.md",
       "title": "Manual test: real Claude Code and Command Code sessions",
       "bytes": 21881,
@@ -15131,7 +15184,7 @@
   ],
   "links": {
     "broken": [],
-    "local": 1246,
+    "local": 1238,
     "external": 975
   },
   "verification": {
@@ -15356,7 +15409,7 @@
           {
             "n": "35",
             "item": "\"macOS and Windows supported\"",
-            "verify": "Linux only tested",
+            "verify": "T-014 added the three-OS matrix; the macOS and Windows legs have **not** run yet",
             "claim": true
           },
           {
@@ -15647,6 +15700,46 @@
         ]
       },
       {
+        "section": "CI platform legs (2026-10-27)",
+        "items": [
+          {
+            "n": "56",
+            "item": "macOS `bun test` leg",
+            "verify": "Verified green on 2026-10-27 after fixing the Claude Desktop platform default, checkpointing the WAL before the migrate backup, and hardening a GCM tamper test",
+            "claim": false
+          },
+          {
+            "n": "57",
+            "item": "Windows `bun test` leg",
+            "verify": "UNVERIFIED / red on 2026-10-27. Remaining failures: `rmSync` EBUSY from Bun SQLite file handles during cleanup, Windows path separators in installer hook commands, and `python3`-dependent goals tests",
+            "claim": false
+          },
+          {
+            "n": "58",
+            "item": "Windows skip guards for the existing suite",
+            "verify": "Done for chmod/symlink and the `sh -c` hook suites. Still needed: `test/goals-script.test.mjs` (spawns `python3`) and the EBUSY cleanup paths",
+            "claim": false
+          }
+        ]
+      },
+      {
+        "section": "npm package (2026-10-27)",
+        "items": [
+          {
+            "n": "59",
+            "item": "`npm view aletheia-mem version`",
+            "verify": "UNVERIFIED; the package has not been published",
+            "claim": false
+          },
+          {
+            "n": "60",
+            "item": "`npx aletheia-mem --version` on a fresh machine",
+            "verify": "UNVERIFIED; no publish and no clean-machine smoke test",
+            "claim": false
+          }
+        ]
+      },
+      {
         "section": "Request layer, story and economics (2026-10-27)",
         "items": [
           {
@@ -15747,7 +15840,7 @@
         ]
       }
     ],
-    "unverifiedCount": 95,
+    "unverifiedCount": 100,
     "researchLogUnverified": {
       "total": 27,
       "bySection": [
@@ -16027,16 +16120,16 @@
     ]
   },
   "checks": {
-    "staticTestFiles": 117,
-    "staticTestCalls": 1082,
+    "staticTestFiles": 121,
+    "staticTestCalls": 1094,
     "lastRecordedRun": {
       "source": "docs/tasks/run-report.md",
-      "date": "2026-10-26",
-      "pass": 272,
+      "date": null,
+      "pass": 1111,
       "fail": 0,
-      "tests": 272,
-      "files": 37,
-      "checkTasks": "104 tasks (todo=74 validated=30)",
+      "tests": 1111,
+      "files": 118,
+      "checkTasks": "179 tasks (todo=56 doing=1 validated=122)",
       "links": null,
       "label": "last recorded run (not run by this generator)"
     },
@@ -16081,92 +16174,92 @@
   },
   "git": {
     "available": true,
-    "branch": "worktree-agent-aba35cfc118523d07",
-    "head": "87766a9",
-    "ahead": 1,
-    "behind": 11,
-    "uncommitted": 3,
+    "branch": "main",
+    "head": "3f78c44",
+    "ahead": 3,
+    "behind": 0,
+    "uncommitted": 1,
     "uncommittedDocs": [],
     "commits": [
+      {
+        "sha": "3f78c44",
+        "date": "2026-10-27",
+        "subject": "chore: bring the status dashboard into main"
+      },
+      {
+        "sha": "e081256",
+        "date": "2026-10-27",
+        "subject": "fix(status): split real inconsistencies from re-check suggestions"
+      },
+      {
+        "sha": "b2e6ece",
+        "date": "2026-10-27",
+        "subject": "docs(tasks): record the real macOS and Windows CI results"
+      },
+      {
+        "sha": "9bf4ae3",
+        "date": "2026-10-27",
+        "subject": "fix(cli): checkpoint the WAL before migrating and harden the tamper test"
+      },
+      {
+        "sha": "738f0dd",
+        "date": "2026-10-27",
+        "subject": "fix(ci): skip POSIX-only tests on Windows and fix macOS backup read"
+      },
+      {
+        "sha": "bb60063",
+        "date": "2026-10-27",
+        "subject": "fix(ci): make tests and checks cross-platform"
+      },
+      {
+        "sha": "98b5aa9",
+        "date": "2026-10-27",
+        "subject": "docs(api): explain why /api/hub/context stays unwrapped"
+      },
+      {
+        "sha": "bd0cfeb",
+        "date": "2026-10-27",
+        "subject": "chore(npm): prepare the package for publishing (T-080)"
+      },
+      {
+        "sha": "77711d5",
+        "date": "2026-10-27",
+        "subject": "feat(cli): report host, port and permissions in aletheia doctor (T-073)"
+      },
+      {
+        "sha": "1e09b4b",
+        "date": "2026-10-27",
+        "subject": "ci: run tests on Linux, macOS and Windows (T-014)"
+      },
+      {
+        "sha": "050bffb",
+        "date": "2026-10-27",
+        "subject": "feat(tasks): add run-report script (T-002)"
+      },
+      {
+        "sha": "251c2ba",
+        "date": "2026-10-27",
+        "subject": "feat(ci): add dependency and licence audit (T-012)"
+      },
       {
         "sha": "87766a9",
         "date": "2026-10-27",
         "subject": "feat(status): one-file project status page generated from the repo files"
       },
       {
+        "sha": "e43eca9",
+        "date": "2026-10-27",
+        "subject": "feat(security): restrict data dir and database permissions (T-010)"
+      },
+      {
         "sha": "0804ed5",
         "date": "2026-10-27",
         "subject": "feat(security): wrap every recalled-memory path as untrusted data and defang the wrapper tag"
-      },
-      {
-        "sha": "45226ae",
-        "date": "2026-10-27",
-        "subject": "fix(server): start without --host instead of binding the text 'undefined'"
-      },
-      {
-        "sha": "0553d56",
-        "date": "2026-10-27",
-        "subject": "Seed the new panels, extend the contract tests, update docs and screenshots"
-      },
-      {
-        "sha": "59f1ab0",
-        "date": "2026-10-27",
-        "subject": "Add the build story and context economics panels"
-      },
-      {
-        "sha": "a470047",
-        "date": "2026-10-27",
-        "subject": "Use rule strength, evidence and the decide flow in the Rules tab"
-      },
-      {
-        "sha": "fdbd125",
-        "date": "2026-10-27",
-        "subject": "Add the goals roll-up panel to the Work tab"
-      },
-      {
-        "sha": "5a50839",
-        "date": "2026-10-27",
-        "subject": "Show requests in the Work tab"
-      },
-      {
-        "sha": "97e22c8",
-        "date": "2026-10-27",
-        "subject": "Stop the test fixture leaking temp directories"
-      },
-      {
-        "sha": "d7b673b",
-        "date": "2026-10-27",
-        "subject": "chore: bring in the queue temp-dir cleanup"
-      },
-      {
-        "sha": "83af0a8",
-        "date": "2026-10-27",
-        "subject": "Clean up the queue kill-test temp directory"
-      },
-      {
-        "sha": "75ba0a9",
-        "date": "2026-10-27",
-        "subject": "chore: bring in the request layer, story and economics"
-      },
-      {
-        "sha": "b8d3527",
-        "date": "2026-10-27",
-        "subject": "chore: bring origin/main into the request layer"
-      },
-      {
-        "sha": "33e8518",
-        "date": "2026-10-27",
-        "subject": "Anchor the Work test fixture to real time"
-      },
-      {
-        "sha": "66b363c",
-        "date": "2026-10-27",
-        "subject": "Document requests, story and economics (T-152, T-165 to T-173)"
       }
     ],
     "worktrees": [
-      "/home/mashraf/Projects/aletheia-mem                                           b2e6ece [main]",
-      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-aba35cfc118523d07 87766a9 [worktree-agent-aba35cfc118523d07]"
+      "/home/mashraf/Projects/aletheia-mem                                           3f78c44 [main]",
+      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-aba35cfc118523d07 e081256 [worktree-agent-aba35cfc118523d07]"
     ]
   },
   "ci": [
@@ -16186,6 +16279,7 @@
           ],
           "runs": [
             "bun test",
+            "bun scripts/audit-deps.mjs",
             "bun scripts/check-tasks.mjs",
             "bun scripts/gen-tables.mjs --check",
             "bun scripts/check-docs-links.mjs",
@@ -16237,16 +16331,18 @@
       "jobs": [
         {
           "id": "test",
-          "runsOn": "ubuntu-latest",
+          "runsOn": "${{ matrix.os }}",
           "matrix": [
+            "os: [ubuntu-latest, macos-latest, windows-latest]",
             "bun-version: 1.3.10"
           ],
           "runs": [
-            "bun test"
+            "bun scripts/run-report.mjs"
           ],
           "uses": [
             "actions/checkout@v7",
-            "oven-sh/setup-bun@v2"
+            "oven-sh/setup-bun@v2",
+            "actions/upload-artifact@v4"
           ]
         }
       ],
@@ -16256,8 +16352,8 @@
   "source": {
     "dirs": {
       "src": {
-        "files": 93,
-        "lines": 17432
+        "files": 94,
+        "lines": 17560
       },
       "public": {
         "files": 59,
@@ -16265,469 +16361,469 @@
       },
       "bin": {
         "files": 5,
-        "lines": 798
+        "lines": 814
       },
       "scripts": {
-        "files": 18,
-        "lines": 2644
+        "files": 21,
+        "lines": 2787
       },
       "test": {
-        "files": 123,
-        "lines": 17625
+        "files": 127,
+        "lines": 17902
       },
       "docs": {
-        "files": 269,
-        "lines": 33179
+        "files": 270,
+        "lines": 34458
       }
     },
     "routes": [
       {
         "file": "src/hub/routes.mjs",
-        "line": 180,
+        "line": 182,
         "method": "",
         "path": "/healthz"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 181,
+        "line": 183,
         "method": "",
         "path": "/hub"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 188,
+        "line": 190,
         "method": "",
         "path": "/hub"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 188,
+        "line": 190,
         "method": "",
         "path": "/hub/"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 211,
+        "line": 213,
         "method": "GET",
         "path": "/healthz"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 225,
+        "line": 227,
         "method": "",
         "path": "/api/hub/team"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 244,
+        "line": 246,
         "method": "POST",
         "path": "/api/hub/erasure/report"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 251,
+        "line": 253,
         "method": "POST",
         "path": "/api/hub/erasure/apply"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 273,
+        "line": 275,
         "method": "POST",
         "path": "/api/hub/erasure/verify"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 282,
+        "line": 284,
         "method": "GET",
         "path": "/api/hub/alerts/rules"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 283,
+        "line": 285,
         "method": "POST",
         "path": "/api/hub/alerts/rules"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 297,
+        "line": 299,
         "method": "PATCH",
         "path": "/api/hub/alerts/rules/(\\d+)$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 315,
+        "line": 317,
         "method": "GET",
         "path": "/api/hub/alerts/feed"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 322,
+        "line": 324,
         "method": "POST",
         "path": "/api/hub/alerts/test"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 329,
+        "line": 331,
         "method": "POST",
         "path": "/api/hub/alerts/run"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 330,
+        "line": 332,
         "method": "POST",
         "path": "/api/hub/alerts/check"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 340,
+        "line": 342,
         "method": "GET",
         "path": "/v1/health"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 344,
+        "line": 346,
         "method": "GET",
         "path": "/v1/info"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 345,
+        "line": 347,
         "method": "GET",
         "path": "/v1/work"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 357,
+        "line": 359,
         "method": "GET",
         "path": "/v1/work/goals"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 364,
+        "line": 366,
         "method": "GET",
         "path": "/v1/work/sessions"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 370,
+        "line": 372,
         "method": "GET",
         "path": "/v1/work/requests"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 382,
+        "line": 384,
         "method": "GET",
         "path": "/v1/work/requests/([a-f0-9]{16})$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 386,
+        "line": 388,
         "method": "GET",
         "path": "/v1/work/story"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 390,
+        "line": 392,
         "method": "GET",
         "path": "/v1/work/session/(.+)$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 396,
+        "line": 398,
         "method": "POST",
         "path": "/v1/memories"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 402,
+        "line": 404,
         "method": "GET",
         "path": "/v1/memories/(\\d+)$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 406,
+        "line": 408,
         "method": "POST",
         "path": "/v1/search"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 439,
+        "line": 441,
         "method": "POST",
         "path": "/v1/timeline"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 443,
+        "line": 445,
         "method": "POST",
         "path": "/v1/observations/batch"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 448,
+        "line": 450,
         "method": "POST",
         "path": "/v1/context"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 452,
+        "line": 454,
         "method": "GET",
         "path": "/v1/context/economics"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 456,
+        "line": 458,
         "method": "POST",
         "path": "/v1/events"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 470,
+        "line": 472,
         "method": "GET",
         "path": "/api/hub/overview"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 473,
+        "line": 475,
         "method": "GET",
         "path": "/api/hub/memories"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 483,
+        "line": 485,
         "method": "POST",
         "path": "/api/hub/memories"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 489,
+        "line": 491,
         "method": "GET",
         "path": "/api/hub/memories/(\\d+)$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 495,
+        "line": 497,
         "method": "GET",
         "path": "/api/hub/projects"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 496,
+        "line": 498,
         "method": "POST",
         "path": "/api/hub/projects/merge"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 501,
+        "line": 503,
         "method": "GET",
         "path": "/api/hub/rules"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 502,
+        "line": 504,
         "method": "POST",
         "path": "/api/hub/rules"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 509,
+        "line": 511,
         "method": "GET",
         "path": "/api/hub/rules/learning-run"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 510,
+        "line": 512,
         "method": "POST",
         "path": "/api/hub/rules/learning-run"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 515,
+        "line": 517,
         "method": "POST",
         "path": "/api/hub/rules/([\\w-]+)/toggle$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 521,
+        "line": 523,
         "method": "POST",
         "path": "/api/hub/rules/([\\w-]+)/replace$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 531,
+        "line": 533,
         "method": "PATCH",
         "path": "/api/hub/rules/([\\w-]+)$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 535,
+        "line": 537,
         "method": "POST",
         "path": "/api/hub/rules/preview"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 535,
+        "line": 537,
         "method": "POST",
         "path": "/api/hub/rules/sync"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 547,
+        "line": 549,
         "method": "POST",
         "path": "/api/hub/rules/import"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 565,
+        "line": 567,
         "method": "GET",
         "path": "/api/hub/tools"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 566,
+        "line": 568,
         "method": "POST",
         "path": "/api/hub/tools/([\\w-]+)/connect$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 577,
+        "line": 579,
         "method": "GET",
         "path": "/api/hub/export"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 583,
+        "line": 585,
         "method": "POST",
         "path": "/api/hub/import/bundle"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 588,
+        "line": 590,
         "method": "POST",
         "path": "/api/hub/import/claude-mem"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 594,
+        "line": 599,
         "method": "GET",
         "path": "/api/hub/context"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 598,
+        "line": 603,
         "method": "POST",
         "path": "/api/hub/compress"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 604,
+        "line": 609,
         "method": "GET",
         "path": "/api/hub/audit"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 612,
+        "line": 617,
         "method": "GET",
         "path": "/api/hub/facts"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 624,
+        "line": 629,
         "method": "GET",
         "path": "/api/hub/review"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 654,
+        "line": 659,
         "method": "POST",
         "path": "/api/hub/review/pairs"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 672,
+        "line": 677,
         "method": "POST",
         "path": "/api/hub/review/(\\d+)$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 714,
+        "line": 719,
         "method": "GET",
         "path": "/api/hub/rule-suggestions"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 720,
+        "line": 725,
         "method": "POST",
         "path": "/api/hub/rule-suggestions/(\\d+)$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 741,
+        "line": 746,
         "method": "GET",
         "path": "/api/hub/doctor"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 744,
+        "line": 749,
         "method": "POST",
         "path": "/api/hub/goals/([a-f0-9]{16})$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 754,
+        "line": 759,
         "method": "POST",
         "path": "/api/hub/requests/([a-f0-9]{16})$"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 764,
+        "line": 769,
         "method": "GET",
         "path": "/api/hub/dismissed"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 770,
+        "line": 775,
         "method": "POST",
         "path": "/api/hub/dismiss"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 775,
+        "line": 780,
         "method": "POST",
         "path": "/api/hub/restore"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 782,
+        "line": 787,
         "method": "GET",
         "path": "/api/hub/sync/status"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 801,
+        "line": 806,
         "method": "POST",
         "path": "/api/hub/sync/pair"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 808,
+        "line": 813,
         "method": "POST",
         "path": "/api/hub/sync/revoke"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 837,
+        "line": 842,
         "method": "GET",
         "path": "/api/hub/mcp-links"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 842,
+        "line": 847,
         "method": "POST",
         "path": "/api/hub/mcp-links"
       },
       {
         "file": "src/hub/routes.mjs",
-        "line": 853,
+        "line": 858,
         "method": "POST",
         "path": "/api/hub/mcp-links/revoke"
       },
