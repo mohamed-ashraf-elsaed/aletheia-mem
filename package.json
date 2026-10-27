@@ -63,6 +63,7 @@
     "check:claims": "bun scripts/check-claims.mjs",
     "check:links": "bun scripts/check-docs-links.mjs",
     "check:tables": "bun scripts/gen-tables.mjs --check",
+    "check:openapi": "bun scripts/check-openapi.mjs",
     "check:i18n": "bun scripts/i18n-check.mjs",
     "build:site": "bun scripts/build-site.mjs",
     "check:site": "bun scripts/check-sitemap.mjs",
