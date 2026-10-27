@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Dependencies · Aletheia docs</title>
+<meta name="description" content="Aletheia has no required runtime dependencies. It uses the Bun standard library and Bun's built-in SQLite binding only. The audit that enforces this is scripts/audit-deps.mjs:">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/dependencies.html">
+<link rel="icon" type="image/png" sizes="64x64" href="../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Dependencies","description":"Aletheia has no required runtime dependencies. It uses the Bun standard library and Bun's built-in SQLite binding only. The audit that enforces this is scripts/audit-deps.mjs:","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/dependencies.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="dependencies">Dependencies</h1>
+<p>Aletheia has no required runtime dependencies. It uses the Bun standard library and Bun's built-in SQLite binding only. The audit that enforces this is <code>scripts/audit-deps.mjs</code>:</p>
+<pre><code class="language-bash">bun scripts/audit-deps.mjs</code></pre>
+<p>The command fails when a required dependency is added without a written reason in the script's allowlist, or when a listed licence is copyleft. Run it in CI and before a release.</p>
+<h2 id="devdependencies">devDependencies</h2>
+<p>None. The project has no build step and no test-only packages; the test suite runs with <code>bun test</code> alone.</p>
+<h2 id="vendored-code">Vendored code</h2>
+<p>Everything below is copied or derived from <strong>claude-mem</strong> 15.2.0, licensed under Apache-2.0. Attribution and the exact change for each file is in <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE.md</a>.</p>
+<div class="tablewrap"><table><thead><tr><th>Path</th><th>Licence</th><th>Origin</th></tr></thead><tbody><tr><td><code>public/work.html</code>, <code>public/assets/</code></td><td>Apache-2.0</td><td>claude-mem 15.2.0 (optional legacy viewer)</td></tr><tr><td><code>prompts/request-progress/SKILL.md</code>, <code>prompts/owner-goals/SKILL.md</code></td><td>Apache-2.0</td><td>claude-mem 15.2.0</td></tr><tr><td><code>vendor/owner-goals/</code></td><td>Apache-2.0</td><td>claude-mem 15.2.0</td></tr><tr><td><code>src/ledger/commands.mjs</code></td><td>Apache-2.0</td><td>claude-mem 15.2.0 (derived)</td></tr></tbody></table></div>
+<p>This project's own code is also Apache-2.0, per <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/LICENSE">LICENSE</a>.</p>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>
