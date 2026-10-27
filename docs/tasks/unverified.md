@@ -134,7 +134,7 @@ real CI run exists.
 | # | Item | State | What would verify it |
 |---:|---|---|---|
 | 56 | macOS `bun test` leg | Verified green on 2026-10-27 after fixing the Claude Desktop platform default, checkpointing the WAL before the migrate backup, and hardening a GCM tamper test | — |
-| 57 | Windows `bun test` leg | UNVERIFIED / red on 2026-10-27. Remaining failures: `rmSync` EBUSY from Bun SQLite file handles during cleanup, Windows path separators in installer hook commands, and `python3`-dependent goals tests | A dedicated Windows pass that closes stores before cleanup and makes command quoting Windows-safe |
+| 57 | Windows `bun test` leg | Removed from CI on 2026-10-27 (owner decision for v0.1). It was red. Remaining failures: `rmSync` EBUSY from Bun SQLite file handles during cleanup, Windows path separators in installer hook commands, and `python3`-dependent goals tests | A dedicated Windows pass that closes stores before cleanup and makes command quoting Windows-safe |
 | 58 | Windows skip guards for the existing suite | Done for chmod/symlink and the `sh -c` hook suites. Still needed: `test/goals-script.test.mjs` (spawns `python3`) and the EBUSY cleanup paths | Run the suite on Windows and skip the python3 tests; fix the store-close-before-cleanup paths |
 
 ## npm package (2026-10-27)
@@ -173,3 +173,4 @@ database, never on real owner history.
 | Its error and offline states | The server stayed up, so no failure was produced. | Stop the worker and reload. |
 | Its behaviour at 768 px and 1920 px | Only the default window (about 920 px) and 375 px were captured. | Resize and capture. |
 | Its long-list handling | The Work page showed five cards, so pagination or virtualization never triggered. | Seed a large store and scroll. |
+| 56 | README translations of the CI-support lines | The English README now says CI runs on Linux and macOS and Windows is unsupported (2026-10-27). The 10 translations were hash-updated but those two sentences were not re-translated, so they may still say "Linux only". | A translator pass over the CI sentence in each docs/i18n/README.*.md |

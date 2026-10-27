@@ -14,7 +14,7 @@
 ![Platform](https://img.shields.io/badge/platform-linux%20%28tested%29-lightgrey)
 
 **Status: alpha.** The memory engine and the installers work in tests. No host has been opened with a generated
-config yet, and answer accuracy is not measured. CI runs on Linux only; macOS and Windows are untested.
+config yet, and answer accuracy is not measured. CI runs on Linux and macOS; Windows is not supported yet and not tested.
 
 [English](README.md) · [中文](docs/i18n/README.zh.md) · [Español](docs/i18n/README.es.md) · [Português (Brasil)](docs/i18n/README.pt-br.md) · [日本語](docs/i18n/README.ja.md) · [Deutsch](docs/i18n/README.de.md) · [Français](docs/i18n/README.fr.md) · [한국어](docs/i18n/README.ko.md) · [हिन्दी](docs/i18n/README.hi.md) · [العربية](docs/i18n/README.ar.md) · [Русский](docs/i18n/README.ru.md).
 Machine translations live in `docs/i18n/`; English is canonical. No translation has had native review.
@@ -187,7 +187,7 @@ This list is the honest half of the README. Every item is tracked in
 [docs/tasks/unverified.md](docs/tasks/unverified.md).
 
 - No config has been run inside its host application. "Config written from docs, not tested on a real install."
-- CI and the benchmark run on Linux only. macOS and Windows are untested.
+- CI runs on Linux and macOS. The benchmark runs on Linux only. Windows is not supported yet and not tested.
 - Answer accuracy is not measured. Recall@5 is retrieval, not whether an answer was correct.
 - The 1B-model extraction run failed; facts from our own extractor were measured with the rule extractor only.
 - Sync and E2EE are tested with temp data dirs and a loopback hub. No real tunnel or second host was used.

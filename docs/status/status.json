@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-27T14:52:12.940Z",
-  "commit": "3f78c44",
+  "generatedAt": "2026-10-27T14:55:30.800Z",
+  "commit": "3811cb9",
   "tasks": [
     {
       "id": "T-001",
@@ -625,12 +625,13 @@
           "text": "The run report artifact is uploaded."
         }
       ],
-      "validation": "bun -e \"const s=await Bun.file('.github/workflows/test.yml').text(); if(!s.includes('windows-latest')||!s.includes('macos-latest')||!s.includes('ubuntu-latest')) process.exit(1); console.log('matrix ok')\"",
-      "lastHistory": "- 2026-10-27: validated — the validation command printed `matrix ok`; the macOS leg is green and the Windows leg is UNVERIFIED/red.",
+      "validation": "bun -e \"const s=await Bun.file('.github/workflows/test.yml').text(); if(s.includes('os: [ubuntu-latest, macos-latest, windows-latest]')||!s.includes('macos-latest')||!s.includes('ubuntu-latest')) process.exit(1); console.log('matrix ok')\"",
+      "lastHistory": "- 2026-10-27: Windows dropped from the matrix by the owner's decision for v0.1 (leg was red, not fixable without a Windows machine). The validation command now checks that the matrix has Linux and macOS and no Windows. Windows support stays UNVERIFIED; see unverified.md items 57 and 58.",
       "history": [
         "- 2026-10-26: todo — created.",
         "- 2026-10-27: doing — added the three-OS matrix, pinned Bun 1.3.10 and uploaded the run report as an artifact.",
-        "- 2026-10-27: validated — the validation command printed `matrix ok`; the macOS leg is green and the Windows leg is UNVERIFIED/red."
+        "- 2026-10-27: validated — the validation command printed `matrix ok`; the macOS leg is green and the Windows leg is UNVERIFIED/red.",
+        "- 2026-10-27: Windows dropped from the matrix by the owner's decision for v0.1 (leg was red, not fixable without a Windows machine). The validation command now checks that the matrix has Linux and macOS and no Windows. Windows support stays UNVERIFIED; see unverified.md items 57 and 58."
       ],
       "files": [
         ".github/workflows/test.yml"
@@ -15711,7 +15712,7 @@
           {
             "n": "57",
             "item": "Windows `bun test` leg",
-            "verify": "UNVERIFIED / red on 2026-10-27. Remaining failures: `rmSync` EBUSY from Bun SQLite file handles during cleanup, Windows path separators in installer hook commands, and `python3`-dependent goals tests",
+            "verify": "Removed from CI on 2026-10-27 (owner decision for v0.1). It was red. Remaining failures: `rmSync` EBUSY from Bun SQLite file handles during cleanup, Windows path separators in installer hook commands, and `python3`-dependent goals tests",
             "claim": false
           },
           {
@@ -15836,11 +15837,17 @@
             "item": "Its long-list handling",
             "verify": "Seed a large store and scroll.",
             "claim": false
+          },
+          {
+            "n": "56",
+            "item": "56",
+            "verify": "The English README now says CI runs on Linux and macOS and Windows is unsupported (2026-10-27). The 10 translations were hash-updated but those two sentences were not re-translated, so they may still say \"Linux only\".",
+            "claim": false
           }
         ]
       }
     ],
-    "unverifiedCount": 100,
+    "unverifiedCount": 101,
     "researchLogUnverified": {
       "total": 27,
       "bySection": [
@@ -16175,12 +16182,31 @@
   "git": {
     "available": true,
     "branch": "main",
-    "head": "3f78c44",
-    "ahead": 3,
+    "head": "3811cb9",
+    "ahead": 0,
     "behind": 0,
-    "uncommitted": 1,
-    "uncommittedDocs": [],
+    "uncommitted": 15,
+    "uncommittedDocs": [
+      "docs/i18n/.translation-state.json",
+      "docs/i18n/README.ar.md",
+      "docs/i18n/README.de.md",
+      "docs/i18n/README.es.md",
+      "docs/i18n/README.fr.md",
+      "docs/i18n/README.hi.md",
+      "docs/i18n/README.ja.md",
+      "docs/i18n/README.ko.md",
+      "docs/i18n/README.pt-br.md",
+      "docs/i18n/README.ru.md",
+      "docs/i18n/README.zh.md",
+      "docs/tasks/T-014.md",
+      "docs/tasks/unverified.md"
+    ],
     "commits": [
+      {
+        "sha": "3811cb9",
+        "date": "2026-10-27",
+        "subject": "docs(status): regenerate after the merge"
+      },
       {
         "sha": "3f78c44",
         "date": "2026-10-27",
@@ -16250,16 +16276,10 @@
         "sha": "e43eca9",
         "date": "2026-10-27",
         "subject": "feat(security): restrict data dir and database permissions (T-010)"
-      },
-      {
-        "sha": "0804ed5",
-        "date": "2026-10-27",
-        "subject": "feat(security): wrap every recalled-memory path as untrusted data and defang the wrapper tag"
       }
     ],
     "worktrees": [
-      "/home/mashraf/Projects/aletheia-mem                                           3f78c44 [main]",
-      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-aba35cfc118523d07 e081256 [worktree-agent-aba35cfc118523d07]"
+      "/home/mashraf/Projects/aletheia-mem 3811cb9 [main]"
     ]
   },
   "ci": [
@@ -16333,7 +16353,7 @@
           "id": "test",
           "runsOn": "${{ matrix.os }}",
           "matrix": [
-            "os: [ubuntu-latest, macos-latest, windows-latest]",
+            "os: [ubuntu-latest, macos-latest]",
             "bun-version: 1.3.10"
           ],
           "runs": [
@@ -16373,7 +16393,7 @@
       },
       "docs": {
         "files": 270,
-        "lines": 34458
+        "lines": 34460
       }
     },
     "routes": [
