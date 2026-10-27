@@ -114,7 +114,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-070 | Verify rules formats on real installs | P3 | T-058 | validated | 2026-10-26 | [T-070.md](T-070.md) |
 | T-071 | Add uninstall for every installer | P3 | T-058 | validated | 2026-10-26 | [T-071.md](T-071.md) |
 | T-072 | Add rule hygiene checks | P3 | T-058 | validated | 2026-10-26 | [T-072.md](T-072.md) |
-| T-073 | Add `aletheia doctor` | P3 | T-007 | todo | — | [T-073.md](T-073.md) |
+| T-073 | Add `aletheia doctor` | P3 | T-007 | validated | 2026-10-27 | [T-073.md](T-073.md) |
 | T-074 | Generate folder context files | P3 | T-059 | todo | — | [T-074.md](T-074.md) |
 | T-075 | Add a connector verification registry | P3 | T-070 | todo | — | [T-075.md](T-075.md) |
 | T-076 | Document and test Claude Desktop MCP setup | P3 | T-058 | validated | 2026-10-26 | [T-076.md](T-076.md) |

@@ -747,6 +747,19 @@ function hookCommandsIn(doc) {
 /** Health checks a user can run after install: server, every installer's hooks, spool and last capture. */
 export async function doctor(env) {
   const checks = [];
+
+  // The loopback-by-default posture: a non-loopback bind is only healthy behind TLS.
+  const host = env.host ?? "127.0.0.1";
+  const loopback = ["127.0.0.1", "localhost", "::1", "[::1]"].includes(host);
+  checks.push({
+    name: "host",
+    ok: loopback || env.behindTls === true,
+    detail: loopback ? `${host} (loopback)` : env.behindTls ? `${host} (non-loopback, behind TLS)` : `${host} (non-loopback; set ALETHEIA_BEHIND_TLS=1 when a reverse proxy terminates TLS)`,
+  });
+  const port = Number(env.port);
+  const portOk = Number.isInteger(port) && port >= 1 && port <= 65535;
+  checks.push({ name: "port", ok: portOk, detail: portOk ? String(port) : `invalid port ${env.port}` });
+
   const url = `http://127.0.0.1:${env.port}/healthz`;
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(400) });

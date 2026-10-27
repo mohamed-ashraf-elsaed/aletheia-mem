@@ -101,6 +101,8 @@ function installEnv(hub) {
     dataDir: config.dataDir,
     dbPath: config.hubDb,
     port: config.port,
+    host: config.host,
+    behindTls: config.behindTls,
     provider: config.provider,
     mode: config.mode,
     rules: hub ? hub.rules.list() : [],
@@ -335,6 +337,7 @@ async function main() {
 
   if (cmd === "doctor") {
     const checks = await doctor(installEnv(null));
+    if (flags.json) return out(checks);
     for (const check of checks) out(`${check.ok ? "ok  " : "FAIL"} ${check.name.padEnd(20)} ${check.detail}`);
     if (checks.some((check) => !check.ok)) process.exitCode = 1;
     return;

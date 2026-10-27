@@ -121,6 +121,8 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       dataDir: config.dataDir,
       dbPath: config.hubDb,
       port: server?.port ?? config.port,
+      host: config.host,
+      behindTls: config.behindTls,
       provider: config.provider,
       mode: config.mode,
     };
