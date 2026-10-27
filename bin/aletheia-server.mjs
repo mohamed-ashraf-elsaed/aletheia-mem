@@ -13,7 +13,9 @@ const flag = (name, fallback) => {
   return next === undefined || next.startsWith("--") ? true : next;
 };
 
-const config = loadConfig({ host: String(flag("host", undefined) ?? undefined), behindTls: !!flag("behind-tls", false) });
+// Pass --host only when it was given with a value. String(undefined) is the text "undefined", which is not a host name.
+const hostFlag = flag("host", undefined);
+const config = loadConfig({ host: typeof hostFlag === "string" ? hostFlag : undefined, behindTls: !!flag("behind-tls", false) });
 const autoRefresh = config.provider !== "none" && config.autoRefresh ? createAutoRefresh(config) : null;
 const { server, stop } = startServer({ ...config, extractionWorker: true }, { autoRefresh, behindTls: config.behindTls });
 autoRefresh?.start();
