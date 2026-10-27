@@ -316,7 +316,7 @@ describe("MCP server", () => {
     expect(ctx.tool).toBe("cursor");
     expect(rpc("initialize", { protocolVersion: "1999-01-01" }).result.protocolVersion).toBe("2025-11-25");
     expect(rpc("initialize", { protocolVersion: "2024-11-05" }).result.protocolVersion).toBe("2024-11-05");
-    expect(rpc("tools/list").result.tools.map((t) => t.name)).toEqual(["search", "timeline", "get_observations", "save_memory", "session_start_context", "list_rules", "add_rule", "dismiss_memory", "restore_memory"]);
+    expect(rpc("tools/list").result.tools.map((t) => t.name)).toEqual(["search", "timeline", "get_observations", "save_memory", "session_start_context", "fact_history", "list_rules", "add_rule", "dismiss_memory", "restore_memory"]);
     expect(handleMessage({ jsonrpc: "2.0", method: "notifications/initialized" }, ctx)).toBeNull();
     expect(rpc("nope").error.code).toBe(-32601);
     expect(handleMessage({ id: 1 }, ctx).error.code).toBe(-32600);
