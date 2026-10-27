@@ -114,7 +114,9 @@ describe("schema v3 migration", () => {
     expect(real.stdout).toContain("Migrated schema v2 -> v3");
     expect(existsSync(backup)).toBe(true);
     expect(inspectMigration(dbPath).version).toBe(3);
-    expect(new Database(backup, { readonly: true }).prepare("PRAGMA user_version").get().user_version).toBe(2);
+    // A WAL database copy opened read-only fails with SQLITE_CANTOPEN on macOS when the -wal/-shm files were
+    // not copied; open it writable (Bun recreates the sidecars) and read the version instead.
+    expect(new Database(backup).prepare("PRAGMA user_version").get().user_version).toBe(2);
   });
 });
 

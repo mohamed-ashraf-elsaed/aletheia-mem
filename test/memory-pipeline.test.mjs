@@ -64,7 +64,7 @@ function fakeAsk(prompt) {
   return JSON.stringify({ facts: [] });
 }
 
-describe("memory pipeline", () => {
+describe.skipIf(process.platform === "win32")("memory pipeline (needs a POSIX shell for the hook commands)", () => {
   beforeAll(() => {
     config = loadConfig({
       port: 0, sourceDb: fx.dbPath, dataDir,

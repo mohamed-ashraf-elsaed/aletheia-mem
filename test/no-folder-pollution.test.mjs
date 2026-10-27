@@ -49,7 +49,7 @@ function snapshot(dir) {
   return out;
 }
 
-describe("T-122: no writes into a project folder", () => {
+describe.skipIf(process.platform === "win32")("T-122: no writes into a project folder (needs a POSIX shell for the hook commands)", () => {
   test("install writes under HOME only, and a full simulated session leaves the project byte-identical", async () => {
     const original = snapshot(project);
     expect(original.length).toBe(3); // README.md, src/, src/pay.mjs

@@ -251,10 +251,13 @@ describe("T-117: end-to-end encryption for sync", () => {
         restored.close();
       }
 
-      const { statSync, writeFileSync } = await import("node:fs");
-      const out = join(temp, "recovery.key");
-      writeFileSync(out, `${recovery}\n`, { mode: 0o600 });
-      expect(statSync(out).mode & 0o777).toBe(0o600);
+      // POSIX mode bits do not exist on Windows; the 0600 write is still issued, but the assertion is POSIX-only.
+      if (process.platform !== "win32") {
+        const { statSync, writeFileSync } = await import("node:fs");
+        const out = join(temp, "recovery.key");
+        writeFileSync(out, `${recovery}\n`, { mode: 0o600 });
+        expect(statSync(out).mode & 0o777).toBe(0o600);
+      }
     } finally {
       source.close();
     }

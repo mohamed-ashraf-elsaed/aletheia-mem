@@ -68,7 +68,7 @@ beforeAll(async () => {
 
 afterAll(() => app.stop());
 
-describe("end to end: install, hooks, server, spool, doctor, uninstall", () => {
+describe.skipIf(process.platform === "win32")("end to end: install, hooks, server, spool, doctor, uninstall (needs a POSIX shell for the hook commands)", () => {
   test("one install command wires Claude Code, and the installed commands capture a session", async () => {
     const install = await runCli(["install", "claude-code", "--write"]);
     expect(install.exitCode).toBe(0);
