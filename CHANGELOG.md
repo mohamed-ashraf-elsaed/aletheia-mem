@@ -6,8 +6,14 @@ history.
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-28
+
 ### Added
 
+- A graph retrieval channel and entity pages, off by default behind a flag. On a synthetic test it found related
+  memories that keyword search missed; it has not been measured on real data.
+- Rule-based entity summaries and belief tracking. No model is used.
+- A file-read gate and a smart outline for files.
 - Rules keep their date, source and evidence. A rule made from an approved suggestion copies the suggestion's source ids
   and dated quotes; `add_rule` and `POST /api/hub/rules` accept evidence ids. Rules made before this have no evidence.
 - A rule is flagged for re-check, with reasons, when an evidence fact is superseded or expired, an evidence memory is
@@ -20,27 +26,16 @@ history.
 - `aletheia rules diff` and `GET /api/hub/rules/diff` show, per tool file, rules only in the store, only in the file or
   worded differently, with file and line. Read-only. The Rules page shows how many tools are out of sync.
 - `older_than_days` on the memory list, `/v1/search` and the `search` MCP tool, so pruning old memories is a query.
-
-### Changed
-
-- `list_rules` prints each rule's date, source, last-confirmed date and a `[re-check: reason]` marker. `get_observations`
-  and the memory detail panel show the source (tool, session, origin) and the files a memory touched.
-
-## [0.1.4] - 2026-10-27
-
-### Added
-
-- A graph retrieval channel and entity pages, off by default behind a flag. On a synthetic test it found related
-  memories that keyword search missed; it has not been measured on real data.
-- Rule-based entity summaries and belief tracking. No model is used.
-- A file-read gate and a smart outline for files.
+- `aletheia audit export` and `GET /v1/audit/export` (admin token) stream the sync audit log as JSONL or CSV.
 
 ### Changed
 
 - Search is faster at 50,000 memories: project-scoped p95 fell from 67.5 ms to 32.7 ms on a synthetic test, and
   all-projects p95 is 58.6 ms. On the real LoCoMo set, Recall@5 did not change.
 - `fact_history` and `GET /v1/facts` accept `as_of` as epoch milliseconds as well as ISO 8601.
-- The README lists all 12 MCP tools.
+- The README lists all 13 MCP tools.
+- `list_rules` prints each rule's date, source, last-confirmed date and a `[re-check: reason]` marker. `get_observations`
+  and the memory detail panel show the source (tool, session, origin) and the files a memory touched.
 
 ## [0.1.3] - 2026-10-27
 
