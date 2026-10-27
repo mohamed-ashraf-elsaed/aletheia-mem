@@ -55,7 +55,7 @@ describe("T-076: Claude Desktop MCP config", () => {
     const file = claudeDesktopPath({ home, platform: "linux" });
     mkdirSync(join(home, ".config/Claude"), { recursive: true });
     writeFileSync(file, "{ not json");
-    expect(() => planClaudeDesktop({ home, bun: "/opt/bun", mcpScript: join(root, "bin/mcp.mjs"), dataDir })).toThrow(/not a JSON object/);
+    expect(() => planClaudeDesktop({ home, bun: "/opt/bun", mcpScript: join(root, "bin/mcp.mjs"), dataDir, platform: "linux" })).toThrow(/not a JSON object/);
     expect(readFileSync(file, "utf8")).toBe("{ not json");
   });
 

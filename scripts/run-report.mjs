@@ -39,7 +39,7 @@ if (failed && !allowFail) {
   for (const result of results) {
     if (result.exitCode !== 0) {
       console.error(`  ${result.label} exited ${result.exitCode}`);
-      console.error(`${result.stdout}\n${result.stderr}`.trim().split("\n").slice(-20).join("\n"));
+      console.error(`${result.stdout}\n${result.stderr}`.trim());
     }
   }
   process.exit(1);

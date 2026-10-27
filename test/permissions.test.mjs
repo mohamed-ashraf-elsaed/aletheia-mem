@@ -15,7 +15,7 @@ const mode = (path) => statSync(path).mode & 0o777;
 afterAll(() => cleanupTempDirs());
 
 describe("data permissions", () => {
-  test("a new store secures the data dir, the db and the WAL sidecars", () => {
+  test.skipIf(process.platform === "win32")("a new store secures the data dir, the db and the WAL sidecars (POSIX)", () => {
     const dataDir = join(tempDir("aletheia-perm-"), "data");
     mkdirSync(dataDir, { recursive: true }); // 0755 by default
     const dbPath = join(dataDir, "hub.db");
@@ -29,7 +29,7 @@ describe("data permissions", () => {
     expect(mode(`${dbPath}-shm`)).toBe(0o600);
   });
 
-  test("an existing 0755 dir and 0644 db are repaired on open", () => {
+  test.skipIf(process.platform === "win32")("an existing 0755 dir and 0644 db are repaired on open (POSIX)", () => {
     const dataDir = join(tempDir("aletheia-repair-"), "data");
     mkdirSync(dataDir, { recursive: true });
     const dbPath = join(dataDir, "hub.db");
@@ -65,7 +65,7 @@ describe("data permissions", () => {
     expect(mode(link)).toBe(0o700); // stat follows the symlink to the secured target
   });
 
-  test("spool and token files are 0600", () => {
+  test.skipIf(process.platform === "win32")("spool and token files are 0600 (POSIX)", () => {
     const dataDir = tempDir("aletheia-spool-");
     spoolAppend(dataDir, { kind: "memory", memory: { title: "A" } });
     expect(mode(join(dataDir, "spool", "hook-spool.jsonl"))).toBe(0o600);
