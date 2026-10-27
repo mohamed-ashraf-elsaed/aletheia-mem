@@ -6,11 +6,13 @@ import { routeOf } from "../ui-core.js";
 import { badge, button, clampText, disclosure, emptyState, markdownView, mono, skeleton, statTile, statusDot, timeEl, timeline } from "../ui-components.js";
 import { api, byId, h, state, swap } from "../ui-dom.js";
 import { optimistic } from "../ui-actions.js";
+import { estimated } from "../ui-estimates.js";
 import { firstRunGuide, guideHidden } from "../ui-guide.js";
 import { pagedList, region } from "../ui-region.js";
-import { filterBar, hideCard, segmentFilter, textFilter } from "../ui-views.js";
+import { hideCard } from "../ui-views.js";
 import { factLineView, goalView, sessionDetailView, workHeaderView, workNeedsView } from "../work-view.js";
 import { queryString } from "./memory-views.js";
+import { requestDetailPage, requestRoute, requestsView } from "./work-requests.js";
 
 const REFRESH_MS = 10_000;
 const NEEDS_SHOWN = 6;
@@ -39,7 +41,7 @@ function sessionRoute() {
   return { id, project: params.get("project") ?? "" };
 }
 
-const onWorkOverview = () => routeOf(globalThis.location.hash).tab === "work" && !sessionRoute();
+const onWorkOverview = () => routeOf(globalThis.location.hash).tab === "work" && !sessionRoute() && !requestRoute();
 
 function startRefresh(refresh) {
   stopWorkRefresh();
@@ -55,18 +57,6 @@ function startRefresh(refresh) {
 }
 
 // ---- cards -----------------------------------------------------------------------------------------------
-
-function sessionCard(session) {
-  const live = session.state === "in_progress";
-  return h("article", { class: "ui-card ui-item ui-session", "data-kind": "session", "data-id": session.id },
-    h("div", { class: "ui-item-head" },
-      h("a", { class: "ui-work-link ui-item-title", href: session.href, dir: "auto" }, `${session.project} · ${session.id}`),
-      h("div", { class: "ui-row" }, h("span", { class: "ui-row" }, statusDot(live ? "working" : "idle"), badge(live ? "In progress" : "Finished", live ? "success" : "neutral")), session.tool ? badge(session.tool) : null)),
-    h("div", { class: "ui-meta" }, h("span", {}, "last event"), timeEl(session.lastAt), h("span", {}, `${session.promptCount} prompt${session.promptCount === 1 ? "" : "s"}`), h("span", {}, `${session.toolCount} tool event${session.toolCount === 1 ? "" : "s"}`), session.factCount ? h("span", {}, `${session.factCount} fact${session.factCount === 1 ? "" : "s"}`) : null),
-    session.lastPrompt ? h("div", { class: "ui-session-prompt" }, h("div", { class: "ui-meta" }, "last typed prompt"), clampText({ text: session.lastPrompt, lines: 3, mono: true })) : h("div", { class: "ui-meta" }, "No typed prompt captured."),
-    session.summary ? h("div", {}, h("div", { class: "ui-meta" }, "summary", session.summary.at ? timeEl(session.summary.at) : null), clampText({ text: session.summary.text, lines: 3 })) : null,
-    h("div", { class: "ui-acts" }, h("a", { class: "ui-btn ui-btn-secondary ui-btn-sm", href: session.href }, "Open session")));
-}
 
 function factLine(fact) {
   const view = factLineView(fact);
@@ -142,10 +132,10 @@ function buildOverview() {
   const recentSlot = h("div", { class: "ui-recent-slot" }, skeleton({ kind: "card", count: 2 }));
   const dismissedGoals = h("div", { class: "ui-dismissed-goals" });
   let guide = null;
-  let sessions = null;
+  let requests = null;
   let goals = null;
 
-  const refresh = ({ soft = true } = {}) => { strip.reload({ soft }); sessions?.reload({ soft: true }); goals?.reload({ soft: true }); };
+  const refresh = ({ soft = true } = {}) => { strip.reload({ soft }); requests?.reload({ soft: true }); goals?.reload({ soft: true }); };
 
   const syncGuide = async (data) => {
     // The overview says `empty` only when there is nothing at all: no sessions, facts, review items or captures.
@@ -188,19 +178,7 @@ function buildOverview() {
     },
   });
 
-  const sessionDefaults = { limit: 10, state: "", q: "", since: "", until: "" };
-  sessions = pagedList({
-    defaults: sessionDefaults, label: "Sessions",
-    fetchPage: (p) => api(`/v1/work/sessions?${queryString({ limit: p.limit, offset: p.offset, project: state.project, state: p.state, q: p.q, since: p.since, until: p.until })}`),
-    renderItem: (session) => sessionCard(session),
-    skeleton: () => skeleton({ kind: "card", count: 3 }),
-    empty: () => emptyState({ title: "No sessions yet", text: "A session appears here when a connected tool sends its first prompt.", art: "memory", compact: true }),
-    emptyFiltered: () => emptyState({ title: "No session matches", text: "Try another state or a wider date range.", art: "search", compact: true }),
-    toolbar: ({ state: s, set }) => filterBar([[
-      segmentFilter({ key: "state", label: "Show", value: s.state, options: [{ value: "", label: "All" }, { value: "in_progress", label: "In progress" }, { value: "finished", label: "Finished" }], onChange: (value) => set({ state: value }) }),
-      textFilter({ key: "q", value: s.q, label: "Find a session by id", placeholder: "Session id…", onChange: (q) => set({ q }, { replace: true }) }),
-    ]]),
-  });
+  requests = requestsView({ onCounts: () => {} });
 
   goals = pagedList({
     defaults: { limit: 5 }, prefix: "g", label: "Goals",
@@ -218,13 +196,16 @@ function buildOverview() {
     h("div", { class: "ui-work-head" }, h("h1", { id: "ui-work-title", tabindex: "-1" }, "Work"), h("p", { class: "ui-meta" }, `Captured sessions, facts and review items from this hub · project: ${state.project || "all"}`)),
     guideSlot,
     strip,
+    h("section", { class: "ui-work-requests", "aria-labelledby": "ui-work-requests" },
+      h("h2", { id: "ui-work-requests" }, "Requests"),
+      h("p", { class: "ui-meta" }, "One card per request: sessions that share a goal in one project. ", estimated("Request grouping")),
+      requests),
     h("div", { class: "ui-work-grid" },
-      h("section", { class: "ui-work-col", "aria-labelledby": "ui-work-now" }, h("h2", { id: "ui-work-now" }, "Now"), h("p", { class: "ui-meta" }, "Sessions in progress and recently finished, newest first."), sessions),
       h("section", { class: "ui-work-col", "aria-labelledby": "ui-work-needs" }, h("h2", { id: "ui-work-needs" }, "Needs you"), needsSlot)),
     h("section", { class: "ui-work-memory", "aria-labelledby": "ui-work-recent" }, h("h2", { id: "ui-work-recent" }, "Recent memory"), h("p", { class: "ui-meta" }, "Current facts with their source episode and importance."), recentSlot),
     h("section", { class: "ui-work-goals", "aria-labelledby": "ui-work-goals" }, h("h2", { id: "ui-work-goals" }, "Goals"), h("p", { class: "ui-meta" }, "From your own typed prompts only. A topic is a goal when it repeats in at least two sessions."), goals, dismissedGoals),
     h("p", { class: "ui-meta ui-work-updated" }, "Refreshes every 10 s while this tab is visible, and at once when something changes."));
-  return { el: root, refresh, project: state.project, dispose: () => { guide?.dispose(); sessions?.dispose?.(); goals?.dispose?.(); } };
+  return { el: root, refresh, project: state.project, dispose: () => { guide?.dispose(); requests?.dispose?.(); goals?.dispose?.(); } };
 }
 
 // ---- one session -------------------------------------------------------------------------------------------
@@ -266,6 +247,13 @@ export async function renderWork() {
     overview?.dispose();
     overview = null;
     swap(root, sessionPage(route));
+    return;
+  }
+  const request = requestRoute();
+  if (request) {
+    overview?.dispose();
+    overview = null;
+    swap(root, requestDetailPage(request));
     return;
   }
   globalThis.document.title = "Work · Aletheia";

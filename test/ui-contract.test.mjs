@@ -36,7 +36,7 @@ export function apiPaths() {
     // Comments name routes in prose ("/api/hub/team/*"); only code counts.
     const source = readFileSync(file, "utf8").split("\n").filter((line) => !line.trim().startsWith("//")).join("\n");
     for (const match of source.matchAll(/["'`](\/(?:api\/hub|v1)\/[A-Za-z0-9_\-/.:${}()]*)/g)) {
-      let path = match[1].replace(/\$\{[^}]*\}/g, "1").split("?")[0].replace(/\/+$/, "");
+      let path = match[1].replace(/\$\{[^}]*\}/g, "1").replace(/\$\{.*$/, "").split("?")[0].replace(/\/+$/, "");
       // A trailing slash left by "/api/hub/memories/${id}" becomes /1; a prefix such as "/api/hub/review/" is cut.
       if (!path || path.endsWith("/api/hub") || path === "/v1") continue;
       if (!found.has(path)) found.set(path, new Set());
@@ -46,8 +46,11 @@ export function apiPaths() {
   return found;
 }
 
-/** The UI builds ids at run time; give the probe an id of the right shape (a goal id is 16 hex digits). */
-const probePath = (path) => path.replace(/^\/api\/hub\/goals\/1$/, "/api/hub/goals/0123456789abcdef");
+/** The UI builds ids at run time; give the probe an id of the right shape (a goal or request id is 16 hex digits). */
+const probePath = (path) => path
+  .replace(/^\/api\/hub\/goals\/1$/, "/api/hub/goals/0123456789abcdef")
+  .replace(/^\/api\/hub\/requests\/1+$/, "/api/hub/requests/0123456789abcdef")
+  .replace(/^\/v1\/work\/requests\/1+$/, "/v1/work/requests/0123456789abcdef");
 
 async function exists(rawPath) {
   const path = probePath(rawPath);
