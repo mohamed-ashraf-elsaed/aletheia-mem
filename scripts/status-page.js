@@ -69,7 +69,6 @@
   function tr(cells) { return h("tr", {}, cells.map(function (c) { return h("td", {}, c); })); }
 
   // ---- all red-list items (computed fields plus stale) ----
-  function redItems() { return D.inconsistencies.concat(D.stale); }
 
   // ---- Overview ----
   function overview() {
@@ -78,10 +77,15 @@
     root.appendChild(h("div", { class: "cards" }, [["validated", "validated"], ["implemented", "implemented"], ["doing", "doing"], ["failed", "failed"], ["todo", "todo"]].map(function (p) {
       return h("div", { class: "card" }, h("div", { class: "n", text: c[p[0]] || 0 }), h("div", { class: "l", text: p[1] }));
     }), h("div", { class: "card" }, h("div", { class: "n", text: D.taskTotal }), h("div", { class: "l", text: "tasks in total" }))));
-    var red = redItems();
-    root.appendChild(h("h2", { text: red.length ? "Inconsistent (" + red.length + ")" : "Inconsistent: none" }));
-    if (red.length) root.appendChild(h("ul", { class: "plain red" }, red.map(function (r) { return h("li", { text: r.text }); })));
-    else root.appendChild(h("p", { class: "muted", text: "No table/file mismatch, no validated task with empty Evidence, no stale validation found." }));
+    var bad = D.inconsistencies;
+    root.appendChild(h("h2", { text: bad.length ? "Inconsistent (" + bad.length + ")" : "Inconsistent: none" }));
+    if (bad.length) root.appendChild(h("ul", { class: "plain red" }, bad.map(function (r) { return h("li", { text: r.text }); })));
+    else root.appendChild(h("p", { class: "muted", text: "No table/file mismatch and no validated task with empty Evidence." }));
+    var re = D.stale;
+    root.appendChild(h("h2", { text: "Re-check suggested (" + re.length + ")" }));
+    root.appendChild(h("p", { class: "muted small", text: "A file listed in the task was changed by a later commit. The task may still be fine; re-run its validation command to be sure." }));
+    if (re.length) root.appendChild(h("ul", { class: "plain amber" }, re.slice(0, 15).map(function (r) { return h("li", { text: r.text }); })));
+    if (re.length > 15) root.appendChild(h("p", { class: "muted small", text: "and " + (re.length - 15) + " more in the Tasks tab and status.json" }));
     if (D.notes.length) {
       root.appendChild(h("h3", { text: "Notes (" + D.notes.length + ")" }));
       root.appendChild(h("ul", { class: "plain amber" }, D.notes.slice(0, 12).map(function (r) { return h("li", { text: r.text }); })));

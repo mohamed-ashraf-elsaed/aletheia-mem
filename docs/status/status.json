@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-27T13:45:04.842Z",
-  "commit": "0804ed5",
+  "generatedAt": "2026-10-27T14:52:07.780Z",
+  "commit": "87766a9",
   "tasks": [
     {
       "id": "T-001",
@@ -4184,6 +4184,10 @@
         {
           "file": "README.md",
           "lastCommit": "2026-10-27"
+        },
+        {
+          "file": "package.json",
+          "lastCommit": "2026-10-27"
         }
       ]
     },
@@ -4669,6 +4673,10 @@
         "T-088"
       ],
       "stale": [
+        {
+          "file": "package.json",
+          "lastCommit": "2026-10-27"
+        },
         {
           "file": ".github/workflows/ci.yml",
           "lastCommit": "2026-10-27"
@@ -11197,7 +11205,7 @@
     },
     {
       "id": "T-079",
-      "text": "T-079 validated 2026-10-26; changed later: README.md (2026-10-27)"
+      "text": "T-079 validated 2026-10-26; changed later: README.md (2026-10-27), package.json (2026-10-27)"
     },
     {
       "id": "T-083",
@@ -11213,7 +11221,7 @@
     },
     {
       "id": "T-087",
-      "text": "T-087 validated 2026-10-26; changed later: .github/workflows/ci.yml (2026-10-27)"
+      "text": "T-087 validated 2026-10-26; changed later: package.json (2026-10-27), .github/workflows/ci.yml (2026-10-27)"
     },
     {
       "id": "T-088",
@@ -16074,14 +16082,17 @@
   "git": {
     "available": true,
     "branch": "worktree-agent-aba35cfc118523d07",
-    "head": "0804ed5",
-    "ahead": 0,
-    "behind": 0,
-    "uncommitted": 11,
-    "uncommittedDocs": [
-      "docs/tasks/TASKS.md"
-    ],
+    "head": "87766a9",
+    "ahead": 1,
+    "behind": 11,
+    "uncommitted": 3,
+    "uncommittedDocs": [],
     "commits": [
+      {
+        "sha": "87766a9",
+        "date": "2026-10-27",
+        "subject": "feat(status): one-file project status page generated from the repo files"
+      },
       {
         "sha": "0804ed5",
         "date": "2026-10-27",
@@ -16151,17 +16162,11 @@
         "sha": "66b363c",
         "date": "2026-10-27",
         "subject": "Document requests, story and economics (T-152, T-165 to T-173)"
-      },
-      {
-        "sha": "41826b4",
-        "date": "2026-10-27",
-        "subject": "Add work list query params (filter, sort, group) (T-173)"
       }
     ],
     "worktrees": [
-      "/home/mashraf/Projects/aletheia-mem                                           0804ed5 [main]",
-      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-aba35cfc118523d07 0804ed5 [worktree-agent-aba35cfc118523d07] locked",
-      "/home/mashraf/Projects/aletheia-ship                                          e43eca9 [feat/ship-ready]"
+      "/home/mashraf/Projects/aletheia-mem                                           b2e6ece [main]",
+      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-aba35cfc118523d07 87766a9 [worktree-agent-aba35cfc118523d07]"
     ]
   },
   "ci": [
@@ -16264,7 +16269,7 @@
       },
       "scripts": {
         "files": 18,
-        "lines": 2640
+        "lines": 2644
       },
       "test": {
         "files": 123,
