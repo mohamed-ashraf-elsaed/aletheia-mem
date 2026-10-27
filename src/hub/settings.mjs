@@ -9,6 +9,7 @@ export const SETTINGS_SCHEMA = [
   { key: "providers", kind: "list", label: "Provider chain", secret: false },
   { key: "factBudget.maxEpisodes", kind: "int", label: "Fact episodes budget", min: 1, max: 1000, secret: false },
   { key: "factBudget.maxChars", kind: "int", label: "Fact characters budget", min: 100, max: 200000, secret: false },
+  { key: "rules.reviewDays", kind: "int", label: "Rule review window (days)", min: 7, max: 730, default: 90, secret: false },
   { key: "redaction", kind: "boolean", label: "Redact before storing", secret: false },
   { key: "excludedProjects", kind: "list", label: "Excluded projects", secret: false },
   { key: "apiKey", kind: "string", label: "API key", secret: true },
@@ -16,7 +17,7 @@ export const SETTINGS_SCHEMA = [
 
 const byKey = new Map(SETTINGS_SCHEMA.map((spec) => [spec.key, spec]));
 const keyOf = (key) => `${PREFIX}${key}`;
-const defaultFor = (spec) => (spec.kind === "boolean" ? false : spec.kind === "int" ? spec.min : spec.kind === "list" ? [] : "");
+const defaultFor = (spec) => (spec.kind === "boolean" ? false : spec.kind === "int" ? spec.default ?? spec.min : spec.kind === "list" ? [] : "");
 
 export function validateSetting(key, value) {
   const spec = byKey.get(key);

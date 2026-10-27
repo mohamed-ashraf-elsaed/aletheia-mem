@@ -1,6 +1,8 @@
 // Rule decide flow: approve / edit-then-approve / reject a suggestion, toggle an active rule on/off, replace a rule
 // (recording "replaced by <rule> on <date>"), count decisions, and record the last learning run. Every write is
 // reversible where the underlying table allows it; nothing here deletes a suggestion or a rule.
+import { evidenceFromSuggestion } from "./rule-evidence.mjs";
+
 const LEARNING_RUN_KEY = "rules.last_learning_run";
 
 export function decidedCounts(store) {
@@ -35,7 +37,7 @@ export function decideSuggestion(store, id, { action, text = null, actor = "ui",
       finalText = edited;
     }
     const scopeTier = row.project && row.project !== "default" ? "project" : "everywhere";
-    ruleId = store.rules.add({ then: finalText, when: row.when_text, scopeTier, scopeName: scopeTier === "project" ? row.project : "Everywhere", source: "suggested" }).id;
+    ruleId = store.rules.add({ then: finalText, when: row.when_text, scopeTier, scopeName: scopeTier === "project" ? row.project : "Everywhere", source: "suggested", evidence: evidenceFromSuggestion(store, row.id) }).id;
     store.db.prepare("UPDATE rule_suggestions SET status = 'accepted' WHERE id = ?").run(row.id);
   } else if (action === "reject") {
     store.db.prepare("UPDATE rule_suggestions SET status = 'dismissed' WHERE id = ?").run(row.id);

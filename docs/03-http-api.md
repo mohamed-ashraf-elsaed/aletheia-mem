@@ -236,8 +236,39 @@ Full field descriptions and real samples are in [32-requests.md](32-requests.md)
 | `/api/hub/rules/:id/toggle` | POST | `{enabled: boolean}` |
 | `/api/hub/rules/:id/replace` | POST | `{then, when?, scopeTier?, scopeName?}`; the old rule gets `replacedBy` and `replacedAtEpoch` |
 | `/api/hub/rules/learning-run` | GET, POST | read the last learning run, or run `suggestRules` and record it |
+| `/api/hub/rules` | GET | every rule with `createdAtEpoch`, `source`, `evidence`, `last_confirmed_epoch`, `age_days`, `stale` and `reasons`; `?stale=1` keeps flagged rules, `?older_than_days=N` keeps rules last confirmed more than N days ago |
+| `/api/hub/rules` | POST | add a rule; optional `evidence: [{kind: "memory" \| "fact", id}]` (ids must exist) |
+| `/api/hub/rules/:id/confirm` | POST | "this rule is still right": sets `last_confirmed_epoch` to now and writes an audit row; `{restore: epoch}` puts an earlier date back (the Undo) |
+| `/api/hub/rules/diff` | GET | per tool file, rules only in the store, only in the file, or worded differently, with file and line; `?tools=a,b&projectDir=/abs/path`; read-only |
 
 The CLI equivalents: `aletheia context economics [--project p] [--limit n]` and `aletheia rules suggest`.
+
+### Rule dates, evidence and the re-check flag
+
+Every rule keeps the date it was made, its source, the memories and facts it rests on (its evidence) and the date it
+was last confirmed. A rule approved from a suggestion copies the suggestion's source ids and dated quotes as its
+evidence; a rule added through the API or the `add_rule` MCP tool may name evidence ids. A rule made before this
+existed has no evidence and keeps working.
+
+A rule is flagged for re-check when any of these holds. The flag is computed on every read and is **a flag, never a
+deletion**: a flagged rule stays enabled, keeps syncing and is never edited or removed.
+
+| Code | When |
+|---|---|
+| `evidence_fact_superseded` | an evidence fact was superseded or closed after the rule was last confirmed |
+| `evidence_fact_expired` | an evidence fact's `valid_to` or expiry passed after the rule was last confirmed |
+| `evidence_memory_dismissed` | an evidence memory was dismissed after the rule was last confirmed |
+| `newer_fact` | a newer active fact states a different object for the same project, subject and predicate as an evidence fact |
+| `review_overdue` | no confirmation for more than the review window: setting `rules.reviewDays`, 7 to 730, default 90 |
+
+A rule with no evidence can only be flagged by `review_overdue`. Each reason is `{code, message, evidence?}`. Confirming
+a rule (`POST /api/hub/rules/:id/confirm`, `aletheia rules confirm <id>`, or the `confirm_rule` MCP tool) sets
+`last_confirmed_epoch` to now, so a change that happened before it no longer counts. To stop following a rule, use
+the existing turn-off route (`aletheia rules retire <id>` does the same): the rule is kept, not deleted.
+
+`?older_than_days=N` also works on `GET /api/hub/memories` and in the `POST /v1/search` body (and as `older_than_days`
+in the `search` MCP tool), so pruning old memories is a query. Memory rows already carry their date, `tool`,
+`session_id`, `origin` and `files`.
 
 
 

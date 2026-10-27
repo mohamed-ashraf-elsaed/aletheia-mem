@@ -13,7 +13,7 @@
 //   aletheia watch [--once] [--interval ms] [--batch n] [--tool a,b]
 //                                                          poll the verified transcript folders incrementally (read-only, nice 10)
 //   aletheia export [--format jsonl|markdown] [--project p] [--events] [--out file]
-//   aletheia rules list | add <text> [--when w] | lint [--dir path] [--tools a,b] [--json] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
+//   aletheia rules list [--stale] [--older-than N] | add <text> [--when w] | confirm <id> | retire <id> | diff [--dir path] [--tools a,b] [--json] | lint [--dir path] [--tools a,b] [--json] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
 //   aletheia tools                                        detected tools and how to connect each
 //   aletheia connect <tool> [--write]                     preview (default) or write the MCP config for a tool
 //   aletheia install <tool> [--write] [--dry-run]         preview (default) or write MCP, hooks and rules in one go
@@ -546,7 +546,33 @@ async function main() {
       }
       case "rules": {
         const sub = pos[0];
-        if (sub === "list") return out(hub.rules.list().map((r) => `${r.enabled ? "on " : "off"} ${r.id}  ${r.when ? `When ${r.when}: ` : ""}${r.then}  [${r.scopeTier === "everywhere" ? "everywhere" : r.scopeName}${r.tools ? `; ${r.tools.join(",")}` : ""}]`).join("\n") || "No rules yet.");
+        if (sub === "list") {
+          const { describeRules, provenanceLine, recheckMarker } = await import("../src/hub/rule-evidence.mjs");
+          const older = typeof flags["older-than"] === "string" ? flags["older-than"] : null;
+          const rows = describeRules(hub, { stale: flags.stale ? true : null, olderThanDays: older });
+          return out(rows.map((r) => `${r.enabled ? "on " : "off"} ${r.id}  ${r.when ? `When ${r.when}: ` : ""}${r.then}  [${r.scopeTier === "everywhere" ? "everywhere" : r.scopeName}${r.tools ? `; ${r.tools.join(",")}` : ""}]  (${provenanceLine(r)})${recheckMarker(r)}`).join("\n") || "No rules yet.");
+        }
+        if (sub === "confirm") {
+          const id = pos[1] ?? die("Usage: aletheia rules confirm <id>");
+          const done = hub.rules.confirm(id, { actor: "cli" });
+          if (!done) return die(`No rule has the id ${id}.`);
+          return out(`Confirmed ${done.id} on ${new Date(done.lastConfirmedEpoch).toISOString().slice(0, 10)}. The rule is unchanged.`);
+        }
+        if (sub === "retire") {
+          const id = pos[1] ?? die("Usage: aletheia rules retire <id>");
+          const { toggleRule } = await import("../src/hub/rules-decide.mjs");
+          const done = toggleRule(hub, id, { enabled: false, actor: "cli" });
+          if (!done) return die(`No rule has the id ${id}.`);
+          return out(`Retired ${done.id}: turned off, not deleted. Turn it back on in the Rules page.`);
+        }
+        if (sub === "diff") {
+          const { diffRules, diffTargets, formatDiff } = await import("../src/hub/rule-diff.mjs");
+          const ids = typeof flags.tools === "string" ? flags.tools.split(",").map((id) => id.trim()).filter(Boolean) : null;
+          for (const id of ids ?? []) if (!toolById(id)) return die(`Unknown tool: ${id}`);
+          const dir = resolve(typeof flags.dir === "string" ? flags.dir : process.cwd());
+          const report = diffRules({ rules: hub.rules.list(), files: diffTargets({ toolIds: ids, dir, home: config.home }) });
+          return out(flags.json ? report : formatDiff(report));
+        }
         if (sub === "add") { const r = hub.rules.add({ then: pos.slice(1).join(" "), when: typeof flags.when === "string" ? flags.when : "" }); return out(r.created ? `Added ${r.id}.` : `Already there (${r.id}).`); }
         if (sub === "suggest") {
           const { suggestRules } = await import("../src/hub/rule-suggest.mjs");
@@ -593,13 +619,14 @@ async function main() {
               if (path && existsSync(path)) files.push({ path, tool: id });
             }
           }
-          const result = lintRules({ rules: hub.rules.list(), files });
+          const { describeRules } = await import("../src/hub/rule-evidence.mjs");
+          const result = lintRules({ rules: describeRules(hub), files });
           if (flags.json) return out(result);
           out(formatFindings(result.findings));
           if (result.findings.length) process.exitCode = 1;
           return;
         }
-        return die("Usage: aletheia rules list | add <text> | lint | sync | import");
+        return die("Usage: aletheia rules list [--stale] [--older-than N] | add <text> | confirm <id> | retire <id> | diff | lint | sync | import");
       }
       case "tools": return out(detectTools(config.home).map((t) => `${t.installed ? "✔" : "·"} ${t.id.padEnd(12)} ${t.name}  rules: ${t.rulesProject}${t.rulesGlobal ? ` | ~/${t.rulesGlobal}` : ""}${t.canConnect ? "  mcp: yes" : ""}`).join("\n"));
       case "connect": {

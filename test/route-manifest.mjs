@@ -66,6 +66,9 @@ export const ROUTES = [
   R("POST", "/api/hub/rule-suggestions/999999", { template: "/api/hub/rule-suggestions/{id}", status: 404, keys: ["error"], body: { action: "approve" } }),
   R("POST", "/api/hub/rules/ghost/toggle", { template: "/api/hub/rules/{id}/toggle", status: 404, keys: ["error"], body: { enabled: true } }),
   R("POST", "/api/hub/rules/ghost/replace", { template: "/api/hub/rules/{id}/replace", status: 404, keys: ["error"], body: { then: "x" } }),
+  R("GET", "/api/hub/rules", { keys: ["rules", "reviewDays"] }),
+  R("GET", "/api/hub/rules/diff", { keys: ["files", "outOfSync", "checked"] }),
+  R("POST", "/api/hub/rules/ghost/confirm", { template: "/api/hub/rules/{id}/confirm", status: 404, keys: ["error"], body: {} }),
   R("GET", "/api/hub/rules/learning-run", { keys: ["learningRun"] }),
   R("POST", "/api/hub/rules/learning-run", { keys: ["learningRun", "result"], body: {} }),
 

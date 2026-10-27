@@ -25,14 +25,15 @@ const calls = {
   work_state_read: { list: "todo" },
   save_memory: { text: "a new memory about beta", title: "beta" },
   add_rule: { then: "Answer briefly." },
+  confirm_rule: { id: "@RULE" },
   work_state_write: { list: "todo", items: ["a"] },
   dismiss_memory: { id: 1 },
   restore_memory: { id: 1 },
 };
 
 describe("MCP tool definitions", () => {
-  test("lists 12 tools", () => {
-    expect(listed.length).toBe(12);
+  test("lists 13 tools", () => {
+    expect(listed.length).toBe(13);
     expect(Object.keys(calls).sort()).toEqual(Object.keys(byName).sort());
   });
 
@@ -64,7 +65,9 @@ describe("MCP tool definitions", () => {
     db.add({ project: "p", kind: "observation", type: "note", title: "alpha", narrative: "alpha text" });
     const local = { store: db, tool: "quality", cwd: "/work/quality" };
     const snapshot = () => Buffer.from(db.db.serialize()).toString("base64");
-    for (const [name, args] of Object.entries(calls)) {
+    const ruleId = db.rules.add({ then: "Keep answers short." }).id;
+    for (const [name, sample] of Object.entries(calls)) {
+      const args = JSON.parse(JSON.stringify(sample).replace("@RULE", ruleId));
       const before = snapshot();
       const result = callTool(name, args, local);
       expect(result.isError, `${name} sample call must succeed`).toBeFalsy();

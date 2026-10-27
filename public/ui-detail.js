@@ -13,7 +13,7 @@ function memoryBody(memory) {
   const facts = Array.isArray(memory.facts) ? memory.facts : [];
   return h("div", { class: "ui-detail" },
     metaRow(badge(memory.kind), badge(memory.type), memory.pinned ? badge("pinned", "success") : null, h("span", {}, memory.project), h("span", {}, memory.tool), timeEl(memory.created_at_epoch)),
-    metaRow(h("span", {}, "id"), mono(String(memory.id)), memory.session_id ? h("span", {}, "session") : null, memory.session_id ? mono(String(memory.session_id)) : null),
+    metaRow(h("span", {}, "id"), mono(String(memory.id)), memory.session_id ? h("span", {}, "session") : null, memory.session_id ? mono(String(memory.session_id)) : null, memory.origin ? h("span", {}, "origin") : null, memory.origin ? mono(String(memory.origin)) : null, Number.isFinite(memory.created_at_epoch) ? h("span", {}, `saved ${new Date(memory.created_at_epoch).toISOString().slice(0, 10)}`) : null),
     memory.subtitle ? h("p", { class: "ui-meta", dir: "auto" }, memory.subtitle) : null,
     memory.narrative ? h("section", { "aria-label": "Text" }, markdownView(memory.narrative)) : h("p", { class: "ui-meta" }, "This memory has a title only."),
     facts.length ? h("section", {}, h("h3", { class: "ui-detail-h" }, "Facts in this memory"), h("ul", { class: "ui-detail-list" }, ...facts.map((fact) => h("li", { dir: "auto" }, String(fact))))) : null,

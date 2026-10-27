@@ -98,7 +98,7 @@ describe("T-210: the rule list", () => {
     input.value = "thing 2";
     input.dispatch("input");
     expect(view.querySelectorAll(".ui-item").length).toBe(1);
-    expect(calls.length).toBe(1);
+    expect(calls.filter((call) => !call.path.includes("/rules/diff")).length).toBe(1);
   });
   test("rule text and the filter handle hostile and right-to-left text as plain text", async () => {
     install([["/api/hub/rules", () => json({ rules: [rule(1, { then: "<img src=x onerror=alert(1)> قاعدة" })] })]]);

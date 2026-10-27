@@ -5,7 +5,8 @@ import { projectKeyForPath } from "../readmodel/project.mjs";
 import { wrapUntrusted } from "./untrusted.mjs";
 import { redact } from "./capture.mjs";
 import { searchPage } from "./lists.mjs";
-import { epochOrIso, pagingOf, whenOf } from "./paging.mjs";
+import { earlierOf, epochOrIso, olderThanCutoff, pagingOf, whenOf } from "./paging.mjs";
+import { checkEvidenceInput, describeRules, provenanceLine, recheckMarker } from "./rule-evidence.mjs";
 import { readWorkStateList, writeWorkStateList } from "./work-state.mjs";
 import { TOOL_DEFS } from "./mcp-tools.mjs";
 export { TOOL_DEFS };
@@ -29,7 +30,8 @@ function fmtIndex(rows) {
   return rows.map((r) => `#${r.id} ${r.at.slice(0, 10)} [${r.type}] ${r.title}  (${r.project}, ${r.tool}${r.pinned ? ", pinned" : ""})`).join("\n");
 }
 function fmtFull(m) {
-  return [`#${m.id} [${m.type}] ${m.title}`, `${m.project} · ${m.tool} · ${new Date(m.created_at_epoch).toISOString()}`, m.subtitle ?? "", m.narrative ?? "", m.facts.length ? `Facts: ${m.facts.join("; ")}` : "", m.files.length ? `Files: ${m.files.join(", ")}` : ""].filter(Boolean).join("\n");
+  const source = [m.tool, m.session_id ? `session ${m.session_id}` : null, m.origin ? `origin ${m.origin}` : null].filter(Boolean).join(", ");
+  return [`#${m.id} [${m.type}] ${m.title}`, `${m.project} · ${new Date(m.created_at_epoch).toISOString()} · source: ${source}`, m.subtitle ?? "", m.narrative ?? "", m.facts.length ? `Facts: ${m.facts.join("; ")}` : "", m.files.length ? `Files: ${m.files.join(", ")}` : ""].filter(Boolean).join("\n");
 }
 
 /** Run one tool. `ctx`: { store, tool (the calling client), cwd, projects (allowed projects, null = all) }.
@@ -56,7 +58,7 @@ export function callTool(name, args = {}, ctx) {
         const paging = pagingOf({ limit: args.limit, offset: args.offset }, { limit: 20 });
         const order = ["relevance", "date_desc", "date_asc"].includes(args.order) ? args.order : "relevance";
         const since = whenOf(args.since);
-        const until = whenOf(args.until, { end: true });
+        const until = earlierOf(whenOf(args.until, { end: true }), olderThanCutoff(args.older_than_days));
         const pickProject = allowed ? (args.project ?? (ctx.projects.length === 1 ? ctx.projects[0] : undefined)) : args.project;
         const page = searchPage(store, { query: args.query, project: pickProject, type: args.type, kind: args.kind, order, since, until, ...paging, scope: "current" });
         const facts = page.facts.filter((fact) => !allowed || allowed(fact.project));
@@ -120,12 +122,22 @@ export function callTool(name, args = {}, ctx) {
         return recalled(store.context({ project, limit: args.limit ?? 20, tool: ctx.tool }));
       }
       case "list_rules": {
-        const rules = store.rules.list().filter((r) => r.enabled);
-        return text(rules.length ? rules.map((r) => `- ${r.when ? `When ${r.when}: ` : ""}${r.then}  [${r.scopeTier === "everywhere" ? "everywhere" : r.scopeName}]`).join("\n") : "No rules yet.");
+        const rules = describeRules(store).filter((r) => r.enabled);
+        return text(rules.length ? rules.map((r) => `- ${r.when ? `When ${r.when}: ` : ""}${r.then}  [${r.scopeTier === "everywhere" ? "everywhere" : r.scopeName}]  (id ${r.id}, ${provenanceLine(r)})${recheckMarker(r)}`).join("\n") : "No rules yet.");
       }
       case "add_rule": {
-        const r = store.rules.add({ then: args.then, when: args.when ?? "", scopeTier: args.scopeTier ?? "everywhere", scopeName: args.scopeName ?? "Everywhere", source: ctx.tool ?? "mcp" });
+        const evidence = checkEvidenceInput(store, [
+          ...(Array.isArray(args.evidence_memory_ids) ? args.evidence_memory_ids.map((id) => ({ kind: "memory", id })) : []),
+          ...(Array.isArray(args.evidence_fact_ids) ? args.evidence_fact_ids.map((id) => ({ kind: "fact", id })) : []),
+        ], { allowed });
+        const r = store.rules.add({ then: args.then, when: args.when ?? "", scopeTier: args.scopeTier ?? "everywhere", scopeName: args.scopeName ?? "Everywhere", source: ctx.tool ?? "mcp", evidence });
         return text(r.created ? `Rule saved (${r.id}). The owner syncs rules to tools from the Rules page.` : `That rule already exists (${r.id}).`);
+      }
+      case "confirm_rule": {
+        if (typeof args.id !== "string" || !args.id.trim()) return fail("id is required (a rule id from list_rules).");
+        const done = store.rules.confirm(args.id.trim(), { actor: ctx.tool ?? "mcp" });
+        if (!done) return fail(`No rule has the id ${args.id.trim()}.`);
+        return text(`Confirmed rule ${done.id} on ${new Date(done.lastConfirmedEpoch).toISOString().slice(0, 10)}. It stays as it is; only the date it was last checked changed.`);
       }
       case "dismiss_memory": {
         if (!Number.isSafeInteger(Number(args.id))) return fail("id is required (a number).");

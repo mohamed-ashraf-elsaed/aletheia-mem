@@ -6,6 +6,26 @@ history.
 
 ## [Unreleased]
 
+### Added
+
+- Rules keep their date, source and evidence. A rule made from an approved suggestion copies the suggestion's source ids
+  and dated quotes; `add_rule` and `POST /api/hub/rules` accept evidence ids. Rules made before this have no evidence.
+- A rule is flagged for re-check, with reasons, when an evidence fact is superseded or expired, an evidence memory is
+  dismissed, a newer fact covers the same subject and predicate, or nobody confirmed it within the review window
+  (`rules.reviewDays`, default 90). It is a flag, never a deletion: the rule stays on and keeps syncing.
+- `POST /api/hub/rules/:id/confirm`, `aletheia rules confirm <id>` and the `confirm_rule` MCP tool (13 tools now) record
+  that a rule is still right. `aletheia rules retire <id>` turns a rule off without deleting it.
+- `GET /api/hub/rules` returns `evidence`, `last_confirmed_epoch`, `stale` and `reasons`, with `?stale=1` and
+  `?older_than_days=N` filters. `aletheia rules lint` reports a stale rule as a warning.
+- `aletheia rules diff` and `GET /api/hub/rules/diff` show, per tool file, rules only in the store, only in the file or
+  worded differently, with file and line. Read-only. The Rules page shows how many tools are out of sync.
+- `older_than_days` on the memory list, `/v1/search` and the `search` MCP tool, so pruning old memories is a query.
+
+### Changed
+
+- `list_rules` prints each rule's date, source, last-confirmed date and a `[re-check: reason]` marker. `get_observations`
+  and the memory detail panel show the source (tool, session, origin) and the files a memory touched.
+
 ## [0.1.4] - 2026-10-27
 
 ### Added

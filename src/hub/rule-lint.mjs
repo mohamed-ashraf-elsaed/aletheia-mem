@@ -43,9 +43,9 @@ function core(normalized) {
     .trim();
 }
 
-const ruleKey = (rule) => `${rule.scopeTier ?? "everywhere"}|${rule.scopeName ?? "Everywhere"}|${normalizeRuleText(rule.when)}|${normalizeRuleText(rule.then)}`;
+export const ruleKey = (rule) => `${rule.scopeTier ?? "everywhere"}|${rule.scopeName ?? "Everywhere"}|${normalizeRuleText(rule.when)}|${normalizeRuleText(rule.then)}`;
 
-const finding = (ruleId, code, message, fix) => ({ ruleId, code, message, fix });
+const finding = (ruleId, code, message, fix) => ({ ruleId, code, severity: "warning", message, fix });
 
 /** Check one rule's text. Kept separate so the CLI can explain a single rule if needed. */
 export function lintRule(rule, { budget = DEFAULT_BUDGET } = {}) {
@@ -105,6 +105,13 @@ export function lintRules({ rules = [], files = [], budget = DEFAULT_BUDGET } = 
 
   // Per-rule checks.
   for (const rule of list) findings.push(...lintRule(rule, { budget }));
+
+  // Rules the caller marked stale (see rule-evidence.mjs): a flag to act on, never a block.
+  for (const rule of list) {
+    if (rule.enabled === false || !rule.stale) continue;
+    const why = (rule.reasons ?? []).map((reason) => reason.message).join(" ");
+    findings.push(finding(rule.id, "stale_rule", `Rule ${rule.id} may be out of date. ${why}`.trim(), "Confirm it with aletheia rules confirm, or retire it with aletheia rules retire."));
+  }
   const total = list.filter((rule) => rule.enabled !== false).reduce((sum, rule) => sum + String(rule.then ?? "").length, 0);
   if (total > budget.maxTotalChars) {
     findings.push(finding("set", "set_too_large", `Enabled rules total ${total} characters (budget ${budget.maxTotalChars}).`, "Move project detail out of the always-on set; keep the standing rules short."));
