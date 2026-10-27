@@ -29,7 +29,7 @@ describe("npm package prep", () => {
     expect(pkg.publishConfig.access).toBe("public");
     expect(pkg.files).toContain("bin");
     expect(pkg.files).toContain("src");
-    expect(pkg.files).toContain("docs");
+    expect(pkg.files).toContain("docs/dependencies.md");
     expect(pkg.files).toContain("NOTICE.md");
   });
 });

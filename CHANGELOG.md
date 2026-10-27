@@ -6,6 +6,8 @@ history and the validated tasks in [docs/tasks/TASKS.md](docs/tasks/TASKS.md).
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-10-27
+
 ### Added
 
 - `docs/releasing.md`: versioning policy, the release sequence with the owner-only steps marked, and rollback notes.

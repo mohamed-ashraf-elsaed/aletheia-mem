@@ -1,6 +1,6 @@
 {
   "name": "aletheia-mem",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Aletheia: a free, local memory and rules hub for AI coding tools. One store any tool reads over MCP, REST or CLI; rules synced to CLAUDE.md, AGENTS.md, Cursor and more; export and import to move between tools.",
   "keywords": [
     "ai-memory",
@@ -31,7 +31,7 @@
   "files": [
     "bin",
     "src",
-    "docs",
+    "docs/dependencies.md",
     "prompts",
     "vendor",
     "public",

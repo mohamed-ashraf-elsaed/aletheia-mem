@@ -6,3 +6,13 @@ node_modules/
 
 bench/data/
 bench/runtime/
+
+# Agent sessions, worktrees and local planning. Never committed, never published.
+.claude/
+.commandcode/
+.codex/
+.cursor/
+.aider*
+.qoder/
+.work-view-local/
+.aletheia/

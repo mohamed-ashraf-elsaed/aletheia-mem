@@ -71,7 +71,7 @@ describe("package.json metadata for the npm page", () => {
     expect(pkg.funding).toBeUndefined();
   });
 
-  test("files ship the README images' source folders and the changelog", () => {
-    for (const f of ["README.md", "CHANGELOG.md", "LICENSE", "NOTICE.md", "docs"]) expect(pkg.files).toContain(f);
+  test("files ship the changelog and licence files; images load from absolute GitHub URLs, so docs stays out", () => {
+    for (const f of ["README.md", "CHANGELOG.md", "LICENSE", "NOTICE.md", "docs/dependencies.md"]) expect(pkg.files).toContain(f);
   });
 });
