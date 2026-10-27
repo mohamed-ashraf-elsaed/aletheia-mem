@@ -91,7 +91,8 @@ function parseRelative(text, baseEpoch) {
     }
     if (unit === "quarter") {
       const current = quarterStart(yearOf(baseEpoch), Math.floor(monthOf(baseEpoch) / 3));
-      const from = quarterStart(yearOf(current), Math.floor(monthOf(addMonths(current, delta * 3)) / 3));
+      const shifted = addMonths(current, delta * 3);
+      const from = quarterStart(yearOf(shifted), Math.floor(monthOf(shifted) / 3));
       return range(from, quarterStart(yearOf(from), Math.floor(monthOf(from) / 3) + 1), m[0], true, "quarter");
     }
     const year = yearOf(baseEpoch) + delta;
