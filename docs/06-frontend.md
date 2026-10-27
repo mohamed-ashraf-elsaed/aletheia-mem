@@ -77,7 +77,7 @@ and answers `total`, `limit`, `offset` and `hasMore`. The UI sends the page size
 | `POST /api/hub/rules/:id/toggle` | body `{enabled}` |
 | `POST /api/hub/rules/:id/replace` | body `{then, when?}`; the old rule is kept and marked replaced |
 | `POST /api/hub/rule-suggestions/:id` | body `{action, text?}`; action is approve, edit, reject or restore |
-| `POST /v1/search` | body `limit`, `offset`, `paged: true`, `scope`, `includeHistory`, `since`, `until`, `kind`, `mix`; without `offset` or `paged` it keeps its older shape |
+| `POST /v1/search` | body `limit`, `offset`, `paged: true`, `scope`, `includeHistory`, `since`, `until`, `order=relevance\|date_desc\|date_asc`, `kind`, `mix`; without `offset` or `paged` it keeps its older shape |
 
 A date without a time as `until` means the end of that day. Tests: `test/pagination.test.mjs`.
 

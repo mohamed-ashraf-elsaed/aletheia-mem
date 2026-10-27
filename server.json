@@ -1,0 +1,21 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.mohamed-ashraf-elsaed/aletheia-mem",
+  "title": "Aletheia",
+  "description": "A free, local memory and rules hub for AI coding tools, served over MCP.",
+  "repository": {
+    "url": "https://github.com/mohamed-ashraf-elsaed/aletheia-mem",
+    "source": "github"
+  },
+  "version": "0.1.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "aletheia-mem",
+      "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      }
+    }
+  ]
+}

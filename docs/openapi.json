@@ -1,0 +1,1546 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Aletheia HTTP API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "GET /",
+        "responses": {
+          "200": {
+            "description": "GET /"
+          }
+        }
+      }
+    },
+    "/index.html": {
+      "get": {
+        "summary": "GET /index.html",
+        "responses": {
+          "200": {
+            "description": "GET /index.html"
+          }
+        }
+      }
+    },
+    "/work-view/{file}": {
+      "get": {
+        "summary": "GET /work-view/{file}",
+        "parameters": [
+          {
+            "name": "file",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GET /work-view/{file}"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "GET /health",
+        "responses": {
+          "200": {
+            "description": "GET /health",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "status",
+                    "timestamp"
+                  ],
+                  "properties": {
+                    "status": {},
+                    "timestamp": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work-view": {
+      "get": {
+        "summary": "GET /api/work-view",
+        "responses": {
+          "200": {
+            "description": "GET /api/work-view",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "version",
+                    "generatedAt",
+                    "agents",
+                    "humanRequests",
+                    "revision",
+                    "source"
+                  ],
+                  "properties": {
+                    "version": {},
+                    "generatedAt": {},
+                    "agents": {},
+                    "humanRequests": {},
+                    "revision": {},
+                    "source": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work-view/events": {
+      "get": {
+        "summary": "GET /api/work-view/events",
+        "responses": {
+          "200": {
+            "description": "GET /api/work-view/events"
+          }
+        }
+      }
+    },
+    "/api/work-view/evidence/{kind}/{id}": {
+      "get": {
+        "summary": "GET /api/work-view/evidence/{kind}/{id}",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GET /api/work-view/evidence/{kind}/{id}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "kind"
+                  ],
+                  "properties": {
+                    "kind": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work-view/file/{kind}/{id}/{index}": {
+      "get": {
+        "summary": "GET /api/work-view/file/{kind}/{id}/{index}",
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "index",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "GET /api/work-view/file/{kind}/{id}/{index}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work-view/review": {
+      "post": {
+        "summary": "POST /api/work-view/review",
+        "responses": {
+          "404": {
+            "description": "POST /api/work-view/review",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work-view/rules": {
+      "post": {
+        "summary": "POST /api/work-view/rules",
+        "responses": {
+          "200": {
+            "description": "POST /api/work-view/rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "version",
+                    "rules"
+                  ],
+                  "properties": {
+                    "version": {},
+                    "rules": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work-view/agents/mark-finished": {
+      "post": {
+        "summary": "POST /api/work-view/agents/mark-finished",
+        "responses": {
+          "404": {
+            "description": "POST /api/work-view/agents/mark-finished",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work-view/rules/load-in-claude-code": {
+      "post": {
+        "summary": "POST /api/work-view/rules/load-in-claude-code",
+        "responses": {
+          "200": {
+            "description": "POST /api/work-view/rules/load-in-claude-code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "version",
+                    "rulesFile"
+                  ],
+                  "properties": {
+                    "version": {},
+                    "rulesFile": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/work-state/entries": {
+      "post": {
+        "summary": "POST /api/work-state/entries",
+        "responses": {
+          "200": {
+            "description": "POST /api/work-state/entries"
+          }
+        }
+      }
+    },
+    "/api/setup/state": {
+      "get": {
+        "summary": "GET /api/setup/state",
+        "responses": {
+          "200": {
+            "description": "GET /api/setup/state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "status"
+                  ],
+                  "properties": {
+                    "status": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/setup/scan": {
+      "get": {
+        "summary": "GET /api/setup/scan",
+        "responses": {
+          "200": {
+            "description": "GET /api/setup/scan",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "phase",
+                    "done",
+                    "agents"
+                  ],
+                  "properties": {
+                    "phase": {},
+                    "done": {},
+                    "agents": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/setup/{step}": {
+      "post": {
+        "summary": "POST /api/setup/{step}",
+        "parameters": [
+          {
+            "name": "step",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "POST /api/setup/{step}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/team": {
+      "get": {
+        "summary": "GET /api/hub/team",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/team",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "teams"
+                  ],
+                  "properties": {
+                    "teams": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "POST /api/hub/team",
+        "responses": {
+          "201": {
+            "description": "POST /api/hub/team"
+          }
+        }
+      }
+    },
+    "/api/hub/team/projects": {
+      "get": {
+        "summary": "GET /api/hub/team/projects",
+        "responses": {
+          "404": {
+            "description": "GET /api/hub/team/projects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "POST /api/hub/team/projects",
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/team/projects",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/team/members": {
+      "get": {
+        "summary": "GET /api/hub/team/members",
+        "responses": {
+          "404": {
+            "description": "GET /api/hub/team/members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "POST /api/hub/team/members",
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/team/members",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/team/members/revoke": {
+      "post": {
+        "summary": "POST /api/hub/team/members/revoke",
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/team/members/revoke",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/team/shares": {
+      "post": {
+        "summary": "POST /api/hub/team/shares",
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/team/shares",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/team/board": {
+      "get": {
+        "summary": "GET /api/hub/team/board",
+        "responses": {
+          "404": {
+            "description": "GET /api/hub/team/board",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "POST /api/hub/team/board",
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/team/board",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/team/memory": {
+      "post": {
+        "summary": "POST /api/hub/team/memory",
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/team/memory",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/team/brief": {
+      "get": {
+        "summary": "GET /api/hub/team/brief",
+        "responses": {
+          "404": {
+            "description": "GET /api/hub/team/brief",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/team/search": {
+      "post": {
+        "summary": "POST /api/hub/team/search",
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/team/search",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/team/leave": {
+      "post": {
+        "summary": "POST /api/hub/team/leave",
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/team/leave",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/team/audit": {
+      "get": {
+        "summary": "GET /api/hub/team/audit",
+        "responses": {
+          "404": {
+            "description": "GET /api/hub/team/audit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/erasure/report": {
+      "post": {
+        "summary": "POST /api/hub/erasure/report",
+        "responses": {
+          "200": {
+            "description": "POST /api/hub/erasure/report",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "plan"
+                  ],
+                  "properties": {
+                    "plan": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/erasure/apply": {
+      "post": {
+        "summary": "POST /api/hub/erasure/apply",
+        "responses": {
+          "200": {
+            "description": "POST /api/hub/erasure/apply",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "plan",
+                    "erased"
+                  ],
+                  "properties": {
+                    "plan": {},
+                    "erased": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/erasure/verify": {
+      "post": {
+        "summary": "POST /api/hub/erasure/verify",
+        "responses": {
+          "400": {
+            "description": "POST /api/hub/erasure/verify",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok"
+                  ],
+                  "properties": {
+                    "ok": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/alerts/rules": {
+      "get": {
+        "summary": "GET /api/hub/alerts/rules",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/alerts/rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "rules"
+                  ],
+                  "properties": {
+                    "rules": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "POST /api/hub/alerts/rules",
+        "responses": {
+          "201": {
+            "description": "POST /api/hub/alerts/rules",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "rule"
+                  ],
+                  "properties": {
+                    "rule": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/alerts/rules/{id}": {
+      "patch": {
+        "summary": "PATCH /api/hub/alerts/rules/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "PATCH /api/hub/alerts/rules/{id}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "DELETE /api/hub/alerts/rules/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "DELETE /api/hub/alerts/rules/{id}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/alerts/feed": {
+      "get": {
+        "summary": "GET /api/hub/alerts/feed",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/alerts/feed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "deliveries",
+                    "total"
+                  ],
+                  "properties": {
+                    "deliveries": {},
+                    "total": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/alerts/test": {
+      "post": {
+        "summary": "POST /api/hub/alerts/test",
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/alerts/test",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/alerts/run": {
+      "post": {
+        "summary": "POST /api/hub/alerts/run",
+        "responses": {
+          "200": {
+            "description": "POST /api/hub/alerts/run"
+          }
+        }
+      }
+    },
+    "/api/hub/alerts/check": {
+      "post": {
+        "summary": "POST /api/hub/alerts/check",
+        "responses": {
+          "200": {
+            "description": "POST /api/hub/alerts/check",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "queueDepth",
+                    "failures",
+                    "queued"
+                  ],
+                  "properties": {
+                    "queueDepth": {},
+                    "failures": {},
+                    "queued": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/work/requests": {
+      "get": {
+        "summary": "GET /v1/work/requests",
+        "responses": {
+          "200": {
+            "description": "GET /v1/work/requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "requests",
+                    "counts"
+                  ],
+                  "properties": {
+                    "requests": {},
+                    "counts": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/work/requests/{id}": {
+      "get": {
+        "summary": "GET /v1/work/requests/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "GET /v1/work/requests/{id}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/work/story": {
+      "get": {
+        "summary": "GET /v1/work/story",
+        "responses": {
+          "200": {
+            "description": "GET /v1/work/story",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "counts",
+                    "velocity",
+                    "learned"
+                  ],
+                  "properties": {
+                    "counts": {},
+                    "velocity": {},
+                    "learned": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/work/goals": {
+      "get": {
+        "summary": "GET /v1/work/goals",
+        "responses": {
+          "200": {
+            "description": "GET /v1/work/goals",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "goals"
+                  ],
+                  "properties": {
+                    "goals": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/context/economics": {
+      "get": {
+        "summary": "GET /v1/context/economics",
+        "responses": {
+          "200": {
+            "description": "GET /v1/context/economics",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "observations",
+                    "totals"
+                  ],
+                  "properties": {
+                    "observations": {},
+                    "totals": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/requests/{id}": {
+      "post": {
+        "summary": "POST /api/hub/requests/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "POST /api/hub/requests/{id}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "action",
+                    "dismissed"
+                  ],
+                  "properties": {
+                    "id": {},
+                    "action": {},
+                    "dismissed": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/rule-suggestions": {
+      "get": {
+        "summary": "GET /api/hub/rule-suggestions",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/rule-suggestions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "total",
+                    "items"
+                  ],
+                  "properties": {
+                    "total": {},
+                    "items": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/rule-suggestions/{id}": {
+      "post": {
+        "summary": "POST /api/hub/rule-suggestions/{id}",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/rule-suggestions/{id}",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/rules/{id}/toggle": {
+      "post": {
+        "summary": "POST /api/hub/rules/{id}/toggle",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/rules/{id}/toggle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/rules/{id}/replace": {
+      "post": {
+        "summary": "POST /api/hub/rules/{id}/replace",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "POST /api/hub/rules/{id}/replace",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "error"
+                  ],
+                  "properties": {
+                    "error": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/rules/learning-run": {
+      "get": {
+        "summary": "GET /api/hub/rules/learning-run",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/rules/learning-run",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "learningRun"
+                  ],
+                  "properties": {
+                    "learningRun": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "POST /api/hub/rules/learning-run",
+        "responses": {
+          "200": {
+            "description": "POST /api/hub/rules/learning-run",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "learningRun",
+                    "result"
+                  ],
+                  "properties": {
+                    "learningRun": {},
+                    "result": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/memories": {
+      "get": {
+        "summary": "GET /api/hub/memories",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/memories",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "total",
+                    "limit",
+                    "offset",
+                    "hasMore",
+                    "items"
+                  ],
+                  "properties": {
+                    "total": {},
+                    "limit": {},
+                    "offset": {},
+                    "hasMore": {},
+                    "items": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/facts": {
+      "get": {
+        "summary": "GET /api/hub/facts",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/facts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "total",
+                    "limit",
+                    "offset",
+                    "hasMore",
+                    "items"
+                  ],
+                  "properties": {
+                    "total": {},
+                    "limit": {},
+                    "offset": {},
+                    "hasMore": {},
+                    "items": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/review": {
+      "get": {
+        "summary": "GET /api/hub/review",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/review",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "items",
+                    "total",
+                    "limit",
+                    "offset",
+                    "hasMore"
+                  ],
+                  "properties": {
+                    "items": {},
+                    "total": {},
+                    "limit": {},
+                    "offset": {},
+                    "hasMore": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/dismissed": {
+      "get": {
+        "summary": "GET /api/hub/dismissed",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/dismissed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "total",
+                    "items"
+                  ],
+                  "properties": {
+                    "total": {},
+                    "items": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/audit": {
+      "get": {
+        "summary": "GET /api/hub/audit",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/audit",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "total",
+                    "audit"
+                  ],
+                  "properties": {
+                    "total": {},
+                    "audit": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/hub/sync/status": {
+      "get": {
+        "summary": "GET /api/hub/sync/status",
+        "responses": {
+          "200": {
+            "description": "GET /api/hub/sync/status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "total",
+                    "devices"
+                  ],
+                  "properties": {
+                    "total": {},
+                    "devices": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/work/sessions": {
+      "get": {
+        "summary": "GET /v1/work/sessions",
+        "responses": {
+          "200": {
+            "description": "GET /v1/work/sessions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "total",
+                    "items"
+                  ],
+                  "properties": {
+                    "total": {},
+                    "items": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/search": {
+      "post": {
+        "summary": "POST /v1/search",
+        "responses": {
+          "200": {
+            "description": "POST /v1/search",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "results",
+                    "facts",
+                    "reason",
+                    "channels"
+                  ],
+                  "properties": {
+                    "results": {},
+                    "facts": {},
+                    "reason": {},
+                    "channels": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

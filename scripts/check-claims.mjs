@@ -1,9 +1,10 @@
 #!/usr/bin/env bun
 // Check the README's claims without trusting a hand-typed number.
-//   bun scripts/check-claims.mjs
-// Runs the suite, parses its real counts, rejects hand-typed test/star/download counts, and checks that
-// every badge URL is a real endpoint that exists in this repository.
-import { existsSync, readFileSync } from "node:fs";
+//   bun scripts/check-claims.mjs           # check; exit 1 when a claim drifted
+//   bun scripts/check-claims.mjs --write   # regenerate the generated test-count block
+// Runs the suite, parses its real counts, verifies the generated claims block, rejects hand-typed
+// test/star/download counts, and checks that every badge URL is a real endpoint in this repository.
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const DEFAULT_ROOT = join(import.meta.dir, "..");
@@ -23,12 +24,17 @@ export const ALLOWED_SHIELDS = [
 const NPM_VERSION_BADGE = /^https:\/\/img\.shields\.io\/npm\/v\/aletheia-mem$/;
 const FORBIDDEN_BADGE = /(npm|coverage|downloads?|release|scorecard|docker|discord|sponsor)/i;
 
+export const CLAIMS_BEGIN = "<!-- claims:begin -->";
+export const CLAIMS_END = "<!-- claims:end -->";
+export const CLAIMS_BLOCK = /<!-- claims:begin -->[\s\S]*?<!-- claims:end -->/;
+
 export function withoutComments(text) {
   return text.replace(/<!--[\s\S]*?-->/g, "");
 }
 
 export function findTypedCounts(text) {
-  const body = withoutComments(text);
+  // The generated block between the markers is the one place a number may appear; strip it first.
+  const body = withoutComments(String(text ?? "").replace(CLAIMS_BLOCK, ""));
   const patterns = [
     /\b\d[\d,]*\s+(tests?|stars?|downloads?)\b/gi,
     /\b(tests?|stars?|downloads?)\s*[:=]\s*\d[\d,]*/gi,
@@ -78,9 +84,33 @@ export function parseTestCounts(output) {
   return { passed, failed, ran };
 }
 
+export const withCommas = (value) => String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+export function renderClaims(counts) {
+  const skipped = Number.isFinite(counts.ran) ? Math.max(0, counts.ran - counts.passed - counts.failed) : 0;
+  const tail = skipped ? `, ${withCommas(skipped)} skipped` : "";
+  return `**${withCommas(counts.passed)} tests pass** — ${withCommas(counts.passed)} pass, ${withCommas(counts.failed)} fail${tail} (run \`bun test\`).`;
+}
+
+export function claimsBlockState(text) {
+  const begin = text.indexOf(CLAIMS_BEGIN);
+  const end = text.indexOf(CLAIMS_END);
+  if (begin < 0 || end < begin) return { present: false, current: null, begin, end };
+  return { present: true, current: text.slice(begin + CLAIMS_BEGIN.length, end).trim(), begin, end };
+}
+
+export function replaceClaimsBlock(text, body) {
+  const state = claimsBlockState(text);
+  if (state.present) return `${text.slice(0, state.begin + CLAIMS_BEGIN.length)}\n${body}\n${text.slice(state.end)}`;
+  return `${text.replace(/\s*$/, "")}\n\n${CLAIMS_BEGIN}\n${body}\n${CLAIMS_END}\n`;
+}
+
 async function main() {
   const root = process.env.CLAIMS_ROOT ? resolve(process.env.CLAIMS_ROOT) : DEFAULT_ROOT;
-  const readme = readFileSync(join(root, "README.md"), "utf8");
+  const write = process.argv.includes("--write");
+  const readmePath = join(root, "README.md");
+  let readme = readFileSync(readmePath, "utf8");
+
   const typed = findTypedCounts(readme);
   if (typed.length) {
     console.error(`claims: README contains a hand-typed count: ${typed.join(", ")}`);
@@ -100,6 +130,19 @@ async function main() {
     console.error(`${stdout}\n${stderr}`.trim().split("\n").slice(-20).join("\n"));
     process.exit(1);
   }
+
+  const expected = renderClaims(counts);
+  if (write) {
+    readme = replaceClaimsBlock(readme, expected);
+    writeFileSync(readmePath, readme);
+  }
+  const state = claimsBlockState(readme);
+  if (!state.present || state.current !== expected) {
+    console.error(`claims: the README claims block differs from the measured counts; run \`bun scripts/check-claims.mjs --write\``);
+    console.error(`claims: measured: ${expected}`);
+    process.exit(1);
+  }
+
   console.log(`claims ok: tests=${Number.isFinite(counts.ran) ? counts.ran : counts.passed} passed=${counts.passed} failed=0; badges=${badgeCheck.badges.length} real; typed counts=0`);
 }
 

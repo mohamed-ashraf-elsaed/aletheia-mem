@@ -12,9 +12,11 @@ const STATE = "docs/i18n/.translation-state.json";
 
 /** Remove structural lines a translation does not carry: code, badges, the switcher and the file header. */
 export function translatable(text) {
+  // The generated test-count block is a metric, not prose; a number changing must not mark translations stale.
   let fence = false;
   const kept = [];
-  for (const line of String(text).split("\n")) {
+  const source = String(text).replace(/<!-- claims:begin -->[\s\S]*?<!-- claims:end -->/g, "");
+  for (const line of source.split("\n")) {
     if (/^\s*```/.test(line)) {
       fence = !fence;
       continue;
