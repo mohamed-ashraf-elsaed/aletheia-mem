@@ -5,6 +5,7 @@ import { badge, button, chipFilters, clampText, codeBlock, confirmDialog, disclo
 import { api, h, state, swap } from "../ui-dom.js";
 import { optimistic } from "../ui-actions.js";
 import { region, pagedList } from "../ui-region.js";
+import { estimated } from "../ui-estimates.js";
 import { chipFilter, filterBar, hideCard, segmentFilter, selectFilter, textFilter } from "../ui-views.js";
 import { queryString } from "./memory-views.js";
 
@@ -20,22 +21,44 @@ function ruleCard(rule, ctx) {
     h("div", { class: "ui-item-head" },
       h("p", { class: "ui-item-title", dir: "auto" }, ruleTitle(rule)),
       h("div", { class: "ui-row" }, badge(rule.enabled ? "on" : "off", rule.enabled ? "success" : "warning"))),
-    h("div", { class: "ui-meta" }, badge(scopeLabel(rule)), rule.tools?.length ? badge(`only ${rule.tools.join(", ")}`) : badge("all tools"), h("span", {}, `source: ${rule.source}`)),
+    h("div", { class: "ui-meta" }, badge(scopeLabel(rule)), rule.tools?.length ? badge(`only ${rule.tools.join(", ")}`) : badge("all tools"), h("span", {}, `source: ${rule.source}`), rule.replaced_by ? badge(`replaced by ${rule.replaced_by}`) : null),
     h("div", { class: "ui-acts" },
       button({ label: rule.enabled ? "Turn off" : "Turn on", size: "sm", icon: rule.enabled ? "eye-off" : "check", onClick: () => toggle() }),
-      button({ label: "Edit", size: "sm", icon: "edit", onClick: () => edit() })));
+      button({ label: "Edit", size: "sm", icon: "edit", onClick: () => edit() }),
+      button({ label: "Replace", size: "sm", icon: "undo", onClick: () => replace() })));
   const patch = (body) => api(`/api/hub/rules/${rule.id}`, { method: "PATCH", body });
+  // T-172: the on/off write has its own route and keeps the same optimistic Undo.
+  const setEnabled = (enabled) => api(`/api/hub/rules/${rule.id}/toggle`, { method: "POST", body: { enabled } });
   const toggle = () => {
     const next = !rule.enabled;
     return optimistic({
       apply: () => { rule.enabled = next; render(); },
       rollback: () => { rule.enabled = !next; render(); },
-      request: () => patch({ enabled: next }),
+      request: () => setEnabled(next),
       done: next ? "Rule turned on. Write the files again to update your tools." : "Rule turned off. It is kept, not deleted.",
-      undo: () => patch({ enabled: !next }),
+      undo: () => setEnabled(!next),
       reapply: () => { rule.enabled = !next; render(); },
       failure: "Could not change this rule.",
     }).then((ok) => { if (ok) ctx.changed?.(); return ok; });
+  };
+  const replace = () => {
+    const then = h("textarea", { class: "ui-input", rows: "3", dir: "auto", "aria-label": "Replacement rule" });
+    then.value = rule.then;
+    const when = h("input", { type: "text", class: "ui-input", value: rule.when ?? "", dir: "auto", "aria-label": "When (optional)" });
+    const layer = modal({
+      title: "Replace this rule", size: "md",
+      body: h("div", {},
+        h("p", { class: "ui-meta" }, "The replacement is added as a new rule. This rule is kept and marked as replaced; there is no unreplace route, so this cannot be undone here."),
+        field({ label: "What the tool should do instead", control: then }),
+        field({ label: "When (optional)", control: when })),
+      actions: [button({ label: "Cancel", onClick: () => layer.close(false) }), button({ label: "Replace", variant: "primary", onClick: async () => {
+        if (!then.value.trim()) throw new Error("Write the replacement rule first.");
+        const result = await api(`/api/hub/rules/${rule.id}/replace`, { method: "POST", body: { then: then.value.trim(), when: when.value.trim() } });
+        toast(`Replaced with rule ${result.replacedBy}. The old rule is kept.`, { tone: "success" });
+        layer.close(true);
+        ctx.changed?.();
+      } })],
+    });
   };
   const edit = () => {
     const then = h("textarea", { class: "ui-input", rows: "3", dir: "auto", "aria-label": "Rule" });
@@ -111,28 +134,101 @@ export function rulesView(ctx) {
 
 // ---- suggested rules ---------------------------------------------------------------------------------------
 
+const STRENGTH_TONE = { Strong: "success", Steady: "info", Light: "neutral" };
+const strengthTone = (value) => STRENGTH_TONE[value] ?? "neutral";
+
+function quoteRow(quote) {
+  return h("div", { class: "ui-fact-source", dir: "auto" },
+    h("span", { class: "ui-meta" }, quote.at ? String(quote.at) : "unknown time"),
+    " · ", quote.text,
+    quote.sessionId ? h("span", { class: "ui-meta" }, ` · session ${quote.sessionId}`) : null);
+}
+
 function suggestionCard(item, ctx, { dismissed }) {
   const card = h("article", { class: "ui-card ui-item", "data-kind": "suggestion", "data-id": item.id });
-  const post = (action) => api(`/api/hub/rule-suggestions/${item.id}`, { method: "POST", body: { action } });
-  const move = (action, done, undo, failure) => {
-    let back = () => {};
-    return optimistic({ apply: () => { back = hideCard(card); }, rollback: () => back(), request: async () => { result = await post(action); }, done, undo, reapply: () => { back(); ctx.changed(); }, failure }).then((ok) => { if (ok) ctx.changed({ soft: true }); return ok; });
-  };
+  const post = (action, extra = {}) => api(`/api/hub/rule-suggestions/${item.id}`, { method: "POST", body: { action, ...extra } });
   let result = null;
+  const quotes = item.quotes ?? [];
+  const first = quotes.slice(0, 2);
+  const more = quotes.slice(2);
+  const decide = (action, { done, undo, failure, extra = {} }) => {
+    let back = () => {};
+    return optimistic({
+      apply: () => { back = hideCard(card); },
+      rollback: () => back(),
+      request: async () => { result = await post(action, extra); },
+      done, undo,
+      reapply: () => { back(); ctx.changed?.(); },
+      failure,
+    }).then((ok) => { if (ok) ctx.changed?.({ soft: true }); return ok; });
+  };
+  const undoDecide = async () => {
+    await post("restore");
+    if (result?.ruleId) await api(`/api/hub/rules/${result.ruleId}/toggle`, { method: "POST", body: { enabled: false } });
+  };
+  const edit = () => {
+    const text = h("textarea", { class: "ui-input", rows: "3", dir: "auto", "aria-label": "Rule text" });
+    text.value = item.text;
+    const layer = modal({
+      title: "Edit before approving", size: "md",
+      body: field({ label: "Rule text", control: text }),
+      actions: [button({ label: "Cancel", onClick: () => layer.close(false) }), button({ label: "Save and approve", variant: "primary", onClick: async () => {
+        const next = text.value.trim();
+        if (next.length < 6) throw new Error("The rule needs at least 6 characters.");
+        const ok = await decide("edit", { extra: { text: next }, done: "Edited and added. It is on, for every tool you write files for.", undo: undoDecide, failure: "Could not save this suggestion." });
+        if (ok) layer.close(true);
+      } })],
+    });
+  };
+  const restore = () => {
+    let back = () => {};
+    return optimistic({
+      apply: () => { back = hideCard(card); },
+      rollback: () => back(),
+      request: () => post("restore"),
+      done: "Moved back to Suggested.",
+      undo: () => post("reject"),
+      reapply: () => { back(); ctx.changed?.(); },
+      failure: "Could not restore this suggestion.",
+    }).then((ok) => { if (ok) ctx.changed?.({ soft: true }); return ok; });
+  };
   swap(card,
-    h("div", { class: "ui-item-head" }, h("p", { class: "ui-item-title", dir: "auto" }, item.text), h("div", { class: "ui-row" }, badge(dismissed ? "dismissed" : "suggested", "warning"), badge(item.project), badge(`confidence ${Number(item.confidence).toFixed(2)}`))),
+    h("div", { class: "ui-item-head" }, h("p", { class: "ui-item-title", dir: "auto" }, item.text), h("div", { class: "ui-row" }, badge(dismissed ? "dismissed" : "suggested", "warning"), item.project ? badge(item.project) : null, badge(`strength: ${item.strength ?? "Light"}`, strengthTone(item.strength)))),
+    h("div", { class: "ui-meta" },
+      h("span", {}, `${item.timesSeen ?? 1}× seen`),
+      h("span", {}, `confidence ${Number(item.confidence ?? 0).toFixed(2)}`),
+      item.latestAt ? h("span", {}, "last seen ") : null,
+      item.latestAt ? timeEl(item.latestAt) : null,
+      h("span", {}, `from ${item.sourceType ?? "prompt"}`),
+      estimated("Rule strength bands")),
     item.when ? h("div", { class: "ui-meta" }, `When ${item.when}`) : null,
-    h("div", { class: "ui-meta" }, h("span", {}, `from ${item.sourceType}`), item.createdAt ? timeEl(item.createdAt) : null),
+    first.length ? h("div", { class: "ui-quotes" }, ...first.map(quoteRow)) : h("p", { class: "ui-meta" }, "No dated quotes were stored for this suggestion."),
+    more.length ? disclosure({ summary: `More quotes (${item.moreQuotes ?? more.length})`, content: h("div", { class: "ui-quotes" }, ...more.map(quoteRow)) }) : null,
     h("div", { class: "ui-acts" }, dismissed
-      ? button({ label: "Restore", size: "sm", icon: "undo", onClick: () => move("restore", "Moved back to Suggested.", () => post("dismiss"), "Could not restore this suggestion.") })
+      ? button({ label: "Restore", size: "sm", icon: "undo", onClick: restore })
       : [
-        button({ label: "Accept", variant: "primary", size: "sm", icon: "check", onClick: () => move("accept", "Rule added. It is on, for every tool you write files for.", async () => {
-          await post("restore");
-          if (result?.ruleId) await api(`/api/hub/rules/${result.ruleId}`, { method: "PATCH", body: { enabled: false } });
-        }, "Could not add this rule.") }),
-        button({ label: "Dismiss", size: "sm", icon: "eye-off", onClick: () => move("dismiss", "Dismissed. It is under Dismissed if you change your mind.", () => post("restore"), "Could not dismiss this suggestion.") }),
+        button({ label: "Approve", variant: "primary", size: "sm", icon: "check", onClick: () => decide("approve", { done: "Rule added. It is on, for every tool you write files for.", undo: undoDecide, failure: "Could not approve this suggestion." }) }),
+        button({ label: "Edit", size: "sm", icon: "edit", onClick: edit }),
+        button({ label: "Reject", size: "sm", icon: "x", onClick: () => decide("reject", { done: "Rejected. It is under Dismissed if you change your mind.", undo: () => post("restore"), failure: "Could not reject this suggestion." }) }),
       ]));
   return card;
+}
+
+/** The last learning run from T-172, and a button that runs it again. */
+function learningRunPanel({ onRan }) {
+  const out = h("div", { class: "ui-meta", role: "status" });
+  const show = (run) => swap(out, run ? `${run.at ?? "unknown time"} · found ${run.found ?? 0} · proposed ${run.proposed ?? 0} · errors ${run.errors ?? 0}` : "No learning run has been recorded yet. Run it to scan your prompts for repeated corrections.");
+  const load = async () => {
+    try { show((await api("/api/hub/rules/learning-run")).learningRun); } catch (error) { swap(out, `Could not read the learning run: ${error.message}`); }
+  };
+  const run = button({ label: "Run learning now", size: "sm", icon: "bolt", onClick: async () => {
+    const data = await api(`/api/hub/rules/learning-run${state.project ? `?project=${encodeURIComponent(state.project)}` : ""}`, { method: "POST" });
+    show(data.learningRun);
+    toast(`Learning run recorded: found ${data.learningRun?.found ?? 0}, proposed ${data.learningRun?.proposed ?? 0}, errors ${data.learningRun?.errors ?? 0}.`, { tone: "success" });
+    onRan?.();
+  } });
+  load();
+  return h("div", { class: "ui-card ui-learning-run" }, h("div", { class: "ui-row" }, h("b", {}, "Rule learning"), run), out);
 }
 
 export function suggestionsView(ctx) {
@@ -142,7 +238,7 @@ export function suggestionsView(ctx) {
     fetchPage: (p) => api(`/api/hub/rule-suggestions?${queryString({ limit: p.limit, offset: p.offset, project: state.project, status: p.status, q: p.q, sort: p.sort })}`),
     renderItem: (item, { state: s }) => suggestionCard(item, { changed: (options) => { list.reload(options); ctx.changed?.(); } }, { dismissed: s.status === "dismissed" }),
     skeleton: () => skeleton({ kind: "card", count: 3 }),
-    empty: (s) => emptyState({ title: s.status === "dismissed" ? "No dismissed suggestions" : "No rule suggestion is waiting", text: s.status === "dismissed" ? "Suggestions you dismiss are kept here, so you can restore them." : "When you correct a tool the same way a few times, Aletheia suggests a rule here. Nothing is applied until you click Accept.", art: "rules" }),
+    empty: (s) => emptyState({ title: s.status === "dismissed" ? "No dismissed suggestions" : "No rule suggestion is waiting", text: s.status === "dismissed" ? "Suggestions you dismiss are kept here, so you can restore them." : "When you correct a tool the same way a few times, Aletheia suggests a rule here. Nothing is applied until you Approve it.", art: "rules" }),
     emptyFiltered: () => emptyState({ title: "No suggestion matches", text: "Try other words.", art: "search", compact: true }),
     onData: (data, s) => { if (s.status === "pending") ctx.counts?.({ suggestions: data.total }); },
     toolbar: ({ state: s, set }) => filterBar([[
@@ -151,7 +247,10 @@ export function suggestionsView(ctx) {
       selectFilter({ key: "sort", label: "Sort", value: s.sort, options: [{ value: "newest", label: "Newest" }, { value: "confidence", label: "Most confident" }, { value: "oldest", label: "Oldest" }], onChange: (sort) => set({ sort }) }),
     ]]),
   });
-  return list;
+  const panel = learningRunPanel({ onRan: () => { list.reload(); ctx.changed?.(); } });
+  const el = h("div", { class: "ui-suggestions" }, panel, list);
+  Object.assign(el, { reload: (options) => list.reload(options), dispose: () => list.dispose?.() });
+  return el;
 }
 
 // ---- write rules into each tool's file --------------------------------------------------------------------

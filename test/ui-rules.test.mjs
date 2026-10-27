@@ -65,22 +65,22 @@ describe("T-210: the rule list", () => {
     expect(view.querySelector("a")?.getAttribute("href")).toBe("#/rules/import");
   });
   test("Turn off is immediate, sent to the server, and Undo turns it back on", async () => {
-    const calls = install([["/api/hub/rules/r1", (r) => json({ ...rule(1), ...r.body })], ["/api/hub/rules", () => json({ rules: [rule(1)] })]]);
+    const calls = install([["/api/hub/rules/r1/toggle", (r) => json({ rule: { ...rule(1), ...r.body } })], ["/api/hub/rules", () => json({ rules: [rule(1)] })]]);
     const view = RV.rulesView({ addRule() {} });
     await flush();
     const card = view.querySelector(".ui-item");
     buttonByText(card, "Turn off").click();
     expect(card.textContent).toContain("off");
     await flush();
-    expect(calls.find((c) => c.method === "PATCH").body).toEqual({ enabled: false });
+    expect(calls.find((c) => c.path === "/api/hub/rules/r1/toggle").body).toEqual({ enabled: false });
     expect(toasts()).toContain("kept, not deleted");
     buttonByText(dom.getElementById("ui-toasts"), "Undo").click();
     await flush();
-    expect(calls.filter((c) => c.method === "PATCH").map((c) => c.body.enabled)).toEqual([false, true]);
+    expect(calls.filter((c) => c.path === "/api/hub/rules/r1/toggle").map((c) => c.body.enabled)).toEqual([false, true]);
     expect(card.textContent).toContain("on");
   });
   test("a failed toggle rolls back and says why", async () => {
-    install([["/api/hub/rules/r1", () => json({ error: "read-only file" }, 500)], ["/api/hub/rules", () => json({ rules: [rule(1)] })]]);
+    install([["/api/hub/rules/r1/toggle", () => json({ error: "read-only file" }, 500)], ["/api/hub/rules", () => json({ rules: [rule(1)] })]]);
     const view = RV.rulesView({ addRule() {} });
     await flush();
     const card = view.querySelector(".ui-item");
@@ -152,17 +152,17 @@ describe("T-210: suggested rules", () => {
     expect(calls[0].path).toBe("/api/hub/rule-suggestions?limit=25&offset=0&project=shop&status=pending&sort=confidence");
     expect(view.querySelectorAll(".ui-item").length).toBe(2);
   });
-  test("Accept hides the row first; Undo restores it and turns the new rule off", async () => {
+  test("Approve hides the row first; Undo restores it and turns the new rule off", async () => {
     fakeLocation("#/rules/suggestions");
     const calls = install([
       [/rule-suggestions\?/, () => json({ items: [sug(5)], total: 1 })],
-      ["/api/hub/rule-suggestions/5", (r) => json(r.body.action === "accept" ? { status: "accepted", ruleId: "r77" } : { status: "pending" })],
-      ["/api/hub/rules/r77", () => json({ id: "r77", enabled: false })],
+      ["/api/hub/rule-suggestions/5", (r) => json(r.body.action === "approve" ? { status: "accepted", ruleId: "r77" } : { status: "pending" })],
+      ["/api/hub/rules/r77/toggle", () => json({ rule: { id: "r77", enabled: false } })],
     ]);
     const view = RV.suggestionsView({});
     await flush();
     const card = view.querySelector(".ui-item");
-    buttonByText(card, "Accept").click();
+    buttonByText(card, "Approve").click();
     await tick();
     expect(card.classList.contains("is-leaving")).toBe(true);
     await flush();
@@ -170,22 +170,22 @@ describe("T-210: suggested rules", () => {
     buttonByText(dom.getElementById("ui-toasts"), "Undo").click();
     await flush();
     const seq = calls.filter((c) => c.method !== "GET").map((c) => `${c.path} ${JSON.stringify(c.body)}`);
-    expect(seq).toEqual(['/api/hub/rule-suggestions/5 {"action":"accept"}', '/api/hub/rule-suggestions/5 {"action":"restore"}', '/api/hub/rules/r77 {"enabled":false}']);
+    expect(seq).toEqual(['/api/hub/rule-suggestions/5 {"action":"approve"}', '/api/hub/rule-suggestions/5 {"action":"restore"}', '/api/hub/rules/r77/toggle {"enabled":false}']);
   });
-  test("a dismissed suggestion has Restore, not Accept", async () => {
+  test("a dismissed suggestion has Restore, not Approve", async () => {
     fakeLocation("#/rules/suggestions?status=dismissed");
     install([[/rule-suggestions\?/, () => json({ items: [{ ...sug(6), status: "dismissed" }], total: 1 })]]);
     const view = RV.suggestionsView({});
     await flush();
     expect(buttonByText(view, "Restore")).toBeTruthy();
-    expect(buttonByText(view, "Accept")).toBeUndefined();
+    expect(buttonByText(view, "Approve")).toBeUndefined();
   });
-  test("the empty state promises that nothing applies without Accept", async () => {
+  test("the empty state promises that nothing applies without Approve", async () => {
     fakeLocation("#/rules/suggestions");
     install([[/rule-suggestions\?/, () => json({ items: [], total: 0 })]]);
     const view = RV.suggestionsView({});
     await flush();
-    expect(view.textContent).toContain("Nothing is applied until you click Accept");
+    expect(view.textContent).toContain("Nothing is applied until you Approve it");
   });
 });
 
