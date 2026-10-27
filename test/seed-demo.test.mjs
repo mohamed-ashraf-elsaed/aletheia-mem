@@ -4,6 +4,10 @@ import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { HubStore } from "../src/hub/store.mjs";
+import { economics } from "../src/hub/economics.mjs";
+import { proposeGoalsRollup } from "../src/hub/goals-rollup.mjs";
+import { proposeRequests } from "../src/hub/requests.mjs";
+import { buildStory } from "../src/hub/story.mjs";
 import { DEMO_PROJECTS, seed } from "../scripts/seed-demo.mjs";
 
 const SCRIPT = join(import.meta.dir, "..", "scripts", "seed-demo.mjs");
@@ -26,6 +30,36 @@ describe("T-216: seed-demo", () => {
       expect(hub.setting("demo.seeded", false)).toBe(true);
       expect(hub.db.prepare("SELECT COUNT(*) AS n FROM rule_suggestions").get().n).toBeGreaterThan(5);
       expect(hub.db.prepare("SELECT COUNT(*) AS n FROM dismissals").get().n).toBeGreaterThan(0);
+      hub.close();
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+  test("the seed fills the request, goal, story and economics panels", () => {
+    const dir = temp();
+    try {
+      seed(dir, { rows: 60 });
+      const hub = new HubStore(join(dir, "hub.db"));
+      const now = Date.now();
+      const requests = proposeRequests(hub, { now, limit: 100 });
+      const shipped = requests.requests.find((request) => request.status === "Shipped");
+      expect(shipped).toBeTruthy();
+      expect(shipped.cameOutOfIt.some((artifact) => artifact.kind === "commit")).toBe(true);
+      expect(shipped.cameOutOfIt.some((artifact) => artifact.kind === "pull")).toBe(true);
+      expect(shipped.cameOutOfIt.some((artifact) => artifact.kind === "branch")).toBe(true);
+      expect(requests.requests.some((request) => request.status === "Waiting on you")).toBe(true);
+      const goals = proposeGoalsRollup(hub, { now });
+      expect(goals.goals.length).toBeGreaterThan(0);
+      expect(goals.goals.some((goal) => goal.requestCount > 0)).toBe(true);
+      const story = buildStory(hub, { now });
+      expect(story.learned.length).toBeGreaterThan(0);
+      expect(story.counts.shipped).toBeGreaterThan(0);
+      const econ = economics(hub, { now });
+      expect(econ.observations.length).toBeGreaterThan(0);
+      expect(econ.totals.workTokens).toBeGreaterThan(0);
+      expect(econ.observations.every((row) => row.workTokens === null)).toBe(true);
+      expect(hub.db.prepare("SELECT COUNT(*) AS n FROM rule_suggestions WHERE times_seen >= 5").get().n).toBeGreaterThan(0);
+      expect(hub.db.prepare("SELECT COUNT(*) AS n FROM rule_suggestion_quotes").get().n).toBeGreaterThan(5);
       hub.close();
     } finally {
       rmSync(dir, { recursive: true, force: true });

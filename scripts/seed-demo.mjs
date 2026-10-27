@@ -83,9 +83,44 @@ export function seed(dataDir, { rows = 120, empty = false, force = false } = {})
       if (i % 6 === 0 && fact.created) hub.addReview({ itemType: "fact", itemId: fact.id, reason: "contradiction" });
       if (i % 17 === 5 && fact.created) hub.dismiss("fact", fact.id, { actor: "demo", reason: "demo noise" });
     }
+    // T-222: owner prompts and tool events for the request, goal and story panels. These are episodes, so the
+    // memory count stays the requested number and the request code reads the same rows a real capture would write.
+    const episode = (project, sessionId, text, at, role = "user", kind = "message") =>
+      hub.addEpisode({ project, tool: "demo-seed", sessionId, text, role, kind, sourceRef: `demo:${sessionId}:${role}:${at}`, createdAtEpoch: at });
+    const prompts = [
+      ["demo-shop", "demo-req-retry-1", "Build a retry button on the checkout page for failed payments", now - 2 * DAY],
+      ["demo-shop", "demo-req-retry-2", "Build a retry button on the checkout page for timeouts", now - 1.6 * DAY],
+      ["demo-shop", "demo-req-retry-2", "No, use pnpm instead of npm.", now - 1.55 * DAY],
+      ["demo-blog", "demo-req-onboarding-1", "Write the onboarding guide so a new hire can finish setup alone", now - 3 * DAY],
+      ["demo-blog", "demo-req-onboarding-2", "Write the onboarding guide and add a checklist", now - 2.4 * DAY],
+      ["demo-blog", "demo-req-onboarding-2", "Please use pnpm, not npm.", now - 2.3 * DAY],
+      ["demo-api", "demo-req-queue-1", "Fix the queue backoff so retries do not hammer the API", now - 1.2 * DAY],
+      ["demo-api", "demo-req-queue-2", "Fix the queue backoff and add a dead-letter table", now - 0.5 * DAY],
+    ];
+    for (const [project, sessionId, text, at] of prompts) episode(project, sessionId, text, at);
+    episode("demo-blog", "demo-req-onboarding-2", "Reviewed the setup steps and the checklist.", now - 2.2 * DAY, "tool", "event");
+    episode("demo-shop", "demo-req-retry-2", 'git commit -m "feat(checkout): retry button"\n[feat/retry-button abc1234] 2 files changed', now - 1.5 * DAY, "tool", "event");
+    episode("demo-shop", "demo-req-retry-2", "git push -u origin feat/retry-button", now - 1.49 * DAY, "tool", "event");
+    episode("demo-shop", "demo-req-retry-2", "https://github.com/demo/shop/pull/42", now - 1.48 * DAY, "tool", "event");
+    hub.markSessionEnded("demo-shop", "demo-req-retry-2", { now: now - 1.4 * DAY, source: "demo" });
+    // One usage row so the economics totals have a real ledger number; per-observation work tokens stay null.
+    hub.recordUsage({ atEpoch: now - 6 * 3_600_000, batchId: "demo-batch", model: "demo-seed", mode: "rules", inputTokens: 1200, outputTokens: 300, episodes: prompts.length, facts: 5 });
+
+    const ruleTexts = ["Use pnpm, not npm", "Always run the tests before saying a task is done", "Never rewrite a migration in place", "Do not push without asking the owner", "Use UTC timestamps in the API", "Fix the layout at 375 px before shipping"];
+    const quoteTexts = ["No, use pnpm instead of npm.", "Use pnpm, not npm.", "Always run the tests first.", "Please always run the tests before saying done.", "Never rewrite a migration in place.", "Do not push without asking me."];
     for (let i = 0; i < Math.max(8, Math.round(rows / 10)); i += 1) {
-      hub.db.prepare("INSERT OR IGNORE INTO rule_suggestions (project, text, when_text, confidence, source_type, source_id, status, created_at_epoch) VALUES (?,?,?,?,?,?,?,?)")
-        .run(DEMO_PROJECTS[i % 3], `Demo rule ${i + 1}: run the tests before saying a task is done`, i % 2 ? "editing tests" : "", 0.55 + (i % 5) / 12, "prompt", i, i % 5 === 4 ? "dismissed" : "pending", now - i * 3_600_000);
+      const project = DEMO_PROJECTS[i % 3];
+      const text = `${ruleTexts[i % ruleTexts.length]} (demo ${i + 1})`;
+      const times = [6, 3, 1][i % 3];
+      const latest = now - i * 3_600_000;
+      hub.db.prepare("INSERT INTO rule_suggestions (project, text, when_text, confidence, source_type, source_id, status, created_at_epoch, times_seen, latest_at_epoch) VALUES (?,?,?,?,?,?,?,?,?,?)")
+        .run(project, text, i % 2 ? "editing tests" : "", 0.55 + (i % 5) / 12, "prompt", i, i % 5 === 4 ? "dismissed" : "pending", latest, times, latest);
+      const suggestionId = hub.db.prepare("SELECT id FROM rule_suggestions WHERE project = ? AND text = ?").get(project, text)?.id;
+      if (suggestionId == null) continue;
+      for (let q = 0; q < times; q += 1) {
+        hub.db.prepare("INSERT INTO rule_suggestion_quotes (suggestion_id, project, text, at_epoch, source_type, source_id, session_id) VALUES (?,?,?,?,?,?,?)")
+          .run(suggestionId, project, quoteTexts[(i + q) % quoteTexts.length], latest - q * DAY, "prompt", i, `demo-session-${q % 14}`);
+      }
     }
     for (let i = 0; i < Math.min(8, Math.round(rows / 15)); i += 1) hub.dismiss("memory", memoryIds[(i * 7) % memoryIds.length], { actor: "demo", reason: "demo duplicate" });
     for (let i = 0; i < Math.round(rows / 4); i += 1) hub.audit(i % 3 ? "ui" : "demo", i % 2 ? "memory.update" : "memory.pin", { id: i, note: "demo" });

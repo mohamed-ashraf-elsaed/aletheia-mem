@@ -4,7 +4,7 @@ Aletheia has one app page at `/`. It is plain HTML, CSS and JavaScript: no frame
 CDN and no dependency. It works offline. The older claude-mem viewer is kept as an optional page; it is described at
 the end of this file.
 
-Screens (real captures of the running app on seeded demo data, labelled `?demo=1`; taken 2026-10-26 UTC):
+Screens (real captures of the running app on seeded demo data, labelled `?demo=1`; taken 2026-10-26 and 2026-10-27 UTC):
 
 | | |
 |---|---|
@@ -14,6 +14,11 @@ Screens (real captures of the running app on seeded demo data, labelled `?demo=1
 | ![Status popover](screenshots/status-popover-dark.webp) | ![Command palette](screenshots/palette-dark.webp) |
 | ![Search results](screenshots/search-dark.webp) | ![First-run guide](screenshots/guide-dark.webp) |
 | ![Memory at 375 px, light](screenshots/memory-375-light.webp) | ![Memory at 375 px, dark](screenshots/memory-375-dark.webp) |
+| ![Requests, dark](screenshots/requests-dark.webp) | ![Requests, light](screenshots/requests-light.webp) |
+| ![Requests at 375 px, dark](screenshots/requests-375-dark.webp) | ![Requests at 375 px, light](screenshots/requests-375-light.webp) |
+| ![Goals roll-up, dark](screenshots/goals-story-dark.webp) | ![Build story, dark](screenshots/story-dark.webp) |
+| ![Suggested rules with strength, dark](screenshots/rules-strength-dark.webp) | ![Suggested rules with strength, light](screenshots/rules-strength-light.webp) |
+| ![Context economics, light](screenshots/economics-light.webp) | |
 
 ## 6.1 Files
 
@@ -28,7 +33,8 @@ Screens (real captures of the running app on seeded demo data, labelled `?demo=1
 | `public/ui-region.js`, `public/ui-actions.js` | `region()` (loading, content, empty, error), `pagedList()` (server pages with state in the URL), optimistic actions with Undo, progress for long calls. |
 | `public/ui-status.js` | The status bar, the connection banner, polling and the `/v1/live` socket. |
 | `public/ui-search.js`, `public/ui-keys.js`, `public/ui-detail.js`, `public/ui-guide.js`, `public/ui-views.js`, `public/ui-frame.js` | Header search, shortcuts and the command palette, detail drawers, the first-run guide, shared cards and filters, the tab frame. |
-| `public/tabs/*.js` | One module per tab (`work`, `memory`, `rules`, `tools`) plus the pages inside them (`memory-views`, `review`, `rules-views`, `tools-views`, `tools-team`). Loaded on the first visit. `team.js` and `alerts.js` are older standalone modules that nothing loads; the same features are the Team and Alerts pages of Tools. |
+| `public/tabs/*.js` | One module per tab (`work`, `memory`, `rules`, `tools`) plus the pages inside them (`memory-views`, `review`, `rules-views`, `tools-views`, `tools-team`) and the request panels (`work-requests`, `work-goals`, `work-story`, `memory-economics`). Loaded on the first visit. `team.js` and `alerts.js` are older standalone modules that nothing loads; the same features are the Team and Alerts pages of Tools. |
+| `public/ui-estimates.js` | The "estimated" label and its link to the UNVERIFIED note, used for request grouping, progress, ETA, goal progress, strength bands and read tokens. |
 | `public/one-ui.js`, `public/one-ui.css` | The shell logic and the shell and page styles. |
 
 ## 6.2 Pages and the URL
@@ -39,8 +45,8 @@ page.
 
 | Tab | Pages (`#/<tab>/<page>`) |
 |---|---|
-| Work | the overview, and `#/work/session/<id>?project=<name>` |
-| Memory | `memories`, `facts`, `review`, `dismissed`, `search?q=…` |
+| Work | the overview, `#/work/request/<16 hex>`, and `#/work/session/<id>?project=<name>` |
+| Memory | `memories`, `facts`, `review`, `dismissed`, `economics`, `search?q=…` |
 | Rules | `rules`, `suggestions`, `sync` (write to tools), `import` |
 | Tools | `tools`, `devices`, `access`, `alerts`, `team`, `checks`, `activity` |
 
@@ -60,7 +66,17 @@ and answers `total`, `limit`, `offset` and `hasMore`. The UI sends the page size
 | `GET /api/hub/sync/status` | `limit`, `offset` over the devices |
 | `GET /api/hub/alerts/feed` | `limit`, `offset` over the newest 500 deliveries |
 | `GET /v1/work/sessions` | `project`, `state=in_progress\|finished`, `since`, `until`, `q` (session id) |
-| `GET /v1/work/goals` | `project`, `limit`, `offset` |
+| `GET /v1/work/goals` | `project`, `limit`, `offset`; the roll-up from T-168 |
+| `GET /v1/work/requests` | `project`, `filter` (all, needs-you, shipped), `sort` (newest, needs-you, most-progress), `group=tool`, `limit`; **no `offset`**, so the Work tab has a page size and the server's counts, never a pager |
+| `GET /v1/work/requests/:id` | one request plus `whereThisCameFrom` (sessions, prompts and facts) |
+| `POST /api/hub/requests/:id` | body `{action: "dismiss"}` or `{action: "restore"}`; reversible |
+| `GET /v1/work/story` | `project`; counts, shipping velocity and learned habits |
+| `GET /v1/context/economics` | `project`, `limit`; read tokens per context row and ledger work tokens |
+| `GET /api/hub/rules/learning-run` | the last recorded learning run |
+| `POST /api/hub/rules/learning-run` | run `suggestRules` and record the run |
+| `POST /api/hub/rules/:id/toggle` | body `{enabled}` |
+| `POST /api/hub/rules/:id/replace` | body `{then, when?}`; the old rule is kept and marked replaced |
+| `POST /api/hub/rule-suggestions/:id` | body `{action, text?}`; action is approve, edit, reject or restore |
 | `POST /v1/search` | body `limit`, `offset`, `paged: true`, `scope`, `includeHistory`, `since`, `until`, `kind`, `mix`; without `offset` or `paged` it keeps its older shape |
 
 A date without a time as `until` means the end of that day. Tests: `test/pagination.test.mjs`.
@@ -119,7 +135,33 @@ ALETHEIA_DATA_DIR=/tmp/aletheia-demo/data HOME=/tmp/aletheia-demo/home ALETHEIA_
 Tests: `bun test test/ui-*.test.mjs test/pagination.test.mjs test/seed-demo.test.mjs`. Measured numbers are in
 [ui-design.md](ui-design.md#measured-performance).
 
-## 6.9 The classic viewer (optional)
+## 6.9 Requests, goals, story and economics
+
+The Work tab is built around requests now, not a flat session list. Each request card shows its status, its progress
+and the ids behind that progress, an ETA only when one can be measured (otherwise the reason there is none), and what
+came out of it: commits, pull requests and branches, each with the evidence id and a link to its session page. The
+filter (all, needs you, shipped), sort (newest, needs you, most progress) and group (by tool) controls refetch
+`GET /v1/work/requests`; the route has no `offset`, so the page size is the only paging control. Dismiss is optimistic
+and Undo restores; dismissed requests sit in their own folded list. `#/work/request/<id>` reads
+`GET /v1/work/requests/:id` and shows "where this came from": every session with its dated prompts and facts, and a
+link back to the T-145 session page.
+
+The Goals section is the T-168 roll-up: a status per goal (Moving, Stalled, Nothing on it), aggregate progress with
+the request count, the linked requests, the merged artifacts, and the open asks split into being worked and nothing
+working. Requests that serve no goal are counted and linked. Pin, Unpin, Dismiss and Restore still use
+`POST /api/hub/goals/:id`.
+
+Below it, the Build story shows shipped, working, waiting and idle counts, the weekly shipping line, the average days
+to ship (or "n/a") and the corrections that repeat in the owner's own prompts, with dated quotes. Memory gains an
+Economics page for the T-170 data: the totals strip, the documented read-token counter, and one row per context
+memory. A per-observation work token value is `null` by design, so the row prints "n/a" with the response's own
+sentence; zero is never substituted.
+
+Every value that is a chosen rule rather than a measurement carries an "estimated" link to
+[tasks/unverified.md](tasks/unverified.md#request-layer-story-and-economics-2026-10-27): request grouping, progress,
+ETA, goal progress, rule strength bands and read tokens.
+
+## 6.10 The classic viewer (optional)
 
 `public/work.html` and `public/assets/` are the original claude-mem viewer, kept byte for byte and linked from Tools only when the
 old database exists. Everything below describes that page, not the Aletheia app.

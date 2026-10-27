@@ -71,7 +71,7 @@ describe("T-216: the UI's API contract", () => {
   test("the scripts name a believable number of routes", () => {
     const paths = apiPaths();
     expect(paths.size).toBeGreaterThan(30);
-    for (const expected of ["/api/hub/memories", "/api/hub/facts", "/api/hub/review", "/api/hub/review/pairs", "/api/hub/rule-suggestions", "/api/hub/dismissed", "/api/hub/dismiss", "/api/hub/restore", "/api/hub/audit", "/api/hub/doctor", "/api/hub/sync/status", "/api/hub/mcp-links", "/v1/search", "/v1/work", "/v1/work/sessions", "/v1/work/goals", "/v1/health"]) expect(paths.has(expected)).toBe(true);
+    for (const expected of ["/api/hub/memories", "/api/hub/facts", "/api/hub/review", "/api/hub/review/pairs", "/api/hub/rule-suggestions", "/api/hub/rule-suggestions/1", "/api/hub/dismissed", "/api/hub/dismiss", "/api/hub/restore", "/api/hub/audit", "/api/hub/doctor", "/api/hub/sync/status", "/api/hub/mcp-links", "/api/hub/requests/1", "/api/hub/rules/learning-run", "/api/hub/rules/1/toggle", "/api/hub/rules/1/replace", "/v1/search", "/v1/work", "/v1/work/sessions", "/v1/work/goals", "/v1/work/requests", "/v1/work/requests/1", "/v1/work/story", "/v1/context/economics", "/v1/health"]) expect(paths.has(expected)).toBe(true);
   });
 
   test("every path the UI calls is a route the server has", async () => {
@@ -84,7 +84,7 @@ describe("T-216: the UI's API contract", () => {
   });
 
   test("paths with an id are real routes too, not just a prefix", async () => {
-    for (const path of ["/api/hub/memories/1", "/api/hub/review/1", "/api/hub/rules/r1", "/api/hub/rule-suggestions/1", "/api/hub/goals/0123456789abcdef", "/v1/work/session/s1"]) expect((await exists(path)).ok).toBe(true);
+    for (const path of ["/api/hub/memories/1", "/api/hub/review/1", "/api/hub/rules/r1", "/api/hub/rule-suggestions/1", "/api/hub/goals/0123456789abcdef", "/api/hub/requests/0123456789abcdef", "/v1/work/session/s1", "/v1/work/requests/0123456789abcdef"]) expect((await exists(path)).ok).toBe(true);
   });
 
   test("an invented path is reported missing, so the check can fail", async () => {

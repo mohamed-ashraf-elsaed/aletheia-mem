@@ -141,7 +141,7 @@ database, never on real owner history.
 | 51 | Savings percent | Derived from `fact_usage` input + output only; not a measured reduction | Measure a real before/after context session |
 | 52 | "What came out of it" detector | Tested on synthetic tool events (`test/artifacts.test.mjs`); no real host output was read for this task | Read real Claude Code, Command Code and Codex tool events |
 | 53 | Build story quality | Rule-based only; no model was run, so no prose quality is claimed | A model-written story (not part of this task) |
-| 54 | UI wiring of the new routes | Not done; `public/**` was not changed | A later UI prompt |
+| 54 | UI wiring of the new routes | **done in T-218 to T-222**: the Work and Memory tabs call the routes, and Chromium loaded the six new screens at 375 and 1280 px in both themes with no page overflow and no console errors | — (the remaining heuristic values are rows 46 to 53) |
 | 55 | Sample JSON in [32](../32-requests.md) | Produced from a seeded temp database on 2026-10-27; no real user data | Regenerate from a real store and compare |
 
 ## UI study (2026-10-27)

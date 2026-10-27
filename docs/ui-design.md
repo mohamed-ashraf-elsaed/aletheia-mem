@@ -105,9 +105,11 @@ light accent        on s1  6.14:1  (min 3) pass
 
 ## Screenshots
 
-Twelve captures of the running app are in [screenshots/](screenshots/) (WebP, 420 KB in all) and shown in
-[06-frontend.md](06-frontend.md). They were taken 2026-10-26 (UTC) from the Playwright Chromium on the seeded demo store, in dark and
-light, at 1280 px and 375 px. Each shows the "Demo mode" banner because the page was opened with `?demo=1`. None shows real data.
+Twenty-one captures of the running app are in [screenshots/](screenshots/) (WebP, 858 KB in all) and shown in
+[06-frontend.md](06-frontend.md). They were taken 2026-10-26 and 2026-10-27 (UTC) from the Playwright Chromium on the seeded demo
+store, in dark and light, at 1280 px and 375 px. Each shows the "Demo mode" banner because the page was opened with `?demo=1`. None
+shows real data. The 2026-10-27 captures used `scripts/seed-demo.mjs --rows 150` and cover requests, the goals roll-up, the build
+story, suggested rules with strength, and context economics.
 
 ## Accessibility audit
 
@@ -116,6 +118,11 @@ order, directions and the stylesheet rules on every page. A Chromium pass over 1
 combinations, with a 200-character unbroken token and an Arabic paragraph in the data) found no page that scrolls sideways, no
 control without a name and no duplicate id, after the fixes listed in [T-214](tasks/T-214.md). The two remaining targets under 40 px
 are disabled Markdown task-list checkboxes and checkboxes inside a 40 px label.
+
+A second pass on 2026-10-27 in Playwright Chromium (150-row demo seed) loaded six routes — Work, a request detail, Rules, Suggested,
+Economics and Memories — at 375 and 1280 px in light and dark. On every combination `document.documentElement.scrollWidth` was at
+most `innerWidth` (the only overflow was the status strip's own horizontal scroll), and the console had no errors. This checked
+layout, not a keyboard walk; the keyboard pass is still the 2026-10-26 one above.
 
 ## Measured performance
 

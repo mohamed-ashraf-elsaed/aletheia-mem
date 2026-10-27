@@ -3,7 +3,8 @@
 Status: implemented, 2026-10-27. This page describes the code that exists: `src/hub/requests.mjs`,
 `goals-rollup.mjs`, `artifacts.mjs`, `story.mjs`, `economics.mjs`, `rule-suggest.mjs`, `rules-decide.mjs`.
 Every number comes from a stored row. An empty store returns empty arrays and `empty: true`; there are no
-placeholder counts. The rule-based path needs no model. The UI is not wired yet (backend only).
+placeholder counts. The rule-based path needs no model. The Work and Memory tabs read these routes; the mapping is in
+§32.11.
 
 ## 32.1 Requests (T-152)
 
@@ -202,17 +203,36 @@ Waiting on you. `GET /v1/work/requests?project=shop` (abbreviated):
 }
 ```
 
-## 32.11 What is not done
+## 32.11 UI wiring (T-218 to T-222)
 
-- **UI wiring.** No `public/**` file was changed. The Work, Goals and Rules tabs still render the T-143/T-144 shapes.
-  A later prompt wires these routes.
+The UI is wired; no new tab was added. The existing modules changed shape:
+
+| Route | Where it appears |
+|---|---|
+| `GET /v1/work/requests` | Work tab, Requests section: filter, sort and group controls, one card per request |
+| `GET /v1/work/requests/:id` | `#/work/request/<id>`: where this came from, with links to the session page |
+| `POST /api/hub/requests/:id` | Work tab: Dismiss with Undo; dismissed requests have Restore |
+| `GET /v1/work/goals` | Work tab, Goals section: roll-up, open asks and the no-goal bucket |
+| `GET /v1/work/story` | Work tab, Build story section |
+| `GET /v1/context/economics` | Memory tab, Economics page |
+| `GET`/`POST /api/hub/rules/learning-run` | Rules tab, Suggested page: last run and Run learning now |
+| `POST /api/hub/rule-suggestions/:id` | Rules tab: Approve, Edit, Reject and Restore |
+| `POST /api/hub/rules/:id/toggle` | Rules tab: Turn on or off, optimistic with Undo |
+| `POST /api/hub/rules/:id/replace` | Rules tab: Replace, which says the old rule is kept |
+
+Progress, ETA, request grouping, goal progress, rule strength and read tokens carry an "estimated" link to
+[tasks/unverified.md](tasks/unverified.md#request-layer-story-and-economics-2026-10-27). The request route has no
+`offset`, so the Work tab offers a page size and the server's counts, not a pager that would repeat the same rows.
+
+## 32.12 What is not done
+
 - **A model-written story.** The build story is rule-based. No model was run, so no prose quality is claimed.
 - **Measured thresholds.** The progress formula, the 24 h request gap, the ETA pace and the rule strength bands are
   chosen rules, not measured against owner behaviour. See [tasks/unverified.md](tasks/unverified.md).
 - **Per-observation work tokens.** The usage ledger is per extraction call, so per-observation work tokens are `null`.
 
-## 32.12 Sources
+## 32.13 Sources
 
-- The task files T-152 and T-165 to T-173 for the acceptance criteria.
+- The task files T-152, T-165 to T-173 and T-218 to T-222 for the acceptance criteria and the UI wiring.
 - [26-memory-pipeline.md](26-memory-pipeline.md) for the store and the worker.
 - `aletheia-private/claude-mem-gap-report.md` for the gap list (read-only). No external URL was fetched for this page.

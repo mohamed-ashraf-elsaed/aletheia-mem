@@ -30,7 +30,8 @@ const ROUTES = [
   [/items=0/, () => json({ items: [], duplicates: [{ key: "1:2", a: 1, b: 2, aText: ARABIC, bText: TOKEN, score: 0.9 }], duplicatesTotal: 1, dismissedDuplicates: [], dismissedDuplicatesTotal: 0 })],
   [/^\/api\/hub\/review\?/, () => json({ items: [{ id: 5, type: "fact", itemId: 1, reason: "contradiction", status: "pending", text: ARABIC, project: "shop", confidence: 0.8, createdAt: NOW }], total: 1 })],
   [/^\/api\/hub\/dismissed/, () => json({ items: [{ item_type: "fact", item_id: 3, reason: "noise", at_epoch: Date.now(), label: ARABIC, project: "shop" }], total: 1 })],
-  [/^\/api\/hub\/rule-suggestions/, () => json({ items: [{ id: 7, project: "shop", text: ARABIC, when: "", confidence: 0.7, sourceType: "prompt", createdAt: NOW }], total: 1 })],
+  [/^\/api\/hub\/rule-suggestions/, () => json({ items: [{ id: 7, project: "shop", text: ARABIC, when: "", confidence: 0.7, sourceType: "prompt", createdAt: NOW, timesSeen: 3, strength: "Steady", latestAt: NOW, moreQuotes: 0, quotes: [{ id: 1, text: ARABIC, at: NOW, sessionId: "s1" }] }], total: 1 })],
+  [/^\/api\/hub\/rules\/learning-run/, () => json({ learningRun: { at: NOW, found: 2, proposed: 1, errors: 0 } })],
   [/^\/api\/hub\/rules/, () => json({ rules: [{ id: "r1", then: ARABIC, when: "", enabled: true, scopeTier: "everywhere", scopeName: "Everywhere", tools: null, source: "manual" }] })],
   [/^\/api\/hub\/tools/, () => json({ tools: [{ id: "claude-code", name: "Claude Code", installed: true }, { id: "agents-md", name: "AGENTS.md", installed: false }] })],
   [/^\/api\/hub\/doctor/, () => json({ tools: [tool], checks: [{ name: "server", ok: true, detail: "ok" }], dataDir: "/d", generatedAt: NOW })],
@@ -44,7 +45,11 @@ const ROUTES = [
   [/^\/api\/hub\/mcp-links/, () => json({ links: [{ id: 1, scope: "mcp", name: "laptop", projects: [], revoked: false }] })],
   [/^\/api\/hub\/audit/, () => json({ audit: [{ id: 1, at_epoch: Date.now(), actor: "ui", action: "memory.add", detail: { id: 1 } }], total: 1 })],
   [/^\/v1\/work\/sessions/, () => json({ items: [{ id: "s1", project: "shop", tool: "cursor", firstAt: NOW, lastAt: NOW, promptCount: 1, toolCount: 1, state: "finished", lastPrompt: ARABIC, summary: { text: "sum", at: NOW }, factCount: 1, href: "#/work/session/s1?project=shop" }], total: 1 })],
-  [/^\/v1\/work\/goals/, () => json({ goals: [{ id: "0123456789abcdef", label: ARABIC, count: 2, sessionCount: 2, projects: ["shop"], lastSeen: NOW, pinned: false, quotes: [{ id: 1, at: NOW, project: "shop", text: "q" }] }], dismissedGoals: [], total: 1 })],
+  [/^\/v1\/work\/goals/, () => json({ goals: [{ id: "0123456789abcdef", label: ARABIC, object: ARABIC, status: "Moving", aggregateProgress: 50, requestCount: 1, workingCount: 1, waitingCount: 0, shippedCount: 0, count: 2, sessionCount: 2, projects: ["shop"], lastSeen: NOW, pinned: false, requests: [{ id: "0123456789abcdef", title: ARABIC, status: "Working", progress: 50 }], whatCameOutOfIt: [{ kind: "commit", value: "abc1234", evidenceId: 2 }], quotes: [{ id: 1, at: NOW, project: "shop", text: "q" }] }], dismissedGoals: [], noGoal: { count: 0, requests: [] }, openAsks: { total: 1, beingWorked: [{ object: ARABIC, count: 2, sessionCount: 2 }], nothingWorking: [] }, total: 1 })],
+  [/^\/v1\/work\/requests\/[a-f0-9]{16}/, () => json({ request: { id: "0123456789abcdef", project: "shop", tool: "cursor", title: ARABIC, status: "Waiting on you", progress: 50, progressEvidence: { sessionCount: 2, completedSessions: 1, completedSessionIds: ["s1"], factIds: [1], summaryIds: [] }, eta: NOW, etaEvidence: { paceMs: 1800000, remainingSessions: 1 }, cameOutOfIt: [{ kind: "pull", value: "#42", url: "https://github.com/acme/shop/pull/42", evidenceId: 4 }], whereThisCameFrom: { promptCount: 1, factCount: 1, sessions: [{ sessionId: "s1", project: "shop", firstAt: NOW, lastAt: NOW, ended: NOW, prompts: [{ id: 1, text: ARABIC, at: NOW }], facts: [fact(1)] }] } } })],
+  [/^\/v1\/work\/requests\?/, () => json({ counts: { all: 1, needsYou: 1, shipped: 0, working: 0, idle: 0, waitingOnYou: 1, total: 1 }, requests: [{ id: "0123456789abcdef", project: "shop", tool: "cursor", title: ARABIC, status: "Waiting on you", progress: 50, progressEvidence: { sessionCount: 2, completedSessions: 1, completedSessionIds: ["s1"], factIds: [1], summaryIds: [] }, eta: NOW, etaEvidence: { paceMs: 1800000, remainingSessions: 1 }, cameOutOfIt: [], startedAt: NOW, runningTimeMs: 3600000, sessionCount: 2, promptCount: 1, toolCount: 1, evidence: { sessionIds: ["s1"] } }], dismissedRequests: [] })],
+  [/^\/v1\/work\/story/, () => json({ counts: { shipped: 1, working: 0, waitingOnYou: 1, idle: 0, total: 2 }, velocity: { totalShipped: 1, averageDaysToShip: 0, perWeek: [{ week: "2026-W44", shipped: 1 }] }, learned: [{ text: ARABIC, timesSeen: 2, latestAt: NOW, quotes: [{ text: ARABIC, at: NOW }] }], empty: false })],
+  [/^\/v1\/context\/economics/, () => json({ project: "shop", counter: "estimateTokens: ceil(text.length / 4)", observations: [{ id: 1, project: "shop", kind: "observation", title: ARABIC, text: ARABIC, readTokens: 28, workTokens: null, workTokensSource: "usage is recorded per extraction call, not per observation", at: NOW }], totals: { observations: 1, readTokens: 28, workTokens: 1500, workTokensSource: "fact_usage input + output tokens", savingsPercent: 97 }, empty: false })],
   [/^\/v1\/work\/session\//, () => json({ session: { id: "s1", project: "shop", tool: "cursor", firstAt: NOW, lastAt: NOW, promptCount: 1, toolCount: 1, summary: { text: ARABIC, at: NOW }, timeline: [{ id: 1, kind: "prompt", at: NOW, text: ARABIC, tool: "cursor" }], facts: [fact(1)] } })],
   [/^\/v1\/work\?/, () => json({ health: { status: "ok" }, mode: "code", empty: false, queue: { pending: 0, running: 0, failed: 0, done: 1, depth: 0 }, lastCapture: [{ tool: "cursor", at: NOW, count: 1 }], sessions: [{}], recentFacts: [fact(1)], review: { pending: 1, items: [{ id: 5, type: "fact", itemId: 1, reason: "contradiction", label: ARABIC, project: "shop" }] }, ruleSuggestions: [], dismissed: [], pinned: [], generatedAt: NOW })],
   [/^\/v1\/search/, () => json({ total: 2, totals: { facts: 1, memories: 1 }, capped: false, facts: [{ kind: "fact", id: 1, text: ARABIC, title: ARABIC, project: "shop", status: "active", confidence: 0.8, at: NOW, source: {} }], results: [{ id: 2, kind: "observation", type: "note", title: TOKEN, project: "shop", tool: "cursor" }], channels: {}, reason: null })],
@@ -196,7 +201,7 @@ describe("T-214: the audit itself", () => {
 
 describe("T-214: names, roles and tab order on every page", () => {
   const cases = [
-    ["memory", "ui-memory", (r) => mods.memory.renderMemory(r), ["memories", "facts", "review", "dismissed", "search"]],
+    ["memory", "ui-memory", (r) => mods.memory.renderMemory(r), ["memories", "facts", "review", "dismissed", "economics", "search"]],
     ["rules", "ui-rules", (r) => mods.rules.renderRules(r), ["rules", "suggestions", "sync", "import"]],
     ["tools", "ui-tools", (r) => mods.tools.renderTools(r), ["tools", "devices", "access", "alerts", "team", "checks", "activity"]],
   ];
@@ -222,6 +227,11 @@ describe("T-214: names, roles and tab order on every page", () => {
     fakeLocation("#/work/session/s1?project=shop");
     const holder = await mount("ui-work", (r) => mods.work.renderWork(r), { tab: "work" });
     expect([...audit(holder, dom, "session"), ...directionProblems(holder, ARABIC, "session")]).toEqual([]);
+  });
+  test("work request detail", async () => {
+    fakeLocation("#/work/request/0123456789abcdef");
+    const holder = await mount("ui-work", (r) => mods.work.renderWork(r), { tab: "work" });
+    expect([...audit(holder, dom, "request"), ...directionProblems(holder, ARABIC, "request")]).toEqual([]);
   });
   test("the first-run guide, the shortcut sheet, the palette and the dialogs", async () => {
     const guide = mods.guide.firstRunGuide({ tools: [tool], intervalMs: 0 });
