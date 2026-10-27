@@ -44,6 +44,7 @@
 //   aletheia service install|uninstall|status [--write] [--cpu-quota X] [--memory-max Y]
 //                                                          auto-start unit/plist (dry-run by default; Linux/macOS only)
 //   aletheia audit [--limit n]                          read the sync audit log
+//   aletheia audit export [--from DATE] [--to DATE] [--format jsonl|csv] [--out file]
 //   aletheia erase [--project p | --id 12,fact:3 | --before DATE] [--apply] [--export file] [--receipt file]
 //                                                          report first; --apply exports, erases and signs a receipt
 //   aletheia erase verify <receipt.json>                  check a receipt's HMAC
@@ -442,7 +443,16 @@ async function main() {
         }
       }
       case "audit": {
-        const { readAudit } = await import("../src/hub/sync/cli.mjs");
+        const { exportAuditLog, readAudit } = await import("../src/hub/sync/cli.mjs");
+        if (pos[0] === "export") {
+          const from = typeof flags.from === "string" ? Date.parse(flags.from) : null;
+          const to = typeof flags.to === "string" ? Date.parse(flags.to) : null;
+          if (flags.from && !Number.isFinite(from)) return die("--from needs a date, for example 2026-01-31.");
+          if (flags.to && !Number.isFinite(to)) return die("--to needs a date, for example 2026-01-31.");
+          const result = exportAuditLog(config, { from, to, format: flags.format === "csv" ? "csv" : "jsonl" });
+          if (flags.out) { writeFileSync(flags.out, result.body); return out(`Wrote ${result.count} audit row(s) to ${flags.out}`); }
+          return process.stdout.write(result.body.endsWith("\n") ? result.body : `${result.body}\n`);
+        }
         const rows = readAudit(config, Number(flags.limit) || 100);
         return out(rows.length ? rows.map((row) => `${new Date(row.ts).toISOString()}  ${row.action}  ${row.result}${row.device_id ? `  ${row.device_id}` : ""}${row.detail ? `  ${JSON.stringify(row.detail).slice(0, 120)}` : ""}`).join("\n") : "No sync audit entries.");
       }
