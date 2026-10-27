@@ -15,7 +15,8 @@ import { spoolPath, spoolRead } from "./hooks/shared.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "./rules-sync.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "./tools.mjs";
 import { sessionDetail, workOverview } from "./work.mjs";
-import { goalAction, proposeGoals } from "./goals.mjs";
+import { goalAction } from "./goals.mjs";
+import { proposeGoalsRollup } from "./goals-rollup.mjs";
 import { proposeRequests, requestAction, requestDetail } from "./requests.mjs";
 import { SyncStore } from "./sync/store.mjs";
 import { AlertStore, deliverDue, extractionFailures, queueDepth } from "./alerts.mjs";
@@ -342,7 +343,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       }
       if (pathname === "/v1/work/goals" && method === "GET") {
         const q = qs(url);
-        return h.json(proposeGoals(hub, { project: q.project || null, minSessions: q.minSessions, limit: q.limit }));
+        return h.json(proposeGoalsRollup(hub, { project: q.project || null, minSessions: q.minSessions, limit: q.limit, maxGapHours: q.maxGapHours, activeMinutes: q.activeMinutes }));
       }
       if (pathname === "/v1/work/requests" && method === "GET") {
         const q = qs(url);
