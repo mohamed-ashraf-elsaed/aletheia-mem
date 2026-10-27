@@ -1077,7 +1077,7 @@ export class HubStore {
    * Fact search over the FTS index and the extracted keys. Current facts are the default; `includeHistory` and
    * `asOf` expose the older rows. Every hit carries the episode that produced it.
    */
-  searchFacts({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null, pool = 100, scope = "current", cap = 200 } = {}) {
+  searchFacts({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null, pool = 100, scope = "current", cap = 200, since = null, until = null } = {}) {
     const expr = ftsAnyQuery(query);
     if (!expr) return [];
     const now = Date.now();
@@ -1086,6 +1086,8 @@ export class HubStore {
     const where = [];
     const params = [];
     if (this.hasDismissals("fact")) where.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = f.id)");
+    if (Number.isFinite(since)) { where.push("f.recorded_at_epoch >= ?"); params.push(since); }
+    if (Number.isFinite(until)) { where.push("f.recorded_at_epoch <= ?"); params.push(until); }
     if (project && scope !== "all") {
       if (this.hasGlobal("facts")) { where.push("(f.project = ? OR f.scope = 'global')"); } else { where.push("f.project = ?"); }
       params.push(project);
@@ -1112,6 +1114,8 @@ export class HubStore {
       if (vecRows.length) ids = rrf([ids, topKByVector(queryVec, vecRows, pool).map((row) => row.id)]).map((row) => row.id);
     }
     const facts = this.getFactsByIds(ids).filter((fact) => {
+      if (Number.isFinite(since) && fact.recorded_at_epoch < since) return false;
+      if (Number.isFinite(until) && fact.recorded_at_epoch > until) return false;
       if (project && scope !== "all" && fact.project !== project && fact.scope !== "global") return false;
       if (at != null) {
         return fact.status !== "retracted" && (fact.valid_from_epoch ?? fact.recorded_at_epoch) <= at && fact.recorded_at_epoch <= at && (fact.valid_to_epoch == null || fact.valid_to_epoch > at);
@@ -1312,7 +1316,7 @@ export class HubStore {
   }
 
   /** Full rows, best first. Same ranking as search(). */
-  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false, scope = "current", cap = 200 } = {}) {
+  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false, scope = "current", cap = 200, since = null, until = null } = {}) {
     const filters = [];
     const params = [];
     if (project && scope !== "all") {
@@ -1323,6 +1327,8 @@ export class HubStore {
     }
     for (const [col, val] of [["kind", kind], ["type", type], ["tool", tool]]) if (val) { filters.push(`m.${col} = ?`); params.push(val); }
     if (this.hasDismissals("memory")) filters.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = m.id)");
+    if (Number.isFinite(since)) { filters.push("m.created_at_epoch >= ?"); params.push(since); }
+    if (Number.isFinite(until)) { filters.push("m.created_at_epoch <= ?"); params.push(until); }
     const where = filters.length ? `AND ${filters.join(" AND ")}` : "";
     const expr = orExpr(this.selectTerms(query));
     const lexical = expr

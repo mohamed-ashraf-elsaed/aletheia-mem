@@ -165,24 +165,28 @@ const SEARCH_CAP = 300;
  * Search as one ordered list (facts first, then memories; `mix` alternates them) with a window. `totals` counts each kind; `capped` says the
  * ranking pool was full, so more may exist than the total shows.
  */
-export function searchPage(hub, { query, project, kind, type, tool, scope = "current", includeHistory = false, asOf = null, since = null, until = null, limit, offset, mix = false } = {}) {
+export function searchPage(hub, { query, project, kind, type, tool, scope = "current", includeHistory = false, asOf = null, since = null, until = null, order = "relevance", limit, offset, mix = false } = {}) {
   const inRange = (item) => {
     const at = Date.parse(item.at);
-    return (!Number.isFinite(since) || at >= since) && (!Number.isFinite(until) || at < until);
+    return (!Number.isFinite(since) || at >= since) && (!Number.isFinite(until) || at <= until);
   };
-  const facts = hub.searchFacts({ query, project, limit: SEARCH_CAP, pool: SEARCH_CAP, includeHistory, asOf, scope, cap: SEARCH_CAP }).filter(inRange);
-  const memories = hub.ranked({ query, project, kind, type, tool, limit: SEARCH_CAP, pool: SEARCH_CAP, scope, includeHistory, cap: SEARCH_CAP })
+  const facts = hub.searchFacts({ query, project, limit: SEARCH_CAP, pool: SEARCH_CAP, includeHistory, asOf, scope, cap: SEARCH_CAP, since, until }).filter(inRange);
+  const memories = hub.ranked({ query, project, kind, type, tool, limit: SEARCH_CAP, pool: SEARCH_CAP, scope, includeHistory, cap: SEARCH_CAP, since, until })
     .map((m) => ({ id: m.id, kind: m.kind, type: m.type, title: m.title, project: m.project, tool: m.tool, pinned: m.pinned, at: new Date(m.created_at_epoch).toISOString() }))
     .filter(inRange);
+  const all = [...facts, ...memories];
+  const byDateAsc = (a, b) => Date.parse(a.at) - Date.parse(b.at) || a.id - b.id;
   // mix alternates the two kinds so a short window (the header dropdown) shows both; the default lists facts first.
-  const combined = mix
-    ? Array.from({ length: Math.max(facts.length, memories.length) }, (_, i) => [facts[i], memories[i]]).flat().filter(Boolean)
-    : [...facts, ...memories];
+  const combined = order === "date_asc" ? all.sort(byDateAsc)
+    : order === "date_desc" ? all.sort((a, b) => byDateAsc(b, a))
+    : mix ? Array.from({ length: Math.max(facts.length, memories.length) }, (_, i) => [facts[i], memories[i]]).flat().filter(Boolean)
+    : all;
   const window = slicePage(combined, { limit, offset });
   return {
     total: combined.length,
     totals: { facts: facts.length, memories: memories.length },
     capped: facts.length >= SEARCH_CAP || memories.length >= SEARCH_CAP,
+    order,
     facts: window.filter((item) => item.kind === "fact"),
     results: window.filter((item) => item.kind !== "fact"),
   };

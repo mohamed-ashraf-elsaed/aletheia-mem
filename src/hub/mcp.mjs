@@ -4,13 +4,15 @@
 import { projectKeyForPath } from "../readmodel/project.mjs";
 import { wrapUntrusted } from "./untrusted.mjs";
 import { redact } from "./capture.mjs";
+import { searchPage } from "./lists.mjs";
+import { pagingOf, whenOf } from "./paging.mjs";
 
 // Newest first. Per the spec: answer with the client's version if supported, else with our latest.
 export const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 
 const str = { type: "string" };
 export const TOOL_DEFS = [
-  { name: "search", description: "Step 1. Search shared memory. Returns a compact index of ids and titles (cheap). Then call timeline or get_observations for the ones that matter.", inputSchema: { type: "object", properties: { query: str, project: str, type: str, kind: str, limit: { type: "number" } }, required: ["query"] } },
+  { name: "search", description: "Step 1. Search shared memory. Returns a compact index of ids and titles (cheap). Then call timeline or get_observations for the ones that matter. since/until are ISO dates or epoch ms; order is relevance, date_desc or date_asc; offset pages the index.", inputSchema: { type: "object", properties: { query: str, project: str, type: str, kind: str, limit: { type: "number" }, since: str, until: str, order: str, offset: { type: "number" } }, required: ["query"] } },
   { name: "timeline", description: "Step 2. What happened around a memory (anchor id) or the best match for a query, in time order.", inputSchema: { type: "object", properties: { anchor: { type: "number" }, query: str, project: str, before: { type: "number" }, after: { type: "number" } } } },
   { name: "get_observations", description: "Step 3. Full text of memories by id. Always batch ids; fetch only what step 1 and 2 selected.", inputSchema: { type: "object", properties: { ids: { type: "array", items: { type: "number" } } }, required: ["ids"] } },
   { name: "save_memory", description: "Save something worth remembering across sessions and tools (a decision, a gotcha, a convention, a fix).", inputSchema: { type: "object", properties: { title: str, text: str, project: str, type: { type: "string", enum: ["decision", "gotcha", "bugfix", "feature", "refactor", "change", "discovery", "note"] }, pinned: { type: "boolean" } }, required: ["text"] } },
@@ -52,14 +54,18 @@ export function callTool(name, args = {}, ctx) {
     switch (name) {
       case "search": {
         if (typeof args.query !== "string" || !args.query.trim()) return fail("query is required.");
-        const limit = args.limit ?? 20;
+        const paging = pagingOf({ limit: args.limit, offset: args.offset }, { limit: 20 });
+        const order = ["relevance", "date_desc", "date_asc"].includes(args.order) ? args.order : "relevance";
+        const since = whenOf(args.since);
+        const until = whenOf(args.until, { end: true });
         const pickProject = allowed ? (args.project ?? (ctx.projects.length === 1 ? ctx.projects[0] : undefined)) : args.project;
-        const facts = store.searchFacts({ query: args.query, project: pickProject, limit: Math.min(limit, 10) }).filter((fact) => !allowed || allowed(fact.project));
+        const page = searchPage(store, { query: args.query, project: pickProject, type: args.type, kind: args.kind, order, since, until, ...paging, scope: "current" });
+        const facts = page.facts.filter((fact) => !allowed || allowed(fact.project));
+        const index = page.results.filter((row) => !allowed || allowed(row.project));
         const factLines = facts.map((fact) => `fact #${fact.id} ${fact.text}${fact.source?.episodeId ? ` (episode #${fact.source.episodeId})` : ""}`);
-        const detailed = store.searchDetailed({ query: args.query, project: pickProject, type: args.type, kind: args.kind, limit });
-        const index = store.search({ query: args.query, project: pickProject, type: args.type, kind: args.kind, limit }).filter((row) => !allowed || allowed(row.project));
         const memoryIndex = fmtIndex(index);
         if (!factLines.length && !index.length) {
+          const detailed = store.searchDetailed({ query: args.query, project: pickProject, type: args.type, kind: args.kind, limit: paging.limit });
           const reason = detailed.reason ? (REASON[detailed.reason] ?? "filtered") : (allowed ? "filtered" : "");
           return text(`No matches. ${reason}`.trim());
         }
