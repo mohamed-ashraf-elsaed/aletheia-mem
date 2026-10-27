@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 4f62c98f2ff9f83f945dfa66205924f6f83137adcb71fd489eafd16e3c6aa546
+> Source: [README.md](../../README.md) · source-sha256: 8a46344ccb10df9aff21b444185154e17a153903407dc4352c047dba7c5ce02f
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 

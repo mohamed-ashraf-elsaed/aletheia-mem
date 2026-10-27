@@ -12,7 +12,7 @@ const RAW = "https://raw.githubusercontent.com/mohamed-ashraf-elsaed/aletheia-me
 
 describe("README top block", () => {
   test("every image in the top lines is a raw GitHub URL for a file that exists here", () => {
-    const refs = imageRefs(top).filter((r) => !/img\.shields\.io|badge\.svg|glama\.ai\/mcp\/servers\/mohamed-ashraf-elsaed\/aletheia-mem\/badges\/score\.svg/.test(r.url));
+    const refs = imageRefs(top).filter((r) => !/img\.shields\.io|badge\.svg|glama\.ai\/mcp\/servers\/mohamed-ashraf-elsaed\/aletheia-mem\/badges\/score\.svg|badge\.socket\.dev\/npm\/package\/aletheia-mem/.test(r.url));
     expect(refs.length).toBeGreaterThanOrEqual(3);
     for (const { url } of refs) {
       expect(url.startsWith(RAW)).toBe(true);
@@ -37,6 +37,7 @@ describe("README top block", () => {
   test("the badge row has the npm version badge and real endpoints only", () => {
     expect(top).toContain("https://img.shields.io/npm/v/aletheia-mem");
     expect(top).toContain("https://glama.ai/mcp/servers/mohamed-ashraf-elsaed/aletheia-mem/badges/score.svg");
+    expect(top).toContain("https://badge.socket.dev/npm/package/aletheia-mem)");
     expect(top).toContain("actions/workflows/test.yml/badge.svg");
     expect(top).toContain("img.shields.io/github/license/");
     expect(top).toContain("img.shields.io/badge/bun-%3E%3D1.1-black");
