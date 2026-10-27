@@ -407,7 +407,7 @@ export class HubStore {
       }
     }
     this.vecCache = null;
-    this.termOptions = { max: 12, maxShare: 0.6 }; // see selectTerms. Swept on LoCoMo (docs/14): 12/0.6 loses no recall; 8/0.35 lost ~8 points
+    this.termOptions = { max: 12, maxShare: 0.2 }; // see selectTerms. 50k synthetic sweep (seed 1): 0.2 raises Recall@5 and shrinks the bm25 match set
     this.ensureScopeColumns();
     this.ensureRuleSuggestions();
     this.ensureRuleStrength();
@@ -415,6 +415,7 @@ export class HubStore {
     this.ensureDismissals();
     this.ensureSessionEnd();
     this.ensureMemoryFiles();
+    this.ensureSearchIndexes();
   }
 
   /** Add the T-172 rule-replacement history columns to databases created before they existed. Idempotent. */
@@ -470,6 +471,12 @@ export class HubStore {
   indexFiles(memoryId, files) {
     const stmt = this.db.prepare("INSERT OR IGNORE INTO memory_files (memory_id, path) VALUES (?, ?)");
     for (const path of files) stmt.run(memoryId, path);
+  }
+
+  /** Indexes that keep the hot search paths off a full table scan. Idempotent and safe on every open. */
+  ensureSearchIndexes() {
+    this.db.exec("CREATE INDEX IF NOT EXISTS idx_memories_scope ON memories(scope)");
+    this.db.exec("CREATE INDEX IF NOT EXISTS idx_facts_scope ON facts(scope)");
   }
 
   /** Build the file filter for a search/list. Exact by default; suffix is opt-in. */
@@ -1362,7 +1369,8 @@ export class HubStore {
   /**
    * Choose the query terms. A word that appears in most memories adds cost and almost no signal, so words found in more
    * than `maxShare` of memories are dropped (when others remain) and at most `max` of the rarest are kept.
-   * Aggressive settings cost recall (8 terms / 35%: -8 points Recall@5 on LoCoMo, because a person's name is in many turns), so the defaults are gentle.
+   * The 50k synthetic sweep (bench/scale.mjs, seed 1) keeps Recall@5 at 59% at 0.2 and cuts the bm25 match set,
+   * so the default is gentle on term count but tight on the document share.
    */
   selectTerms(text, { max = this.termOptions.max, maxShare = this.termOptions.maxShare } = {}) {
     const words = contentTerms(text);

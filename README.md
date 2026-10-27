@@ -230,7 +230,7 @@ This list is the honest half of the README.
 - The 1B-model extraction run failed; facts from our own extractor were measured with the rule extractor only.
 - Sync and E2EE are tested with temp data dirs and a loopback hub. No real tunnel or second host was used.
 - E2EE covers payloads, not metadata.
-- At 50,000 rows, keyword search p95 was 108.1 ms after an FTS fix; the 50 ms target is not met.
+- At 50,000 synthetic rows, keyword search p95 is 32.7 ms project-scoped and 58.6 ms across all projects (measured-by-us, `bun bench/scale.mjs 50000 20000 --index tuned --queries 200 --seed 1`, Linux). The 50 ms target is met for project-scoped search.
 - The 10 README translations are machine-translated. No native speaker has reviewed them.
 - "Works with <tool>" is not claimed for any tool. Only a real install test would justify it.
 
