@@ -242,6 +242,7 @@ function shell({ title, description, canonical, siteFile, body, jsonLd }) {
 <title>${esc(title)} · Aletheia docs</title>
 <meta name="description" content="${esc(description)}">
 <meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
 <link rel="canonical" href="${canonical}">
 <link rel="icon" type="image/png" sizes="64x64" href="${asset("favicon.png")}">
 <link rel="icon" type="image/png" sizes="32x32" href="${asset("favicon-32.png")}">
