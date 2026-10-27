@@ -330,3 +330,84 @@ describe("T-214: the page and the stylesheets", () => {
     }
   });
 });
+
+// T-224: the real-browser keyboard and 375 px walk of Requests, Goals, Story, Suggested rules and Economics
+// (docs/a11y-walk-requests.md). Each test below pins one fix the walk led to.
+describe("T-224: findings from the keyboard and small-screen walk", () => {
+  const css = read("ui-components.css");
+  const card = (label) => {
+    const el = dom.createElement("article");
+    el.className = "ui-card";
+    const btn = dom.createElement("button");
+    btn.append(label);
+    el.append(btn);
+    return { el, btn };
+  };
+
+  test("an estimated link names what is estimated and still contains the visible word", async () => {
+    const { estimated } = await import("../public/ui-estimates.js");
+    const link = estimated("Progress");
+    expect(link.getAttribute("aria-label")).toBe("Progress: estimated");
+    expect(link.textContent).toBe("estimated");
+    expect(link.getAttribute("href")).toContain("unverified.md");
+  });
+
+  test("the estimated link and the artifact link are 40 px targets on a narrow screen", () => {
+    const start = css.indexOf("@media (max-width: 480px) {\n  .ui-estimate");
+    expect(start).toBeGreaterThan(-1);
+    expect(css.slice(start, css.indexOf("}\n}", start))).toMatch(/\.ui-estimate[^}]*min-height: var\(--ui-touch\)[^}]*min-width: var\(--ui-touch\)/);
+    expect(css).toMatch(/\.ui-artifact-link \{[^}]*min-width: var\(--ui-touch\)/);
+    expect(read("tabs/work-requests.js")).toContain('class: "ui-artifact-link"');
+  });
+
+  test("hiding a card moves focus to the next card, or the previous one, never to the page top", async () => {
+    const { hideCard } = await import("../public/ui-views.js");
+    const list = dom.createElement("div");
+    const a = card("a");
+    const b = card("b");
+    const c = card("c");
+    list.append(a.el, b.el, c.el);
+    dom.body.append(list);
+    b.btn.focus();
+    hideCard(b.el);
+    expect(dom.activeElement).toBe(c.btn);
+    b.el.hidden = true;
+    c.btn.focus();
+    hideCard(c.el);
+    expect(dom.activeElement).toBe(a.btn);
+  });
+
+  test("hiding a card that does not hold focus leaves focus alone", async () => {
+    const { hideCard } = await import("../public/ui-views.js");
+    const list = dom.createElement("div");
+    const a = card("a");
+    const b = card("b");
+    list.append(a.el, b.el);
+    dom.body.append(list);
+    a.btn.focus();
+    hideCard(b.el);
+    expect(dom.activeElement).toBe(a.btn);
+  });
+
+  test("a soft reload that rebuilds the rows gives focus back to the control in the same place", async () => {
+    const { region } = await import("../public/ui-region.js");
+    let rows = ["one", "two", "three"];
+    const r = region({
+      load: async () => ({ items: rows }),
+      render: (data) => {
+        const list = dom.createElement("div");
+        for (const item of data.items) { const btn = dom.createElement("button"); btn.append("Reject"); btn.setAttribute("data-row", item); list.append(btn); }
+        return list;
+      },
+    });
+    dom.body.append(r);
+    await flush();
+    const buttons = () => dom.documentElement.querySelectorAll("button").filter((x) => x.getAttribute("data-row"));
+    buttons()[1].focus();
+    rows = ["one", "three"];
+    r.reload({ soft: true });
+    await flush();
+    expect(buttons().length).toBe(2);
+    expect(dom.activeElement.getAttribute("data-row")).toBe("three");
+  });
+});

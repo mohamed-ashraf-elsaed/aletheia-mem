@@ -43,7 +43,7 @@ export function artifactList(artifacts = []) {
     const url = externalUrl(artifact.url);
     return h("li", { class: "ui-meta", dir: "auto" },
       h("span", {}, `${label}: `),
-      url ? h("a", { href: url, dir: "ltr", rel: "noreferrer" }, value) : mono(value, { copy: false }),
+      url ? h("a", { class: "ui-artifact-link", href: url, dir: "ltr", rel: "noreferrer" }, value) : mono(value, { copy: false }),
       artifact.evidenceId != null ? h("span", {}, ` · evidence ${artifact.evidenceId}`) : null,
       artifact.sessionId ? h("span", {}, ` · session ${artifact.sessionId}`) : null);
   }));

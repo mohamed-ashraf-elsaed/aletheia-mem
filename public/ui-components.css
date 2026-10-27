@@ -24,6 +24,10 @@ kbd {
 .ui-estimate { color: var(--ui-muted); text-decoration: underline dotted; text-underline-offset: 2px; white-space: nowrap; }
 .ui-meta .ui-estimate { display: inline; min-height: auto; }
 .ui-estimate:hover, .ui-estimate:focus-visible { color: var(--ui-text); }
+.ui-artifact-link { min-width: var(--ui-touch); justify-content: center; }
+@media (max-width: 480px) {
+  .ui-estimate, .ui-meta .ui-estimate { display: inline-flex; align-items: center; justify-content: center; min-height: var(--ui-touch); min-width: var(--ui-touch); }
+}
 .ui-plain-list { margin: 0; padding-left: 1.2em; display: grid; gap: var(--ui-space-1); }
 .ui-subhead { margin: var(--ui-space-3) 0 var(--ui-space-1); font-size: var(--ui-text-lg); }
 .ui-request-progress { display: grid; gap: var(--ui-space-1); }

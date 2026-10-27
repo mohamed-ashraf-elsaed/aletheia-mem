@@ -33,6 +33,26 @@ export function region({ load, render, isEmpty = defaultEmpty, empty = () => emp
   };
   const unlockHeight = () => el.style.removeProperty("min-height");
 
+  const labelOf = (node) => (node.getAttribute?.("aria-label") || node.textContent || "").trim();
+  const leaving = (node) => { for (let n = node; n && n !== body; n = n.parentNode) if (n.hidden || n.classList?.contains("is-leaving")) return true; return false; };
+  const likeThis = (tag, label) => [...body.querySelectorAll(tag)].filter((node) => labelOf(node) === label && !leaving(node));
+  /** Which control has focus inside the body, as its tag, label and place among controls like it. */
+  const focusMark = () => {
+    const active = globalThis.document?.activeElement;
+    let inside = false;
+    for (let node = active; node; node = node.parentNode) if (node === body) { inside = true; break; }
+    if (!inside || active === body) return null;
+    const tag = active.tagName.toLowerCase();
+    const label = labelOf(active);
+    return { tag, label, ordinal: Math.max(0, likeThis(tag, label).indexOf(active)) };
+  };
+  /** A refresh replaces the nodes. Give focus back to the control that took the old one's place. */
+  const restoreFocus = (mark) => {
+    if (!mark || !["button", "a", "select", "input", "textarea"].includes(mark.tag)) return;
+    const same = likeThis(mark.tag, mark.label);
+    (same[Math.min(mark.ordinal, same.length - 1)] ?? body.querySelector("button") ?? body.querySelector("a"))?.focus?.();
+  };
+
   const paint = () => {
     el.setAttribute("aria-busy", String(state.status === "loading" || state.refreshing));
     bar.hidden = !state.refreshing;
@@ -50,11 +70,13 @@ export function region({ load, render, isEmpty = defaultEmpty, empty = () => emp
     }
     const first = shown !== state.status;
     shown = state.status;
+    const mark = focusMark();
     const content = state.status === "empty" ? empty(state.data) : render(state.data, { soft: lastKind === "reload" });
     const softError = state.error
       ? h("div", { class: "ui-inline-error", role: "alert" }, h("span", {}, `Could not refresh: ${state.error}`), button({ label: "Retry", size: "sm", onClick: () => api.reload({ soft: true }) }))
       : null;
     swap(body, softError, content);
+    restoreFocus(mark);
     if (animate && first && !rendered) { body.classList.add("ui-fade"); setTimeout(() => body.classList.remove("ui-fade"), 400); }
     rendered = true;
     unlockHeight();

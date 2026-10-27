@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-27T15:18:36.843Z",
-  "commit": "ad633d4",
+  "generatedAt": "2026-10-27T15:35:45.264Z",
+  "commit": "3cd426f",
   "tasks": [
     {
       "id": "T-001",
@@ -4565,6 +4565,10 @@
       "blocked": false,
       "dependents": [],
       "stale": [
+        {
+          "file": "CHANGELOG.md",
+          "lastCommit": "2026-10-27"
+        },
         {
           "file": ".github/workflows/ci.yml",
           "lastCommit": "2026-10-27"
@@ -10997,16 +11001,68 @@
       "blocked": false,
       "dependents": [],
       "stale": []
+    },
+    {
+      "id": "T-224",
+      "title": "Keyboard and small-screen walk of Requests, Goals, Story, Suggested rules and Economics",
+      "status": "validated",
+      "phase": "P4",
+      "depsRaw": "none",
+      "validatedOn": "2026-10-27",
+      "evidenceNonEmpty": true,
+      "evidenceChars": 705,
+      "acceptanceTicked": 4,
+      "acceptanceTotal": 4,
+      "acceptance": [
+        {
+          "done": true,
+          "text": "`docs/a11y-walk-requests.md` has the date, what was run, a pass/fail table per check, failing selectors and what was not checked."
+        },
+        {
+          "done": true,
+          "text": "Every fix has a test in `test/ui-a11y.test.mjs`."
+        },
+        {
+          "done": true,
+          "text": "The browser check was re-run after the fixes (0 targets under 40 px at 375 px; focus lands on the next card after Dismiss, Approve and Reject)."
+        },
+        {
+          "done": true,
+          "text": "No change to `src/` or API routes."
+        }
+      ],
+      "validation": "bun test test/ui-a11y.test.mjs test/ui-contract.test.mjs",
+      "lastHistory": "- 2026-10-27: validated - the validation command passed and its output is in Evidence.",
+      "history": [
+        "- 2026-10-27: todo, created.",
+        "- 2026-10-27: doing",
+        "- 2026-10-27: validated - the validation command passed and its output is in Evidence."
+      ],
+      "files": [
+        "docs/a11y-walk-requests.md",
+        "public/ui-components.css",
+        "public/tabs/work-requests.js",
+        "scripts/seed-demo.mjs",
+        "test/ui-a11y.test.mjs",
+        "docs/tasks/TASKS.md"
+      ],
+      "ownerSteps": [],
+      "deps": [],
+      "blockedBy": [],
+      "eligible": false,
+      "blocked": false,
+      "dependents": [],
+      "stale": []
     }
   ],
   "taskCounts": {
-    "validated": 127,
+    "validated": 128,
     "implemented": 0,
     "doing": 0,
     "failed": 0,
     "todo": 53
   },
-  "taskTotal": 180,
+  "taskTotal": 181,
   "phases": {
     "P0": {
       "total": 18,
@@ -11041,8 +11097,8 @@
       "todo": 6
     },
     "P4": {
-      "total": 13,
-      "validated": 10,
+      "total": 14,
+      "validated": 11,
       "implemented": 0,
       "doing": 0,
       "failed": 0,
@@ -11287,7 +11343,7 @@
     },
     {
       "id": "T-085",
-      "text": "T-085 validated 2026-10-26; changed later: .github/workflows/ci.yml (2026-10-27)"
+      "text": "T-085 validated 2026-10-26; changed later: CHANGELOG.md (2026-10-27), .github/workflows/ci.yml (2026-10-27)"
     },
     {
       "id": "T-086",
@@ -15129,6 +15185,16 @@
       "orphan": true
     },
     {
+      "file": "docs/a11y-walk-requests.md",
+      "title": "Keyboard and small-screen walk: Requests, Goals, Story, Suggested rules, Economics",
+      "bytes": 5774,
+      "lastCommit": "n/a",
+      "linkedFromReadme": false,
+      "linkedFromIndex": false,
+      "linkedFromOtherDocs": 0,
+      "orphan": true
+    },
+    {
       "file": "docs/claude-desktop.md",
       "title": "Claude Desktop and the aletheia MCP server",
       "bytes": 1955,
@@ -15181,7 +15247,7 @@
   ],
   "links": {
     "broken": [],
-    "local": 1238,
+    "local": 1239,
     "external": 975
   },
   "verification": {
@@ -16124,7 +16190,7 @@
   },
   "checks": {
     "staticTestFiles": 121,
-    "staticTestCalls": 1094,
+    "staticTestCalls": 1099,
     "lastRecordedRun": {
       "source": "docs/tasks/run-report.md",
       "date": null,
@@ -16177,16 +16243,20 @@
   },
   "git": {
     "available": true,
-    "branch": "main",
-    "head": "ad633d4",
+    "branch": "worktree-agent-aba78cdc0bd0d914c",
+    "head": "3cd426f",
     "ahead": 0,
-    "behind": 0,
-    "uncommitted": 3,
+    "behind": 2,
+    "uncommitted": 13,
     "uncommittedDocs": [
-      "docs/tasks/T-080.md",
-      "docs/tasks/unverified.md"
+      "docs/tasks/TASKS.md"
     ],
     "commits": [
+      {
+        "sha": "3cd426f",
+        "date": "2026-10-27",
+        "subject": "docs: record the v0.1.0 npm publish, verify the npx smoke test, add the changelog entry"
+      },
       {
         "sha": "ad633d4",
         "date": "2026-10-27",
@@ -16256,15 +16326,12 @@
         "sha": "251c2ba",
         "date": "2026-10-27",
         "subject": "feat(ci): add dependency and licence audit (T-012)"
-      },
-      {
-        "sha": "87766a9",
-        "date": "2026-10-27",
-        "subject": "feat(status): one-file project status page generated from the repo files"
       }
     ],
     "worktrees": [
-      "/home/mashraf/Projects/aletheia-mem ad633d4 [main]"
+      "/home/mashraf/Projects/aletheia-mem                                           31e6e48 [main]",
+      "/home/mashraf/Projects/aletheia-mem/.claude/worktrees/agent-aba78cdc0bd0d914c 3cd426f [worktree-agent-aba78cdc0bd0d914c] locked",
+      "/home/mashraf/Projects/aletheia-next                                          20d08c6 [feat/after-v010]"
     ]
   },
   "ci": [
@@ -16362,7 +16429,7 @@
       },
       "public": {
         "files": 59,
-        "lines": 6884
+        "lines": 6939
       },
       "bin": {
         "files": 5,
@@ -16370,15 +16437,15 @@
       },
       "scripts": {
         "files": 21,
-        "lines": 2787
+        "lines": 2796
       },
       "test": {
         "files": 127,
-        "lines": 17902
+        "lines": 17983
       },
       "docs": {
-        "files": 270,
-        "lines": 34461
+        "files": 272,
+        "lines": 34624
       }
     },
     "routes": [
