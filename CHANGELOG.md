@@ -6,6 +6,8 @@ history.
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-10-27
+
 ### Added
 
 - A graph retrieval channel and entity pages, off by default behind a flag. On a synthetic test it found related
