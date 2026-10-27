@@ -197,6 +197,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-171 | Add rule strength and evidence (times seen, dated quotes) | P6 | T-035 | validated | 2026-10-26 | [T-171.md](T-171.md) |
 | T-172 | Add the rule decide flow API | P6 | T-072, T-171 | validated | 2026-10-26 | [T-172.md](T-172.md) |
 | T-173 | Add work list query params (filter, sort, group) | P6 | T-152 | validated | 2026-10-26 | [T-173.md](T-173.md) |
+| T-174 | Stop the test fixture leaking temp directories | P0 | none | validated | 2026-10-27 | [T-174.md](T-174.md) |
 | T-200 | Study claude-mem's viewer and derive Aletheia's design tokens | P6 | none | validated | 2026-10-26 | [T-200.md](T-200.md) |
 | T-201 | Add DOM-free UI logic: pager, time, highlight, hash params, Region machine | P6 | T-200 | validated | 2026-10-26 | [T-201.md](T-201.md) |
 | T-202 | Add a safe Markdown renderer | P6 | T-200 | validated | 2026-10-26 | [T-202.md](T-202.md) |

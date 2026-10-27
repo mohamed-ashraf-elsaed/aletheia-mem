@@ -3,6 +3,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
+import { makeFixture } from "./fixture.mjs";
 
 describe("temp dir registry", () => {
   test("a registered dir is removed by cleanup", () => {
@@ -21,6 +22,13 @@ describe("temp dir registry", () => {
     cleanupTempDirs();
     cleanupTempDirs();
     expect(existsSync(dir)).toBe(false);
+  });
+
+  test("a fixture directory is registered and does not survive cleanup", () => {
+    const fx = makeFixture();
+    expect(existsSync(fx.dir)).toBe(true);
+    cleanupTempDirs();
+    expect(existsSync(fx.dir)).toBe(false);
   });
 });
 

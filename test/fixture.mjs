@@ -2,9 +2,9 @@
 // exactly like 15.2.0). Three Claude sessions in two projects, one subagent, a commit + push + PR, work-state
 // entries with an explicit request id, and owner goals. No real data.
 import { Database } from "bun:sqlite";
-import { mkdirSync, mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync } from "node:fs";
 import { join } from "node:path";
+import { tempDir } from "./temp-dirs.mjs";
 
 const SCHEMA = `
 CREATE TABLE sdk_sessions (id INTEGER PRIMARY KEY AUTOINCREMENT, content_session_id TEXT NOT NULL, memory_session_id TEXT UNIQUE, project TEXT NOT NULL,
@@ -28,7 +28,7 @@ export const NOW = Date.UTC(2026, 9, 25, 12, 0, 0);
 const min = (m) => NOW - m * 60_000;
 
 export function makeFixture() {
-  const dir = mkdtempSync(join(tmpdir(), "work-view-fixture-"));
+  const dir = tempDir("work-view-fixture-");
   const dbPath = join(dir, "claude-mem.db");
   const db = new Database(dbPath, { create: true });
   db.exec(SCHEMA);
