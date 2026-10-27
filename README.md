@@ -7,6 +7,7 @@
 <div align="center">
 
 [![npm version](https://img.shields.io/npm/v/aletheia-mem)](https://www.npmjs.com/package/aletheia-mem)
+[![Glama score](https://glama.ai/mcp/servers/mohamed-ashraf-elsaed/aletheia-mem/badges/score.svg)](https://glama.ai/mcp/servers/mohamed-ashraf-elsaed/aletheia-mem)
 [![Licence](https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/LICENSE)
 [![Tests](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml/badge.svg)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml)
 [![Last commit](https://img.shields.io/github/last-commit/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/commits/main)
