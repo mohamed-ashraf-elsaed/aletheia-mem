@@ -18,6 +18,7 @@ import { sessionDetail, workOverview } from "./work.mjs";
 import { goalAction } from "./goals.mjs";
 import { proposeGoalsRollup } from "./goals-rollup.mjs";
 import { proposeRequests, requestAction, requestDetail } from "./requests.mjs";
+import { buildStory } from "./story.mjs";
 import { SyncStore } from "./sync/store.mjs";
 import { AlertStore, deliverDue, extractionFailures, queueDepth } from "./alerts.mjs";
 import { applyErase, erasePlan, loadEraseKey, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } from "./erasure.mjs";
@@ -357,6 +358,10 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       if ((m = /^\/v1\/work\/requests\/([a-f0-9]{16})$/.exec(pathname)) && method === "GET") {
         const detail = requestDetail(hub, { requestId: m[1], project: qs(url).project || null });
         return detail ? h.json({ request: detail }) : h.json({ error: "No request has that id." }, 404);
+      }
+      if (pathname === "/v1/work/story" && method === "GET") {
+        const q = qs(url);
+        return h.json(buildStory(hub, { project: q.project || null, maxGapHours: q.maxGapHours, activeMinutes: q.activeMinutes, limit: q.limit }));
       }
       if ((m = /^\/v1\/work\/session\/(.+)$/.exec(pathname)) && method === "GET") {
         let id;
