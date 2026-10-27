@@ -133,9 +133,9 @@ real CI run exists.
 
 | # | Item | State | What would verify it |
 |---:|---|---|---|
-| 56 | macOS `bun test` leg | UNVERIFIED; not run by the author | A green run of `Test (macos-latest)` on GitHub Actions |
-| 57 | Windows `bun test` leg | UNVERIFIED; not run by the author | A green run of `Test (windows-latest)` on GitHub Actions |
-| 58 | Windows skip guards for the existing suite | The chmod/symlink permission test skips on Windows. Tests that spawn `sh -c` or send `SIGKILL` are POSIX-only and have not been run on Windows, so they may fail there instead of skipping | Run the suite on Windows and add `test.skipIf(process.platform === "win32")` to each failing test with the reason |
+| 56 | macOS `bun test` leg | Verified green on 2026-10-27 after fixing the Claude Desktop platform default, checkpointing the WAL before the migrate backup, and hardening a GCM tamper test | — |
+| 57 | Windows `bun test` leg | UNVERIFIED / red on 2026-10-27. Remaining failures: `rmSync` EBUSY from Bun SQLite file handles during cleanup, Windows path separators in installer hook commands, and `python3`-dependent goals tests | A dedicated Windows pass that closes stores before cleanup and makes command quoting Windows-safe |
+| 58 | Windows skip guards for the existing suite | Done for chmod/symlink and the `sh -c` hook suites. Still needed: `test/goals-script.test.mjs` (spawns `python3`) and the EBUSY cleanup paths | Run the suite on Windows and skip the python3 tests; fix the store-close-before-cleanup paths |
 
 ## npm package (2026-10-27)
 
