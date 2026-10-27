@@ -54,7 +54,7 @@ These are not `UNVERIFIED` facts about other projects; they are claims this proj
 | 32 | "Automatic capture through a tool's hooks" | **proven end-to-end through the installed hook commands for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf** in T-140 (2026-10-26). No host application was opened, so the host's own hook loader and trust UI are untested. OpenCode has no hook shipped. | Open each host, trust the hooks, run one session (manual-test section 7) |
 | 33 | "Answer accuracy is better" | Not measured | T-051, T-052 |
 | 34 | "p95 ≤ 50 ms at 50k rows" | **still not met**: 137.8 ms before the FTS `optimize` fix, 108.1 ms after it (2026-10-26) | T-047 / further index work |
-| 35 | "macOS and Windows supported" | Linux only tested | T-014 |
+| 35 | "macOS and Windows supported" | T-014 added the three-OS matrix; the macOS and Windows legs have **not** run yet | A real green run of `.github/workflows/test.yml` on each runner |
 | 36 | "30+ languages supported" | English only | T-087 to T-089 |
 | 37 | OpenCode plugin event payload fields | The official plugin page lists event names (`session.idle`, `message.updated`, `tool.execute.after`) but not their payload shape, so no capture plugin ships (T-068) | Read the `@opencode-ai/plugin` types or log one real event |
 | 38 | Codex hook trust flow | The installer writes non-managed hooks; Codex requires them to be reviewed with `/hooks` (docs, 2026-10-26) | Open Codex, review/trust, run one session |
@@ -125,6 +125,17 @@ verification is the same: read the project's source or its current documentation
 | Copilot memory | every capability in the matrix |
 
 Rows 3, 4, 10, 15, 25, 27, 28, 30, 37, 39, 40 and 41 in section 21.2 carry the same caveat.
+
+## CI platform legs (2026-10-27)
+
+The workflow matrix lists all three runners, but only Linux has been run here. These legs stay UNVERIFIED until a
+real CI run exists.
+
+| # | Item | State | What would verify it |
+|---:|---|---|---|
+| 56 | macOS `bun test` leg | UNVERIFIED; not run by the author | A green run of `Test (macos-latest)` on GitHub Actions |
+| 57 | Windows `bun test` leg | UNVERIFIED; not run by the author | A green run of `Test (windows-latest)` on GitHub Actions |
+| 58 | Windows skip guards for the existing suite | The chmod/symlink permission test skips on Windows. Tests that spawn `sh -c` or send `SIGKILL` are POSIX-only and have not been run on Windows, so they may fail there instead of skipping | Run the suite on Windows and add `test.skipIf(process.platform === "win32")` to each failing test with the reason |
 
 ## Request layer, story and economics (2026-10-27)
 

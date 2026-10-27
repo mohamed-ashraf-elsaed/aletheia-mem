@@ -55,7 +55,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-011 | Wrap recalled memory as untrusted data | P0 | none | validated | 2026-10-27 | [T-011.md](T-011.md) |
 | T-012 | Add a dependency and licence audit | P0 | none | validated | 2026-10-27 | [T-012.md](T-012.md) |
 | T-013 | Add a documentation link checker | P0 | none | todo | — | [T-013.md](T-013.md) |
-| T-014 | Add Linux, macOS and Windows CI | P0 | T-002 | todo | — | [T-014.md](T-014.md) |
+| T-014 | Add Linux, macOS and Windows CI | P0 | T-002 | validated | 2026-10-27 | [T-014.md](T-014.md) |
 | T-015 | Add a benchmark protocol test | P0 | none | todo | — | [T-015.md](T-015.md) |
 | T-016 | Add excluded projects and context scope | P0 | none | validated | 2026-10-26 | [T-016.md](T-016.md) |
 | T-017 | Add schema v3 with an additive migration | P1 | T-003 | validated | 2026-10-26 | [T-017.md](T-017.md) |
