@@ -10,6 +10,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { HubStore } from "../src/hub/store.mjs";
 import { topKByVector } from "../src/hub/retrieval.mjs";
+import { RetrievalCache } from "../src/hub/cache.mjs";
 
 const positional = process.argv.slice(2).filter((arg) => !arg.startsWith("--"));
 const flags = new Set(process.argv.slice(2).filter((arg) => arg.startsWith("--")));
@@ -96,6 +97,38 @@ qi = 0;
 const hs = lat(() => store.search({ query: queries[qi++ % queries.length], limit: 10, queryVec: qv }), 50);
 console.log(`hybrid   bm25 + vectors         p50 ${pct(hs, 0.5).toFixed(1)} ms   p95 ${pct(hs, 0.95).toFixed(1)} ms`);
 
+// Query/result cache over a synthetic replayed session: each of QUERIES queries is repeated three times. A miss runs
+// the real search; a hit returns the cached ids. Reports hit rate and the cold-vs-warm latency split.
+let cacheSummary = null;
+if (flags.has("--cache")) {
+  const cache = new RetrievalCache({ capacity: 512, revision: () => 0 });
+  const cold = [];
+  const warm = [];
+  const replay = Array.from({ length: QUERIES * 3 }, (_, i) => queries[i % queries.length]);
+  for (const query of replay) {
+    const key = cache.key({ query, project: "p7", limit: 10 });
+    const t = performance.now();
+    const cached = cache.get(key);
+    if (cached === undefined) {
+      cache.set(key, store.search({ query, project: "p7", limit: 10 }).map((m) => m.id));
+      cold.push(performance.now() - t);
+    } else {
+      warm.push(performance.now() - t);
+    }
+  }
+  cacheSummary = {
+    replayQueries: replay.length,
+    hits: cache.hits,
+    misses: cache.misses,
+    hit_rate: Number((cache.hitRate * 100).toFixed(1)),
+    cold_p50_ms: Number(pct(cold, 0.5).toFixed(1)),
+    cold_p95_ms: Number(pct(cold, 0.95).toFixed(1)),
+    warm_p50_ms: Number(pct(warm, 0.5).toFixed(1)),
+    warm_p95_ms: Number(pct(warm, 0.95).toFixed(1)),
+  };
+  console.log(`cache    replay ${replay.length} q      hit rate ${cacheSummary.hit_rate}%   cold p50 ${cacheSummary.cold_p50_ms} ms / p95 ${cacheSummary.cold_p95_ms} ms   warm p50 ${cacheSummary.warm_p50_ms} ms / p95 ${cacheSummary.warm_p95_ms} ms`);
+}
+
 const summary = {
   generatedAt: new Date().toISOString(),
   synthetic: true,
@@ -106,6 +139,7 @@ const summary = {
   index: INDEX ?? (OPTIMIZE ? "tuned" : "default"),
   search: searchRows,
   recall5_synthetic: Number((recall5 * 100).toFixed(1)),
+  cache: cacheSummary,
 };
 if (OUT) writeFileSync(OUT, JSON.stringify(summary, null, 2));
 store.close();
