@@ -7,25 +7,12 @@ import { redact } from "./capture.mjs";
 import { searchPage } from "./lists.mjs";
 import { pagingOf, whenOf } from "./paging.mjs";
 import { readWorkStateList, writeWorkStateList } from "./work-state.mjs";
+import { TOOL_DEFS } from "./mcp-tools.mjs";
+export { TOOL_DEFS };
 
 // Newest first. Per the spec: answer with the client's version if supported, else with our latest.
 export const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 
-const str = { type: "string" };
-export const TOOL_DEFS = [
-  { name: "search", description: "Step 1. Search shared memory by words or by file. Returns a compact index of ids and titles (cheap). Then call timeline or get_observations for the ones that matter. Pass file to ask what touched an exact path; file_suffix opts into a suffix match. since/until are ISO dates or epoch ms; order is relevance, date_desc or date_asc; offset pages the index.", inputSchema: { type: "object", properties: { query: str, file: str, file_suffix: { type: "boolean" }, project: str, type: str, kind: str, limit: { type: "number" }, since: str, until: str, order: str, offset: { type: "number" } } } },
-  { name: "timeline", description: "Step 2. What happened around a memory (anchor id) or the best match for a query, in time order.", inputSchema: { type: "object", properties: { anchor: { type: "number" }, query: str, project: str, before: { type: "number" }, after: { type: "number" } } } },
-  { name: "get_observations", description: "Step 3. Full text of memories by id. Always batch ids; fetch only what step 1 and 2 selected.", inputSchema: { type: "object", properties: { ids: { type: "array", items: { type: "number" } } }, required: ["ids"] } },
-  { name: "save_memory", description: "Save something worth remembering across sessions and tools (a decision, a gotcha, a convention, a fix).", inputSchema: { type: "object", properties: { title: str, text: str, project: str, type: { type: "string", enum: ["decision", "gotcha", "bugfix", "feature", "refactor", "change", "discovery", "note"] }, pinned: { type: "boolean" } }, required: ["text"] } },
-  { name: "session_start_context", description: "Pinned and recent memories plus standing rules for a project. Call at the start of a session.", inputSchema: { type: "object", properties: { project: str, limit: { type: "number" } } } },
-  { name: "fact_history", description: "The history of a fact subject: what was believed and when. Current facts by default; include_superseded adds the older rows; as_of returns the fact valid at that ISO date or epoch ms.", inputSchema: { type: "object", properties: { subject: str, project: str, predicate: str, as_of: str, include_superseded: { type: "boolean" } }, required: ["subject"] } },
-  { name: "list_rules", description: "The owner's standing rules.", inputSchema: { type: "object", properties: {} } },
-  { name: "add_rule", description: "Add a standing rule the owner wants every tool to follow. Only when the owner asked for it.", inputSchema: { type: "object", properties: { then: str, when: str, scopeTier: { type: "string", enum: ["everywhere", "project", "situation"] }, scopeName: str }, required: ["then"] } },
-  { name: "dismiss_memory", description: "Hide a memory, observation or fact from search and context without deleting it. Reversible with restore_memory.", inputSchema: { type: "object", properties: { type: { type: "string", enum: ["memory", "observation", "fact", "episode"] }, id: { type: "number" }, reason: str }, required: ["id"] } },
-  { name: "restore_memory", description: "Undo a dismissal. The item appears in search and context again.", inputSchema: { type: "object", properties: { type: { type: "string", enum: ["memory", "observation", "fact", "episode"] }, id: { type: "number" } }, required: ["id"] } },
-  { name: "work_state_write", description: "Keep one named to-do or scratch list in memory. items is an array of strings or objects; writing again replaces that list.", inputSchema: { type: "object", properties: { list: str, items: { type: "array" }, project: str }, required: ["list", "items"] } },
-  { name: "work_state_read", description: "Read a named list back as its items array.", inputSchema: { type: "object", properties: { list: str, project: str }, required: ["list"] } },
-];
 
 const recalled = (t) => text(wrapUntrusted(t));
 const text = (t) => ({ content: [{ type: "text", text: t }] });
