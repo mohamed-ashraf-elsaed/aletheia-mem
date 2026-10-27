@@ -595,3 +595,15 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | `~/.codex/sessions/2026/05/11/rollout-2026-05-11T13-28-24-019e1694-b216-7b83-92d3-e6090e35ed46.jsonl` | real Codex rollout: top-level `timestamp`/`type`; `session_meta.payload.id` and `.cwd`; `response_item.payload.type = "message"` with `role` and `input_text`/`output_text` content; `event_msg` and `turn_context` are noise |
 | 2026-10-26 | `~/.codex/sessions/2026/05/11/rollout-2026-05-11T13-50-25-019e16a8-dc40-7ce1-9854-d8ebe041ba45.jsonl` | second real rollout; same shape, used to confirm the parser |
 | 2026-10-26 | `~/.codex/history.jsonl` | a separate prompt history file (`session_id`, `ts`, `text`), not the session transcript; not imported by the watcher |
+
+## J. Fetches for the distribution prep (T-082)
+
+| Date | URL | What it gave |
+|---|---|---|
+| 2026-10-27 | https://raw.githubusercontent.com/modelcontextprotocol/registry/main/README.md | publishing is via the `mcp-publisher` CLI, not a PR; auth methods and namespace ownership model |
+| 2026-10-27 | https://raw.githubusercontent.com/modelcontextprotocol/registry/main/docs/modelcontextprotocol-io/quickstart.mdx | `server.json` shape, `$schema` URL (2025-12-11), npm ownership marker `mcpName`, and the exact `mcp-publisher init/login/publish/validate` commands |
+| 2026-10-27 | https://raw.githubusercontent.com/modelcontextprotocol/registry/main/docs/modelcontextprotocol-io/package-types.mdx | npm package verification: `mcpName` in package.json must equal `server.json.name` |
+| 2026-10-27 | https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/CONTRIBUTING.md | fork/branch/PR flow; one server per line; alphabetical order; agent PRs opt in with 🤖🤖🤖; remote-only servers excluded |
+| 2026-10-27 | https://raw.githubusercontent.com/punkpeye/awesome-mcp-servers/main/README.md | entry format, legend (📇/🏠/🐧), and the Knowledge & Memory section |
+| 2026-10-27 | https://raw.githubusercontent.com/hesreallyhim/awesome-claude-code/main/CONTRIBUTING.md | 14-days-active-or-100-stars rule; one resource per submission; web issue form only, not a PR or gh CLI; descriptions descriptive, no emojis |
+| 2026-10-27 | https://raw.githubusercontent.com/hesreallyhim/awesome-claude-code/main/.github/ISSUE_TEMPLATE/recommend-resource.yml | the exact issue-form fields: Display Name, Category, Link, Author Name, Author Link, Description, Checklist |
