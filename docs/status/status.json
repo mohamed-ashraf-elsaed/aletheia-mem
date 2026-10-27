@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-27T14:55:30.800Z",
-  "commit": "3811cb9",
+  "generatedAt": "2026-10-27T15:18:36.843Z",
+  "commit": "ad633d4",
   "tasks": [
     {
       "id": "T-001",
@@ -4226,7 +4226,7 @@
       "validatedOn": "2026-10-27",
       "evidenceNonEmpty": true,
       "evidenceChars": 845,
-      "acceptanceTicked": 1,
+      "acceptanceTicked": 3,
       "acceptanceTotal": 3,
       "acceptance": [
         {
@@ -4234,20 +4234,21 @@
           "text": "The tarball contains bin, src, docs and NOTICE."
         },
         {
-          "done": false,
-          "text": "`npm view aletheia-mem version` returns the version (owner-only, after publish)."
+          "done": true,
+          "text": "`npm view aletheia-mem version` returns the version. Run 2026-10-27: `dist-tags.latest` = `0.1.0`, versions `0.0.0-stage` and `0.1.0`."
         },
         {
-          "done": false,
-          "text": "The `npx aletheia-mem --version` smoke test passes (owner-only, after publish)."
+          "done": true,
+          "text": "The `npx aletheia-mem --version` smoke test passes. Run 2026-10-27 in a clean temp directory: prints `0.1.0`. The owner's first try a few minutes after publishing failed with \"could not determine executable to run\"; the registry still showed only the `0.0.0-stage` placeholder. It worked once `0.1.0` propagated (about 5 minutes)."
         }
       ],
       "validation": "bun scripts/release.mjs",
-      "lastHistory": "- 2026-10-27: validated — `bun scripts/release.mjs` printed `pack ok: 4 required paths present`. Publishing is deferred to the owner.",
+      "lastHistory": "- 2026-10-27: published by the owner as aletheia-mem@0.1.0 (first attempt 403: the npm account needed 2FA for writes). Tag v0.1.0 and the GitHub release were created. Publishing is not repeatable from this repo by an agent; it needs the owner's npm login.",
       "history": [
         "- 2026-10-26: todo — created.",
         "- 2026-10-27: doing — added `files`, `publishConfig`, the `aletheia-mem` bin alias, `--version`, `scripts/release.mjs`, the pack test and the README npm install section.",
-        "- 2026-10-27: validated — `bun scripts/release.mjs` printed `pack ok: 4 required paths present`. Publishing is deferred to the owner."
+        "- 2026-10-27: validated — `bun scripts/release.mjs` printed `pack ok: 4 required paths present`. Publishing is deferred to the owner.",
+        "- 2026-10-27: published by the owner as aletheia-mem@0.1.0 (first attempt 403: the npm account needed 2FA for writes). Tag v0.1.0 and the GitHub release were created. Publishing is not repeatable from this repo by an agent; it needs the owner's npm login."
       ],
       "files": [
         "package.json",
@@ -4255,10 +4256,9 @@
         ".github/workflows/npm-publish.yml"
       ],
       "ownerSteps": [
-        "[ ] `npm view aletheia-mem version` returns the version (owner-only, after publish).",
-        "[ ] The `npx aletheia-mem --version` smoke test passes (owner-only, after publish).",
         "Owner-only steps, in order:",
-        "1. `npm login` (this completes the npm 2FA challenge)."
+        "1. `npm login` (this completes the npm 2FA challenge).",
+        "2026-10-27: published by the owner as aletheia-mem@0.1.0 (first attempt 403: the npm account needed 2FA for writes). Tag v0.1.0 and the GitHub release were created. Publishing is not repeatable from this repo by an agent; it needs the owner"
       ],
       "deps": [
         {
@@ -11176,10 +11176,6 @@
       "text": "T-073 is validated with 3 of 3 acceptance boxes unticked"
     },
     {
-      "id": "T-080",
-      "text": "T-080 is validated with 2 of 3 acceptance boxes unticked"
-    },
-    {
       "id": "T-081",
       "text": "T-081 is validated with 3 of 4 acceptance boxes unticked"
     },
@@ -12044,9 +12040,9 @@
         "id": "T-080",
         "status": "validated",
         "lines": [
-          "[ ] `npm view aletheia-mem version` returns the version (owner-only, after publish).",
-          "[ ] The `npx aletheia-mem --version` smoke test passes (owner-only, after publish).",
-          "Owner-only steps, in order:"
+          "Owner-only steps, in order:",
+          "1. `npm login` (this completes the npm 2FA challenge).",
+          "2026-10-27: published by the owner as aletheia-mem@0.1.0 (first attempt 403: the npm account needed 2FA for writes). Tag v0.1.0 and the GitHub release were created. Publishing is not repeatable from this repo by an agent; it needs the owner"
         ]
       }
     ]
@@ -15729,13 +15725,13 @@
           {
             "n": "59",
             "item": "`npm view aletheia-mem version`",
-            "verify": "UNVERIFIED; the package has not been published",
+            "verify": "VERIFIED 2026-10-27: latest = 0.1.0 (see T-080)",
             "claim": false
           },
           {
             "n": "60",
             "item": "`npx aletheia-mem --version` on a fresh machine",
-            "verify": "UNVERIFIED; no publish and no clean-machine smoke test",
+            "verify": "VERIFIED 2026-10-27 in a clean temp directory on the author machine (Linux, Bun 1.3.10): prints 0.1.0. Not tried on macOS or a machine without Bun installed.",
             "claim": false
           }
         ]
@@ -16182,26 +16178,20 @@
   "git": {
     "available": true,
     "branch": "main",
-    "head": "3811cb9",
+    "head": "ad633d4",
     "ahead": 0,
     "behind": 0,
-    "uncommitted": 15,
+    "uncommitted": 3,
     "uncommittedDocs": [
-      "docs/i18n/.translation-state.json",
-      "docs/i18n/README.ar.md",
-      "docs/i18n/README.de.md",
-      "docs/i18n/README.es.md",
-      "docs/i18n/README.fr.md",
-      "docs/i18n/README.hi.md",
-      "docs/i18n/README.ja.md",
-      "docs/i18n/README.ko.md",
-      "docs/i18n/README.pt-br.md",
-      "docs/i18n/README.ru.md",
-      "docs/i18n/README.zh.md",
-      "docs/tasks/T-014.md",
+      "docs/tasks/T-080.md",
       "docs/tasks/unverified.md"
     ],
     "commits": [
+      {
+        "sha": "ad633d4",
+        "date": "2026-10-27",
+        "subject": "ci: drop Windows from the test matrix for v0.1 and say so in the README"
+      },
       {
         "sha": "3811cb9",
         "date": "2026-10-27",
@@ -16271,15 +16261,10 @@
         "sha": "87766a9",
         "date": "2026-10-27",
         "subject": "feat(status): one-file project status page generated from the repo files"
-      },
-      {
-        "sha": "e43eca9",
-        "date": "2026-10-27",
-        "subject": "feat(security): restrict data dir and database permissions (T-010)"
       }
     ],
     "worktrees": [
-      "/home/mashraf/Projects/aletheia-mem 3811cb9 [main]"
+      "/home/mashraf/Projects/aletheia-mem ad633d4 [main]"
     ]
   },
   "ci": [
@@ -16393,7 +16378,7 @@
       },
       "docs": {
         "files": 270,
-        "lines": 34460
+        "lines": 34461
       }
     },
     "routes": [

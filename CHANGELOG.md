@@ -6,6 +6,10 @@ history and the validated tasks in [docs/tasks/TASKS.md](docs/tasks/TASKS.md).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-10-27
+
+First public release, published to npm as `aletheia-mem@0.1.0`. CI runs on Linux and macOS; Windows is not supported yet.
+
 ### Added
 
 - Generated comparison, tool-support and measured-number tables. `scripts/gen-tables.mjs --check` fails when a

@@ -139,12 +139,12 @@ real CI run exists.
 
 ## npm package (2026-10-27)
 
-The package is prepared, not published. These stay UNVERIFIED until the owner publishes and smokes it.
+The package was published as 0.1.0 on 2026-10-27. Items 59 and 60 are verified; what is still open is below.
 
 | # | Item | State | What would verify it |
 |---:|---|---|---|
-| 59 | `npm view aletheia-mem version` | UNVERIFIED; the package has not been published | The owner runs `npm publish --access public`, then `npm view aletheia-mem version` |
-| 60 | `npx aletheia-mem --version` on a fresh machine | UNVERIFIED; no publish and no clean-machine smoke test | Publish, then run `npx aletheia-mem --version` in a clean directory |
+| 59 | `npm view aletheia-mem version` | VERIFIED 2026-10-27: latest = 0.1.0 (see T-080) | Done. Re-run `npm view aletheia-mem version` after each release |
+| 60 | `npx aletheia-mem --version` on a fresh machine | VERIFIED 2026-10-27 in a clean temp directory on the author machine (Linux, Bun 1.3.10): prints 0.1.0. Not tried on macOS or a machine without Bun installed. | Publish, then run `npx aletheia-mem --version` in a clean directory |
 
 ## Request layer, story and economics (2026-10-27)
 
