@@ -50,6 +50,7 @@ const ROUTES = [
   [/^\/v1\/work\/requests\?/, () => json({ counts: { all: 1, needsYou: 1, shipped: 0, working: 0, idle: 0, waitingOnYou: 1, total: 1 }, requests: [{ id: "0123456789abcdef", project: "shop", tool: "cursor", title: ARABIC, status: "Waiting on you", progress: 50, progressEvidence: { sessionCount: 2, completedSessions: 1, completedSessionIds: ["s1"], factIds: [1], summaryIds: [] }, eta: NOW, etaEvidence: { paceMs: 1800000, remainingSessions: 1 }, cameOutOfIt: [], startedAt: NOW, runningTimeMs: 3600000, sessionCount: 2, promptCount: 1, toolCount: 1, evidence: { sessionIds: ["s1"] } }], dismissedRequests: [] })],
   [/^\/v1\/work\/story/, () => json({ counts: { shipped: 1, working: 0, waitingOnYou: 1, idle: 0, total: 2 }, velocity: { totalShipped: 1, averageDaysToShip: 0, perWeek: [{ week: "2026-W44", shipped: 1 }] }, learned: [{ text: ARABIC, timesSeen: 2, latestAt: NOW, quotes: [{ text: ARABIC, at: NOW }] }], empty: false })],
   [/^\/v1\/context\/economics/, () => json({ project: "shop", counter: "estimateTokens: ceil(text.length / 4)", observations: [{ id: 1, project: "shop", kind: "observation", title: ARABIC, text: ARABIC, readTokens: 28, workTokens: null, workTokensSource: "usage is recorded per extraction call, not per observation", at: NOW }], totals: { observations: 1, readTokens: 28, workTokens: 1500, workTokensSource: "fact_usage input + output tokens", savingsPercent: 97 }, empty: false })],
+  [/^\/v1\/context/, () => json({ context: `<aletheia-memory>${ARABIC}</aletheia-memory>` })],
   [/^\/v1\/work\/session\//, () => json({ session: { id: "s1", project: "shop", tool: "cursor", firstAt: NOW, lastAt: NOW, promptCount: 1, toolCount: 1, summary: { text: ARABIC, at: NOW }, timeline: [{ id: 1, kind: "prompt", at: NOW, text: ARABIC, tool: "cursor" }], facts: [fact(1)] } })],
   [/^\/v1\/work\?/, () => json({ health: { status: "ok" }, mode: "code", empty: false, queue: { pending: 0, running: 0, failed: 0, done: 1, depth: 0 }, lastCapture: [{ tool: "cursor", at: NOW, count: 1 }], sessions: [{}], recentFacts: [fact(1)], review: { pending: 1, items: [{ id: 5, type: "fact", itemId: 1, reason: "contradiction", label: ARABIC, project: "shop" }] }, ruleSuggestions: [], dismissed: [], pinned: [], generatedAt: NOW })],
   [/^\/v1\/search/, () => json({ total: 2, totals: { facts: 1, memories: 1 }, capped: false, facts: [{ kind: "fact", id: 1, text: ARABIC, title: ARABIC, project: "shop", status: "active", confidence: 0.8, at: NOW, source: {} }], results: [{ id: 2, kind: "observation", type: "note", title: TOKEN, project: "shop", tool: "cursor" }], channels: {}, reason: null })],
@@ -203,7 +204,7 @@ describe("T-214: names, roles and tab order on every page", () => {
   const cases = [
     ["memory", "ui-memory", (r) => mods.memory.renderMemory(r), ["memories", "facts", "review", "dismissed", "economics", "search"]],
     ["rules", "ui-rules", (r) => mods.rules.renderRules(r), ["rules", "suggestions", "sync", "import"]],
-    ["tools", "ui-tools", (r) => mods.tools.renderTools(r), ["tools", "devices", "access", "alerts", "team", "checks", "activity"]],
+    ["tools", "ui-tools", (r) => mods.tools.renderTools(r), ["tools", "devices", "access", "alerts", "team", "checks", "activity", "context"]],
   ];
   for (const [tab, id, render, subs] of cases) {
     for (const sub of subs) {

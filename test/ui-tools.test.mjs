@@ -90,7 +90,7 @@ describe("T-211: the tools page", () => {
     await TOOLS.renderTools({ tab: "tools", sub: "tools", params: {} });
     await flush();
     expect(root.textContent).toContain("Classic claude-mem viewer (reads ~/.claude-mem, read-only)");
-    expect(root.querySelectorAll(".ui-tab").map((t) => t.getAttribute("data-tab"))).toEqual(["tools", "devices", "access", "alerts", "team", "checks", "activity"]);
+    expect(root.querySelectorAll(".ui-tab").map((t) => t.getAttribute("data-tab"))).toEqual(["tools", "devices", "access", "alerts", "team", "checks", "activity", "context"]);
   });
 });
 
