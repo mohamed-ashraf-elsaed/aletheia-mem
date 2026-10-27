@@ -11,6 +11,7 @@ import { ensureDirMode, secureDbFiles } from "./permissions.mjs";
 import { normalizeLanguage } from "./language.mjs";
 import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVector, unpackVector } from "./retrieval.mjs";
 import { epochOrIso } from "./paging.mjs";
+import { graphWalk } from "./graph.mjs";
 
 const SCHEMA_VERSION = 3; // 3: episodes, observations, facts, entities, keys, links, queue and usage
 
@@ -1321,8 +1322,8 @@ export class HubStore {
    * Natural-language queries work: ANY content word may match and BM25 ranks (see retrieval.mjs). When `queryVec` is
    * given and memories have vectors, keyword and semantic rankings are fused with reciprocal rank fusion.
    */
-  search({ query, project, kind, type, tool, limit = 20, queryVec = null, scope = "current", file = null, fileSuffix = false, since = null, until = null } = {}) {
-    return this.ranked({ query, project, kind, type, tool, limit, queryVec, scope, file, fileSuffix, since, until }).map((m) => ({ id: m.id, kind: m.kind, type: m.type, title: m.title, project: m.project, tool: m.tool, pinned: m.pinned, at: new Date(m.created_at_epoch).toISOString() }));
+  search({ query, project, kind, type, tool, limit = 20, queryVec = null, scope = "current", file = null, fileSuffix = false, since = null, until = null, graph = false, graphOptions = {} } = {}) {
+    return this.ranked({ query, project, kind, type, tool, limit, queryVec, scope, file, fileSuffix, since, until, graph, graphOptions }).map((m) => ({ id: m.id, kind: m.kind, type: m.type, title: m.title, project: m.project, tool: m.tool, pinned: m.pinned, at: new Date(m.created_at_epoch).toISOString() }));
   }
 
   /** "What touched this file": memories whose files list contains the exact path. A suffix match is opt-in. */
@@ -1400,7 +1401,7 @@ export class HubStore {
   }
 
   /** Full rows, best first. Same ranking as search(). */
-  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false, scope = "current", cap = 200, since = null, until = null, file = null, fileSuffix = false } = {}) {
+  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false, scope = "current", cap = 200, since = null, until = null, file = null, fileSuffix = false, graph = false, graphOptions = {} } = {}) {
     const filters = [];
     const params = [];
     if (project && scope !== "all") {
@@ -1422,11 +1423,16 @@ export class HubStore {
       // index table once per memory row (measured: 267 ms vs 2 ms on 600 rows).
       ? this.db.prepare(`SELECT m.id FROM memories_fts CROSS JOIN memories m ON m.id = memories_fts.rowid WHERE memories_fts MATCH ? ${where} ORDER BY bm25(memories_fts) LIMIT ?`).all(expr, ...params, pool).map((r) => r.id)
       : [];
-    let ids = lexical;
+    const lists = [lexical];
     if (queryVec) {
-      const dense = topKByVector(queryVec, this.vectorRows({ project, kind, type, tool, scope }), pool).map((r) => r.id);
-      ids = rrf([lexical, dense]).map((r) => r.id);
+      lists.push(topKByVector(queryVec, this.vectorRows({ project, kind, type, tool, scope }), pool).map((r) => r.id));
     }
+    if (graph && project) {
+      const walked = graphWalk(this, { seeds: lexical.slice(0, 20), project, ...graphOptions });
+      this.graphTrace = walked.trace;
+      if (walked.ids.length) lists.push(walked.ids);
+    }
+    let ids = lists.length > 1 ? rrf(lists).map((r) => r.id) : lists[0];
     const top = ids.slice(0, Math.min(Math.max(limit, 1), cap));
     if (!top.length) return [];
     const byId = new Map(this.db.prepare(`SELECT * FROM memories WHERE id IN (${top.map(() => "?").join(",")})`).all(...top).map((r) => [r.id, this.row(r)]));
