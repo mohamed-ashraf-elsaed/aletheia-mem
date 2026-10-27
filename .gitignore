@@ -16,3 +16,44 @@ bench/runtime/
 .qoder/
 .work-view-local/
 .aletheia/
+
+# Private working files. They stay on the maintainers' machines and are never committed or published.
+# Planning, task system, research, status dashboard, release and announcement notes, agent instructions.
+/AGENTS.md
+/docs/tasks/
+/docs/status/
+/docs/research/
+/docs/announcement.md
+/docs/releasing.md
+/docs/submissions/
+/docs/_re-notes.md
+/docs/a11y-walk-requests.md
+/docs/manual-test.md
+/docs/ui-design.md
+/docs/ui-study.md
+/docs/0[4589]-*.md
+/docs/1[0-8]-*.md
+/docs/2[0-4]-*.md
+/docs/2[678]-*
+/docs/distribution.md
+/docs/install-check.md
+# Tooling that only works on the private files above.
+/scripts/check-tasks.mjs
+/scripts/gen-status.mjs
+/scripts/status-page.css
+/scripts/status-page.js
+/scripts/run-report.mjs
+
+# Agent and session folders.
+.claude/
+.commandcode/
+.codex/
+.cursor/
+.qoder/
+.windsurf/
+.gemini/
+.opencode/
+.continue/
+.cline/
+.roo/
+.kiro/
