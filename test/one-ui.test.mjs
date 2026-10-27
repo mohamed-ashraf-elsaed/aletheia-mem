@@ -78,11 +78,15 @@ describe("T-139: the one page", () => {
     expect(() => new Bun.Transpiler({ loader: "js" }).transformSync(source)).not.toThrow();
   });
 
-  test("the 375 px stylesheet opts out of horizontal scroll and gives 40 px tap targets", () => {
+  test("the small-screen stylesheet rearranges the header, and controls keep a 40 px target", () => {
     const css = readFileSync(join(root, "public", "one-ui.css"), "utf8");
-    expect(css).toContain("@media (max-width: 400px)");
-    expect(css).toContain("overflow-x: hidden");
-    expect(css).toContain("min-height: 40px");
+    const theme = readFileSync(join(root, "public", "ui-theme.css"), "utf8");
+    const components = readFileSync(join(root, "public", "ui-components.css"), "utf8");
+    expect(css).toContain("@media (max-width: 960px)");
+    expect(css).toContain("@media (max-width: 420px)");
+    expect(theme).toContain("--ui-touch: 40px");
+    expect(components).toContain("min-height: var(--ui-touch)");
+    expect(css).toContain("min-height: 44px");
   });
 
   test("/hub redirects to the Memory tab and keeps serving its assets", async () => {

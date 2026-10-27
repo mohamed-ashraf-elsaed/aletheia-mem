@@ -3,6 +3,9 @@
 
 export const state = { project: "", query: "", health: "checking", factsHistory: false, loaded: {} };
 
+/** setTimeout that does nothing once the document is gone (a finished test, a torn-down window). */
+export const later = (fn, ms) => setTimeout(() => { if (globalThis.document) fn(); }, ms);
+
 export const byId = (id) => document.getElementById(id);
 
 export const h = (tag, attrs = {}, ...kids) => {
@@ -24,13 +27,29 @@ export const h = (tag, attrs = {}, ...kids) => {
 export const swap = (el, ...kids) => el.replaceChildren(...kids.flat(4).filter((kid) => kid != null && kid !== false));
 export const chip = (text, tone = "") => h("span", { class: `ui-chip ${tone}`.trim() }, text);
 
-export function toast(message) {
+let toastHandler = null;
+/** The component library registers the real toast queue here, so older code that imports toast keeps working. */
+export const setToastHandler = (fn) => { toastHandler = fn; };
+
+export function toast(message, options) {
+  if (toastHandler) return toastHandler(message, options);
   const el = byId("ui-toast");
-  if (!el) return;
+  if (!el) return null;
   el.textContent = message;
   el.classList.add("show");
   clearTimeout(toast.timer);
   toast.timer = setTimeout(() => el.classList.remove("show"), 2800);
+  return null;
+}
+
+/** A failed request. `status` is the HTTP status (0 when the server was unreachable) and `path` the request path. */
+export class ApiError extends Error {
+  constructor(message, { status = 0, path = "" } = {}) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.path = path;
+  }
 }
 
 export async function api(path, { method = "GET", body } = {}) {
@@ -41,14 +60,15 @@ export async function api(path, { method = "GET", body } = {}) {
     const pair = (document.cookie ?? "").split(";").map((part) => part.trim()).find((part) => part.startsWith("aletheia_csrf="));
     if (pair) headers["X-CSRF-Token"] = decodeURIComponent(pair.slice("aletheia_csrf=".length));
   }
-  const response = await fetch(path, {
-    method,
-    headers,
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
+  let response;
+  try {
+    response = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+  } catch (error) {
+    throw new ApiError("The server is not reachable.", { status: 0, path });
+  }
   const type = response.headers.get("content-type") ?? "";
-  const data = type.includes("json") ? await response.json() : await response.text();
-  if (!response.ok) throw new Error((data && data.error) || `Request failed (${response.status})`);
+  const data = type.includes("json") ? await response.json().catch(() => ({})) : await response.text();
+  if (!response.ok) throw new ApiError((data && data.error) || `Request failed (${response.status})`, { status: response.status, path });
   return data;
 }
 

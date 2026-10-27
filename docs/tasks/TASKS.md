@@ -197,3 +197,21 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-171 | Add rule strength and evidence (times seen, dated quotes) | P6 | T-035 | validated | 2026-10-26 | [T-171.md](T-171.md) |
 | T-172 | Add the rule decide flow API | P6 | T-072, T-171 | validated | 2026-10-26 | [T-172.md](T-172.md) |
 | T-173 | Add work list query params (filter, sort, group) | P6 | T-152 | validated | 2026-10-26 | [T-173.md](T-173.md) |
+| T-200 | Study claude-mem's viewer and derive Aletheia's design tokens | P6 | none | validated | 2026-10-26 | [T-200.md](T-200.md) |
+| T-201 | Add DOM-free UI logic: pager, time, highlight, hash params, Region machine | P6 | T-200 | validated | 2026-10-26 | [T-201.md](T-201.md) |
+| T-202 | Add a safe Markdown renderer | P6 | T-200 | validated | 2026-10-26 | [T-202.md](T-202.md) |
+| T-203 | Add limit, offset and total to every list route | P6 | none | validated | 2026-10-26 | [T-203.md](T-203.md) |
+| T-204 | Build the component system | P6 | T-200, T-201 | validated | 2026-10-26 | [T-204.md](T-204.md) |
+| T-205 | Build the app shell, theme toggle, search, shortcuts and palette | P6 | T-204, T-202 | validated | 2026-10-26 | [T-205.md](T-205.md) |
+| T-206 | Add the live status bar and connection banner | P6 | T-205 | validated | 2026-10-26 | [T-206.md](T-206.md) |
+| T-207 | Add the Region wrapper, paged list controller and Pager | P6 | T-201, T-204, T-203 | validated | 2026-10-26 | [T-207.md](T-207.md) |
+| T-208 | Rebuild the Memory tab | P6 | T-207, T-202, T-203 | validated | 2026-10-26 | [T-208.md](T-208.md) |
+| T-209 | Rebuild the Review queue | P6 | T-208 | validated | 2026-10-26 | [T-209.md](T-209.md) |
+| T-210 | Rebuild the Rules tab | P6 | T-207 | validated | 2026-10-26 | [T-210.md](T-210.md) |
+| T-211 | Rebuild the Tools tab | P6 | T-207 | validated | 2026-10-26 | [T-211.md](T-211.md) |
+| T-212 | Add the first-run guide | P6 | T-208 | validated | 2026-10-26 | [T-212.md](T-212.md) |
+| T-213 | Add motion and reduced-motion support | P6 | T-204 | validated | 2026-10-26 | [T-213.md](T-213.md) |
+| T-214 | Accessibility and responsive pass | P6 | T-208, T-209, T-210, T-211, T-212, T-213, T-215 | validated | 2026-10-26 | [T-214.md](T-214.md) |
+| T-215 | Restyle the Work tab | P6 | T-213 | validated | 2026-10-26 | [T-215.md](T-215.md) |
+| T-216 | Seed demo data, measure performance, update docs and screenshots | P6 | T-214 | validated | 2026-10-26 | [T-216.md](T-216.md) |
+| T-217 | Put Alerts and Team in the Tools tab on the shared components | P6 | T-211, T-207 | validated | 2026-10-26 | [T-217.md](T-217.md) |

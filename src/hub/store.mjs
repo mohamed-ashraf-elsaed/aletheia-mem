@@ -990,14 +990,27 @@ export class HubStore {
    * the episode it came from, its extractor mode and scope. Importance is the linked observation's importance, or
    * the fact confidence when no observation owns it; both are returned so the UI can say which.
    */
-  listFacts({ project, history = false, limit = 100, offset = 0, now = Date.now() } = {}) {
+  listFacts({ project, history = false, limit = 100, offset = 0, now = Date.now(), status = null, since = null, until = null, rowScope = null, q = null, sort = "recent" } = {}) {
     const where = [];
     const params = [];
     if (project) {
       where.push(this.hasGlobal("facts") ? "(f.project = ? OR f.scope = 'global')" : "f.project = ?");
       params.push(project);
     }
-    if (this.hasDismissals("fact")) where.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = f.id)");
+    // status: "current" (default), "history" (every row, hidden ones excluded) or "dismissed" (only hidden rows).
+    if (status === "history") history = true;
+    if (status === "dismissed") where.push("EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = f.id)");
+    else if (this.hasDismissals("fact")) where.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = f.id)");
+    if (rowScope === "global" || rowScope === "project") { where.push("f.scope = ?"); params.push(rowScope); }
+    if (Number.isFinite(since)) { where.push("f.recorded_at_epoch >= ?"); params.push(since); }
+    if (Number.isFinite(until)) { where.push("f.recorded_at_epoch < ?"); params.push(until); }
+    if (q) {
+      const expr = ftsAnyQuery(q);
+      if (!expr) return { total: 0, current: !history, items: [] };
+      where.push("f.id IN (SELECT rowid FROM facts_fts WHERE facts_fts MATCH ?)");
+      params.push(expr);
+    }
+    if (status === "dismissed") history = true;
     if (!history) {
       where.push("f.status = 'active'", "coalesce(f.valid_from_epoch, f.recorded_at_epoch) <= ?", "(f.valid_to_epoch IS NULL OR f.valid_to_epoch > ?)", "(f.expired_at_epoch IS NULL OR f.expired_at_epoch > ?)");
       params.push(now, now, now);
@@ -1009,7 +1022,7 @@ export class HubStore {
     const rows = this.db
       .prepare(`SELECT f.*, o.importance AS observation_importance, e.text AS episode_text, e.source_ref AS episode_source_ref
                 FROM facts f LEFT JOIN observations o ON o.id = f.observation_id LEFT JOIN episodes e ON e.id = f.episode_id
-                ${clause} ORDER BY f.recorded_at_epoch DESC, f.id DESC LIMIT ? OFFSET ?`)
+                ${clause} ORDER BY ${{ oldest: "f.recorded_at_epoch ASC, f.id ASC", confidence: "f.confidence DESC, f.id DESC" }[sort] ?? "f.recorded_at_epoch DESC, f.id DESC"} LIMIT ? OFFSET ?`)
       .all(...params, lim, off);
     const iso = (value) => (Number.isFinite(value) ? new Date(value).toISOString() : null);
     return {
@@ -1058,7 +1071,7 @@ export class HubStore {
    * Fact search over the FTS index and the extracted keys. Current facts are the default; `includeHistory` and
    * `asOf` expose the older rows. Every hit carries the episode that produced it.
    */
-  searchFacts({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null, pool = 100, scope = "current" } = {}) {
+  searchFacts({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null, pool = 100, scope = "current", cap = 200 } = {}) {
     const expr = ftsAnyQuery(query);
     if (!expr) return [];
     const now = Date.now();
@@ -1106,7 +1119,7 @@ export class HubStore {
       if (active) return active;
       return b.recorded_at_epoch - a.recorded_at_epoch || b.id - a.id;
     });
-    return facts.slice(0, Math.min(Math.max(Number(limit) || 20, 1), 200)).map((fact) => this.factHit(fact));
+    return facts.slice(0, Math.min(Math.max(Number(limit) || 20, 1), cap)).map((fact) => this.factHit(fact));
   }
 
   getFactsByIds(ids) {
@@ -1208,7 +1221,7 @@ export class HubStore {
   }
 
   /** Newest first. Filters: project, kind, type, tool, pinned, q (full text), before (epoch), limit, offset. */
-  list({ project, kind, type, tool, pinned, q, limit = 50, offset = 0, scope = "current", includeDismissed = false } = {}) {
+  list({ project, kind, type, tool, pinned, q, limit = 50, offset = 0, scope = "current", includeDismissed = false, since = null, until = null, sort = "default", rowScope = null, dismissedOnly = false } = {}) {
     const where = [];
     const params = [];
     const match = ftsQuery(q);
@@ -1218,12 +1231,18 @@ export class HubStore {
     if (project && scope !== "all") { where.push(this.hasGlobal("memories") ? "(m.project = ? OR m.scope = 'global')" : "m.project = ?"); params.push(project); }
     for (const [col, val] of [["kind", kind], ["type", type], ["tool", tool]]) if (val) { where.push(`m.${col} = ?`); params.push(val); }
     if (pinned) where.push("m.pinned = 1");
-    if (!includeDismissed && this.hasDismissals("memory")) where.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = m.id)");
+    if (rowScope === "global" || rowScope === "project") { where.push("m.scope = ?"); params.push(rowScope); }
+    if (Number.isFinite(since)) { where.push("m.created_at_epoch >= ?"); params.push(since); }
+    if (Number.isFinite(until)) { where.push("m.created_at_epoch < ?"); params.push(until); }
+    if (dismissedOnly) where.push("EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = m.id)");
+    else if (!includeDismissed && this.hasDismissals("memory")) where.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = m.id)");
     const clause = where.length ? `WHERE ${where.join(" AND ")}` : "";
     const lim = Math.min(Math.max(Number(limit) || 50, 1), 500);
     const off = Math.max(Number(offset) || 0, 0);
     const total = this.db.prepare(`SELECT COUNT(*) AS n FROM ${from} ${clause}`).get(...params).n;
-    const order = match ? "ORDER BY bm25(memories_fts), m.created_at_epoch DESC" : "ORDER BY m.pinned DESC, m.created_at_epoch DESC, m.id DESC";
+    // Every order ends in m.id so two pages never overlap or skip a row.
+    const plain = { oldest: "ORDER BY m.created_at_epoch ASC, m.id ASC", title: "ORDER BY m.title COLLATE NOCASE ASC, m.id ASC", newest: "ORDER BY m.created_at_epoch DESC, m.id DESC" }[sort] ?? "ORDER BY m.pinned DESC, m.created_at_epoch DESC, m.id DESC";
+    const order = match && (sort === "default" || sort === "relevance") ? "ORDER BY bm25(memories_fts), m.created_at_epoch DESC, m.id DESC" : plain;
     const items = this.db.prepare(`SELECT m.* FROM ${from} ${clause} ${order} LIMIT ? OFFSET ?`).all(...params, lim, off).map((r) => this.row(r));
     return { total, items };
   }
@@ -1287,7 +1306,7 @@ export class HubStore {
   }
 
   /** Full rows, best first. Same ranking as search(). */
-  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false, scope = "current" } = {}) {
+  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false, scope = "current", cap = 200 } = {}) {
     const filters = [];
     const params = [];
     if (project && scope !== "all") {
@@ -1310,7 +1329,7 @@ export class HubStore {
       const dense = topKByVector(queryVec, this.vectorRows({ project, kind, type, tool, scope }), pool).map((r) => r.id);
       ids = rrf([lexical, dense]).map((r) => r.id);
     }
-    const top = ids.slice(0, Math.min(Math.max(limit, 1), 200));
+    const top = ids.slice(0, Math.min(Math.max(limit, 1), cap));
     if (!top.length) return [];
     const byId = new Map(this.db.prepare(`SELECT * FROM memories WHERE id IN (${top.map(() => "?").join(",")})`).all(...top).map((r) => [r.id, this.row(r)]));
     return top.map((id) => byId.get(id)).filter(Boolean).filter((memory) => this.summaryIsCurrent(memory, { includeHistory }));

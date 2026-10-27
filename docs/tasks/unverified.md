@@ -144,3 +144,12 @@ database, never on real owner history.
 | 54 | UI wiring of the new routes | Not done; `public/**` was not changed | A later UI prompt |
 | 55 | Sample JSON in [32](../32-requests.md) | Produced from a seeded temp database on 2026-10-27; no real user data | Regenerate from a real store and compare |
 
+## UI study (2026-10-27)
+
+| Item | Why UNVERIFIED | What would verify it |
+|---|---|---|
+| How the claude-mem viewer refreshes after load | The page requested `/api/work-view/events` once. Whether that is a stream, and how often it pushes, was not inspected. | Read its network panel over several minutes, or its source. |
+| Its keyboard shortcuts | None were tried. No shortcut hint was visible. | Press keys in the viewer and read its help. |
+| Its error and offline states | The server stayed up, so no failure was produced. | Stop the worker and reload. |
+| Its behaviour at 768 px and 1920 px | Only the default window (about 920 px) and 375 px were captured. | Resize and capture. |
+| Its long-list handling | The Work page showed five cards, so pagination or virtualization never triggered. | Seed a large store and scroll. |

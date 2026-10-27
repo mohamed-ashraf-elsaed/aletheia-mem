@@ -199,10 +199,10 @@ session, so a fresh hook capture is visible before extraction and a back-filled 
 memories. It returns the last typed prompt, the last summary with its source facts, current facts, review items,
 queue depth, pinned rows, recent dismissals and the last capture per tool. `src/hub/goals.mjs` derives goals from
 `memories.kind = 'prompt'` only (repeated imperative topics across sessions); pin and dismiss are settings, never
-deletes. The page refreshes every 10 s only while visible. The old viewer remains at `/work-view/work.html`; the
+deletes. The page refreshes every 10 s only while visible, and at once when the status bar's `/v1/live` socket reports a change. The old viewer remains at `/work-view/work.html`; the
 Tools tab links to it only when the old database exists, and `NOTICE.md` records its Apache-2.0 origin.
 
-The header carries a project selector, a memory search box and a health dot from `/v1/health`. `/hub` redirects to
+The header carries a project selector, a memory search box with live results, a theme switch and, under it, a status bar of nine indicators fed by `/v1/health`, `/v1/work` and the sync status (see [06-frontend.md](06-frontend.md)). `/hub` redirects to
 `/#/memory` so old links keep working. `public/ui-core.js` holds the router and the view helpers with no DOM, which
 is what `test/one-ui.test.mjs` imports.
 

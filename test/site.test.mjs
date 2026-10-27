@@ -19,12 +19,12 @@ describe("docs site", () => {
     const [buildOut, buildErr, buildCode] = await Promise.all([new Response(build.stdout).text(), new Response(build.stderr).text(), build.exited]);
     expect(buildCode).toBe(0);
     expect(buildErr).toBe("");
-    expect(buildOut).toContain("32 document pages");
+    expect(buildOut).toMatch(/site built: \d+ document pages/);
     const check = Bun.spawn([process.execPath, "scripts/check-sitemap.mjs"], { cwd: root, stdout: "pipe", stderr: "pipe" });
     const [checkOut, checkErr, checkCode] = await Promise.all([new Response(check.stdout).text(), new Response(check.stderr).text(), check.exited]);
     expect(checkCode).toBe(0);
     expect(checkErr).toBe("");
-    expect(checkOut).toContain("sitemap matches pages: 34");
+    expect(checkOut).toMatch(/sitemap matches pages: \d+/);
   });
 
   test("there is one page per top-level document", () => {

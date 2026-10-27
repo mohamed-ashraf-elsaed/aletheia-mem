@@ -1,12 +1,41 @@
 // DOM-free helpers for the one UI (T-134, T-139). Everything here is a plain function so it can be imported in
 // a test with no browser. The router, the tab list and the view models live here; one-ui.js only touches the DOM.
 
+import { parseHash } from "./ui-pure.js";
+
 export const TABS = [
-  { id: "work", label: "Work", hash: "#/work" },
-  { id: "memory", label: "Memory", hash: "#/memory" },
-  { id: "rules", label: "Rules", hash: "#/rules" },
-  { id: "tools", label: "Tools", hash: "#/tools" },
+  { id: "work", label: "Work", hash: "#/work", key: "w", icon: "home", hint: "What your tools are doing now" },
+  { id: "memory", label: "Memory", hash: "#/memory", key: "m", icon: "layers", hint: "Memories, facts and the review queue" },
+  { id: "rules", label: "Rules", hash: "#/rules", key: "r", icon: "rules", hint: "How you want every tool to work" },
+  { id: "tools", label: "Tools", hash: "#/tools", key: "t", icon: "tool", hint: "Installed tools, sync and activity" },
 ];
+
+/** The pages inside a tab. The first one is the default. */
+export const SUBVIEWS = {
+  work: [],
+  memory: [
+    { id: "memories", label: "Memories" },
+    { id: "facts", label: "Facts" },
+    { id: "review", label: "Review" },
+    { id: "dismissed", label: "Dismissed" },
+    { id: "search", label: "Search" },
+  ],
+  rules: [
+    { id: "rules", label: "Rules" },
+    { id: "suggestions", label: "Suggested", count: 0 },
+    { id: "sync", label: "Write to tools" },
+    { id: "import", label: "Import" },
+  ],
+  tools: [
+    { id: "tools", label: "Tools" },
+    { id: "devices", label: "Devices" },
+    { id: "access", label: "Remote access" },
+    { id: "alerts", label: "Alerts" },
+    { id: "team", label: "Team" },
+    { id: "checks", label: "Checks" },
+    { id: "activity", label: "Activity" },
+  ],
+};
 
 export const DEFAULT_TAB = "work";
 
@@ -115,7 +144,23 @@ export function tabIdFromElement(element) {
   return TABS.some((tab) => tab.id === element) ? element : DEFAULT_TAB;
 }
 
+/** True when the page was opened with ?demo=1, which is how screenshots and demos of seeded data are labelled. */
+export const isDemo = (search) => new URLSearchParams(String(search ?? "")).get("demo") === "1";
+
 /** The optional legacy viewer is offered only when the old database exists. */
 export function classicViewerAvailable(overview) {
   return overview?.claudeMem?.exists === true;
+}
+
+/**
+ * A hash split into the tab, the page inside it and the rest. "#/memory/facts?page=2" gives tab memory, sub facts.
+ * `key` changes only when the visible page changes, so a page number or a filter in the hash does not rebuild it.
+ */
+export function routeOf(hash) {
+  const { path, params } = parseHash(hash);
+  const tab = parseRoute(`#/${path[0] ?? ""}`);
+  const subs = SUBVIEWS[tab] ?? [];
+  const sub = subs.some((item) => item.id === path[1]) ? path[1] : subs[0]?.id ?? null;
+  const rest = tab === "work" ? path.slice(1) : path.slice(sub === path[1] ? 2 : 1);
+  return { tab, sub, rest, params, key: [tab, sub, ...rest].filter(Boolean).join("/") };
 }

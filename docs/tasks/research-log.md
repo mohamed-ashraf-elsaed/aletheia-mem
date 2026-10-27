@@ -576,6 +576,7 @@ Run date: 2026-10-26. Branch: `docs/roadmap-and-research`.
 | 2026-10-26 | https://modelcontextprotocol.io/specification/2025-03-26/basic/transports | MCP Streamable HTTP rules used for T-067: single endpoint for POST and GET, Accept header, Origin validation, Mcp-Session-Id, 202-for-notifications, 405-when-no-SSE, batch handling |
 | 2026-10-26 | https://docs.claude.com/en/docs/claude-code/mcp (redirected to https://code.claude.com/docs/en/mcp) | Claude Code remote MCP syntax for T-107: `claude mcp add --transport http <name> <url> --header "Authorization: Bearer <token>"` and the `mcpServers` JSON shape with `type: http`, `url`, `headers` |
 | 2026-10-26 | https://modelcontextprotocol.io/quickstart/user and https://modelcontextprotocol.io/docs/develop/connect-remote-servers | Claude Desktop MCP config (`claude_desktop_config.json`, `mcpServers`) and remote-server connection flow; used for the T-107 client snippets (Desktop snippet config-written-from-docs, not tested on a real install) |
+| 2026-10-27 | http://127.0.0.1:37700/ (the owner's local claude-mem viewer, opened with the Playwright browser) | Layout, navigation, status chips, card and list views, filters, mobile bottom bar, network calls (`/api/work-view`, `/api/work-view/events`), CSS keyframe names, ARIA roles. Used for docs/ui-study.md. Only structure was recorded; the owner's prompt text was not copied. |
 
 ## C. Plugin and extension manifests (T-066)
 
