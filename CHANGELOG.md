@@ -6,6 +6,11 @@ history.
 
 ## [Unreleased]
 
+### Changed
+
+- The npm package now ships code and licence files only. Version 0.1.1 also shipped the whole `docs/` tree by mistake.
+- Search filters, OpenAPI document, MCP registry `server.json`, and a crash-safety test.
+
 ## [0.1.1] - 2026-10-27
 
 ### Added
