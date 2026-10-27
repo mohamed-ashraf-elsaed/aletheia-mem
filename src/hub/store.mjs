@@ -7,6 +7,7 @@ import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { sha256 } from "../lib/hash.mjs";
+import { ensureDirMode, secureDbFiles } from "./permissions.mjs";
 import { normalizeLanguage } from "./language.mjs";
 import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVector, unpackVector } from "./retrieval.mjs";
 
@@ -368,9 +369,14 @@ export function ftsQuery(text) {
 export class HubStore {
   constructor(path) {
     this.path = path;
-    if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
+    if (path !== ":memory:") {
+      mkdirSync(dirname(path), { recursive: true });
+      ensureDirMode(dirname(path), 0o700);
+    }
     this.db = new Database(path, { create: true });
     this.db.exec("PRAGMA journal_mode = WAL");
+    // 0600 on the db before the first write: SQLite copies the main file's mode onto -wal and -shm.
+    secureDbFiles(path);
     this.db.exec("PRAGMA synchronous = NORMAL");
     this.db.exec("PRAGMA busy_timeout = 3000");
     this.db.exec("PRAGMA foreign_keys = ON");

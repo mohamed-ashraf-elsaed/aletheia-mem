@@ -3,6 +3,7 @@
 import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { ensureDirMode, ensureFileMode } from "../permissions.mjs";
 import { redact } from "../redact.mjs";
 import { wrapUntrusted } from "../untrusted.mjs";
 
@@ -103,7 +104,10 @@ export function spoolPath(dataDir) {
 export function spoolAppend(dataDir, item) {
   const file = spoolPath(dataDir);
   mkdirSync(dirname(file), { recursive: true });
+  ensureDirMode(dataDir, 0o700);
+  ensureDirMode(dirname(file), 0o700);
   appendFileSync(file, `${JSON.stringify(item)}\n`);
+  ensureFileMode(file, 0o600);
 }
 
 function parseItems(text) {

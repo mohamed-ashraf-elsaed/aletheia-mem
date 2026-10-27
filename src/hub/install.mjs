@@ -7,6 +7,7 @@ import { createHash } from "node:crypto";
 import { basename, dirname, join } from "node:path";
 import { applyBlock, removeBlock, renderRules, targetPath } from "./rules-sync.mjs";
 import { MARK_BEGIN, MARK_END, resolveMcpPath, toolById } from "./tools.mjs";
+import { WINDOWS, modeOctal } from "./permissions.mjs";
 import { spoolPath, spoolRead } from "./hooks/shared.mjs";
 
 export const MANIFEST_FILE = "install-manifest.json";
@@ -781,6 +782,29 @@ export async function doctor(env) {
 
   const spooled = spoolRead(env.dataDir).length;
   checks.push({ name: "spool", ok: spooled === 0, detail: spooled === 0 ? "empty" : `${spooled} item(s) at ${spoolPath(env.dataDir)}` });
+
+  // Report modes before the store below opens and repairs a loose one, so `aletheia doctor` flags what it found.
+  const dataDirMode = modeOctal(env.dataDir);
+  const dbMode = modeOctal(env.dbPath);
+  const walMode = modeOctal(`${env.dbPath}-wal`);
+  const shmMode = modeOctal(`${env.dbPath}-shm`);
+  let permissionsOk = true;
+  let permissionsDetail;
+  if (WINDOWS) {
+    permissionsDetail = "skipped on Windows (no POSIX mode bits)";
+  } else if (!existsSync(env.dbPath)) {
+    permissionsOk = dataDirMode === "0700";
+    permissionsDetail = dataDirMode ? `data dir ${dataDirMode}${permissionsOk ? "" : " (should be 0700)"}` : "data dir missing";
+  } else {
+    const loose = [];
+    if (dataDirMode && dataDirMode !== "0700") loose.push(`data dir ${dataDirMode}`);
+    if (dbMode && dbMode !== "0600") loose.push(`db ${dbMode}`);
+    if (walMode && walMode !== "0600") loose.push(`wal ${walMode}`);
+    if (shmMode && shmMode !== "0600") loose.push(`shm ${shmMode}`);
+    permissionsOk = loose.length === 0;
+    permissionsDetail = permissionsOk ? "data dir 0700, db 0600" : `loose: ${loose.join(", ")}`;
+  }
+  checks.push({ name: "permissions", ok: permissionsOk, detail: permissionsDetail });
 
   let last = null;
   let readable = true;

@@ -5,6 +5,7 @@ import { Database } from "bun:sqlite";
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { createHmac } from "node:crypto";
 import { dirname, join } from "node:path";
+import { ensureDirMode, secureDbFiles } from "../permissions.mjs";
 import { redact } from "../redact.mjs";
 import { buildOp, canonicalOp, computeContentHash, hashSync, mergeOps, redactValue, replicaContentHash, stableStringify } from "./engine.mjs";
 import { decryptPayload, deriveKek, encryptPayload, isEnvelope, unwrapKey } from "./e2ee.mjs";
@@ -30,9 +31,14 @@ CREATE TABLE IF NOT EXISTS sync_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL)
 export class SyncClient {
   constructor(path, { deviceId = null, name = null } = {}) {
     this.path = path;
-    if (path !== ":memory:") mkdirSync(dirname(path), { recursive: true });
+    if (path !== ":memory:") {
+      mkdirSync(dirname(path), { recursive: true });
+      ensureDirMode(dirname(path), 0o700);
+    }
     this.db = new Database(path, { create: true });
     this.db.exec("PRAGMA journal_mode = WAL");
+    // The device token lives in this database; keep it owner-only like the other stores.
+    secureDbFiles(path);
     this.db.exec("PRAGMA synchronous = NORMAL");
     this.db.exec(SCHEMA);
     if (!this.meta("device_id")) this.setMeta("device_id", deviceId ?? crypto.randomUUID());
