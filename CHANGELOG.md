@@ -6,9 +6,20 @@ history.
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-27
+
+### Added
+
+- `GET /v1/facts` and the `fact_history` MCP tool: how a fact changed over time.
+- Search by file: files are indexed, with `file` and `file_suffix` filters on search and in the MCP search tool.
+- `work_state_write` and `work_state_read` MCP tools for named to-do lists per project.
+- Folder context files and a connector verification status in the tools view and in doctor.
+- `glama.json`, so the Glama listing can be claimed.
+
 ### Changed
 
 - MCP tool definitions now carry annotations and parameter descriptions.
+- The README platform badge says Linux and macOS, which CI covers.
 
 ## [0.1.2] - 2026-10-27
 
