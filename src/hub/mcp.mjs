@@ -6,6 +6,7 @@ import { wrapUntrusted } from "./untrusted.mjs";
 import { redact } from "./capture.mjs";
 import { searchPage } from "./lists.mjs";
 import { pagingOf, whenOf } from "./paging.mjs";
+import { readWorkStateList, writeWorkStateList } from "./work-state.mjs";
 
 // Newest first. Per the spec: answer with the client's version if supported, else with our latest.
 export const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
@@ -22,6 +23,8 @@ export const TOOL_DEFS = [
   { name: "add_rule", description: "Add a standing rule the owner wants every tool to follow. Only when the owner asked for it.", inputSchema: { type: "object", properties: { then: str, when: str, scopeTier: { type: "string", enum: ["everywhere", "project", "situation"] }, scopeName: str }, required: ["then"] } },
   { name: "dismiss_memory", description: "Hide a memory, observation or fact from search and context without deleting it. Reversible with restore_memory.", inputSchema: { type: "object", properties: { type: { type: "string", enum: ["memory", "observation", "fact", "episode"] }, id: { type: "number" }, reason: str }, required: ["id"] } },
   { name: "restore_memory", description: "Undo a dismissal. The item appears in search and context again.", inputSchema: { type: "object", properties: { type: { type: "string", enum: ["memory", "observation", "fact", "episode"] }, id: { type: "number" } }, required: ["id"] } },
+  { name: "work_state_write", description: "Keep one named to-do or scratch list in memory. items is an array of strings or objects; writing again replaces that list.", inputSchema: { type: "object", properties: { list: str, items: { type: "array" }, project: str }, required: ["list", "items"] } },
+  { name: "work_state_read", description: "Read a named list back as its items array.", inputSchema: { type: "object", properties: { list: str, project: str }, required: ["list"] } },
 ];
 
 const recalled = (t) => text(wrapUntrusted(t));
@@ -148,6 +151,21 @@ export function callTool(name, args = {}, ctx) {
         const type = args.type ?? "memory";
         const r = store.restore(type, Number(args.id), { actor: ctx.tool ?? "mcp" });
         return text(r.restored ? `Restored ${r.type} #${r.id}.` : `${r.type} #${r.id} was not dismissed.`);
+      }
+      case "work_state_write": {
+        const denied = scopedProject(args.project);
+        if (denied) return denied;
+        const project = args.project ?? (ctx.cwd ? projectKeyForPath(ctx.cwd) : "default");
+        const result = writeWorkStateList(store, { project, list: args.list, items: args.items, tool: ctx.tool ?? "mcp" });
+        return text(result.created ? `Saved list "${result.list}" with ${result.items.length} item(s) as #${result.id}.` : `Updated list "${result.list}" (#${result.id}).`);
+      }
+      case "work_state_read": {
+        const denied = scopedProject(args.project);
+        if (denied) return denied;
+        const project = args.project ?? (ctx.cwd ? projectKeyForPath(ctx.cwd) : "default");
+        const row = readWorkStateList(store, { project, list: args.list });
+        if (!row) return text(`No list named "${String(args.list ?? "").trim()}".`);
+        return text(JSON.stringify(row.items));
       }
       default:
         return fail(`Unknown tool: ${name}`);
