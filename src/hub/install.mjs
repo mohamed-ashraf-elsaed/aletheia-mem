@@ -6,7 +6,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSyn
 import { createHash } from "node:crypto";
 import { basename, dirname, join } from "node:path";
 import { applyBlock, removeBlock, renderRules, targetPath } from "./rules-sync.mjs";
-import { MARK_BEGIN, MARK_END, resolveMcpPath, toolById } from "./tools.mjs";
+import { MARK_BEGIN, MARK_END, resolveMcpPath, toolById, TOOLS, verificationStatus } from "./tools.mjs";
 import { WINDOWS, modeOctal } from "./permissions.mjs";
 import { spoolPath, spoolRead } from "./hooks/shared.mjs";
 
@@ -791,6 +791,13 @@ export async function doctor(env) {
       detail = `cannot read ${expected.file}`;
     }
     checks.push({ name: `hooks ${installer.id}`, ok: found === Object.keys(expected.commands).length, detail });
+  }
+
+  // Connector verification: unverified is honest, stale is a warning. Never a hard failure.
+  for (const tool of TOOLS) {
+    const status = verificationStatus(tool);
+    const evidence = tool.rules.evidence ? ` — ${tool.rules.evidence}` : "";
+    checks.push({ name: `verify ${tool.id}`, ok: status.status !== "stale", detail: `${status.label}: ${status.reason}${evidence}` });
   }
 
   const spooled = spoolRead(env.dataDir).length;

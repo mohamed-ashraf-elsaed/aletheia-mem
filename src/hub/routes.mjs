@@ -15,7 +15,7 @@ import { spoolPath, spoolRead } from "./hooks/shared.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "./rules-sync.mjs";
 import { suggestRules } from "./rule-suggest.mjs";
 import { decideSuggestion, decidedCounts, learningRun, recordLearningRun, replaceRule, toggleRule } from "./rules-decide.mjs";
-import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "./tools.mjs";
+import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById, verificationStatus } from "./tools.mjs";
 import { sessionDetail, workOverview } from "./work.mjs";
 import { goalAction } from "./goals.mjs";
 import { proposeGoalsRollup } from "./goals-rollup.mjs";
@@ -73,7 +73,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
 
   const toolView = (t) => {
     const plan = mcpPlan(t, config.home, argv());
-    return { id: t.id, name: t.name, installed: detectTools(config.home).find((d) => d.id === t.id).installed, rules: { project: t.rules.project, global: t.rules.global, style: t.rules.style }, mcp: plan.supported ? { kind: plan.kind, path: plan.path, command: plan.command ?? null, snippet: plan.snippet ?? null, connected: plan.connected, error: plan.error ?? null } : null };
+    return { id: t.id, name: t.name, installed: detectTools(config.home).find((d) => d.id === t.id).installed, rules: { project: t.rules.project, global: t.rules.global, style: t.rules.style, verifiedOn: t.rules.verifiedOn ?? null, toolVersion: t.rules.toolVersion ?? null, evidence: t.rules.evidence ?? null }, verification: verificationStatus(t), mcp: plan.supported ? { kind: plan.kind, path: plan.path, command: plan.command ?? null, snippet: plan.snippet ?? null, connected: plan.connected, error: plan.error ?? null } : null };
   };
 
   const memoryInput = (b, tool) => {

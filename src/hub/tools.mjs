@@ -17,19 +17,39 @@ export const MARK_END = "<!-- aletheia:rules:end -->";
  * mcp:   { path under $HOME, format }  formats: json-mcpServers | json-mcpServers-commandcode | json-opencode | toml-codex | command
  */
 export const TOOLS = [
-  { id: "claude-code", name: "Claude Code", detect: [".claude"], rules: { project: "CLAUDE.md", global: ".claude/CLAUDE.md", style: "block", verifiedOn: "2026-10-26", source: "docs/25-installers.md" }, mcp: { format: "command", command: (cmd) => `claude mcp add --scope user aletheia -- ${cmd.join(" ")}` } },
-  { id: "command-code", name: "Command Code", detect: [".commandcode"], rules: { project: "AGENTS.md", global: ".commandcode/AGENTS.md", style: "block", verifiedOn: "2026-10-26", source: "docs/25-installers.md" }, mcp: { path: ".commandcode/mcp.json", format: "json-mcpServers-commandcode" } },
-  { id: "codex", name: "Codex CLI", detect: [".codex"], rules: { project: "AGENTS.md", global: ".codex/AGENTS.md", style: "block", verifiedOn: "2026-10-26", source: "https://developers.openai.com/codex/agent-configuration/agents-md" }, mcp: { path: ".codex/config.toml", format: "toml-codex" } },
-  { id: "gemini-cli", name: "Gemini CLI", detect: [".gemini"], rules: { project: "GEMINI.md", global: ".gemini/GEMINI.md", style: "block", verifiedOn: "2026-10-26", source: "https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/cli/gemini-md.md" }, mcp: { path: ".gemini/settings.json", format: "json-mcpServers" } },
-  { id: "cursor", name: "Cursor", detect: [".cursor"], rules: { project: ".cursor/rules/aletheia.mdc", global: null, style: "owned", verifiedOn: "2026-10-26", source: "https://cursor.com/docs/context/rules" }, mcp: { path: ".cursor/mcp.json", format: "json-mcpServers" } },
-  { id: "windsurf", name: "Windsurf", detect: [".codeium/windsurf", ".windsurf", ".config/devin"], rules: { project: ".windsurf/rules/aletheia.md", global: ".codeium/windsurf/memories/global_rules.md", style: "owned-windsurf", verifiedOn: "2026-10-26", source: "https://docs.windsurf.com/windsurf/cascade/memories" }, mcp: { path: ".config/devin/mcp_config.json", alt: [".codeium/windsurf/mcp_config.json"], format: "json-mcpServers" } },
-  { id: "opencode", name: "OpenCode", detect: [".config/opencode"], rules: { project: "AGENTS.md", global: ".config/opencode/AGENTS.md", style: "block", verifiedOn: "2026-10-26", source: "https://opencode.ai/docs/rules/" }, mcp: { path: ".config/opencode/opencode.json", format: "json-opencode" } },
-  { id: "copilot", name: "GitHub Copilot", detect: [".config/github-copilot"], rules: { project: ".github/copilot-instructions.md", global: null, style: "block", verifiedOn: null, source: null }, mcp: null },
-  { id: "aider", name: "Aider", detect: [".aider.conf.yml"], rules: { project: "CONVENTIONS.md", global: null, style: "block", verifiedOn: null, source: null }, mcp: null },
-  { id: "agents-md", name: "AGENTS.md (open standard)", detect: [], rules: { project: "AGENTS.md", global: null, style: "block", verifiedOn: null, source: null }, mcp: null },
+  { id: "claude-code", name: "Claude Code", detect: [".claude"], rules: { project: "CLAUDE.md", global: ".claude/CLAUDE.md", style: "block", verifiedOn: "2026-10-26", toolVersion: null, evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); no real session run", source: "docs/25-installers.md" }, mcp: { format: "command", command: (cmd) => `claude mcp add --scope user aletheia -- ${cmd.join(" ")}` } },
+  { id: "command-code", name: "Command Code", detect: [".commandcode"], rules: { project: "AGENTS.md", global: ".commandcode/AGENTS.md", style: "block", verifiedOn: "2026-10-26", toolVersion: "1.88.0", evidence: "CLI 1.88.0 reference generated from commandcode.ai/docs plus real files (2026-10-26); no real session run", source: "docs/25-installers.md" }, mcp: { path: ".commandcode/mcp.json", format: "json-mcpServers-commandcode" } },
+  { id: "codex", name: "Codex CLI", detect: [".codex"], rules: { project: "AGENTS.md", global: ".codex/AGENTS.md", style: "block", verifiedOn: "2026-10-26", toolVersion: "0.130.0", evidence: "Codex 0.130.0 present; hooks configured from docs (2026-10-26); no hook run by Codex", source: "https://developers.openai.com/codex/agent-configuration/agents-md" }, mcp: { path: ".codex/config.toml", format: "toml-codex" } },
+  { id: "gemini-cli", name: "Gemini CLI", detect: [".gemini"], rules: { project: "GEMINI.md", global: ".gemini/GEMINI.md", style: "block", verifiedOn: "2026-10-26", toolVersion: "0.37.0", evidence: "Gemini 0.37.0 present; hooks configured from docs (2026-10-26); no hook run", source: "https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/cli/gemini-md.md" }, mcp: { path: ".gemini/settings.json", format: "json-mcpServers" } },
+  { id: "cursor", name: "Cursor", detect: [".cursor"], rules: { project: ".cursor/rules/aletheia.mdc", global: null, style: "owned", verifiedOn: "2026-10-26", toolVersion: null, evidence: "Cursor docs fetched 2026-10-26; Cursor is not installed on this machine", source: "https://cursor.com/docs/context/rules" }, mcp: { path: ".cursor/mcp.json", format: "json-mcpServers" } },
+  { id: "windsurf", name: "Windsurf", detect: [".codeium/windsurf", ".windsurf", ".config/devin"], rules: { project: ".windsurf/rules/aletheia.md", global: ".codeium/windsurf/memories/global_rules.md", style: "owned-windsurf", verifiedOn: "2026-10-26", toolVersion: null, evidence: "Windsurf docs fetched 2026-10-26; no working Windsurf/Devin install here", source: "https://docs.windsurf.com/windsurf/cascade/memories" }, mcp: { path: ".config/devin/mcp_config.json", alt: [".codeium/windsurf/mcp_config.json"], format: "json-mcpServers" } },
+  { id: "opencode", name: "OpenCode", detect: [".config/opencode"], rules: { project: "AGENTS.md", global: ".config/opencode/AGENTS.md", style: "block", verifiedOn: "2026-10-26", toolVersion: null, evidence: "OpenCode docs fetched 2026-10-26; no capture plugin ships (event payloads undocumented)", source: "https://opencode.ai/docs/rules/" }, mcp: { path: ".config/opencode/opencode.json", format: "json-opencode" } },
+  { id: "copilot", name: "GitHub Copilot", detect: [".config/github-copilot"], rules: { project: ".github/copilot-instructions.md", global: null, style: "block", verifiedOn: null, toolVersion: null, evidence: null, source: null }, mcp: null },
+  { id: "aider", name: "Aider", detect: [".aider.conf.yml"], rules: { project: "CONVENTIONS.md", global: null, style: "block", verifiedOn: null, toolVersion: null, evidence: null, source: null }, mcp: null },
+  { id: "agents-md", name: "AGENTS.md (open standard)", detect: [], rules: { project: "AGENTS.md", global: null, style: "block", verifiedOn: null, toolVersion: null, evidence: null, source: null }, mcp: null },
 ];
 
 export const toolById = (id) => TOOLS.find((t) => t.id === id);
+
+export const STALE_DAYS = 180;
+
+/**
+ * A connector is verified only when it has a `verifiedOn` date that is not too old and its pinned
+ * `toolVersion` still matches the running one. Missing `verifiedOn` means the connector was never verified.
+ */
+export function verificationStatus(tool, { now = Date.now(), currentVersion = null, staleDays = STALE_DAYS } = {}) {
+  const meta = tool.rules ?? tool;
+  const verifiedOn = meta.verifiedOn ?? null;
+  if (!verifiedOn) return { status: "unverified", label: "unverified", reason: "no verifiedOn recorded" };
+  const verifiedAt = Date.parse(verifiedOn);
+  if (!Number.isFinite(verifiedAt)) return { status: "unverified", label: "unverified", reason: `unparsable verifiedOn (${verifiedOn})` };
+  const ageDays = (now - verifiedAt) / 86_400_000;
+  if (ageDays > staleDays) return { status: "stale", label: "stale", reason: `verified ${Math.round(ageDays)} days ago (over ${staleDays})` };
+  if (meta.toolVersion && currentVersion && currentVersion !== meta.toolVersion) {
+    return { status: "stale", label: "stale", reason: `verified for ${meta.toolVersion}, running ${currentVersion}` };
+  }
+  return { status: "verified", label: "verified", reason: `verified ${verifiedOn}` };
+}
 
 export function detectTools(home) {
   return TOOLS.map((t) => ({ id: t.id, name: t.name, installed: t.detect.some((p) => existsSync(join(home, p))), rulesProject: t.rules.project, rulesGlobal: t.rules.global, canConnect: !!t.mcp }));
