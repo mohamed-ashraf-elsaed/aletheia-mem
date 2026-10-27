@@ -43,21 +43,25 @@ function sessionGroups(store, scope) {
     if (!map.has(k)) map.set(k, { project, sessionId, firstAt: null, lastAt: null, prompts: [], tools: [] });
     return map.get(k);
   };
-  const touch = (session, at) => {
+  const touch = (session, at, tool) => {
     session.firstAt = Math.min(session.firstAt ?? at, at);
     session.lastAt = Math.max(session.lastAt ?? at, at);
+    if (at >= (session.toolAt ?? -Infinity)) {
+      session.tool = tool ?? session.tool ?? "unknown";
+      session.toolAt = at;
+    }
   };
 
   for (const m of memories) {
     const session = get(m.project, m.session_id);
-    touch(session, m.created_at_epoch);
+    touch(session, m.created_at_epoch, m.tool);
     const text = oneLine(m.narrative || m.title);
     if (m.kind === "prompt") session.prompts.push({ id: m.id, text, at: m.created_at_epoch, source: "memory" });
     else if (m.kind === "event") session.tools.push({ id: m.id, text, at: m.created_at_epoch, source: "memory" });
   }
   for (const e of episodes) {
     const session = get(e.project, e.session_id);
-    touch(session, e.created_at_epoch);
+    touch(session, e.created_at_epoch, e.tool);
     const text = oneLine(e.text);
     if (e.role === "user" || e.kind === "prompt") session.prompts.push({ id: e.id, text, at: e.created_at_epoch, source: "episode" });
     else if (e.role === "tool" || e.kind === "event") session.tools.push({ id: e.id, text, at: e.created_at_epoch, source: "episode" });
@@ -148,6 +152,7 @@ function buildRequest(store, sessions, { now, activeMs, project }) {
   return {
     id,
     project: first.project,
+    tool: last.tool ?? null,
     goalKey: goalKey === NO_GOAL ? null : goalKey,
     goal: topic?.object ?? null,
     title: requestTitle(sorted),
@@ -186,7 +191,7 @@ function buildRequest(store, sessions, { now, activeMs, project }) {
 }
 
 /** Group sessions into requests. Read-only. */
-export function proposeRequests(store, { project = null, now = Date.now(), maxGapHours, activeMinutes, limit } = {}) {
+export function proposeRequests(store, { project = null, now = Date.now(), maxGapHours, activeMinutes, limit, filter, sort, group } = {}) {
   const scope = typeof project === "string" && project.trim() ? project.trim() : null;
   const gapMs = clamp(maxGapHours, 1, 24 * 30, 24) * HOUR;
   const activeMs = clamp(activeMinutes, 1, 1440, 5) * MINUTE;
@@ -221,19 +226,54 @@ export function proposeRequests(store, { project = null, now = Date.now(), maxGa
   const all = clusters
     .map((cluster) => buildRequest(store, cluster, { now, activeMs, project: scope }))
     .sort((a, b) => (b.lastAtEpoch ?? 0) - (a.lastAtEpoch ?? 0) || b.startedAtEpoch - a.startedAtEpoch || String(b.id).localeCompare(String(a.id)));
+
+  const filterMode = ["all", "needs-you", "shipped"].includes(filter) ? filter : "all";
+  const sortMode = ["newest", "needs-you", "most-progress"].includes(sort) ? sort : "newest";
+  const groupMode = group === "agent" || group === "tool" ? group : null;
+  const counts = {
+    all: all.length,
+    needsYou: all.filter((request) => request.status === "Waiting on you").length,
+    shipped: all.filter((request) => request.status === "Shipped").length,
+    working: all.filter((request) => request.status === "Working").length,
+    idle: all.filter((request) => request.status === "Idle").length,
+    waitingOnYou: all.filter((request) => request.status === "Waiting on you").length,
+    total: all.length,
+  };
+
+  const visible = all.filter((request) => !dismissed.has(request.id));
+  const filtered = filterMode === "needs-you"
+    ? visible.filter((request) => request.status === "Waiting on you")
+    : filterMode === "shipped"
+      ? visible.filter((request) => request.status === "Shipped")
+      : visible;
+  const sorter = {
+    newest: (a, b) => (b.lastAtEpoch ?? 0) - (a.lastAtEpoch ?? 0) || b.startedAtEpoch - a.startedAtEpoch,
+    "needs-you": (a, b) => Number(b.status === "Waiting on you") - Number(a.status === "Waiting on you") || (b.lastAtEpoch ?? 0) - (a.lastAtEpoch ?? 0),
+    "most-progress": (a, b) => (b.progress ?? 0) - (a.progress ?? 0) || (b.lastAtEpoch ?? 0) - (a.lastAtEpoch ?? 0),
+  }[sortMode];
+  const requests = filtered.slice().sort((a, b) => sorter(a, b) || String(b.id).localeCompare(String(a.id)));
   const max = clamp(limit, 1, 100, 20);
+  const grouped = groupMode
+    ? [...requests.reduce((map, request) => {
+        const key = request.tool ?? "unknown";
+        if (!map.has(key)) map.set(key, []);
+        map.get(key).push(request);
+        return map;
+      }, new Map()).entries()]
+        .map(([key, rows]) => ({ key, label: key, count: rows.length, requests: rows }))
+        .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key))
+    : null;
+
   return {
     project: scope ?? "all",
     generatedAt: iso(now),
-    requests: all.filter((request) => !dismissed.has(request.id)).slice(0, max),
+    filter: filterMode,
+    sort: sortMode,
+    group: groupMode,
+    requests: requests.slice(0, max),
+    groups: grouped,
     dismissedRequests: all.filter((request) => dismissed.has(request.id)),
-    counts: {
-      working: all.filter((request) => request.status === "Working").length,
-      idle: all.filter((request) => request.status === "Idle").length,
-      shipped: all.filter((request) => request.status === "Shipped").length,
-      waitingOnYou: all.filter((request) => request.status === "Waiting on you").length,
-      total: all.length,
-    },
+    counts,
     empty: all.length === 0,
   };
 }

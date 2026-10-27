@@ -356,6 +356,9 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
           maxGapHours: q.maxGapHours,
           activeMinutes: q.activeMinutes,
           limit: q.limit,
+          filter: q.filter,
+          sort: q.sort,
+          group: q.group,
         }));
       }
       if ((m = /^\/v1\/work\/requests\/([a-f0-9]{16})$/.exec(pathname)) && method === "GET") {
