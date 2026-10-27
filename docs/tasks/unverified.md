@@ -137,6 +137,15 @@ real CI run exists.
 | 57 | Windows `bun test` leg | UNVERIFIED; not run by the author | A green run of `Test (windows-latest)` on GitHub Actions |
 | 58 | Windows skip guards for the existing suite | The chmod/symlink permission test skips on Windows. Tests that spawn `sh -c` or send `SIGKILL` are POSIX-only and have not been run on Windows, so they may fail there instead of skipping | Run the suite on Windows and add `test.skipIf(process.platform === "win32")` to each failing test with the reason |
 
+## npm package (2026-10-27)
+
+The package is prepared, not published. These stay UNVERIFIED until the owner publishes and smokes it.
+
+| # | Item | State | What would verify it |
+|---:|---|---|---|
+| 59 | `npm view aletheia-mem version` | UNVERIFIED; the package has not been published | The owner runs `npm publish --access public`, then `npm view aletheia-mem version` |
+| 60 | `npx aletheia-mem --version` on a fresh machine | UNVERIFIED; no publish and no clean-machine smoke test | Publish, then run `npx aletheia-mem --version` in a clean directory |
+
 ## Request layer, story and economics (2026-10-27)
 
 These are chosen rules and unmeasured behaviour in T-152 and T-165 to T-173. Each was tested only on a seeded

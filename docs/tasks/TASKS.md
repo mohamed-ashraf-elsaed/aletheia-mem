@@ -121,7 +121,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 | T-077 | Add live feed, session pages and context preview | P3 | T-017 | todo | — | [T-077.md](T-077.md) |
 | T-078 | Add a settings UI | P3 | T-016 | todo | — | [T-078.md](T-078.md) |
 | T-079 | Restructure the README and add real badges | P4 | T-001 | validated | 2026-10-26 | [T-079.md](T-079.md) |
-| T-080 | Publish the npm package | P4 | T-014 | todo | — | [T-080.md](T-080.md) |
+| T-080 | Publish the npm package | P4 | T-014 | validated | 2026-10-27 | [T-080.md](T-080.md) |
 | T-081 | Add a Docker image and compose file | P4 | T-073 | validated | 2026-10-26 | [T-081.md](T-081.md) |
 | T-082 | Submit to the MCP registry and two awesome lists | P4 | T-080 | todo | — | [T-082.md](T-082.md) |
 | T-083 | Add logo, social preview and demo GIF | P4 | none | validated | 2026-10-26 | [T-083.md](T-083.md) |

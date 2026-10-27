@@ -302,6 +302,9 @@ async function runAlertsCommand(flags, pos, hub) {
 }
 
 async function main() {
+  if (cmd === "--version" || cmd === "-v" || cmd === "version") {
+    return out(JSON.parse(readFileSync(join(import.meta.dir, "..", "package.json"), "utf8")).version);
+  }
   const { flags, pos } = parseArgs(rest);
 
   // Hooks run in the host tool's hot path: no store is opened here, and a watchdog guarantees a return.

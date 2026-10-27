@@ -28,11 +28,28 @@
   "author": "Mohamed Ashraf Elsaed",
   "license": "Apache-2.0",
   "type": "module",
+  "files": [
+    "bin",
+    "src",
+    "docs",
+    "prompts",
+    "vendor",
+    "public",
+    "public-hub",
+    "NOTICE.md",
+    "LICENSE",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
   "engines": {
     "bun": ">=1.1.0"
   },
   "bin": {
     "aletheia": "bin/aletheia.mjs",
+    "aletheia-mem": "bin/aletheia.mjs",
     "aletheia-server": "bin/aletheia-server.mjs",
     "aletheia-mcp": "bin/mcp.mjs"
   },

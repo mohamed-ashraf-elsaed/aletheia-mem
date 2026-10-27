@@ -36,8 +36,9 @@ cd aletheia-mem
 bun bin/aletheia-server.mjs
 ```
 
-Open <http://127.0.0.1:37790>. Needs [Bun](https://bun.sh) 1.1 or newer. There is no `npm install` step because
-there are no runtime dependencies.
+Open <http://127.0.0.1:37790>. Needs [Bun](https://bun.sh) 1.1 or newer. To install the published package instead,
+run `npm install -g aletheia-mem`, then start it with `aletheia-server`. There are no runtime dependencies to
+install.
 
 The first screen has four tabs: **Work** (Aletheia's own view of captured sessions, facts and goals), **Memory**
 (search, edit, pin, delete, export), **Rules** (write once and sync) and **Tools** (installer status and audit).
