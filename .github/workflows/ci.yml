@@ -6,7 +6,7 @@ permissions:
   contents: read
 jobs:
   check:
-    # Linux only. macOS and Windows are untested (docs/tasks/unverified.md, item 35).
+    # Linux only. macOS and Windows are untested for this job.
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -17,8 +17,6 @@ jobs:
         run: bun test
       - name: Dependency and licence audit
         run: bun scripts/audit-deps.mjs
-      - name: Task table and task files agree
-        run: bun scripts/check-tasks.mjs
       - name: Generated tables are current
         run: bun scripts/gen-tables.mjs --check
       - name: Relative documentation links resolve
@@ -27,5 +25,3 @@ jobs:
         run: bun scripts/i18n-check.mjs
       - name: Docs site and sitemap agree
         run: bun scripts/build-site.mjs && bun scripts/check-sitemap.mjs
-      - name: Status page is current
-        run: bun scripts/gen-status.mjs --check

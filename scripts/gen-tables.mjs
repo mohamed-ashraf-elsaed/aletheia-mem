@@ -1,6 +1,8 @@
 #!/usr/bin/env bun
 // Generate the comparison, tool-support and measured-number tables from their data sources.
-// Sources: docs/28-competitor-report.json, src/hub/install.mjs and bench/results/<date>/*.json.
+// Sources: docs/28-competitor-report.json, docs/14-research-ai-memory.md (both kept only on the maintainers' machines),
+// src/hub/install.mjs and bench/results/<date>/*.json.
+// A block whose private source is absent (a fresh clone) is skipped: its committed text is left as it is.
 // Usage: bun scripts/gen-tables.mjs [--check] [--results <dir>]
 //   --check  exit 1 when a marked block is missing or differs from the generated text
 // Blocks are delimited by <!-- gen:name --> ... <!-- /gen:name --> in .md and .html files.
@@ -17,15 +19,20 @@ const flag = (name) => {
 
 export const TARGETS = [
   { file: "README.md", blocks: ["tools", "capabilities", "bench"] },
-  { file: "docs/28-competitor-report.md", blocks: ["capabilities"] },
+  { file: "docs/28-competitor-report.md", blocks: ["capabilities"], optional: true },
   { file: "site/index.html", blocks: ["bench", "tools"] },
 ];
 
 const read = (root, path) => readFileSync(join(root, path), "utf8");
 const cell = (value) => String(value ?? "").replace(/\|/g, "\\|").replace(/\s*\n\s*/g, " ").trim();
 
+// Internal task ids (T-123) mean nothing to a reader of the public README.
+export function withoutTaskIds(text) {
+  return String(text).replace(/ ?\((?:T-\d+(?:,\s*T-\d+)*)\)/g, "").replace(/ T-\d+\b/g, "");
+}
+
 export function humanCell(value) {
-  const text = String(value ?? "").trim();
+  const text = withoutTaskIds(String(value ?? "").trim());
   if (!text || text === "?" || /^unverified$/i.test(text)) return "UNVERIFIED";
   if (text.startsWith("✅")) return `yes${text.slice(1)}`.trim();
   if (text.startsWith("❌")) return `no${text.slice(1)}`.trim();
@@ -82,7 +89,7 @@ export function renderCapabilities(format = "md", root = DEFAULT_ROOT) {
   const wanted = ["Capability", "Aletheia (today)", "claude-mem", "Mem0", "Zep/Graphiti", "Supermemory", "Basic Memory"];
   const rows = capabilityRows(root).map((row) => wanted.map((header) => humanCell(row.cells[header])));
   const lines = [table(format, wanted, rows)];
-  lines.push(note(format, "Generated from docs/28-competitor-report.json (rows copied from docs/21-competitor-landscape.md, fetched 2026-10-26). Aletheia cells updated 2026-10-26 from validated tasks; see docs/20 and docs/25. Cells the source did not state read UNVERIFIED."));
+  lines.push(note(format, "Competitor cells are copied from each project's own public documentation, fetched 2026-10-26. Aletheia cells were updated 2026-10-26 from tested features; installer sources are in `docs/25-installers.md`. Cells the source did not state read UNVERIFIED."));
   return lines.join("\n\n");
 }
 
@@ -126,7 +133,7 @@ export function baselineRow(root = DEFAULT_ROOT) {
     recall: `${recall}%`,
     mrr,
     latency,
-    source: "docs/14 §14.6",
+    source: "bench/claude-mem-baseline.mjs",
   };
 }
 
@@ -164,6 +171,13 @@ export function renderBench(format = "md", resultsDir = latestResultsDir(join(DE
   const lines = [table(format, headers, rows)];
   lines.push(note(format, `Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/${date}/ (${sources.join(", ")}); re-run with \`bun scripts/compare-bench.mjs\`.`));
   return lines.join("\n\n");
+}
+
+// A block can only be regenerated where its private source file exists.
+export function blockAvailable(name, root = DEFAULT_ROOT) {
+  if (name === "capabilities") return existsSync(join(root, "docs/28-competitor-report.json"));
+  if (name === "bench") return existsSync(join(root, "docs/14-research-ai-memory.md"));
+  return true;
 }
 
 export const RENDERERS = {
@@ -204,12 +218,14 @@ function main() {
   for (const target of TARGETS) {
     const path = join(root, target.file);
     if (!existsSync(path)) {
+      if (target.optional) continue;
       problems.push(`${target.file}: file not found`);
       continue;
     }
     let text = readFileSync(path, "utf8");
     const format = target.file.endsWith(".html") ? "html" : "md";
     for (const name of target.blocks) {
+      if (!blockAvailable(name, root)) continue;
       const body = RENDERERS[name](format, root, resultsDir);
       if (CHECK) {
         const result = checkBlocks(text, name, body);

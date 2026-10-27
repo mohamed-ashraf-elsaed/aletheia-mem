@@ -5,6 +5,7 @@
 import { execFileSync } from "node:child_process";
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { basename, dirname, join, relative, resolve, sep } from "node:path";
+import { isTracked, trackedFiles } from "./tracked.mjs";
 
 const ROOT = process.env.SITE_ROOT ? resolve(process.env.SITE_ROOT) : join(import.meta.dir, "..");
 const SITE = join(ROOT, "site");
@@ -265,8 +266,11 @@ ${body}
 
 function main() {
   const docsDir = DOCS;
+  // Build only from files git tracks, so a local run makes the same site as a fresh clone.
+  const tracked = trackedFiles(ROOT);
   const files = readdirSync(docsDir)
     .filter((name) => name.endsWith(".md") && !name.startsWith("_"))
+    .filter((name) => isTracked(tracked, ROOT, join(docsDir, name)))
     .sort()
     .map((name) => join(docsDir, name));
   if (!files.length) throw new Error("no Markdown documents found in docs/");
@@ -313,8 +317,8 @@ function main() {
   const list = [...pages.entries()].sort(([a], [b]) => a.localeCompare(b));
   const groups = [
     ["Core", list.filter(([name]) => /^docs\/0[1-9]|^docs\/10-/.test(name))],
-    ["Product and research", list.filter(([name]) => /^docs\/1[1-8]-/.test(name))],
-    ["Comparison and operations", list.filter(([name]) => /^docs\/2[0-9]-|^docs\/30-/.test(name))],
+    ["Reference", list.filter(([name]) => /^docs\/1[1-8]-/.test(name))],
+    ["Installers, sync and remote access", list.filter(([name]) => /^docs\/2[0-9]-|^docs\/30-/.test(name))],
     ["Guides", list.filter(([name]) => !/^docs\/(?:0[1-9]|1[0-8]|2[0-9]|30)-/.test(name))],
   ];
   const sections = groups
@@ -327,7 +331,7 @@ function main() {
     indexFile,
     shell({
       title: "Documentation",
-      description: "Every Aletheia document: architecture, installers, benchmarks, sync, remote MCP and the task system.",
+      description: "Aletheia documentation: architecture, HTTP API, installers, sync, remote MCP and team mode.",
       canonical: `${SITE_URL}docs/`,
       siteFile: indexFile,
       body: `<h1>Documentation</h1><p>${pages.size} documents, generated from the Markdown in <code>docs/</code>. The Markdown is canonical.</p>${sections}`,

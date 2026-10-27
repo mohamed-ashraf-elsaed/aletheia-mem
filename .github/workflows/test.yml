@@ -10,7 +10,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Windows is out of the matrix for v0.1: its leg was red and cannot be fixed without a Windows machine (docs/tasks/unverified.md, items 57-58).
+        # Windows is out of the matrix for v0.1: its leg was red and cannot be fixed without a Windows machine.
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
@@ -18,12 +18,5 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.10
-      - name: Test suite and run report
-        run: bun scripts/run-report.mjs
-      - name: Upload run report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: run-report-${{ matrix.os }}
-          path: docs/tasks/run-report.md
-          if-no-files-found: ignore
+      - name: Test suite
+        run: bun test

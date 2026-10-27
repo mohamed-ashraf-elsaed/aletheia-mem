@@ -3,6 +3,7 @@
 //   bun scripts/check-docs-links.mjs
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, extname, join, relative, resolve } from "node:path";
+import { isTracked, trackedFiles } from "./tracked.mjs";
 
 const DEFAULT_ROOT = join(import.meta.dir, "..");
 const MD_EXT = new Set([".md", ".markdown"]);
@@ -64,7 +65,8 @@ function linksIn(line) {
 }
 
 export function checkFiles(root = DEFAULT_ROOT) {
-  const files = [join(root, "README.md"), join(root, "CONTRIBUTING.md"), join(root, "SECURITY.md"), join(root, "NOTICE.md"), ...walk(join(root, "docs"))];
+  const tracked = trackedFiles(root);
+  const files = [join(root, "README.md"), join(root, "CONTRIBUTING.md"), join(root, "SECURITY.md"), join(root, "NOTICE.md"), ...walk(join(root, "docs"))].filter((file) => isTracked(tracked, root, file));
   const problems = [];
   let local = 0;
   let external = 0;
@@ -99,7 +101,7 @@ export function checkFiles(root = DEFAULT_ROOT) {
           problems.push(`${location}: link leaves the repository: ${target}`);
           continue;
         }
-        if (!existsSync(resolved)) {
+        if (!existsSync(resolved) || !isTracked(tracked, root, resolved)) {
           problems.push(`${location}: missing file: ${target}`);
           continue;
         }
