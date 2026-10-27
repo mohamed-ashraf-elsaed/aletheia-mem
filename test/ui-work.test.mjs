@@ -65,6 +65,7 @@ const routesFor = (extra = []) => [
   ...extra,
   [/^\/v1\/work\/requests\?/, () => json(requestPage())],
   [/^\/v1\/work\/goals/, () => json({ goals: [goalRow()], dismissedGoals: [], total: 1 })],
+  [/^\/v1\/work\/story/, () => json({ counts: { shipped: 1, working: 0, waitingOnYou: 1, idle: 0, total: 2 }, velocity: { totalShipped: 1, averageDaysToShip: 0, perWeek: [{ week: "2026-W44", shipped: 1 }] }, learned: [], empty: false })],
   [/^\/v1\/work\?/, () => json(overview())],
   ["/api/hub/doctor", () => json({ tools: [] })],
 ];

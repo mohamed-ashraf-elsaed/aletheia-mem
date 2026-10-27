@@ -18,6 +18,7 @@ export const SUBVIEWS = {
     { id: "facts", label: "Facts" },
     { id: "review", label: "Review" },
     { id: "dismissed", label: "Dismissed" },
+    { id: "economics", label: "Economics" },
     { id: "search", label: "Search" },
   ],
   rules: [

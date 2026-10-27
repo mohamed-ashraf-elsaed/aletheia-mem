@@ -10,6 +10,7 @@ import { openFactDetail, openMemoryDetail } from "../ui-detail.js";
 import { GUIDE_HIDDEN_KEY, firstRunGuide, guideHidden, storeIsEmpty } from "../ui-guide.js";
 import { TYPE_OPTIONS } from "../ui-views.js";
 import { dismissedView, factsView, memoriesView, queryString, searchView } from "./memory-views.js";
+import { economicsView } from "./memory-economics.js";
 import { reviewView } from "./review.js";
 
 let frame = null;
@@ -120,7 +121,7 @@ function buildFrame() {
   function show(route) {
     subnav.setActive(route.sub);
     currentView?.dispose?.();
-    const make = { memories: memoriesView, facts: factsView, review: reviewView, dismissed: dismissedView, search: searchView }[route.sub] ?? memoriesView;
+    const make = { memories: memoriesView, facts: factsView, review: reviewView, dismissed: dismissedView, economics: economicsView, search: searchView }[route.sub] ?? memoriesView;
     currentView = make(ctx, route);
     ctx.counts = (next) => {
       if (next.memories != null && !state.project) subnav.setCount?.("memories", next.memories);

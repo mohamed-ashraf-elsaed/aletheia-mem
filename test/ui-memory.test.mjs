@@ -425,7 +425,7 @@ describe("T-208: the Memory frame", () => {
     expect(root.querySelector("h1").textContent).toBe("Memory");
     const tiles = root.querySelectorAll(".ui-stat").map((tile) => tile.textContent.replace(/\s+/g, " "));
     expect(tiles.some((text) => text.includes("Facts"))).toBe(true);
-    expect(root.querySelectorAll(".ui-tab").map((tab) => tab.getAttribute("data-tab"))).toEqual(["memories", "facts", "review", "dismissed", "search"]);
+    expect(root.querySelectorAll(".ui-tab").map((tab) => tab.getAttribute("data-tab"))).toEqual(["memories", "facts", "review", "dismissed", "economics", "search"]);
     expect(root.querySelector('.ui-tab[aria-selected="true"]').getAttribute("data-tab")).toBe("facts");
     expect(calls.some((c) => c.path.startsWith("/api/hub/facts?limit=25"))).toBe(true);
     const review = root.querySelector('.ui-tab[data-tab="review"]');

@@ -14,6 +14,7 @@ import { factLineView, sessionDetailView, workHeaderView, workNeedsView } from "
 import { queryString } from "./memory-views.js";
 import { goalsRollupView } from "./work-goals.js";
 import { requestDetailPage, requestRoute, requestsView } from "./work-requests.js";
+import { storyView } from "./work-story.js";
 
 const REFRESH_MS = 10_000;
 const NEEDS_SHOWN = 6;
@@ -113,8 +114,9 @@ function buildOverview() {
   let guide = null;
   let requests = null;
   let goals = null;
+  let story = null;
 
-  const refresh = ({ soft = true } = {}) => { strip.reload({ soft }); requests?.reload({ soft: true }); goals?.reload({ soft: true }); };
+  const refresh = ({ soft = true } = {}) => { strip.reload({ soft }); requests?.reload({ soft: true }); goals?.reload({ soft: true }); story?.reload({ soft: true }); };
 
   const syncGuide = async (data) => {
     // The overview says `empty` only when there is nothing at all: no sessions, facts, review items or captures.
@@ -160,6 +162,7 @@ function buildOverview() {
   requests = requestsView({ onCounts: () => {} });
 
   goals = goalsRollupView();
+  story = storyView();
 
   const root = h("div", { class: "ui-work" },
     h("div", { class: "ui-work-head" }, h("h1", { id: "ui-work-title", tabindex: "-1" }, "Work"), h("p", { class: "ui-meta" }, `Captured sessions, facts and review items from this hub · project: ${state.project || "all"}`)),
@@ -173,8 +176,9 @@ function buildOverview() {
       h("section", { class: "ui-work-col", "aria-labelledby": "ui-work-needs" }, h("h2", { id: "ui-work-needs" }, "Needs you"), needsSlot)),
     h("section", { class: "ui-work-memory", "aria-labelledby": "ui-work-recent" }, h("h2", { id: "ui-work-recent" }, "Recent memory"), h("p", { class: "ui-meta" }, "Current facts with their source episode and importance."), recentSlot),
     h("section", { class: "ui-work-goals", "aria-labelledby": "ui-work-goals" }, h("h2", { id: "ui-work-goals" }, "Goals"), h("p", { class: "ui-meta" }, "From your own typed prompts only. A topic is a goal when it repeats in at least two sessions."), goals),
+    h("section", { class: "ui-work-story", "aria-labelledby": "ui-work-story" }, h("h2", { id: "ui-work-story" }, "Build story"), h("p", { class: "ui-meta" }, "Counts, shipping velocity and the corrections that repeat in your prompts."), story),
     h("p", { class: "ui-meta ui-work-updated" }, "Refreshes every 10 s while this tab is visible, and at once when something changes."));
-  return { el: root, refresh, project: state.project, dispose: () => { guide?.dispose(); requests?.dispose?.(); goals?.dispose?.(); } };
+  return { el: root, refresh, project: state.project, dispose: () => { guide?.dispose(); requests?.dispose?.(); goals?.dispose?.(); story?.dispose?.(); } };
 }
 
 // ---- one session -------------------------------------------------------------------------------------------
