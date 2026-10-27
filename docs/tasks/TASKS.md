@@ -42,7 +42,7 @@ index. Both must agree, or `bun scripts/check-tasks.mjs` fails.
 
 | ID | Title | Phase | Depends on | Status | Validated on (date) | Evidence link |
 |---|---|---|---|---|---|---|
-| T-001 | Make README claims generated, not typed | P0 | none | todo | — | [T-001.md](T-001.md) |
+| T-001 | Make README claims generated, not typed | P0 | none | validated | 2026-10-27 | [T-001.md](T-001.md) |
 | T-002 | Add a run-report script | P0 | none | validated | 2026-10-27 | [T-002.md](T-002.md) |
 | T-003 | Add a schema probe to the claude-mem importer | P0 | none | validated | 2026-10-26 | [T-003.md](T-003.md) |
 | T-004 | Make empty search results explain themselves | P0 | none | validated | 2026-10-26 | [T-004.md](T-004.md) |
