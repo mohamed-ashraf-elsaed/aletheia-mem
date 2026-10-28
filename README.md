@@ -16,7 +16,7 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
 
 </div>
 
@@ -33,10 +33,10 @@ aletheia-server
 <p align="center"><a href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/">Docs site</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/06-frontend.md">Frontend guide</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues">Issues</a></p>
 
 **Status: alpha.** The memory engine and the installers work in tests. The real Claude Code, Command Code, Codex CLI and
-OpenCode listed the generated MCP config. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), all on the author's machine and one user, with secrets redacted and no leaks found by the checker. No hook has run inside Cursor, Gemini CLI, Windsurf or OpenCode yet, and answer accuracy is not measured. CI runs on Linux and macOS; Windows is not supported yet and not tested.
+OpenCode listed the generated MCP config. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), all on the author's machine and one user, with secrets redacted and no leaks found by the checker. No hook has run inside Cursor, Gemini CLI, Windsurf or OpenCode yet, and answer accuracy is not measured. CI runs the test suite on Linux, macOS and Windows. On Windows, two hook checks (Windsurf and Gemini CLI) are skipped and no real tool was tried there, so Windows is tested in CI only.
 
 <!-- claims:begin -->
-**1,438 tests** — 0 failures (run `bun test`).
+**1,439 tests** — 0 failures (run `bun test`).
 <!-- claims:end -->
 
 [English](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/README.md) · [中文](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.zh.md) · [Español](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.es.md) · [Português (Brasil)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.pt-br.md) · [日本語](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ja.md) · [Deutsch](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.de.md) · [Français](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.fr.md) · [한국어](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ko.md) · [हिन्दी](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.hi.md) · [العربية](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ar.md) · [Русский](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ru.md).
@@ -227,7 +227,7 @@ All settings are environment variables. The defaults are safe for a single-user 
 This list is the honest half of the README.
 
 - MCP config was listed by the real CLI for Claude Code, Command Code, Codex CLI and OpenCode on 2026-10-27. Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), all on the author's machine and one user; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run. Cursor, Gemini CLI and Windsurf remain "config written from docs, not tested on a real install."
-- CI runs on Linux and macOS. The benchmark runs on Linux only. Windows is not supported yet and not tested.
+- CI runs the test suite on Linux, macOS and Windows (GitHub's windows-latest runner, Bun 1.3.10). On Windows, the hook-execution checks for Windsurf and Gemini CLI and one temp-folder cleanup check are skipped, and no real tool was tried. The install smoke test runs on Linux and macOS, and the benchmark gate on Linux only.
 - Answer accuracy is not measured. Recall@5 is retrieval, not whether an answer was correct.
 - The 1B-model extraction run failed; facts from our own extractor were measured with the rule extractor only.
 - Sync and E2EE are tested with temp data dirs and a loopback hub. No real tunnel or second host was used.

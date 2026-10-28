@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 922a57491334f593257c1a92fe3c1ceddb0c9a43f70f7d0365310edb62df451c
+> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -16,9 +16,9 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
 
-**Статус: альфа.** Движок памяти и установщики работают в тестах. Реальные Claude Code, Command Code, Codex CLI и OpenCode перечислили сгенерированную MCP-конфигурацию. Хуки отработали в реальных сессиях Claude Code (два дня использования), Command Code (одна короткая сессия) и Codex CLI (одна интерактивная сессия) — всё на машине автора и одним пользователем, с отредактированными секретами и без утечек, найденных проверкой. В Cursor, Gemini CLI, Windsurf или OpenCode хуки ещё не запускались, а точность ответов не измерена. CI работает на Linux и macOS; Windows пока не поддерживается и не тестировался.
+**Статус: альфа.** Движок памяти и установщики работают в тестах. Реальные Claude Code, Command Code, Codex CLI и OpenCode перечислили сгенерированную MCP-конфигурацию. Хуки отработали в реальных сессиях Claude Code (два дня использования), Command Code (одна короткая сессия) и Codex CLI (одна интерактивная сессия) — всё на машине автора и одним пользователем, с отредактированными секретами и без утечек, найденных проверкой. В Cursor, Gemini CLI, Windsurf или OpenCode хуки ещё не запускались, а точность ответов не измерена. CI запускает набор тестов на Linux, macOS и Windows. В Windows пропускаются две проверки хуков (Windsurf и Gemini CLI), и ни один настоящий инструмент там не пробовали, поэтому Windows проверен только в CI.
 
 Машинные переводы находятся в `docs/i18n/`; английская версия является основной. Ни один перевод не проверен носителем языка.
 
@@ -187,7 +187,7 @@ _Competitor cells are copied from each project's own public documentation, fetch
 Этот список — честная половина README.
 
 - Ни одна конфигурация не запускалась внутри своего хост-приложения. «Конфигурация написана по документации, не проверена на реальной установке».
-- CI работает на Linux и macOS. Бенчмарк работает только на Linux. Windows пока не поддерживается и не тестировался.
+- CI запускает набор тестов на Linux, macOS и Windows (раннер GitHub windows-latest, Bun 1.3.10). В Windows пропускаются проверки запуска хуков для Windsurf и Gemini CLI и одна проверка очистки временных папок, и ни один настоящий инструмент не пробовали. Дымовой тест установки работает на Linux и macOS, а проверка бенчмарка — только на Linux.
 - Точность ответов не измерена. Recall@5 — это поиск, а не правильность ответа.
 - Запуск извлечения моделью на 1B не удался; факты нашего извлекателя измерены только извлекателем правил.
 - Синхронизация и E2EE проверены только с временными каталогами данных и loopback-хабом. Реальный туннель и второй хост не использовались.

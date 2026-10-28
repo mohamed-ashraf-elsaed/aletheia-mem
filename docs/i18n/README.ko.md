@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 922a57491334f593257c1a92fe3c1ceddb0c9a43f70f7d0365310edb62df451c
+> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -16,9 +16,9 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
 
-**상태: 알파.** 메모리 엔진과 설치 프로그램은 테스트에서 동작합니다. 실제 Claude Code, Command Code, Codex CLI, OpenCode는 생성된 MCP 설정을 나열했습니다. 훅은 저자의 머신에서 실제 Claude Code(이틀 사용), Command Code(짧은 세션 하나), Codex CLI(인터랙티브 세션 하나) 세션에서 실행되었으며, 모두 한 명의 사용자에 의한 것으로, 비밀은 가려졌고 검사기는 누출을 찾지 못했습니다. Cursor, Gemini CLI, Windsurf 또는 OpenCode 내부에서는 아직 훅이 실행된 적이 없고, 답변 정확도는 측정되지 않았습니다. CI는 Linux와 macOS에서 실행되며, Windows는 아직 지원되지 않고 테스트되지 않았습니다.
+**상태: 알파.** 메모리 엔진과 설치 프로그램은 테스트에서 동작합니다. 실제 Claude Code, Command Code, Codex CLI, OpenCode는 생성된 MCP 설정을 나열했습니다. 훅은 저자의 머신에서 실제 Claude Code(이틀 사용), Command Code(짧은 세션 하나), Codex CLI(인터랙티브 세션 하나) 세션에서 실행되었으며, 모두 한 명의 사용자에 의한 것으로, 비밀은 가려졌고 검사기는 누출을 찾지 못했습니다. Cursor, Gemini CLI, Windsurf 또는 OpenCode 내부에서는 아직 훅이 실행된 적이 없고, 답변 정확도는 측정되지 않았습니다. CI는 테스트 스위트를 Linux, macOS, Windows에서 실행합니다. Windows에서는 훅 검사 두 개(Windsurf와 Gemini CLI)를 건너뛰며 실제 도구는 사용해 보지 않았으므로, Windows는 CI에서만 테스트되었습니다.
 
 기계 번역은 `docs/i18n/`에 있습니다. 영어판이 기준입니다. 어떤 번역도 원어민 검토를 받지 않았습니다.
 
@@ -187,7 +187,7 @@ _Competitor cells are copied from each project's own public documentation, fetch
 이 목록은 README의 정직한 절반입니다.
 
 - 어떤 설정도 호스트 앱 안에서 실행되지 않았습니다. "설정은 문서를 보고 작성했으며 실제 설치에서 테스트하지 않았습니다."
-- CI는 Linux와 macOS에서 실행됩니다. 벤치마크는 Linux에서만 실행됩니다. Windows는 아직 지원되지 않고 테스트되지 않았습니다.
+- CI는 테스트 스위트를 Linux, macOS, Windows(GitHub의 windows-latest 러너, Bun 1.3.10)에서 실행합니다. Windows에서는 Windsurf와 Gemini CLI의 훅 실행 검사와 임시 폴더 정리 검사 하나를 건너뛰며, 실제 도구는 사용해 보지 않았습니다. 설치 스모크 테스트는 Linux와 macOS에서, 벤치마크 게이트는 Linux에서만 실행됩니다.
 - 답변 정확도는 측정되지 않았습니다. Recall@5는 검색이지 답변이 옳았는지가 아닙니다.
 - 10억 파라미터 모델 추출 실행은 실패했습니다. 우리 추출기의 사실은 규칙 추출기로만 측정했습니다.
 - 동기화와 E2EE는 임시 데이터 디렉터리와 루프백 허브에서만 테스트했습니다. 실제 터널이나 두 번째 호스트는 사용하지 않았습니다.
