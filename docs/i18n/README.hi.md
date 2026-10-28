@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 9c4b57e1221ebbf5d369ab883738ff1650098bda3392ef66460f21cdab792c2a
+> Source: [README.md](../../README.md) · source-sha256: 922a57491334f593257c1a92fe3c1ceddb0c9a43f70f7d0365310edb62df451c
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -18,7 +18,7 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
 
-**स्थिति: अल्फ़ा।** मेमोरी इंजन और इंस्टॉलर टेस्ट में काम करते हैं। वास्तविक Claude Code, Command Code, Codex CLI और OpenCode ने जनरेट की गई MCP कॉन्फ़िग को सूचीबद्ध किया। लेखक की मशीन पर वास्तविक Claude Code सत्रों में दो दिनों तक हुक चले, जिन्होंने प्रॉम्प्ट और टूल इवेंट कैप्चर किए, सीक्रेट रिडैक्ट किए गए और चेकर को कोई लीक नहीं मिला — एक उपयोगकर्ता, एक मशीन। किसी भी अन्य टूल के अंदर अभी तक कोई हुक या सत्र नहीं चला है, और उत्तर की सटीकता मापी नहीं गई है। CI Linux और macOS पर चलता है; Windows अभी समर्थित नहीं है और उसका परीक्षण नहीं हुआ है।
+**स्थिति: अल्फ़ा।** मेमोरी इंजन और इंस्टॉलर टेस्ट में काम करते हैं। वास्तविक Claude Code, Command Code, Codex CLI और OpenCode ने जनरेट की गई MCP कॉन्फ़िग को सूचीबद्ध किया। लेखक की मशीन पर वास्तविक Claude Code (दो दिनों का उपयोग), Command Code (एक छोटा सत्र) और Codex CLI (एक इंटरैक्टिव सत्र) के सत्रों में हुक चले, सभी एक उपयोगकर्ता के साथ, सीक्रेट रिडैक्ट किए गए और चेकर को कोई लीक नहीं मिला। Cursor, Gemini CLI, Windsurf या OpenCode के अंदर अभी तक कोई हुक नहीं चला है, और उत्तर की सटीकता मापी नहीं गई है। CI Linux और macOS पर चलता है; Windows अभी समर्थित नहीं है और उसका परीक्षण नहीं हुआ है।
 
 मशीनी अनुवाद `docs/i18n/` में हैं; अंग्रेज़ी संस्करण मानक है। किसी भी अनुवाद की मूल वक्ता द्वारा समीक्षा नहीं हुई है।
 
@@ -66,15 +66,15 @@ Aletheia किसी एक टूल पर निर्भर नहीं �
 <!-- gen:tools -->
 | Tool | Level | Verification | Hook events installed |
 |---|---|---|---|
-| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days (prompts and tool events captured, secrets redacted, no leaks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| command-code | full | MCP connection 1.88.1 on 2026-10-27; hooks not run | SessionStart, PostToolUse, Stop |
+| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| command-code | full | MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine | SessionStart, PostToolUse, Stop |
 | cursor | full | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
-| codex | full | MCP connection 0.130.0 on 2026-10-27; hooks not run | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| codex | full | MCP connection 0.130.0 on 2026-10-27; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
 | gemini-cli | full | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
 | windsurf | full | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
 | opencode | mcp+rules | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |
 
-_Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection when the real CLI listed the server. Hooks have run only inside real Claude Code sessions so far._
+_Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run._
 <!-- /gen:tools -->
 
 ## मापे गए आंकड़े

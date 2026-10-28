@@ -33,10 +33,10 @@ aletheia-server
 <p align="center"><a href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/">Docs site</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/06-frontend.md">Frontend guide</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues">Issues</a></p>
 
 **Status: alpha.** The memory engine and the installers work in tests. The real Claude Code, Command Code, Codex CLI and
-OpenCode listed the generated MCP config. Hooks have run in real Claude Code sessions on the author's machine over two days, capturing prompts and tool events with secrets redacted and no leaks found by the checker — one user on one machine. No hook or session has run inside any other tool yet, and answer accuracy is not measured. CI runs on Linux and macOS; Windows is not supported yet and not tested.
+OpenCode listed the generated MCP config. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), all on the author's machine and one user, with secrets redacted and no leaks found by the checker. No hook has run inside Cursor, Gemini CLI, Windsurf or OpenCode yet, and answer accuracy is not measured. CI runs on Linux and macOS; Windows is not supported yet and not tested.
 
 <!-- claims:begin -->
-**1,422 tests** — 0 failures (run `bun test`).
+**1,423 tests** — 0 failures (run `bun test`).
 <!-- claims:end -->
 
 [English](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/README.md) · [中文](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.zh.md) · [Español](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.es.md) · [Português (Brasil)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.pt-br.md) · [日本語](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ja.md) · [Deutsch](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.de.md) · [Français](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.fr.md) · [한국어](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ko.md) · [हिन्दी](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.hi.md) · [العربية](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ar.md) · [Русский](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ru.md).
@@ -90,21 +90,21 @@ the instruction file each tool already reads. What has and has not been checked:
 | Config formats for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI, Windsurf, OpenCode | Written from official docs fetched 2026-10-26 and tested against fixtures. The real CLI listed the aletheia MCP server for Claude Code, Command Code, Codex CLI and OpenCode on 2026-10-27; Cursor, Gemini CLI and Windsurf are **Not tested on a real install.** |
 | Claude Desktop MCP config | Documented and merge-tested against a fixture; not opened in the app |
 | Rules files: `CLAUDE.md`, `AGENTS.md`, `GEMINI.md`, `.cursor/rules/*.mdc`, `.windsurf/rules/*.md`, Copilot, Aider | Written and tested in temp folders (`docs/verification/rules-targets.md`) |
-| Any of the above **on a real install of that tool** | MCP config was read back by the real CLI for Claude Code, Command Code, Codex CLI and OpenCode on 2026-10-27. Hooks ran in real Claude Code sessions on the author's machine over two days (prompts and tool events captured, secrets redacted, no leaks); one user on one machine. No hook or session ran inside the other tools. |
-| Automatic capture through a tool's hooks | Built for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf. Each installed hook command is exercised end to end in a temp HOME with a recorded payload. Hooks ran in real Claude Code sessions (one user, one machine); no other tool has run a hook yet. OpenCode is MCP+rules. |
+| Any of the above **on a real install of that tool** | MCP config was read back by the real CLI for Claude Code, Command Code, Codex CLI and OpenCode on 2026-10-27. Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), all on the author's machine and one user (prompts and tool events captured, secrets redacted, no leaks). No hook ran inside Cursor, Gemini CLI, Windsurf or OpenCode. |
+| Automatic capture through a tool's hooks | Built for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf. Each installed hook command is exercised end to end in a temp HOME with a recorded payload. Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run. OpenCode is MCP+rules. |
 
 <!-- gen:tools -->
 | Tool | Level | Verification | Hook events installed |
 |---|---|---|---|
-| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days (prompts and tool events captured, secrets redacted, no leaks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| command-code | full | MCP connection 1.88.1 on 2026-10-27; hooks not run | SessionStart, PostToolUse, Stop |
+| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| command-code | full | MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine | SessionStart, PostToolUse, Stop |
 | cursor | full | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
-| codex | full | MCP connection 0.130.0 on 2026-10-27; hooks not run | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| codex | full | MCP connection 0.130.0 on 2026-10-27; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
 | gemini-cli | full | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
 | windsurf | full | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
 | opencode | mcp+rules | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |
 
-_Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection when the real CLI listed the server. Hooks have run only inside real Claude Code sessions so far._
+_Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run._
 <!-- /gen:tools -->
 
 ## Measured numbers
@@ -226,7 +226,7 @@ All settings are environment variables. The defaults are safe for a single-user 
 
 This list is the honest half of the README.
 
-- MCP config was listed by the real CLI for Claude Code, Command Code, Codex CLI and OpenCode on 2026-10-27. Hooks ran in real Claude Code sessions on the author's machine over two days (prompts and tool events captured, secrets redacted, no leaks); no hook or session ran inside the other tools. Cursor, Gemini CLI and Windsurf remain "config written from docs, not tested on a real install."
+- MCP config was listed by the real CLI for Claude Code, Command Code, Codex CLI and OpenCode on 2026-10-27. Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), all on the author's machine and one user; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run. Cursor, Gemini CLI and Windsurf remain "config written from docs, not tested on a real install."
 - CI runs on Linux and macOS. The benchmark runs on Linux only. Windows is not supported yet and not tested.
 - Answer accuracy is not measured. Recall@5 is retrieval, not whether an answer was correct.
 - The 1B-model extraction run failed; facts from our own extractor were measured with the rule extractor only.

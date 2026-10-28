@@ -76,7 +76,7 @@ export function renderTools(format = "md", installers = INSTALLERS) {
     installer.events?.length ? installer.events.join(", ") : "none (MCP and rules only)",
   ]);
   const lines = [table(format, headers, rows)];
-  lines.push(note(format, "Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection when the real CLI listed the server. Hooks have run only inside real Claude Code sessions so far."));
+  lines.push(note(format, "Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run."));
   return lines.join("\n\n");
 }
 

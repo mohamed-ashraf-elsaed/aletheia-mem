@@ -15,10 +15,10 @@ reads, and what is verified on this machine. Five more hosts and Claude Desktop 
 | `windsurf` | full | from-docs-only | 4 events | `~/.config/devin/mcp_config.json` (or legacy) | global rules + `.windsurf/rules/*.md` |
 | `opencode` | mcp+rules | from-docs-only | none shipped | `~/.config/opencode/opencode.json` | `AGENTS.md` |
 
-No tool was opened with this config in this pass. "from-docs-only" means the format came from the tool's official
-documentation (URL and date below) and the installer was tested against fixtures; it does **not** mean a real
-install was tested. Claude Code's shape was also checked against a real plugin hook file, and Command Code's
-against its bundled reference and a real CLI, but neither ran a real session here.
+Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI
+(one interactive session), all on the author's machine and one user. Cursor, Gemini CLI, Windsurf and OpenCode
+hooks have not run. "from-docs-only" means the format came from the tool's official documentation (URL and date
+below) and the installer was tested against fixtures; it does **not** mean a real install was tested.
 
 ## One command
 
@@ -107,12 +107,12 @@ reference instead.
 
 ## UNVERIFIED
 
-- Claude Code `SessionStart` `additionalContext` in `settings.json` hooks has not been exercised by a real Claude
-  Code session here. It is the shape claude-mem's plugin uses. `UNVERIFIED` until `docs/manual-test.md` is run.
+- Claude Code `SessionStart` `additionalContext` in `settings.json` hooks has not been confirmed by the checker in a
+  real session here. It is the shape claude-mem's plugin uses. `UNVERIFIED` until `docs/manual-test.md` is run.
 - Claude Code's exact `Stop`/`SessionEnd` payload field `last_assistant_message` comes from claude-mem's adapter,
   not from a fetched official page. `UNVERIFIED`.
-- Command Code's hook output was checked against its reference and tested by piping recorded JSON; a real
-  Command Code session has not been run here. `UNVERIFIED` until `docs/manual-test.md` is run.
+- Command Code's hook output was checked against its reference and tested by piping recorded JSON, then ran in one
+  short session; the checker saw PostToolUse and Stop, and the hooks it does not have are documented above.
 
 ## Cursor
 
@@ -141,8 +141,9 @@ Source: <https://cursor.com/docs/agent/hooks>, <https://cursor.com/docs/context/
 
 Events installed: `SessionStart`, `UserPromptSubmit`, `PostToolUse`, `Stop`, `SessionEnd`. Fields read:
 common `session_id`, `cwd`, `hook_event_name`; `prompt`; `tool_name`, `tool_input`, `tool_response`;
-`last_assistant_message`. Codex requires non-managed hooks to be reviewed once with `/hooks`; that was not
-exercised. The TOML guard is structural, not a full parser. Codex 0.130.0 is installed, but no real hook ran.
+`last_assistant_message`. Codex requires non-managed hooks to be reviewed once with `/hooks`; the owner reviewed
+them once and hooks ran in one interactive session. The TOML guard is structural, not a full parser. Codex 0.165.0
+is installed.
 
 Source: <https://developers.openai.com/codex/hooks>, <https://developers.openai.com/codex/config-reference>,
 <https://developers.openai.com/codex/mcp>, <https://developers.openai.com/codex/agent-configuration/agents-md>
@@ -300,14 +301,17 @@ export ALETHEIA_DATA_DIR="$root/data"
 export ALETHEIA_PORT=37890
 aletheia install command-code --write
 aletheia install claude-code --write
+aletheia install codex --write
 ```
 
-Start one short session in Command Code (or Claude Code) in this project with the same `HOME`, send one prompt and
-one file-reading tool call, then end the session. Run the checker on the data directory it wrote:
+Start one short session in Command Code, Claude Code or Codex CLI in this project with the same `HOME`, send one
+prompt and one file-reading tool call, then end the session. Codex requires the non-managed hooks to be reviewed
+once with `/hooks` before they run. Run the checker on the data directory it wrote:
 
 ```bash
 bun scripts/hook-check.mjs "$ALETHEIA_DATA_DIR" --tool command-code
 bun scripts/hook-check.mjs "$ALETHEIA_DATA_DIR" --tool claude-code
+bun scripts/hook-check.mjs "$ALETHEIA_DATA_DIR" --tool codex
 ```
 
 `scripts/hook-check.mjs` opens `hub.db` read-only and prints the sessions seen, events per hook type, the first
@@ -320,11 +324,12 @@ What a real session captures per tool:
 |---|---|---|
 | claude-code | SessionStart context (injected, no stored row), UserPromptSubmit (prompt), PostToolUse (tool event), Stop and SessionEnd (summary) | nothing in its five-event set |
 | command-code | SessionStart context (injected, no stored row), PostToolUse (tool event), Stop (session end) | UserPromptSubmit and SessionEnd: Command Code has no such hooks, so prompts and session-end summaries are not captured |
+| codex | SessionStart context (injected, no stored row), UserPromptSubmit (prompt), PostToolUse (tool event), Stop and SessionEnd (summary) | nothing in its five-event set |
 
 Command Code has no `UserPromptSubmit` or `SessionEnd` hook, so the checker marks those two events "not installed"
 instead of FAIL. `SessionStart` injects context but stores no row, so it is reported as context-only and cannot be
-confirmed from the database. For Claude Code, the checker counts the summary memory as the Stop/SessionEnd signal
-and falls back to the session-end table when that has rows and there is no summary.
+confirmed from the database. For Claude Code and Codex, the checker counts the summary memory as the Stop/SessionEnd
+signal and falls back to the session-end table when that has rows and there is no summary.
 
 ## Sources for the five new hosts
 

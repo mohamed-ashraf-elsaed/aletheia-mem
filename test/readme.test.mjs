@@ -33,7 +33,7 @@ describe("README claims", () => {
   test("no host is claimed as working without a real-install test", () => {
     expect(readme).not.toMatch(/works with (Cursor|Claude|Codex|Gemini|Windsurf|OpenCode|Command Code)/i);
     expect(readme).toContain("config written from docs, not tested on a real install");
-    expect(readme).toContain("no other tool has run a hook yet");
+    expect(readme).toContain("Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run");
   });
 
   test("relative documentation links resolve", async () => {

@@ -15,7 +15,7 @@ describe("docs and claims match what was tested", () => {
     expect(text).not.toContain("## Which tools it works with");
     expect(text).not.toContain("Automatic capture through a tool's hooks | Not built");
     expect(text).toContain("Built for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf");
-    expect(text).toContain("no other tool has run a hook yet");
+    expect(text).toContain("Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run");
     expect(text).toContain("Not tested on a real install");
     expect(text).toContain("install --list");
     expect(text).not.toContain("115 tests");
@@ -35,7 +35,7 @@ describe("docs and claims match what was tested", () => {
       "https://modelcontextprotocol.io/quickstart/user",
     ]) expect(text).toContain(url);
     expect(text).toContain("2026-10-26");
-    expect(text).toContain("No tool was opened with this config in this pass");
+    expect(text).toContain("Hooks have run in real sessions of Claude Code (two days of use)");
   });
 
   whenPresent("docs/manual-test.md")("the manual test marks every new host as not run", () => {

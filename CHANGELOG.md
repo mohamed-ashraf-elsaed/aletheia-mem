@@ -11,6 +11,10 @@ history.
 - The MCP `initialize` reply and `GET /v1/info` reported version 0.1.0 whatever the installed version. They now report the package version.
 - The hook checker counted session-end rows from every tool for each tool, so a tool with no Stop hook run could still pass. It now counts only rows for that tool's own sessions, and accepts `--tool codex`.
 
+### Changed
+
+- Corrected the public hook claims: hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), all on the author's machine and one user; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run.
+
 ## [0.1.5] - 2026-10-28
 
 ### Changed
