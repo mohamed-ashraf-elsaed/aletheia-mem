@@ -318,12 +318,13 @@ What a real session captures per tool:
 
 | Tool | Captured | Not captured |
 |---|---|---|
-| claude-code | SessionStart context (injected, no stored row), UserPromptSubmit (prompt), PostToolUse (tool event), Stop and SessionEnd (summary and session end) | nothing in its five-event set |
+| claude-code | SessionStart context (injected, no stored row), UserPromptSubmit (prompt), PostToolUse (tool event), Stop and SessionEnd (summary) | nothing in its five-event set |
 | command-code | SessionStart context (injected, no stored row), PostToolUse (tool event), Stop (session end) | UserPromptSubmit and SessionEnd: Command Code has no such hooks, so prompts and session-end summaries are not captured |
 
 Command Code has no `UserPromptSubmit` or `SessionEnd` hook, so the checker marks those two events "not installed"
 instead of FAIL. `SessionStart` injects context but stores no row, so it is reported as context-only and cannot be
-confirmed from the database.
+confirmed from the database. For Claude Code, the checker counts the summary memory as the Stop/SessionEnd signal
+and falls back to the session-end table when that has rows and there is no summary.
 
 ## Sources for the five new hosts
 

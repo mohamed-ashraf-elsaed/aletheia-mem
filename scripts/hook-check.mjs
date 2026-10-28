@@ -122,8 +122,14 @@ export function checkHook({ dataDir, tool = "claude-code" } = {}) {
     if (event === "SessionStart") return { signal: "context only (no stored row)", count: null };
     if (event === "UserPromptSubmit") return { signal: "prompt rows", count: result.byKind.prompt ?? 0 };
     if (event === "PostToolUse") return { signal: "event rows", count: result.byKind.event ?? 0 };
-    if (event === "Stop" || event === "SessionEnd") return { signal: "session-end rows", count: result.sessionEnd.total };
-    return { signal: `summary rows`, count: result.byKind.summary ?? 0 };
+    if (event === "Stop" || event === "SessionEnd") {
+      const summary = result.byKind.summary ?? 0;
+      const ended = result.sessionEnd.total;
+      if (summary > 0) return { signal: ended > 0 ? "summary rows (+ session-end rows)" : "summary rows", count: summary };
+      if (ended > 0) return { signal: "session-end rows", count: ended };
+      return { signal: "summary rows or session-end rows", count: 0 };
+    }
+    return { signal: "summary rows", count: result.byKind.summary ?? 0 };
   };
 
   for (const event of adapter.events) {

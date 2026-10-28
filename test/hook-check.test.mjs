@@ -2,6 +2,7 @@
 // artifacts without writing. These tests feed recorded payloads through the real hook command (`aletheia hook`)
 // into a temp data dir, then run the checker on that dir.
 import { afterAll, describe, expect, test } from "bun:test";
+import { Database } from "bun:sqlite";
 import { appendFileSync, mkdirSync } from "node:fs";
 import { basename, join } from "node:path";
 import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
@@ -43,7 +44,7 @@ async function runCheck(dataDir, tool) {
 }
 
 describe("scripts/hook-check.mjs", () => {
-  test("a recorded Claude Code session passes and reports prompt, event and session-end signals", async () => {
+  test("a recorded Claude Code session passes and reports prompt, event and summary signals", async () => {
     const { env, proj, dataDir } = makeEnv();
     const base = { cwd: proj, session_id: "cc-real" };
     for (const [event, payload] of [
@@ -63,9 +64,47 @@ describe("scripts/hook-check.mjs", () => {
     expect(check.stdout).toContain("sessions seen: 1");
     expect(check.stdout).toContain("UserPromptSubmit");
     expect(check.stdout).toContain("PostToolUse");
-    expect(check.stdout).toContain("session-end rows");
+    expect(check.stdout).toContain("summary rows");
     expect(check.stdout).toContain("[PASS]");
     expect(check.stdout).toContain("spool: empty");
+  });
+
+  test("summary rows with an empty session-end table still pass the Stop and SessionEnd verdicts", async () => {
+    const { env, proj, dataDir, dbPath } = makeEnv();
+    const base = { cwd: proj, session_id: "cc-summary" };
+    for (const [event, payload] of [
+      ["UserPromptSubmit", { ...base, hook_event_name: "UserPromptSubmit", prompt: "hello there" }],
+      ["PostToolUse", { ...base, hook_event_name: "PostToolUse", tool_name: "Read", tool_input: { file_path: "README.md" }, tool_response: "the README" }],
+      ["Stop", { ...base, hook_event_name: "Stop", last_assistant_message: "read the README" }],
+      ["SessionEnd", { ...base, hook_event_name: "SessionEnd" }],
+    ]) {
+      expect((await runHook(env, "claude-code", event, payload)).exitCode).toBe(0);
+    }
+    const db = new Database(dbPath);
+    db.run("DELETE FROM session_end");
+    db.close();
+
+    const check = await runCheck(dataDir, "claude-code");
+    expect(check.exitCode).toBe(0);
+    expect(check.stdout).toContain("overall: PASS");
+    expect(check.stdout).toContain("summary rows");
+    expect(check.stdout).not.toContain("session-end rows");
+  });
+
+  test("no summary rows and no session-end rows fail the Stop and SessionEnd verdicts", async () => {
+    const { env, proj, dataDir } = makeEnv();
+    const base = { cwd: proj, session_id: "cc-nosummary" };
+    for (const [event, payload] of [
+      ["UserPromptSubmit", { ...base, hook_event_name: "UserPromptSubmit", prompt: "hello there" }],
+      ["PostToolUse", { ...base, hook_event_name: "PostToolUse", tool_name: "Read", tool_input: { file_path: "README.md" }, tool_response: "the README" }],
+    ]) {
+      expect((await runHook(env, "claude-code", event, payload)).exitCode).toBe(0);
+    }
+
+    const check = await runCheck(dataDir, "claude-code");
+    expect(check.exitCode).toBe(1);
+    expect(check.stdout).toContain("overall: FAIL");
+    expect(check.stdout).toContain("summary rows or session-end rows");
   });
 
   test("a recorded Command Code session passes and names the two hooks it cannot install", async () => {
