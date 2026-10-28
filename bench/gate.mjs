@@ -1,15 +1,14 @@
 #!/usr/bin/env bun
 // Recall@5 and p95 latency regression gate. Synthetic and deterministic: a seeded corpus, no model, no
-// network, no downloaded data. The corpus generator and the seeded PRNG are the same as bench/scale.mjs;
-// the query/gold pair shape mirrors bench/graph-recall.mjs.
+// network, no downloaded data. The corpus generator and the seeded PRNG are the same as bench/scale.mjs.
 //
 //   bun bench/gate.mjs                        check the current numbers against bench/baseline.json
 //   bun bench/gate.mjs --write bench/baseline.json   (re)write the baseline from the current numbers
 //   bun bench/gate.mjs --baseline /path.json  check against a different baseline
 //
-// Latency is enforced with a 5 ms floor: when the baseline p95 is below 5 ms, a rise is reported but never
-// fails the gate. Shared CI runners are noisy, and sub-5 ms SQLite latencies are dominated by scheduler and
-// cache jitter rather than by the search path, so a hard percentage rule there would flake for no reason.
+// Queries carry distractors (near-duplicate documents sharing a topic vocabulary and the answer needle), so
+// the answer is not always ranked first and Recall@5 has headroom to drop. The corpus is large enough that p95
+// sits above the 5 ms floor on the CI runner, which makes the latency rule enforceable instead of report-only.
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { HubStore } from "../src/hub/store.mjs";
@@ -18,7 +17,8 @@ export const RECALL_TOLERANCE = 0.01; // one point of Recall@5 (a fraction in [0
 export const LATENCY_TOLERANCE_PCT = 20;
 export const LATENCY_FLOOR_MS = 5;
 
-export const DEFAULTS = { rows: 1500, queries: 100, seed: 1, runs: 5, topics: 20 };
+export const DEFAULTS = { rows: 50000, queries: 100, seed: 1, runs: 5, topics: 10 };
+const BASELINE_RUNS = 5; // independent measurements the --write baseline is the median of, to dodge p95 noise
 
 // mulberry32, the deterministic PRNG from bench/scale.mjs, so --seed reproduces the corpus across runs.
 function mulberry32(seed) {
@@ -41,31 +41,65 @@ const pct = (arr, p) => arr.slice().sort((a, b) => a - b)[Math.floor((arr.length
 const median = (arr) => arr.slice().sort((a, b) => a - b)[Math.floor((arr.length - 1) / 2)];
 
 /**
- * Build the fixed corpus. Filler memories share a topic word; each answer memory adds a unique needle so its
- * query has exactly one unambiguous gold answer. Ranking is deterministic because the needles are unique tokens.
- * Returns the gold list [{ query, answerId }].
+ * Build the fixed corpus. Every query has four distractors that share its topic vocabulary and (for most
+ * difficulties) its needle, so the answer competes with 3-5 plausible near-duplicates. Difficulty is seeded from
+ * the query index: most answers are ranked first, a share are pushed to rank 3, and every tenth answer is pushed
+ * to rank 6 so Recall@5 lands near 0.9 instead of 1.0. Document length is the only ranking lever; everything
+ * stays deterministic under the seeded PRNG. Returns the gold list [{ query, answerId }].
  */
 export function buildCorpus(store, { rows = DEFAULTS.rows, queries = DEFAULTS.queries, seed = DEFAULTS.seed, topics = DEFAULTS.topics } = {}) {
   const random = mulberry32(seed);
+  const distractors = 4;
+  let hardCount = 0;
+  for (let q = 0; q < queries; q++) if (q % 10 === 9) hardCount += 1;
+  const nonFiller = queries * (1 + distractors) + hardCount;
+  const fillerCount = rows - nonFiller;
+  const shared = (topic) => `topic${topic}share0 topic${topic}share1`;
+  const needle = (q) => `needle${q}`;
   const gold = [];
   store.db.exec("BEGIN");
   try {
-    for (let i = 0; i < rows - queries; i++) {
+    for (let i = 0; i < fillerCount; i++) {
+      const topic = i % topics;
       store.add({
         project: "gate", kind: "observation", type: "note",
         title: `filler ${i}`,
-        narrative: `topic${i % topics} ${sentence(random, 8)}`,
+        narrative: `${shared(topic)} ${sentence(random, 8)}`,
         tool: "gate",
       }, { actor: "import" });
     }
-    for (let i = 0; i < queries; i++) {
-      const memory = store.add({
-        project: "gate", kind: "observation", type: "note",
-        title: `answer ${i}`,
-        narrative: `topic${i % topics} needle${i} ${sentence(random, 6)}`,
-        tool: "gate",
-      }, { actor: "import" });
-      gold.push({ query: `topic${i % topics} needle${i}`, answerId: memory.id });
+    for (let q = 0; q < queries; q++) {
+      const topic = q % topics;
+      const difficulty = q % 10;
+      const sharedWords = shared(topic);
+      const answerToken = needle(q);
+      const docs = [];
+      const push = (title, narrative, answer) => docs.push({ title, narrative, answer });
+      if (difficulty <= 5) {
+        push(`q${q} answer`, `${sharedWords} ${answerToken} ${sentence(random, 4)}`, true);
+        for (let j = 0; j < distractors; j++) push(`q${q} d${j}`, `${sharedWords} ${answerToken} dup${q}${j} ${sentence(random, 6)}`, false);
+      } else if (difficulty <= 8) {
+        push(`q${q} answer`, `${sharedWords} ${answerToken} ${sentence(random, 12)}`, true);
+        push(`q${q} d0`, `${sharedWords} ${answerToken} dup${q}0 ${sentence(random, 1)}`, false);
+        push(`q${q} d1`, `${sharedWords} ${answerToken} dup${q}1 ${sentence(random, 2)}`, false);
+        push(`q${q} d2`, `${sharedWords} other${q}0 ${sentence(random, 6)}`, false);
+        push(`q${q} d3`, `${sharedWords} other${q}1 ${sentence(random, 6)}`, false);
+      } else {
+        push(`q${q} answer`, `${sharedWords} ${answerToken} ${sentence(random, 14)}`, true);
+        for (let j = 0; j < distractors; j++) push(`q${q} d${j}`, `${sharedWords} ${answerToken} dup${q}${j} ${sentence(random, 1 + j)}`, false);
+        push(`q${q} extra`, `${sharedWords} ${answerToken} dup${q}x ${sentence(random, 5)}`, false);
+      }
+      let answerId = null;
+      for (const doc of docs) {
+        const memory = store.add({
+          project: "gate", kind: "observation", type: "note",
+          title: doc.title,
+          narrative: doc.narrative,
+          tool: "gate",
+        }, { actor: "import" });
+        if (doc.answer) answerId = memory.id;
+      }
+      gold.push({ query: `${sharedWords} ${answerToken}`, answerId });
     }
     store.db.exec("COMMIT");
   } catch (error) {
@@ -191,9 +225,14 @@ function main() {
   const runs = Number(flagValue(args, "--runs", String(DEFAULTS.runs)));
   const topics = Number(flagValue(args, "--topics", String(DEFAULTS.topics)));
 
-  const current = computeMetrics({ rows, queries, seed, runs, topics });
-
   if (write) {
+    const samples = [];
+    for (let i = 0; i < BASELINE_RUNS; i++) samples.push(computeMetrics({ rows, queries, seed, runs, topics }));
+    const current = {
+      ...samples[0],
+      recall5: Number(median(samples.map((sample) => sample.recall5)).toFixed(4)),
+      p95_ms: Number(median(samples.map((sample) => sample.p95_ms)).toFixed(3)),
+    };
     const baseline = {
       date: new Date().toISOString().slice(0, 10),
       commit: gitCommit(),
@@ -202,11 +241,13 @@ function main() {
       machine: `${process.platform} ${process.arch} bun ${process.versions.bun}`,
     };
     writeFileSync(baselinePath, `${JSON.stringify(baseline, null, 2)}\n`);
-    console.log(`gate: wrote ${baselinePath} (recall@5 ${current.recall5.toFixed(4)}, p95 ${current.p95_ms.toFixed(3)} ms, rows ${rows}, queries ${queries}, seed ${seed}, runs ${runs})`);
+    console.log(`gate: wrote ${baselinePath} (recall@5 ${current.recall5.toFixed(4)}, p95 ${current.p95_ms.toFixed(3)} ms, rows ${rows}, queries ${queries}, seed ${seed}, runs ${runs}, median of ${BASELINE_RUNS})`);
     return;
   }
 
+  // Load first so a missing or malformed baseline fails before the (slower) corpus build.
   const baseline = loadBaseline(baselinePath);
+  const current = computeMetrics({ rows, queries, seed, runs, topics });
   const paramProblems = mismatchParams(baseline, current);
   if (paramProblems.length) {
     console.error(`gate: baseline parameters do not match the current run: ${paramProblems.join("; ")}`);

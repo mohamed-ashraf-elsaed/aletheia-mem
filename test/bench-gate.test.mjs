@@ -1,8 +1,10 @@
 // The regression gate compares a measured result against bench/baseline.json. The pure evaluate() function
-// is tested with fake numbers, and the CLI is spawned once to prove a missing baseline fails with a clear message.
+// is tested with fake numbers, a real corpus proves a degraded search fails, and the CLI is spawned once to
+// prove a missing baseline fails with a clear message.
 import { afterAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";
-import { evaluate } from "../bench/gate.mjs";
+import { buildCorpus, evaluate, measureRecall5 } from "../bench/gate.mjs";
+import { HubStore } from "../src/hub/store.mjs";
 import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
 
 const root = join(import.meta.dir, "..");
@@ -45,10 +47,31 @@ describe("gate evaluate", () => {
     expect(verdict.reasons.join(" ")).toContain("p95 latency");
   });
 
+  test("a fake result 30 percent slower fails on latency when the baseline is above the floor", () => {
+    const verdict = evaluate(baseline({ p95_ms: 10 }), { recall5: 1, p95_ms: 13 });
+    expect(verdict.latencyPass).toBe(false);
+    expect(verdict.pass).toBe(false);
+    expect(verdict.reasons.join(" ")).toContain("p95 latency");
+  });
+
   test("latency below the 5 ms floor is reported, not enforced", () => {
     const verdict = evaluate(baseline({ p95_ms: 3 }), { recall5: 1, p95_ms: 8 });
     expect(verdict.latencyEnforced).toBe(false);
     expect(verdict.pass).toBe(true);
+  });
+
+  test("a deliberately degraded search fails the gate on recall", () => {
+    const store = new HubStore(":memory:");
+    const gold = buildCorpus(store, { rows: 500, queries: 20, seed: 1, topics: 10 });
+    const good = measureRecall5(store, gold);
+    // Truncate the index: drop every gold answer row so the same queries can no longer find their answer.
+    for (const item of gold) store.remove(item.answerId);
+    const degraded = measureRecall5(store, gold);
+    const verdict = evaluate({ recall5: good, p95_ms: 8 }, { recall5: degraded, p95_ms: 8 });
+    expect(verdict.recallPass).toBe(false);
+    expect(verdict.pass).toBe(false);
+    expect(verdict.reasons.join(" ")).toContain("Recall@5");
+    store.close();
   });
 });
 
