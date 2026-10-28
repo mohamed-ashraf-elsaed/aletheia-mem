@@ -1,4 +1,4 @@
-// T-218: the Work tab with request cards, and the older session page it still links to.
+// the Work tab with request cards, and the older session page it still links to.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 
@@ -70,7 +70,7 @@ const routesFor = (extra = []) => [
   ["/api/hub/doctor", () => json({ tools: [] })],
 ];
 
-describe("T-218: the overview", () => {
+describe("the overview", () => {
   test("asks for a small overview, one page of requests and the goals", async () => {
     const calls = install(routesFor());
     await W.renderWork();
@@ -238,7 +238,7 @@ describe("T-218: the overview", () => {
   });
 });
 
-describe("T-215: refresh", () => {
+describe("refresh", () => {
   test("a change frame from the status bar refreshes the overview after a short pause", async () => {
     const calls = install(routesFor());
     await W.renderWork();
@@ -259,7 +259,7 @@ describe("T-215: refresh", () => {
   });
 });
 
-describe("T-218: one request", () => {
+describe("one request", () => {
   const origin = { promptCount: 2, factCount: 1, sessions: [{ sessionId: "s1", project: "p", firstAt: new Date().toISOString(), lastAt: new Date().toISOString(), ended: new Date().toISOString(), prompts: [{ id: 1, text: "Please retry", at: new Date().toISOString() }], facts: [{ id: 9, text: "Retries twice", status: "active", recordedAt: new Date().toISOString() }] }] };
   test("opens from the address and shows where this came from, with a session link", async () => {
     fakeLocation("#/work/request/0123456789abcdef");
@@ -285,7 +285,7 @@ describe("T-218: one request", () => {
   });
 });
 
-describe("T-215: one session", () => {
+describe("one session", () => {
   test("shows the summary, the timeline in order, and the facts, and links back", async () => {
     fakeLocation("#/work/session/s1?project=p");
     const calls = install([["/v1/work/session/s1", () => json({ session: { id: "s1", project: "p", tool: "cursor", firstAt: new Date().toISOString(), lastAt: new Date().toISOString(), promptCount: 1, toolCount: 1, summary: { text: "Fixed **retry**", at: new Date().toISOString() }, timeline: [{ id: 1, kind: "prompt", at: new Date(Date.now() - 60_000).toISOString(), text: "Please retry", tool: "cursor" }, { id: 2, kind: "tool", at: new Date().toISOString(), text: "Edit file", tool: "cursor", source: "memory:2" }], facts: [{ id: 9, text: "Retries twice", status: "active", confidence: 0.8, source: {} }] } })]]);

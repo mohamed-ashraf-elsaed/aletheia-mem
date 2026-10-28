@@ -1,4 +1,4 @@
-// T-020: the extraction queue is resumable. One claim at a time, exponential backoff, stale rows recovered, and a
+// the extraction queue is resumable. One claim at a time, exponential backoff, stale rows recovered, and a
 // kill -9 mid-run loses no window and duplicates no fact.
 import { afterAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";

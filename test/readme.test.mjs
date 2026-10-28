@@ -1,4 +1,4 @@
-// T-079: the README may show only badges that read a real endpoint, and no count typed by hand.
+// the README may show only badges that read a real endpoint, and no count typed by hand.
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";

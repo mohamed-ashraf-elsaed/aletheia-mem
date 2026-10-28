@@ -1,4 +1,4 @@
-// T-019: batch extraction, cap the input, and record tokens and estimated cost per call. A rejected answer is
+// batch extraction, cap the input, and record tokens and estimated cost per call. A rejected answer is
 // recorded with its raw output; a provider error is recorded and re-thrown so the queue can retry.
 import { describe, expect, test } from "bun:test";
 import { chunkEpisodes, extractWithUsage, storeFacts } from "../src/hub/facts.mjs";

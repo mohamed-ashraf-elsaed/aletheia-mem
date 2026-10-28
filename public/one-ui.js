@@ -1,4 +1,4 @@
-// The one UI shell (T-134, T-205): one page at /, hash routes, a shared header (brand, tabs with a sliding
+// The one UI shell: one page at /, hash routes, a shared header (brand, tabs with a sliding
 // indicator, project, search, theme), a status bar, shortcuts and the command palette. Each tab is a module in
 // ./tabs/ loaded on first visit, so the shell stays small. Nothing here builds markup from strings.
 import { SUBVIEWS, TABS, isDemo, parseRoute, routeOf } from "./ui-core.js";

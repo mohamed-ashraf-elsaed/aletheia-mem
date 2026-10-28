@@ -1,4 +1,4 @@
-// Inline SVG icons (T-204). Each icon is a path on a 24 by 24 grid, drawn with the current text colour. They are
+// Inline SVG icons. Each icon is a path on a 24 by 24 grid, drawn with the current text colour. They are
 // built with createElementNS, so no markup string is ever parsed. Drawn for this project; no icon set is copied.
 const NS = "http://www.w3.org/2000/svg";
 

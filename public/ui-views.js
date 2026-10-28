@@ -1,4 +1,4 @@
-// Shared pieces of the Memory, Review and Rules tabs (T-208): filter controls, and the cards for a memory, a fact
+// Shared pieces of the Memory, Review and Rules tabs: filter controls, and the cards for a memory, a fact
 // and a dismissed item. Cards change the screen first and roll back if the request fails (see ui-actions.js).
 // Text from the API is only ever set as text, or through the safe Markdown view.
 import { badge, button, chipFilters, clampText, field, highlight, iconButton, modal, mono, promptDialog, segmented, statusDot, timeEl, toast } from "./ui-components.js";

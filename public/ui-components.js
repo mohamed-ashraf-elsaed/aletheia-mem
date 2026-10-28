@@ -1,4 +1,4 @@
-// The Aletheia component library (T-204). Every function returns a DOM node built with createElement,
+// The Aletheia component library. Every function returns a DOM node built with createElement,
 // createTextNode and setAttribute; text from data is only ever set as text. No framework, no markup strings, no
 // inline event handlers. Components that change over time return the node with a few methods attached.
 import { brainLoader, emptyArt } from "./ui-brand.js";

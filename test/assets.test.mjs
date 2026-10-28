@@ -1,4 +1,4 @@
-// T-083: the owner's logo (PNG), the brain mark, favicons and a 1280x640 social card; no demo GIF is claimed.
+// the owner's logo (PNG), the brain mark, favicons and a 1280x640 social card; no demo GIF is claimed.
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";

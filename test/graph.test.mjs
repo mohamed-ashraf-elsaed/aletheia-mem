@@ -1,4 +1,4 @@
-// T-048: graph retrieval walks entity links from seed memories and fuses the neighbours as a fourth RRF list,
+// graph retrieval walks entity links from seed memories and fuses the neighbours as a fourth RRF list,
 // behind a flag that is off by default. Synthetic entities and edges; the real LoCoMo part is UNVERIFIED.
 import { describe, expect, test } from "bun:test";
 import { HubStore } from "../src/hub/store.mjs";

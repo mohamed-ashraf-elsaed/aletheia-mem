@@ -1,4 +1,4 @@
-// T-151: the auto-start service writes text only. It never calls systemctl or launchctl and the real
+// the auto-start service writes text only. It never calls systemctl or launchctl and the real
 // start is NOT RUN BY AUTHOR. Tests use a temp HOME and check the generated unit and plist text.
 import { afterAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -17,7 +17,7 @@ const config = {
 
 afterAll(() => rmSync(temp, { recursive: true, force: true }));
 
-describe("T-151: auto-start service", () => {
+describe("auto-start service", () => {
   test("the Linux unit is loopback-only with Restart, Nice and documented quota defaults", () => {
     const plan = servicePlan({ config, platform: "linux" });
     expect(plan).toMatchObject({ platform: "linux", supported: true, kind: "systemd" });

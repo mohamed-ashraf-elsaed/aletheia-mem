@@ -13,7 +13,7 @@ function setup() {
   return { fx, home, dataDir };
 }
 
-describe("T-076: Claude Desktop MCP config", () => {
+describe("Claude Desktop MCP config", () => {
   test("the documented macOS and Windows paths and the observed Linux path", () => {
     const { home } = setup();
     expect(claudeDesktopPath({ home, platform: "darwin" })).toBe(join(home, "Library/Application Support/Claude/claude_desktop_config.json"));

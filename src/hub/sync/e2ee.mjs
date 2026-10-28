@@ -1,4 +1,4 @@
-// E2EE for sync (T-117): standard primitives only, from node:crypto.
+// E2EE for sync: standard primitives only, from node:crypto.
 //   - AES-256-GCM, random 96-bit nonce per message, never reused; the GCM tag authenticates the
 //     associated data, so ciphertext cannot be moved between ops or entities.
 //   - scrypt for passphrase stretching: OWASP minimum N=2^17, r=8, p=1, 32-byte output (docs/29 §29.6).

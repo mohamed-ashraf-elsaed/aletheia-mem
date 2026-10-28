@@ -1,4 +1,4 @@
-// T-168: goals roll-up links requests to goals, gives each goal Stalled / Moving / Nothing on it, aggregates
+// goals roll-up links requests to goals, gives each goal Stalled / Moving / Nothing on it, aggregates
 // progress, and splits open asks into "nothing is working on these" and "being worked on".
 import { describe, expect, test } from "bun:test";
 import { HubStore } from "../src/hub/store.mjs";
@@ -37,7 +37,7 @@ function seed(store) {
   prompt(store, "d1", "the retry button looks good", 40);
 }
 
-describe("T-168: goals roll-up", () => {
+describe("goals roll-up", () => {
   test("goals are linked to requests with status and aggregate progress", () => {
     const store = new HubStore(":memory:");
     try {

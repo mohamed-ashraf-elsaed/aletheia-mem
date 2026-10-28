@@ -1,4 +1,4 @@
-// T-119: provider presets and the ordered fallback chain. A local test server plays each failure type; no
+// provider presets and the ordered fallback chain. A local test server plays each failure type; no
 // model and no external network is touched. The chain is capped at one in-flight request by default.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { loadConfig } from "../src/config.mjs";
@@ -53,7 +53,7 @@ afterAll(() => server.stop(true));
 
 const spec = (name, path, extra = {}) => ({ name, kind: "local", url: `${base}${path}`, models: { extract: "small", summary: "large" }, ...extra });
 
-describe("T-119: presets and chain parsing", () => {
+describe("presets and chain parsing", () => {
   test("the named presets exist for every local server and the remote endpoints", () => {
     for (const name of ["ollama", "lmstudio", "llamacpp", "openrouter", "openai", "claude-cli", "anthropic-compatible"]) expect(PRESET_NAMES).toContain(name);
     expect(parseProviderList(" ollama, OpenRouter ,, openai ")).toEqual(["ollama", "openrouter", "openai"]);
@@ -82,7 +82,7 @@ describe("T-119: presets and chain parsing", () => {
   });
 });
 
-describe("T-119: fallback on each failure type", () => {
+describe("fallback on each failure type", () => {
   test("a quota (429) moves to the next provider", async () => {
     hits.length = 0;
     const ask = createFallbackProvider({ specs: [spec("first", "/quota-1"), spec("second", "/ok-1")] });
@@ -114,7 +114,7 @@ describe("T-119: fallback on each failure type", () => {
   });
 });
 
-describe("T-119: cool-down", () => {
+describe("cool-down", () => {
   test("a failed provider is skipped until its cool-down ends", async () => {
     hits.length = 0;
     let clock = 1_000_000;
@@ -140,7 +140,7 @@ describe("T-119: cool-down", () => {
   });
 });
 
-describe("T-119: concurrency cap", () => {
+describe("concurrency cap", () => {
   test("one in-flight request by default and two when asked for", async () => {
     await Bun.sleep(350); // let the aborted /slow handler finish before measuring
     waitReset();

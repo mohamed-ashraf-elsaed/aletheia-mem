@@ -1,4 +1,4 @@
-// T-137, T-210: the Rules tab. Four pages: the rules, suggested rules, writing the rules into each tool's file, and
+// the Rules tab. Four pages: the rules, suggested rules, writing the rules into each tool's file, and
 // importing from one. The frame shows the counts. Nothing is applied until you Accept, and a rule is turned off
 // rather than deleted, so every hide action here can be undone.
 import { button, toast } from "../ui-components.js";

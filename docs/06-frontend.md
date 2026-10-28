@@ -66,7 +66,7 @@ and answers `total`, `limit`, `offset` and `hasMore`. The UI sends the page size
 | `GET /api/hub/sync/status` | `limit`, `offset` over the devices |
 | `GET /api/hub/alerts/feed` | `limit`, `offset` over the newest 500 deliveries |
 | `GET /v1/work/sessions` | `project`, `state=in_progress\|finished`, `since`, `until`, `q` (session id) |
-| `GET /v1/work/goals` | `project`, `limit`, `offset`; the roll-up from T-168 |
+| `GET /v1/work/goals` | `project`, `limit`, `offset`; the goals roll-up |
 | `GET /v1/work/requests` | `project`, `filter` (all, needs-you, shipped), `sort` (newest, needs-you, most-progress), `group=tool`, `limit`; **no `offset`**, so the Work tab has a page size and the server's counts, never a pager |
 | `GET /v1/work/requests/:id` | one request plus `whereThisCameFrom` (sessions, prompts and facts) |
 | `POST /api/hub/requests/:id` | body `{action: "dismiss"}` or `{action: "restore"}`; reversible |
@@ -143,16 +143,16 @@ filter (all, needs you, shipped), sort (newest, needs you, most progress) and gr
 `GET /v1/work/requests`; the route has no `offset`, so the page size is the only paging control. Dismiss is optimistic
 and Undo restores; dismissed requests sit in their own folded list. `#/work/request/<id>` reads
 `GET /v1/work/requests/:id` and shows "where this came from": every session with its dated prompts and facts, and a
-link back to the T-145 session page.
+link back to the session page.
 
-The Goals section is the T-168 roll-up: a status per goal (Moving, Stalled, Nothing on it), aggregate progress with
+The Goals section is the goals roll-up: a status per goal (Moving, Stalled, Nothing on it), aggregate progress with
 the request count, the linked requests, the merged artifacts, and the open asks split into being worked and nothing
 working. Requests that serve no goal are counted and linked. Pin, Unpin, Dismiss and Restore still use
 `POST /api/hub/goals/:id`.
 
 Below it, the Build story shows shipped, working, waiting and idle counts, the weekly shipping line, the average days
 to ship (or "n/a") and the corrections that repeat in the owner's own prompts, with dated quotes. Memory gains an
-Economics page for the T-170 data: the totals strip, the documented read-token counter, and one row per context
+Economics page for the context-economics data: the totals strip, the documented read-token counter, and one row per context
 memory. A per-observation work token value is `null` by design, so the row prints "n/a" with the response's own
 sentence; zero is never substituted.
 

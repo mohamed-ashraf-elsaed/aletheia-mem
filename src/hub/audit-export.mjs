@@ -1,4 +1,4 @@
-// Audit export (T-093): render the append-only sync audit log as JSONL (default) or CSV, with an
+// Audit export: render the append-only sync audit log as JSONL (default) or CSV, with an
 // optional date range. Reads the existing `sync_audit` table and adds no new table or column. The audit
 // table stores ids and counts, never payloads or secrets, so the export cannot leak them either.
 import { stableStringify } from "./sync/engine.mjs";

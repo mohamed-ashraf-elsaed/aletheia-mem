@@ -172,7 +172,7 @@ export async function runSyncCommand({ config, flags, pos, out }) {
     }
   }
 
-  // ---- end-to-end encryption (T-117) -------------------------------------------------------------
+  // ---- end-to-end encryption -------------------------------------------------------------
   const passphrase = typeof flags.passphrase === "string" && flags.passphrase !== "" ? flags.passphrase : process.env.ALETHEIA_SYNC_PASSPHRASE;
 
   if (sub === "upgrade-kdf") {
@@ -257,7 +257,7 @@ export async function runSyncCommand({ config, flags, pos, out }) {
 }
 
 /**
- * `aletheia mcp-link` manages the private remote MCP endpoint (T-107). Hub-side: it reads sync.db
+ * `aletheia mcp-link` manages the private remote MCP endpoint. Hub-side: it reads sync.db
  * directly and mints a scoped token. The token is printed once and travels in the Authorization
  * header, never in the URL.
  */

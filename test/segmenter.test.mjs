@@ -1,4 +1,4 @@
-// T-037: a fixture of interleaved user turns and tool calls produces the expected rounds; the 2-minute gap splits a
+// a fixture of interleaved user turns and tool calls produces the expected rounds; the 2-minute gap splits a
 // round and each round keeps its episode ids and boundaries.
 import { describe, expect, test } from "bun:test";
 import { segmentRounds } from "../src/hub/segmenter.mjs";

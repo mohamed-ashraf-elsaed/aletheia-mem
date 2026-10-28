@@ -1,4 +1,4 @@
-// T-066: plugin and extension manifests written from official docs on 2026-10-26. Every manifest parses, every
+// plugin and extension manifests written from official docs on 2026-10-26. Every manifest parses, every
 // path it references resolves inside this package, every hook command names a script that exists, and each file
 // says from-docs-only because no host was opened to load it.
 import { describe, expect, test } from "bun:test";
@@ -23,7 +23,7 @@ const MANIFESTS = ALL_MANIFESTS.filter((manifest) => existsSync(manifest.path));
 
 const variablePath = /\$\{(CLAUDE_PLUGIN_ROOT|PLUGIN_ROOT|extensionPath)\}([^"'\\\s]*)/g;
 
-describe("T-066: plugin manifests", () => {
+describe("plugin manifests", () => {
   test("every manifest parses and carries a stable identity", () => {
     for (const manifest of MANIFESTS) {
       expect(existsSync(manifest.path)).toBe(true);

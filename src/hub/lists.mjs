@@ -1,4 +1,4 @@
-// Paged list queries for the UI (T-203). Each function takes the store and returns { rows or items, total } for one
+// Paged list queries for the UI. Each function takes the store and returns { rows or items, total } for one
 // page. Orders always end with a unique id so consecutive pages never overlap or skip a row. Nothing here writes.
 import { slicePage } from "./paging.mjs";
 import { ruleStrength } from "./rule-suggest.mjs";

@@ -1,4 +1,4 @@
-// A small, safe Markdown renderer (T-202). parseMarkdown() turns text into a plain tree; renderMarkdown() builds DOM
+// A small, safe Markdown renderer. parseMarkdown() turns text into a plain tree; renderMarkdown() builds DOM
 // nodes from that tree with createElement and createTextNode only. User text is never parsed as HTML, and a link is
 // created only for http, https and mailto addresses. There is no library and no innerHTML.
 

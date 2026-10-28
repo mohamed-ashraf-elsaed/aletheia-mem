@@ -83,7 +83,7 @@ export function seed(dataDir, { rows = 120, empty = false, force = false } = {})
       if (i % 6 === 0 && fact.created) hub.addReview({ itemType: "fact", itemId: fact.id, reason: "contradiction" });
       if (i % 17 === 5 && fact.created) hub.dismiss("fact", fact.id, { actor: "demo", reason: "demo noise" });
     }
-    // T-222: owner prompts and tool events for the request, goal and story panels. These are episodes, so the
+    // owner prompts and tool events for the request, goal and story panels. These are episodes, so the
     // memory count stays the requested number and the request code reads the same rows a real capture would write.
     const episode = (project, sessionId, text, at, role = "user", kind = "message") =>
       hub.addEpisode({ project, tool: "demo-seed", sessionId, text, role, kind, sourceRef: `demo:${sessionId}:${role}:${at}`, createdAtEpoch: at });

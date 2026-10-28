@@ -1,4 +1,4 @@
-// T-010: the data directory is 0700 and the database, WAL sidecars, spool and token files are 0600,
+// the data directory is 0700 and the database, WAL sidecars, spool and token files are 0600,
 // both on create and when an older looser install is opened. chmod is POSIX-only: the helpers skip it on
 // Windows with a documented reason, and the symlink test is skipped there for the same reason.
 import { afterAll, describe, expect, test } from "bun:test";

@@ -1,4 +1,4 @@
-// T-139: the one UI contract. A real server on a random port with temp data, the four tab containers and both
+// the one UI contract. A real server on a random port with temp data, the four tab containers and both
 // scripts, /hub redirecting to the Memory tab, every /v1 route the UI calls, and DOM-free unit tests of the
 // router and view helpers. No browser is launched.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
@@ -46,7 +46,7 @@ beforeAll(() => {
 });
 afterAll(() => app.stop());
 
-describe("T-139: the one page", () => {
+describe("the one page", () => {
   test("/ serves one shell with the four tab containers, the Work mount and both scripts", async () => {
     const response = await get("/");
     expect(response.status).toBe(200);
@@ -161,7 +161,7 @@ describe("T-139: the one page", () => {
   });
 });
 
-describe("T-139: the facts route", () => {
+describe("the facts route", () => {
   test("the facts route has the shape the Memory tab reads", async () => {
     const current = await (await get("/api/hub/facts?project=shop")).json();
     expect(current.current).toBe(true);
@@ -175,7 +175,7 @@ describe("T-139: the facts route", () => {
   });
 });
 
-describe("T-139: the review route", () => {
+describe("the review route", () => {
   test("the review queue route reads and resolves an item", async () => {
     const queue = await (await get("/api/hub/review?status=pending&project=shop")).json();
     const item = queue.items.find((row) => row.id === reviewId);
@@ -190,7 +190,7 @@ describe("T-139: the review route", () => {
   });
 });
 
-describe("T-139: the rule suggestions route", () => {
+describe("the rule suggestions route", () => {
   test("the rule suggestions route accepts, restores and dismisses", async () => {
     const pending = await (await get("/api/hub/rule-suggestions?status=pending&project=shop")).json();
     expect(pending.items.find((row) => row.id === suggestionId)).toMatchObject({ text: "Use pnpm, not npm", when: "editing checkout" });
@@ -206,7 +206,7 @@ describe("T-139: the rule suggestions route", () => {
   });
 });
 
-describe("T-139: tab modules", () => {
+describe("tab modules", () => {
   test("memory, review, rules and tools load without a DOM and export their renderer", async () => {
     const modules = { work: "renderWork", memory: "renderMemory", rules: "renderRules", tools: "renderTools" };
     for (const [name, exported] of Object.entries(modules)) {
@@ -219,7 +219,7 @@ describe("T-139: tab modules", () => {
   });
 });
 
-describe("T-139: DOM-free router and view helpers", () => {
+describe("DOM-free router and view helpers", () => {
   test("the four routes parse and anything else falls back to Work", () => {
     expect(TABS.map((tab) => tab.id)).toEqual(["work", "memory", "rules", "tools"]);
     expect(parseRoute("#/work")).toBe("work");

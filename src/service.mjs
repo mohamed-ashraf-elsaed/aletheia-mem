@@ -1,4 +1,4 @@
-// Auto-start service generation (T-151). Writes a systemd user unit on Linux and a launchd plist on
+// Auto-start service generation. Writes a systemd user unit on Linux and a launchd plist on
 // macOS, dry-run by default, with a backup and a manifest. It only writes text; it never calls systemctl
 // or launchctl, and the author has not started the service on a real machine.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";

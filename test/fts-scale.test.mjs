@@ -1,4 +1,4 @@
-// T-047: the FTS plan stays a CROSS JOIN (the full-text table is the outer loop) and the prefix query form still
+// the FTS plan stays a CROSS JOIN (the full-text table is the outer loop) and the prefix query form still
 // matches after the index is optimized. The latency target is measured by bench/scale.mjs, not here.
 import { describe, expect, test } from "bun:test";
 import { HubStore, ftsQuery } from "../src/hub/store.mjs";

@@ -6,7 +6,7 @@ Every number comes from a stored row. An empty store returns empty arrays and `e
 placeholder counts. The rule-based path needs no model. The Work and Memory tabs read these routes; the mapping is in
 §32.11.
 
-## 32.1 Requests (T-152)
+## 32.1 Requests
 
 A request is a group of sessions in one project that share a goal and are close in time. The goal is the owner's own
 imperative prompt (`goals.imperativeTopic`); sessions with no imperative prompt share a `no-goal` key. Within a
@@ -28,7 +28,7 @@ source facts.
 
 Dismiss and restore write an id to `work.requests.dismissed` (settings); nothing is deleted.
 
-## 32.2 Progress and ETA (T-166)
+## 32.2 Progress and ETA
 
 `progress` is the share of a request's sessions that ended or produced a summary, capped at 99 unless the request is
 `Shipped` (then 100). `progressEvidence` lists the completed session ids, fact ids and summary ids.
@@ -37,14 +37,14 @@ Dismiss and restore write an id to `work.requests.dismissed` (settings); nothing
 one completed session, and has remaining sessions. The pace is the mean gap between consecutive session starts.
 Otherwise `eta` is `null` and `etaEvidence` is `null`.
 
-## 32.3 What came out of it (T-167)
+## 32.3 What came out of it
 
 `artifacts.detectArtifacts` is conservative: a commit needs a `commit <sha>` lead-in, a full 40-hex sha, or a
 bracketed `[branch sha]`; a PR needs a GitHub pull URL or `pull request #N`; a branch needs a `git push ... origin`
 lead-in or a feat/fix/chore-style name. Each request carries `cameOutOfIt` (the findings, with `evidenceId`, `source`,
 `sessionId` and `at`) and `outcome` counts.
 
-## 32.4 Goals roll-up (T-168)
+## 32.4 Goals roll-up
 
 `proposeGoalsRollup` links each request to the goal whose topic key and project match. A goal is:
 
@@ -58,20 +58,20 @@ It adds `aggregateProgress` (mean of the linked requests' progress), `requests`,
 `whatCameOutOfIt` (merged artifacts). `noGoal` holds requests serving none of the goals. `openAsks` splits non-shipped
 goals into `beingWorked` (Moving) and `nothingWorking` (Stalled or no request).
 
-## 32.5 Build story (T-169)
+## 32.5 Build story
 
 `buildStory` returns counts (shipped, working, waiting on you, idle), a velocity object with `perWeek` (ISO week ->
 shipped count from stored dates), `averageDaysToShip`, and `learned`: repeated corrections in the owner's prompts,
 grouped by rule text with `timesSeen`, `latestAt` and dated quotes.
 
-## 32.6 Context economics (T-170)
+## 32.6 Context economics
 
 `economics` lists context memories (kind observation, summary or note) with `readTokens` from one documented counter,
 `estimateTokens: ceil(text.length / 4)`. Per-observation `workTokens` is `null`, labelled "usage is recorded per
 extraction call, not per observation". Totals take work tokens from `fact_usage` input + output, or `null` with
 "no usage record". Savings is only computed when work tokens exist and exceed zero.
 
-## 32.7 Rule strength and decide flow (T-171, T-172)
+## 32.7 Rule strength and decide flow
 
 Each suggestion stores `times_seen`, `latest_at_epoch` and dated rows in `rule_suggestion_quotes`. Strength is
 documented in code: `Light` at 1-2, `Steady` at 3-4, `Strong` at 5+. `listSuggestions` returns `timesSeen`,
@@ -81,7 +81,7 @@ The decide flow approves, edits-then-approves or rejects a suggestion, returns d
 on or off, records the last learning run, and records `replaced_by` / `replaced_at_epoch` when one rule replaces
 another. Nothing here deletes a suggestion or a rule.
 
-## 32.8 Query params (T-173)
+## 32.8 Query params
 
 `GET /v1/work/requests` accepts `filter` (`all`, `needs-you`, `shipped`), `sort` (`needs-you`, `newest`,
 `most-progress`) and `group` (`agent`, `tool`). `counts` always describes the whole set: `all`, `needsYou`, `shipped`,
@@ -203,7 +203,7 @@ Waiting on you. `GET /v1/work/requests?project=shop` (abbreviated):
 }
 ```
 
-## 32.11 UI wiring (T-218 to T-222)
+## 32.11 UI wiring
 
 The UI is wired; no new tab was added. The existing modules changed shape:
 

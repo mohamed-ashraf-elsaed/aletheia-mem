@@ -1,4 +1,4 @@
-// Back-fill from existing session transcripts (T-121). Read-only on the source files: this module only opens
+// Back-fill from existing session transcripts. Read-only on the source files: this module only opens
 // them with readFileSync, never writes, renames or deletes. Text is redacted before it reaches the store, an
 // episode keeps its transcript turn as source_ref, and one extraction job is queued per session.
 //

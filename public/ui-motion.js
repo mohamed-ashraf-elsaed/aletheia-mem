@@ -1,4 +1,4 @@
-// Motion helpers (T-204, T-213). Everything here uses the Web Animations API on transform and opacity only, and
+// Motion helpers. Everything here uses the Web Animations API on transform and opacity only, and
 // reads its durations from the CSS tokens. When the user asks for reduced motion, movement is replaced by a very
 // short fade. Nothing here blocks input: each function returns a promise that resolves when the animation ends.
 

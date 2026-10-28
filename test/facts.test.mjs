@@ -1,4 +1,4 @@
-// T-018: fact extraction. The validator is strict, an orphan fact is impossible, and the no-provider path still
+// fact extraction. The validator is strict, an orphan fact is impossible, and the no-provider path still
 // produces facts from plain declarative sentences.
 import { describe, expect, test } from "bun:test";
 import { extractFactsByRules, extractWindow, factsPrompt, storeFacts, validateFacts } from "../src/hub/facts.mjs";

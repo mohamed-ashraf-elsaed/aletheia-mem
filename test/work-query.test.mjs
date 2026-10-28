@@ -1,4 +1,4 @@
-// T-173: the work list accepts filter (all / needs-you / shipped) with counts, sort (needs-you / newest /
+// the work list accepts filter (all / needs-you / shipped) with counts, sort (needs-you / newest /
 // most-progress) and group by agent/tool. The same params work on GET /v1/work/requests.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";
@@ -52,7 +52,7 @@ beforeAll(() => {
 
 afterAll(() => seeded.app.stop());
 
-describe("T-173: work list query params", () => {
+describe("work list query params", () => {
   test("filter all / needs-you / shipped counts come from rows", () => {
     const store = new HubStore(join(fx.dir, "work-query.db"));
     try {

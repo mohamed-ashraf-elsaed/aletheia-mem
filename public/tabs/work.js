@@ -1,4 +1,4 @@
-// The Work tab (T-143, T-150, T-215): this hub's own sessions, review items, facts and goals. It never reads the legacy
+// The Work tab: this hub's own sessions, review items, facts and goals. It never reads the legacy
 // viewer's database. Sessions and goals are server-paged lists; the counts, the "needs you" items and the recent
 // facts come from one small overview request that refreshes every 10 seconds while the tab is visible, and at once
 // when the status bar's WebSocket reports a change. Actions change the screen first and can be undone for 8 seconds.

@@ -49,7 +49,7 @@ async function runCommand(command, payload, ctx) {
   return { stdout, exitCode };
 }
 
-describe("T-062: Codex CLI installer and hooks", () => {
+describe("Codex CLI installer and hooks", () => {
   test("a dry run plans the TOML MCP block and hooks, writing nothing", () => {
     const ctx = setup();
     const plan = installerFor("codex").plan(ctx.env);

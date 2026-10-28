@@ -1,4 +1,4 @@
-// T-220: rule strength, evidence, the decide flow, the on/off toggle, replacement and the learning run.
+// rule strength, evidence, the decide flow, the on/off toggle, replacement and the learning run.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 
@@ -52,7 +52,7 @@ const suggestion = (extra = {}) => ({
   ...extra,
 });
 
-describe("T-220: suggestion strength and evidence", () => {
+describe("suggestion strength and evidence", () => {
   test("shows strength, times seen, the latest date and the first two dated quotes", async () => {
     install([[/rule-suggestions\?/, () => json({ items: [suggestion()], total: 1 })], ["/api/hub/rules/learning-run", () => json({ learningRun: null })]]);
     const view = RV.suggestionsView({});
@@ -118,7 +118,7 @@ describe("T-220: suggestion strength and evidence", () => {
   });
 });
 
-describe("T-220: rules, toggle, replace and the learning run", () => {
+describe("rules, toggle, replace and the learning run", () => {
   test("Turn off posts to /toggle and Undo posts the reverse", async () => {
     const calls = install([["/api/hub/rules/r1/toggle", (r) => json({ rule: { ...rule(), ...r.body } })], ["/api/hub/rules", () => json({ rules: [rule()] })]]);
     const view = RV.rulesView({ addRule() {} });

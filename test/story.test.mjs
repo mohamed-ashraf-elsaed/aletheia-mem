@@ -1,4 +1,4 @@
-// T-169: the build story reports shipped/working/waiting counts, a velocity line from shipped dates, and what it
+// the build story reports shipped/working/waiting counts, a velocity line from shipped dates, and what it
 // learned about how you work from repeated corrections in the owner's prompts.
 import { describe, expect, test } from "bun:test";
 import { HubStore } from "../src/hub/store.mjs";
@@ -32,7 +32,7 @@ function seedCorrections(store) {
   prompt(store, "r3", "Never commit to main.", 50);
 }
 
-describe("T-169: the build story", () => {
+describe("the build story", () => {
   test("counts and velocity come from shipped and working requests", () => {
     const store = new HubStore(":memory:");
     try {

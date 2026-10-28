@@ -1,4 +1,4 @@
-// T-030: importance is a transparent weighted sum. The score and every input are stored, a pin wins the user
+// importance is a transparent weighted sum. The score and every input are stored, a pin wins the user
 // component, and a synthetic 200-item rank gives the Spearman number below.
 import { describe, expect, test } from "bun:test";
 import { HALF_LIFE_DAYS, IMPORTANCE_VERSION, WEIGHTS, importanceFor, recomputeImportance, recency, spearman, typeWeight } from "../src/hub/importance.mjs";

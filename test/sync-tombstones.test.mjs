@@ -1,4 +1,4 @@
-// T-103: tombstones, compaction and purge. Deletes converge as tombstones; compaction drops superseded
+// tombstones, compaction and purge. Deletes converge as tombstones; compaction drops superseded
 // bodies older than the retention window that every device has acked past; purge removes content everywhere
 // and leaves only the tombstone. A device whose cursor is behind the retained window re-bootstraps from a
 // snapshot.
@@ -38,7 +38,7 @@ afterAll(() => {
 
 const mint = (deviceId) => hub.store.mintToken(accountId, { scope: "sync", deviceId, name: deviceId }).token;
 
-describe("T-103: tombstones, compaction and purge", () => {
+describe("tombstones, compaction and purge", () => {
   test("(f) a tombstone propagates and compaction keeps convergence", async () => {
     const op = a.put("memory", { project: "shop", title: "Old note", narrative: "will be deleted" });
     await a.push(hub.url, tokenA);

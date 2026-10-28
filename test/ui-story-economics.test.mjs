@@ -1,4 +1,4 @@
-// T-221: the build story and context economics panels.
+// the build story and context economics panels.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 
@@ -67,7 +67,7 @@ const economics = (extra = {}) => ({
   empty: false, ...extra,
 });
 
-describe("T-221: the build story", () => {
+describe("the build story", () => {
   test("shows counts, velocity and learned habits with dated quotes", async () => {
     const calls = install([[/^\/v1\/work\/story/, () => json(story())]]);
     const view = STORY.storyView();
@@ -99,7 +99,7 @@ describe("T-221: the build story", () => {
   });
 });
 
-describe("T-221: context economics", () => {
+describe("context economics", () => {
   test("shows the totals, the counter and one row per context memory", async () => {
     const calls = install([[/^\/v1\/context\/economics/, () => json(economics())]]);
     const view = ECON.economicsView();

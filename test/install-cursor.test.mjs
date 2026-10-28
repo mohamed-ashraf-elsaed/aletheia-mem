@@ -50,7 +50,7 @@ async function runCommand(command, payload, ctx) {
   return { stdout, exitCode };
 }
 
-describe("T-061: Cursor installer and hooks", () => {
+describe("Cursor installer and hooks", () => {
   test("a dry run plans MCP and flat hooks, and writes nothing", () => {
     const ctx = setup();
     const plan = installerFor("cursor").plan(ctx.env);

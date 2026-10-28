@@ -1,4 +1,4 @@
-// T-147: the Work tab contract. The served page and every Work/tab module must be free of the old viewer's
+// the Work tab contract. The served page and every Work/tab module must be free of the old viewer's
 // name, star count and repository URL. The one allowed mention is the optional Tools link required by the task.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
@@ -39,7 +39,7 @@ afterAll(() => app.stop());
 const read = (path) => readFileSync(path, "utf8");
 const clean = (source) => forbidden.every((token) => !source.includes(token));
 
-describe("T-147: the Work UI contract", () => {
+describe("the Work UI contract", () => {
   test("the served / page has no old-viewer name, star count, repository URL or iframe", async () => {
     const response = await fetch(`${base}/`);
     const html = await response.text();

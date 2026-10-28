@@ -1,4 +1,4 @@
-// File-read gate and smart outline (T-060). A large file that already has observations is gated: a whole-file read
+// File-read gate and smart outline. A large file that already has observations is gated: a whole-file read
 // is refused and the caller gets a symbol outline plus an observation timeline, then reads only the offsets it wants.
 // The gate is off by default until it has been measured; a file with no history is never gated.
 import { readFileSync } from "node:fs";

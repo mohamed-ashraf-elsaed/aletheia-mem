@@ -1,4 +1,4 @@
-// T-026: history and as-of over REST and MCP. Current facts are the default, superseded rows are opt-in,
+// history and as-of over REST and MCP. Current facts are the default, superseded rows are opt-in,
 // as_of time-travels back to the fact that was valid then, and an empty subject gets a reason.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";

@@ -1,4 +1,4 @@
-// T-034: provider routing and extraction modes. `none` makes no call, a local OpenAI-compatible endpoint completes
+// provider routing and extraction modes. `none` makes no call, a local OpenAI-compatible endpoint completes
 // a fixture extraction, a mode changes the output language, and a misconfigured provider fails with a clear message.
 import { describe, expect, test } from "bun:test";
 import { extractFactsWithProvider, loadMode, modeInstruction, parseJsonObject, validateFacts } from "../src/hub/facts.mjs";

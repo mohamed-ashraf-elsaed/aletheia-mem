@@ -1,4 +1,4 @@
-// T-218: the request views on their own, with fake DOM and fake fetch.
+// the request views on their own, with fake DOM and fake fetch.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 
@@ -49,7 +49,7 @@ beforeEach(async () => {
 });
 afterAll(() => restoreGlobals());
 
-describe("T-218: request helpers", () => {
+describe("request helpers", () => {
   test("a request route is 16 hex digits and nothing else", () => {
     fakeLocation(`#/work/request/${ID}`);
     expect(R.requestRoute()).toEqual({ id: ID, project: "" });
@@ -76,7 +76,7 @@ describe("T-218: request helpers", () => {
   });
 });
 
-describe("T-218: the request list", () => {
+describe("the request list", () => {
   test("loads one page with the filter, sort and limit, and prints the counts", async () => {
     const calls = install([[/^\/v1\/work\/requests\?/, () => json({ counts: { all: 2, needsYou: 1, shipped: 1, working: 0, idle: 0, waitingOnYou: 1, total: 2 }, requests: [request(), request({ id: "fedcba9876543210", title: "Second", status: "Shipped", eta: null, etaEvidence: null, cameOutOfIt: [] })], dismissedRequests: [] })]]);
     const view = R.requestsView();
@@ -123,7 +123,7 @@ describe("T-218: the request list", () => {
   });
 });
 
-describe("T-218: the request detail", () => {
+describe("the request detail", () => {
   test("shows where it came from, the artifact links and a link to each session", async () => {
     const origin = { promptCount: 1, factCount: 1, sessions: [{ sessionId: "s1", project: "shop", firstAt: new Date().toISOString(), lastAt: new Date().toISOString(), ended: new Date().toISOString(), prompts: [{ id: 1, text: "Please retry", at: new Date().toISOString() }], facts: [{ id: 9, text: "Retries twice", status: "active", recordedAt: new Date().toISOString() }] }] };
     const calls = install([[/^\/v1\/work\/requests\/0123456789abcdef/, () => json({ request: request({ whereThisCameFrom: origin }) })]]);

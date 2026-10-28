@@ -1,4 +1,4 @@
-// T-085: the changelog is real, Dependabot covers Actions only, and no funding or release is claimed.
+// the changelog is real, Dependabot covers Actions only, and no funding or release is claimed.
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -39,7 +39,7 @@ describe("release files", () => {
     expect(text).not.toContain("softprops/action-gh-release");
   });
 
-  test("the only release workflow is the tag-triggered release.yml (T-225)", () => {
+  test("the only release workflow is the tag-triggered release.yml", () => {
     expect(existsSync(join(root, ".github", "workflows", "release.yml"))).toBe(true);
     expect(existsSync(join(root, ".github", "workflows", "npm-publish.yml"))).toBe(false);
   });

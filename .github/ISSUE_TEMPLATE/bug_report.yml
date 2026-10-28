@@ -55,7 +55,7 @@ body:
     id: doctor
     attributes:
       label: Output of `aletheia doctor`
-      description: If your build has the command (T-073 is not built yet), paste the output. Otherwise paste `aletheia install --list`.
+      description: If your build has `aletheia doctor`, paste the output. Otherwise paste `aletheia install --list`.
       render: text
   - type: checkboxes
     id: checks

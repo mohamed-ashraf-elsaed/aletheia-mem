@@ -55,7 +55,7 @@ export class ApiError extends Error {
 export async function api(path, { method = "GET", body } = {}) {
   const headers = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
-  // Remote mode (T-110): state-changing calls echo the CSRF cookie in a header.
+  // Remote mode: state-changing calls echo the CSRF cookie in a header.
   if (method !== "GET") {
     const pair = (document.cookie ?? "").split(";").map((part) => part.trim()).find((part) => part.startsWith("aletheia_csrf="));
     if (pair) headers["X-CSRF-Token"] = decodeURIComponent(pair.slice("aletheia_csrf=".length));

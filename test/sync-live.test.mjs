@@ -1,4 +1,4 @@
-// T-105: live update frames over WebSocket. The server pushes advisory {kind, id, project} frames after a
+// live update frames over WebSocket. The server pushes advisory {kind, id, project} frames after a
 // write; the 10-second poll stays the source of truth. Tests use a temp data dir and a loopback server.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -84,7 +84,7 @@ const writeMemory = async (project, text = "hello") => {
   return response.json();
 };
 
-describe("T-105: live update frames over WebSocket", () => {
+describe("live update frames over WebSocket", () => {
   test("a write pushes a session frame with id and kind only", async () => {
     const client = await openSocket("/v1/live");
     const written = await writeMemory("shop", "live session");

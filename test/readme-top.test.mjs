@@ -1,4 +1,4 @@
-// T-226: the top of the README is the npm package page. It must render from the tarball alone.
+// the top of the README is the npm package page. It must render from the tarball alone.
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";

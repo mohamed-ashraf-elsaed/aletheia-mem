@@ -1,4 +1,4 @@
-// T-208 and T-209: the Memory tab's pages and the Review queue, with fake DOM, fake fetch and a fake location.
+// the Memory tab's pages and the Review queue, with fake DOM, fake fetch and a fake location.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 
@@ -57,13 +57,13 @@ const fact = (id, extra = {}) => ({ id, text: `Fact ${id}`, status: "active", sc
 const buttonByText = (root, text) => root.querySelectorAll("button").find((b) => b.textContent.trim() === text);
 const toasts = () => dom.getElementById("ui-toasts")?.textContent ?? "";
 
-describe("T-208: the list query string", () => {
+describe("the list query string", () => {
   test("empty values are left out", () => {
     expect(MV.queryString({ a: 1, b: "", c: null, d: false, e: "x y" })).toBe("a=1&e=x+y");
   });
 });
 
-describe("T-208: the memories page", () => {
+describe("the memories page", () => {
   const page = (items, total = items.length) => json({ items, total });
   test("asks the server for one page and shows rows, a count and the pager", async () => {
     fakeLocation();
@@ -169,7 +169,7 @@ describe("T-208: the memories page", () => {
   });
 });
 
-describe("T-208: memory card actions", () => {
+describe("memory card actions", () => {
   test("Pin changes the card at once, and a failure puts it back and says why", async () => {
     install([["/api/hub/memories/1", () => json({ error: "locked" }, 500)]]);
     const m = memory(1);
@@ -241,7 +241,7 @@ describe("T-208: memory card actions", () => {
   });
 });
 
-describe("T-208: facts, dismissed and search", () => {
+describe("facts, dismissed and search", () => {
   test("a fact row shows its status and a Dismiss; in the dismissed list it shows Restore", () => {
     const row = V.factCard(fact(3), {});
     expect(row.textContent).toContain("Fact 3");
@@ -301,7 +301,7 @@ describe("T-208: facts, dismissed and search", () => {
   });
 });
 
-describe("T-209: the review queue", () => {
+describe("the review queue", () => {
   const item = (id, extra = {}) => ({ id, type: "fact", itemId: id + 100, reason: "contradiction", status: "pending", text: `Queue item ${id}`, project: "shop", confidence: 0.8, createdAt: new Date().toISOString(), ...extra });
   const reviewRoutes = (extra = []) => [
     ...extra,
@@ -407,7 +407,7 @@ describe("T-209: the review queue", () => {
   });
 });
 
-describe("T-208: the Memory frame", () => {
+describe("the Memory frame", () => {
   test("renders the title, five counts, the page links and the chosen page", async () => {
     fakeLocation("#/memory/facts");
     const root = dom.createElement("div");

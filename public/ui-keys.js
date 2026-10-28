@@ -1,4 +1,4 @@
-// Keyboard shortcuts, the shortcut sheet and the command palette (T-205). One keydown handler for the page. It never
+// Keyboard shortcuts, the shortcut sheet and the command palette. One keydown handler for the page. It never
 // reacts while the user types in a field, except for Ctrl+K and Esc, and it leaves the browser's own shortcuts alone.
 import { badge, icon, modal, spinner } from "./ui-components.js";
 import { SUBVIEWS, TABS } from "./ui-core.js";

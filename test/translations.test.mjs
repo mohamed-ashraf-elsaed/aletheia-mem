@@ -1,4 +1,4 @@
-// T-088: ten translations keep the code, badges and generated tables unchanged, and say they are machine-made.
+// ten translations keep the code, badges and generated tables unchanged, and say they are machine-made.
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -8,7 +8,7 @@ const read = (path) => readFileSync(join(root, path), "utf8");
 const codes = ["zh", "es", "pt-br", "ja", "de", "fr", "ko", "hi", "ar", "ru"];
 const english = read("README.md");
 
-// T-226: the npm version badge was added to the top block after the translations were made (docs/tasks/unverified.md).
+// the npm version badge was added to the top block after the translations were made (docs/tasks/unverified.md).
 const NOT_TRANSLATED = ["https://img.shields.io/npm/v/aletheia-mem"];
 const fences = (text) => [...text.matchAll(/```[\s\S]*?```/g)].map((match) => match[0]);
 const generated = (text) => [...text.matchAll(/<!-- gen:([a-z]+) -->[\s\S]*?<!-- \/gen:\1 -->/g)].map((match) => match[0]);

@@ -268,8 +268,8 @@ aletheia watch --interval 1000 --batch 50 --tool claude-code,command-code,codex
 
 | Tool | Folder | Verified from |
 |---|---|---|
-| Claude Code | `~/.claude/projects/<slug>/<session>.jsonl` | T-121, 2026-10-26 |
-| Command Code | `~/.commandcode/projects/<slug>/<session>.jsonl` | T-121, 2026-10-26 |
+| Claude Code | `~/.claude/projects/<slug>/<session>.jsonl` | 2026-10-26 |
+| Command Code | `~/.commandcode/projects/<slug>/<session>.jsonl` | 2026-10-26 |
 | Codex CLI | `~/.codex/sessions/<year>/<month>/<day>/rollout-*.jsonl` | two real rollouts on this machine, 2026-10-26 |
 
 The source files are opened read-only. A file that shrinks is re-read from zero. A line without a newline is

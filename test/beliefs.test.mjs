@@ -1,4 +1,4 @@
-// T-098: entity summaries cite their source facts, a contested belief stays visible with both sides, and
+// entity summaries cite their source facts, a contested belief stays visible with both sides, and
 // regeneration is deterministic. Rule-based only; model-generated summary prose is UNVERIFIED.
 import { describe, expect, test } from "bun:test";
 import { HubStore } from "../src/hub/store.mjs";

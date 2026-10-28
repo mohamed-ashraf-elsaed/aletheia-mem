@@ -1,4 +1,4 @@
-// T-112: team mode on top of sync. A team has named projects, members (device tokens with owner/editor/viewer
+// team mode on top of sync. A team has named projects, members (device tokens with owner/editor/viewer
 // roles), shared memory, a board of pins and decisions, a rule-based brief and a shared search. Every ACL check
 // runs in the store, so a direct store call is refused as well as an HTTP one. A revoked member or token loses
 // access on the next call.
@@ -52,7 +52,7 @@ afterAll(() => {
   rmSync(temp, { recursive: true, force: true });
 });
 
-describe("T-112: team mode", () => {
+describe("team mode", () => {
   test("the owner sees every project; a member sees only its shares", () => {
     const asOwner = team.listTeams(account.id, owner);
     expect(asOwner[0].role).toBe("owner");

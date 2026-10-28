@@ -1,6 +1,6 @@
 # 29. Aletheia Sync
 
-Status: implemented, 2026-10-26 (T-102, T-103, T-104, T-108; E2EE T-117). This page describes the code that exists.
+Status: implemented, 2026-10-26. This page describes the code that exists.
 
 Aletheia Sync is a free, self-hosted, dependency-free way to move memory between devices. It is an
 append-only operation log with per-operation results, tombstones, device pairing, scoped tokens and an
@@ -87,7 +87,7 @@ self-contained heads.
 - Scopes: `sync` (push and pull), `read` (pull only), `mcp` (read tools), `admin` (mint, revoke, audit).
   Each token is limited to named projects (empty = all). The `mcp` scope also unlocks the private remote MCP
   endpoint (docs/30), and an `admin` token is the Hub login password when the server is not loopback-only
-  (T-110).
+.
 - Unknown, revoked or expired token: 401. Valid token with the wrong scope: 403.
 - Pairing codes: 8 characters, 10-minute life, single use, 5 failed attempts per minute.
 - Per-token ops/day and bytes/day quotas are local settings, off by default. A write quota never blocks reads.
@@ -102,7 +102,7 @@ the actor (token id or device id), the target (`detail`) and the timestamp, and 
 The export is tested loopback-only in `test/audit-export.test.mjs`; TLS is delegated to a reverse proxy or
 tunnel, and no real remote client has been run against it.
 
-## 29.6 End-to-end encryption (optional, T-117)
+## 29.6 End-to-end encryption (optional)
 
 Status: implemented, 2026-10-26. Optional per account, off by default; unencrypted accounts behave exactly as
 before. Tested by `test/sync-e2ee.test.mjs`.

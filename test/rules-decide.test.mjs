@@ -1,4 +1,4 @@
-// T-172: rule decide flow — approve / edit-then-approve / reject, decided counts, on/off toggle, replacement
+// rule decide flow — approve / edit-then-approve / reject, decided counts, on/off toggle, replacement
 // history, and the last learning run record.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";
@@ -43,7 +43,7 @@ beforeAll(() => {
 
 afterAll(() => seeded.app.stop());
 
-describe("T-172: rule decide flow", () => {
+describe("rule decide flow", () => {
   test("approve creates a rule and marks the suggestion accepted", () => {
     const store = new HubStore(":memory:");
     try {

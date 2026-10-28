@@ -1,4 +1,4 @@
-// T-036: search by file. Exact path is the default, a suffix match is opt-in, and a project filter keeps
+// search by file. Exact path is the default, a suffix match is opt-in, and a project filter keeps
 // the same path in two projects from cross-matching.
 import { describe, expect, test } from "bun:test";
 import { callTool } from "../src/hub/mcp.mjs";

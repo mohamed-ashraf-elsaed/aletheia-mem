@@ -1,4 +1,4 @@
-// T-038: the rule-based path reports the parsed range and the "time" path for a 30-expression fixture; expressions
+// the rule-based path reports the parsed range and the "time" path for a 30-expression fixture; expressions
 // the parser does not understand report "none" rather than a guessed range. The model rewrite/HyDE step is out of
 // scope (no model) and is left UNVERIFIED.
 import { describe, expect, test } from "bun:test";

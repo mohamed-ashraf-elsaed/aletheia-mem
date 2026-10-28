@@ -1,4 +1,4 @@
-// T-216: every API route the UI calls exists. The test reads each script in public/ for "/api/hub/..." and "/v1/..."
+// every API route the UI calls exists. The test reads each script in public/ for "/api/hub/..." and "/v1/..."
 // paths, starts a real server on a temporary store, and asks for each path. A path the server does not know answers
 // with an HTML "Cannot GET" page; a real route answers JSON (even an error such as "No memory has that id").
 // It also checks the app page's security header and that the served scripts match the files.
@@ -67,7 +67,7 @@ async function exists(rawPath) {
   return { ok: false };
 }
 
-describe("T-216: the UI's API contract", () => {
+describe("the UI's API contract", () => {
   test("the scripts name a believable number of routes", () => {
     const paths = apiPaths();
     expect(paths.size).toBeGreaterThan(30);

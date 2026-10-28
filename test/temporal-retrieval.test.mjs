@@ -1,4 +1,4 @@
-// T-043: a since/until range filters search, a query with a time expression reports its parsed range, and a query
+// a since/until range filters search, a query with a time expression reports its parsed range, and a query
 // with no time expression reports an unparsed range (null) instead of silently guessing. The Recall@5 temporal-subset
 // gain is a benchmark and is left UNVERIFIED.
 import { describe, expect, test } from "bun:test";

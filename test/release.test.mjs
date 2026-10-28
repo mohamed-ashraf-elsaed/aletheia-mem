@@ -1,4 +1,4 @@
-// T-225: the release helper (--prepare, --verify) and the release workflow, tested on a temp git repository.
+// the release helper (--prepare, --verify) and the release workflow, tested on a temp git repository.
 import { afterAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

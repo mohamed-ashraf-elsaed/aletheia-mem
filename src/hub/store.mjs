@@ -422,7 +422,7 @@ export class HubStore {
     this.ensureSearchIndexes();
   }
 
-  /** Add the T-172 rule-replacement history columns to databases created before they existed. Idempotent. */
+  /** Add the rule-replacement history columns to databases created before they existed. Idempotent. */
   ensureRuleReplacement() {
     if (this.setting("schema.rule_replacement", false)) return false;
     const columns = this.db.prepare("PRAGMA table_info(rules)").all().map((column) => column.name);
@@ -457,7 +457,7 @@ export class HubStore {
     return true;
   }
 
-  /** Add the T-123 dismissal table to databases created before it existed. Idempotent, recorded once. */
+  /** Add the dismissal table to databases created before it existed. Idempotent, recorded once. */
   ensureDismissals() {
     if (this.setting("schema.dismissals", false)) return false;
     this.db.exec(`CREATE TABLE IF NOT EXISTS dismissals (
@@ -472,7 +472,7 @@ export class HubStore {
     return true;
   }
 
-  /** Add the T-036 memory_files table and backfill it from the JSON files column. Idempotent, recorded once. */
+  /** Add the memory_files table and backfill it from the JSON files column. Idempotent, recorded once. */
   ensureMemoryFiles() {
     if (this.setting("schema.memory_files", false)) return false;
     this.db.exec(`CREATE TABLE IF NOT EXISTS memory_files (
@@ -518,7 +518,7 @@ export class HubStore {
     return { sql: "m.id IN (SELECT memory_id FROM memory_files WHERE path = ?)", param: String(file) };
   }
 
-  /** Add the T-035 suggestion table to databases created before it existed. */
+  /** Add the suggestion table to databases created before it existed. */
   ensureRuleSuggestions() {
     if (this.setting("schema.rule_suggestions", false)) return false;
     this.db.exec(`CREATE TABLE IF NOT EXISTS rule_suggestions (
@@ -540,7 +540,7 @@ export class HubStore {
     return true;
   }
 
-  /** Add the T-171 rule-strength columns and quotes table to databases created before they existed. Idempotent. */
+  /** Add the rule-strength columns and quotes table to databases created before they existed. Idempotent. */
   ensureRuleStrength() {
     if (this.setting("schema.rule_strength", false)) return false;
     const columns = this.db.prepare("PRAGMA table_info(rule_suggestions)").all().map((column) => column.name);
@@ -562,7 +562,7 @@ export class HubStore {
   }
 
   /**
-   * Add the T-033 `scope` column to databases created before it existed. Idempotent and recorded in settings, so a
+   * Add the `scope` column to databases created before it existed. Idempotent and recorded in settings, so a
    * hot hook path pays for the PRAGMA check once. Existing rows are project-scoped, which is the old behaviour.
    */
   ensureScopeColumns() {
@@ -579,7 +579,7 @@ export class HubStore {
     return { added };
   }
 
-  /** Add the T-105/T-150 session-end table to databases created before it existed. Idempotent. */
+  /** Add the session-end table to databases created before it existed. Idempotent. */
   ensureSessionEnd() {
     if (this.setting("schema.session_end", false)) return false;
     this.db.exec(`CREATE TABLE IF NOT EXISTS session_end (
@@ -620,7 +620,7 @@ export class HubStore {
     return { type, id: key, scope: "global", project: row.project };
   }
 
-  // ---- dismiss and restore (T-123) ---------------------------------------------------------------------
+  // ---- dismiss and restore ---------------------------------------------------------------------
   // A dismissal is a row, not a status change: nothing is deleted, the original status stays intact, and
   // restore is the reverse write. Search and context skip dismissed rows. `prune --apply` is the only path
   // that removes the underlying row, and it removes the dismissal with it.
@@ -659,7 +659,7 @@ export class HubStore {
       .all(Math.min(Math.max(Number(limit) || 100, 1), 500));
   }
 
-  // ---- output language (T-120) --------------------------------------------------------------------------
+  // ---- output language --------------------------------------------------------------------------
   // Stored per project under one settings key, so a project can answer in a different language without a new
   // table. The global config value is the fallback when neither the project nor "default" has one.
 
@@ -1078,7 +1078,7 @@ export class HubStore {
   }
 
   /**
-   * The Hub facts table (T-135). Current by default; `history` keeps superseded and cold rows. Every row carries
+   * The Hub facts table. Current by default; `history` keeps superseded and cold rows. Every row carries
    * the episode it came from, its extractor mode and scope. Importance is the linked observation's importance, or
    * the fact confidence when no observation owns it; both are returned so the UI can say which.
    */

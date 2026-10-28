@@ -1,6 +1,6 @@
-// Erasure (T-113): count, export, delete and receipt. A plan is computed first and changes nothing. `--apply`
+// Erasure: count, export, delete and receipt. A plan is computed first and changes nothing. `--apply`
 // deletes the rows from the hub store, removes the matching rows from a device replica and outbox, asks the sync
-// store for a T-103 purge (which drops every op body and leaves a tombstone), and writes an HMAC-signed receipt
+// store for a purge (which drops every op body and leaves a tombstone), and writes an HMAC-signed receipt
 // that lists counts and ids, never content.
 import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -162,7 +162,7 @@ export function writePreEraseExport(hub, { path, project = null } = {}) {
 }
 
 /**
- * Apply a plan. Local rows go first, then the device replica/outbox, then a T-103 purge per sync entity. The
+ * Apply a plan. Local rows go first, then the device replica/outbox, then a purge per sync entity. The
  * server tombstone is content-free. Returns the deleted counts plus what the sync layer did.
  */
 export function applyErase(hub, plan, { syncStore = null, syncClient = null, accountId = null, teamStore = null, project = null, ids = [] } = {}) {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bun
-// Synthetic graph retrieval benchmark (T-048). No model, no network, FTS5 + in-memory entity keys only.
+// Synthetic graph retrieval benchmark. No model, no network, FTS5 + in-memory entity keys only.
 //   bun bench/graph-recall.mjs [--pairs 200] [--out /tmp/graph-recall.json]
 // Each pair is a seed memory and an answer memory that share one project-scoped entity; the query matches the seed
 // lexically and the answer only through the graph. Reports Recall@5 with the graph channel off and on.

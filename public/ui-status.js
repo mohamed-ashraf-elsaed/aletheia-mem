@@ -1,4 +1,4 @@
-// The status bar (T-206): nine indicators, a connection banner, polling that backs off and pauses when the page is
+// The status bar: nine indicators, a connection banner, polling that backs off and pauses when the page is
 // hidden, and the /v1/live WebSocket when it is available. createStatusController() holds the logic and takes its
 // timers, network and socket as arguments so it can be tested; mountStatus() draws it. Every value comes from an API
 // answer (see ui-status-model.js).

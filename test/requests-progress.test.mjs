@@ -1,4 +1,4 @@
-// T-166: progress and ETA per request are computed from stored rows (session ends, summaries, facts), with
+// progress and ETA per request are computed from stored rows (session ends, summaries, facts), with
 // evidence ids. ETA is reported only when the data supports a pace, otherwise null.
 import { describe, expect, test } from "bun:test";
 import { HubStore } from "../src/hub/store.mjs";
@@ -14,7 +14,7 @@ function event(store, sessionId, text, minutes) {
   return store.add({ project: "shop", kind: "event", type: "event", title: text, narrative: text, sessionId, tool: "claude-code", createdAtEpoch: at(minutes) });
 }
 
-describe("T-166: progress and ETA", () => {
+describe("progress and ETA", () => {
   test("a shipped request is 100% complete with no ETA", () => {
     const store = new HubStore(":memory:");
     try {

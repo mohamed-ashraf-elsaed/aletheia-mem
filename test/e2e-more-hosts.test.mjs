@@ -138,7 +138,7 @@ beforeAll(async () => {
 
 afterAll(() => app.stop());
 
-describe.skipIf(process.platform === "win32")("T-140: end to end capture for every full-capability host (needs a POSIX shell for the hook commands)", () => {
+describe.skipIf(process.platform === "win32")("end to end capture for every full-capability host (needs a POSIX shell for the hook commands)", () => {
   test("install, feed a recorded payload set, assert rows and no secrets", async () => {
     for (const tool of Object.keys(CONFIGS)) {
       const install = await runCli(["install", tool, "--write"]);

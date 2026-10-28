@@ -1,4 +1,4 @@
-// T-012: the dependency audit passes with zero required dependencies and fails when one is added.
+// the dependency audit passes with zero required dependencies and fails when one is added.
 import { afterAll, describe, expect, test } from "bun:test";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";

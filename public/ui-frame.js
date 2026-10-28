@@ -1,5 +1,5 @@
 // A tab's frame: the title, an optional row of actions, the page links with counts, and the slot for the page
-// (T-210). The Rules and Tools tabs use it; the page inside is swapped on a route change and the old one is
+//. The Rules and Tools tabs use it; the page inside is swapped on a route change and the old one is
 // disposed, so list controllers stop listening for Back and Forward.
 import { SUBVIEWS } from "./ui-core.js";
 import { tabs } from "./ui-components.js";

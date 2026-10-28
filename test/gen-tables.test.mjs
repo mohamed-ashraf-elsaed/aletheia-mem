@@ -1,4 +1,4 @@
-// T-118: comparison, tool and benchmark tables come from data, never from hand-edited cells.
+// comparison, tool and benchmark tables come from data, never from hand-edited cells.
 import { afterAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

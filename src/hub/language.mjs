@@ -1,4 +1,4 @@
-// Output language for extraction and summaries (T-120). A language tag is validated here so a typo fails at the
+// Output language for extraction and summaries. A language tag is validated here so a typo fails at the
 // setting, not at the model. The prompt line only names the language; the schema never changes.
 const TAG = /^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{2,8})*$/;
 

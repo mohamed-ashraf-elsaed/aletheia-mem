@@ -1,4 +1,4 @@
-// T-212: the first-run guide, with fake DOM and fake fetch.
+// the first-run guide, with fake DOM and fake fetch.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 
@@ -28,7 +28,7 @@ const tool = (id, name, extra = {}) => ({ id, name, installed: false, hooks: { p
 const TOOLS = [tool("claude-code", "Claude Code"), tool("cursor", "Cursor", { installed: true })];
 const step = (guide, n) => guide.querySelectorAll("li")[n - 1];
 
-describe("T-212: when the guide shows", () => {
+describe("when the guide shows", () => {
   test("only for a store with no memories and no facts", () => {
     expect(G.storeIsEmpty({ stats: { total: 0 }, facts: 0 })).toBe(true);
     expect(G.storeIsEmpty({ stats: {}, facts: 0 })).toBe(true);
@@ -48,7 +48,7 @@ describe("T-212: when the guide shows", () => {
   });
 });
 
-describe("T-212: the three steps", () => {
+describe("the three steps", () => {
   test("shows three steps with the exact commands for the detected tool", () => {
     const guide = G.firstRunGuide({ tools: TOOLS, intervalMs: 0 });
     expect(guide.querySelectorAll("li").length).toBe(3);
@@ -97,7 +97,7 @@ describe("T-212: the three steps", () => {
   });
 });
 
-describe("T-212: waiting for the first event", () => {
+describe("waiting for the first event", () => {
   test("it flips to done the moment data arrives and then calls back once", async () => {
     let captured = false;
     let arrivedCalls = 0;

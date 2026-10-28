@@ -1,4 +1,4 @@
-// Advisory live frames over WebSocket (T-105). A connected browser is told "something changed, re-poll";
+// Advisory live frames over WebSocket. A connected browser is told "something changed, re-poll";
 // the 10-second poll remains the source of truth. Frames carry ids and kinds only, never payload text.
 export function createLiveHub(hub) {
   const sockets = new Set();

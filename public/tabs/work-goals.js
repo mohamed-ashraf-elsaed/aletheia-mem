@@ -1,6 +1,6 @@
-// The goals roll-up in the Work tab (T-219). Every number comes from GET /v1/work/goals (T-168): a goal's status,
+// The goals roll-up in the Work tab. Every number comes from GET /v1/work/goals: a goal's status,
 // its aggregate progress, the requests that serve it, and what came out of them. Pin, Unpin, Dismiss and Restore
-// still use POST /api/hub/goals/:id (T-144), so that older route keeps working.
+// still use POST /api/hub/goals/:id, so that older route keeps working.
 import { badge, button, disclosure, emptyState, progressBar, skeleton, statTile, timeEl } from "../ui-components.js";
 import { api, h, state, swap } from "../ui-dom.js";
 import { optimistic } from "../ui-actions.js";

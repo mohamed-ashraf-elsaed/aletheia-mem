@@ -1,4 +1,4 @@
-// T-114: alert rules and delivery. A rule fires on an event, queues one delivery, signs the webhook body with
+// alert rules and delivery. A rule fires on an event, queues one delivery, signs the webhook body with
 // HMAC-SHA256, retries 5xx with backoff, times out, refuses private/loopback/link-local targets without the
 // per-rule opt-in, and can append to a local file. No external network is used: every receiver is on loopback.
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
@@ -50,7 +50,7 @@ beforeEach(() => {
 });
 afterEach(() => store.close());
 
-describe("T-114: alert rules and webhooks", () => {
+describe("alert rules and webhooks", () => {
   test("a rule fires once and signs the body with HMAC-SHA256", async () => {
     const rule = store.addRule({ name: "pair", event: "device.paired", target: "webhook", url: base, secret: "s3cret", allowPrivate: true });
     expect(rule.hasSecret).toBe(true);

@@ -1,4 +1,4 @@
-// Transcript watcher (T-063): poll the verified transcript folders and import new turns incrementally.
+// Transcript watcher: poll the verified transcript folders and import new turns incrementally.
 // Offsets, session id/project and the turn counter live in one SQLite file, so a restart resumes exactly where it
 // stopped. Sources are opened read-only. An unknown line is stored as a raw episode, not dropped. The interval is
 // at least one second and the batch size caps how many lines one pass may consume; the CLI also sets nice 10.

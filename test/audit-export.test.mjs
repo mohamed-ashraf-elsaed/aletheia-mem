@@ -1,4 +1,4 @@
-// T-093: audit export. The append-only sync audit log renders as JSONL (default) or CSV with an inclusive
+// audit export. The append-only sync audit log renders as JSONL (default) or CSV with an inclusive
 // date range, is admin-only over HTTP, round-trips into a fresh store, and never carries a secret or payload.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -21,7 +21,7 @@ function seed(store, accountId, rows) {
 
 const T0 = 1700000000000;
 
-describe("T-093: audit export", () => {
+describe("audit export", () => {
   test("epochOrNull accepts epoch ms and ISO dates and rejects garbage", () => {
     expect(epochOrNull("1700000000000")).toBe(1700000000000);
     expect(epochOrNull("2026-01-31")).toBe(Date.parse("2026-01-31"));
@@ -114,7 +114,7 @@ describe("T-093: audit export", () => {
   });
 });
 
-describe("T-093: audit export over HTTP", () => {
+describe("audit export over HTTP", () => {
   let hub;
   let accountId;
   let admin;

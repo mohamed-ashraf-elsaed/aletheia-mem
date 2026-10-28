@@ -1,4 +1,4 @@
-// T-210: the Rules tab with fake DOM and fake fetch.
+// the Rules tab with fake DOM and fake fetch.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 
@@ -45,7 +45,7 @@ afterAll(() => restoreGlobals());
 const rule = (id, extra = {}) => ({ id: `r${id}`, then: `Do thing ${id}`, when: "", enabled: true, scopeTier: "everywhere", scopeName: "Everywhere", tools: null, source: "manual", ...extra });
 const TOOLS = [{ id: "claude-code", name: "Claude Code", installed: true }, { id: "cursor", name: "Cursor", installed: false }, { id: "agents-md", name: "AGENTS.md", installed: false }];
 
-describe("T-210: the rule list", () => {
+describe("the rule list", () => {
   test("shows every rule with its scope, tools and state", async () => {
     install([["/api/hub/rules", () => json({ rules: [rule(1), rule(2, { enabled: false, when: "editing tests", scopeTier: "project", scopeName: "shop", tools: ["cursor"] })] })]]);
     const view = RV.rulesView({ addRule() {} });
@@ -109,7 +109,7 @@ describe("T-210: the rule list", () => {
   });
 });
 
-describe("T-210: add a rule", () => {
+describe("add a rule", () => {
   test("an empty rule is refused with a reason", async () => {
     install([]);
     RV.addRuleDialog({ tools: TOOLS });
@@ -141,7 +141,7 @@ describe("T-210: add a rule", () => {
   });
 });
 
-describe("T-210: suggested rules", () => {
+describe("suggested rules", () => {
   const sug = (id) => ({ id, project: "shop", text: `Suggestion ${id}`, when: "editing checkout", confidence: 0.8, status: "pending", sourceType: "prompt", createdAt: new Date().toISOString() });
   test("pending suggestions page from the server with their project and sort", async () => {
     fakeLocation("#/rules/suggestions?sort=confidence");
@@ -189,7 +189,7 @@ describe("T-210: suggested rules", () => {
   });
 });
 
-describe("T-210: writing rules into tool files", () => {
+describe("writing rules into tool files", () => {
   const setup = async (extra = []) => {
     const calls = install([
       ["/api/hub/tools", () => json({ tools: TOOLS })],
@@ -247,7 +247,7 @@ describe("T-210: writing rules into tool files", () => {
   });
 });
 
-describe("T-210: import and the frame", () => {
+describe("import and the frame", () => {
   test("import posts the tool and the scope and reports the counts", async () => {
     const calls = install([["/api/hub/tools", () => json({ tools: TOOLS })], ["/api/hub/rules/import", () => json({ found: 4, added: 3, skipped: 1 })]]);
     const view = RV.importView({});

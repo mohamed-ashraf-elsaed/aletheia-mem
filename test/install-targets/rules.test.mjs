@@ -14,7 +14,7 @@ const rules = [
 const homeFor = () => makeFixture().makeDir("home");
 const projectFor = () => makeFixture().makeDir("proj");
 
-describe("T-070: rules targets match the documented format", () => {
+describe("rules targets match the documented format", () => {
   test("every target records a verification key and source key", () => {
     for (const tool of TOOLS) {
       expect(tool.rules).toHaveProperty("verifiedOn");

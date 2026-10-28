@@ -71,7 +71,7 @@ beforeAll(() => {
 
 afterAll(() => seeded.app.stop());
 
-describe("T-142: the Work query layer", () => {
+describe("the Work query layer", () => {
   test("a project shows its sessions newest first, with counts, the last prompt, summary and source facts", () => {
     const store = new HubStore(join(fx.dir, "work.db"));
     const data = workOverview(store, { project: "shop", now: NOW, activeMinutes: 5, windowHours: 24 });

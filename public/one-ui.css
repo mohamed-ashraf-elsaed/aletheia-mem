@@ -106,7 +106,7 @@ html, body { min-height: 100%; }
 .ui-chip.warn { color: var(--ui-warning); }
 .ui-chip.bad { color: var(--ui-danger); }
 
-/* ---- the Work tab (restyled in T-213) ---- */
+/* ---- the Work tab (restyled) ---- */
 .ui-work { max-width: 1180px; margin: 0 auto; padding: 18px 16px 80px; }
 .ui-work h1 { margin: 0; }
 .ui-work h2 { margin: 20px 0 8px; }
@@ -158,7 +158,7 @@ html, body { min-height: 100%; }
   .ui-nav .ui-tab { gap: 4px; font-size: var(--ui-text-sm); }
 }
 
-/* ---- status bar details (T-206) ---- */
+/* ---- status bar details ---- */
 .ui-status-list { display: flex; align-items: center; gap: 2px; min-width: 0; }
 .ui-status-item:hover, .ui-status-item:focus-visible, .ui-status-item[aria-expanded="true"] { background: var(--ui-s2); border-color: var(--ui-border); color: var(--ui-text); }
 .ui-status-item { cursor: pointer; }
@@ -171,7 +171,7 @@ html, body { min-height: 100%; }
 @media (prefers-reduced-motion: reduce) { .ui-status-refresh.is-spinning .ui-icon { animation: none; opacity: 0.6; } }
 .ui-status-list.is-stale .ui-status-item:not([data-status="server"]) { opacity: 0.55; }
 
-/* ---- list rows, filters and detail used by Memory, Review, Rules and Tools (T-208) ---- */
+/* ---- list rows, filters and detail used by Memory, Review, Rules and Tools ---- */
 .ui-item { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--ui-space-2); }
 .ui-item > * { min-width: 0; }
 .ui-item.is-leaving { overflow: hidden; }
@@ -217,7 +217,7 @@ html, body { min-height: 100%; }
 .ui-pair-out { margin-top: var(--ui-space-3); }
 @media (max-width: 640px) { .ui-command-row { grid-template-columns: 1fr; gap: 2px; } }
 
-/* ---- first-run guide (T-212) ---- */
+/* ---- first-run guide ---- */
 .ui-guide { padding: var(--ui-space-5); background: linear-gradient(180deg, var(--ui-accent-soft), transparent 60%), var(--ui-s1); border-color: color-mix(in srgb, var(--ui-accent) 40%, var(--ui-border)); }
 .ui-guide-head { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--ui-space-3); flex-wrap: wrap; margin-bottom: var(--ui-space-4); }
 .ui-guide-h { font-size: var(--ui-text-xl); margin: 0 0 4px; }
@@ -231,7 +231,7 @@ html, body { min-height: 100%; }
 .ui-guide-wait .ui-loader { padding: 0; }
 @keyframes ui-pop { 0% { transform: scale(0.6); } 100% { transform: scale(1); } }
 
-/* ---- Work tab on the shared components (T-215) ---- */
+/* ---- Work tab on the shared components ---- */
 .ui-work-strip-region { margin: var(--ui-space-3) 0 var(--ui-space-5); }
 .ui-work-strip { margin: 0; }
 .ui-stat-small { font-size: var(--ui-text-md) !important; line-height: 1.35 !important; }

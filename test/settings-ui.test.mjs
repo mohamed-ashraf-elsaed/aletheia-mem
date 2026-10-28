@@ -1,4 +1,4 @@
-// T-078: settings are persisted in the hub settings table (so they survive a reopen), invalid values are rejected,
+// settings are persisted in the hub settings table (so they survive a reopen), invalid values are rejected,
 // and secrets are masked on read and only replaced with a non-empty value. The view renders fields and saves over
 // PUT /api/hub/settings. Retargeted to the public/ SPA.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";

@@ -1,4 +1,4 @@
-// T-213: motion helpers and the stylesheet's motion rules. The helpers run against a fake element with a recording
+// motion helpers and the stylesheet's motion rules. The helpers run against a fake element with a recording
 // animate(); the stylesheets are read as text.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
@@ -19,7 +19,7 @@ function recorder() {
 }
 const reduce = (on) => { globalThis.matchMedia = () => ({ matches: on }); };
 
-describe("T-213: reduced motion", () => {
+describe("reduced motion", () => {
   test("it is read from the media query", () => {
     expect(reducedMotion()).toBe(false);
     reduce(true);
@@ -77,7 +77,7 @@ describe("T-213: reduced motion", () => {
   });
 });
 
-describe("T-213: count up, tokens, visibility", () => {
+describe("count up, tokens, visibility", () => {
   test("a count-up ends on the final value", async () => {
     const el = dom.createElement("b");
     let frame = 0;
@@ -127,7 +127,7 @@ function keyframeBlocks(source) {
   return blocks;
 }
 
-describe("T-213: the stylesheets", () => {
+describe("the stylesheets", () => {
   const theme = read("ui-theme.css");
   const css = read("ui-components.css") + read("one-ui.css");
   test("duration tokens are 120, 200 and 320 ms", () => {

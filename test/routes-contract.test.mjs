@@ -1,4 +1,4 @@
-// T-005: one contract test per documented route (docs/03-http-api.md and the docs/06-frontend.md paging table).
+// one contract test per documented route (docs/03-http-api.md and the docs/06-frontend.md paging table).
 // The manifest in route-manifest.mjs is the single source of truth; it also drives scripts/check-openapi.mjs.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";

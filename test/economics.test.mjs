@@ -1,4 +1,4 @@
-// T-170: context economics counts per-observation read tokens from stored text, reports work tokens only from a
+// context economics counts per-observation read tokens from stored text, reports work tokens only from a
 // real usage record (else null, labelled), and answers through the route and the CLI.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";
@@ -45,7 +45,7 @@ afterAll(() => {
   cleanupTempDirs();
 });
 
-describe("T-170: context economics", () => {
+describe("context economics", () => {
   test("read tokens are counted from text; work tokens come from the usage ledger", () => {
     const store = new HubStore(":memory:");
     try {

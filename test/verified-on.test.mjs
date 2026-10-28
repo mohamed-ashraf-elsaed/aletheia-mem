@@ -1,4 +1,4 @@
-// T-075: the connector registry records verifiedOn, toolVersion and evidence per connector, and a
+// the connector registry records verifiedOn, toolVersion and evidence per connector, and a
 // verification is labelled stale when it is old or the running version is newer than the pinned one.
 import { describe, expect, test } from "bun:test";
 import { TOOLS, verificationStatus } from "../src/hub/tools.mjs";

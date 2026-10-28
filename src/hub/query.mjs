@@ -1,4 +1,4 @@
-// Rule-based query expansion (T-038). The time range is extracted by parseTemporal (temporal.mjs); the model rewrite
+// Rule-based query expansion. The time range is extracted by parseTemporal (temporal.mjs); the model rewrite
 // and HyDE variants are behind flags and need a provider, so they are out of scope here (no model). The returned
 // `path` tells the caller which expansion ran, and timeFilter maps a parsed range into store search filters.
 

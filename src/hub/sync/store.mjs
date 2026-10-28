@@ -1,6 +1,6 @@
 // SyncStore: the hub's side of Aletheia Sync. One SQLite file (sync.db) that holds the append-only
 // operation log, device registry, token hashes, one-time pairing codes, quotas, an append-only audit
-// table, and (T-117) the account's wrapped E2EE data keys. Tokens are 256-bit random values; only their
+// table, and the account's wrapped E2EE data keys. Tokens are 256-bit random values; only their
 // sha256 is stored.
 import { Database } from "bun:sqlite";
 import { copyFileSync, existsSync, mkdirSync } from "node:fs";
@@ -389,7 +389,7 @@ export class SyncStore {
   }
 
   /**
-   * Erasure (T-113): the live entity ids whose plaintext head payload names this project or these ids. An E2EE
+   * Erasure: the live entity ids whose plaintext head payload names this project or these ids. An E2EE
    * head cannot be matched here; the caller must pass explicit entity ids for an encrypted account.
    */
   findEntities({ project = null, ids = [] } = {}) {
@@ -470,7 +470,7 @@ export class SyncStore {
     return { purged: true, head_seq: headSeq, epoch: account.epoch };
   }
 
-  // ---- end-to-end encryption (T-117) -------------------------------------------------------------
+  // ---- end-to-end encryption -------------------------------------------------------------
 
   /** The account's E2EE state and every wrapped key. Never contains an unwrapped key. */
   e2eeStatus(accountId) {

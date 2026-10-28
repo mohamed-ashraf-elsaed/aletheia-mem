@@ -1,4 +1,4 @@
-// The pages inside the Tools tab (T-211): the tools Aletheia can capture from, paired devices, remote access links,
+// The pages inside the Tools tab: the tools Aletheia can capture from, paired devices, remote access links,
 // the doctor's checks and the activity log. Revoking a device or a link cannot be undone, so each asks first and says
 // what will happen. Commands are shown with a Copy button; nothing here runs a command for you.
 import { badge, button, codeBlock, confirmDialog, copyText, emptyState, iconButton, mono, modal, skeleton, statTile, timeEl, toast, withTooltip } from "../ui-components.js";

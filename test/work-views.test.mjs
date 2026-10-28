@@ -43,7 +43,7 @@ const data = {
   empty: false,
 };
 
-describe("T-143: the Work overview view", () => {
+describe("the Work overview view", () => {
   test("the header strip derives every value from the response", () => {
     const header = workHeaderView(data);
     expect(header).toMatchObject({ project: "shop", mode: "code", sessions: 1, facts: 1, review: 1, pinned: 1, empty: false });
@@ -113,7 +113,7 @@ describe("T-143: the Work overview view", () => {
   });
 });
 
-describe("T-144: the goal view", () => {
+describe("the goal view", () => {
   test("a goal shows its count, session count, last-seen date and dated quote ids", () => {
     const goal = {
       id: "0123456789abcdef",
@@ -142,7 +142,7 @@ describe("T-144: the goal view", () => {
   });
 });
 
-describe("T-145: the session page view", () => {
+describe("the session page view", () => {
   test("a session detail shows the ordered timeline, summary and facts with sources, and no actions", () => {
     const detail = {
       id: "s1",

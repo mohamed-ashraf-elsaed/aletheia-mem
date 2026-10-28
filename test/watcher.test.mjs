@@ -1,4 +1,4 @@
-// T-063: the transcript watcher. It reads the verified Claude Code, Command Code and Codex folders read-only,
+// the transcript watcher. It reads the verified Claude Code, Command Code and Codex folders read-only,
 // keeps byte offsets and turn counters in a state database, survives a restart without duplicates, stores an
 // unknown line as a raw episode, waits for a complete line, and caps a pass by batch size and a 1 s interval.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
@@ -52,7 +52,7 @@ afterAll(() => {
   rmSync(temp, { recursive: true, force: true });
 });
 
-describe("T-063: transcript watcher", () => {
+describe("transcript watcher", () => {
   test("one pass imports user and assistant turns from all three verified layouts", () => {
     const before = {
       claude: readFileSync(claudeFile, "utf8"),

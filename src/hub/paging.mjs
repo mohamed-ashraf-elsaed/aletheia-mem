@@ -1,4 +1,4 @@
-// Shared paging rules for every list route (T-203). One place decides the default page size, the hard maximum and
+// Shared paging rules for every list route. One place decides the default page size, the hard maximum and
 // how a date filter is read, so no route can accept an unbounded limit.
 
 export const DEFAULT_LIMIT = 25;

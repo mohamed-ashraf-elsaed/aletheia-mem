@@ -226,7 +226,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
     const tool = request.headers.get("x-tool") ?? undefined;
     let m;
 
-    // ---- T-112: team mode for the local Hub UI. The route guard already made this an operator session. ----
+    // ---- team mode for the local Hub UI. The route guard already made this an operator session. ----
     if (pathname === "/api/hub/team" || pathname.startsWith("/api/hub/team/")) {
       const sync = getSyncStore();
       const account = sync.ensureAccount();
@@ -245,7 +245,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       return result ? h.json(result.body, result.status) : h.json({ error: "Not found." }, 404);
     }
 
-    // ---- T-113: erasure report, apply and receipt verification for the local UI/admin session ----
+    // ---- erasure report, apply and receipt verification for the local UI/admin session ----
     if (pathname === "/api/hub/erasure/report" && method === "POST") {
       const b = await readJson(request);
       const before = b.before == null ? null : typeof b.before === "number" ? b.before : Date.parse(String(b.before));
@@ -283,7 +283,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       return h.json(result, result.ok ? 200 : 400);
     }
 
-    // ---- T-114: alert rules, the feed and delivery controls for the local UI/admin session ----
+    // ---- alert rules, the feed and delivery controls for the local UI/admin session ----
     if (pathname === "/api/hub/alerts/rules" && method === "GET") return h.json({ rules: getAlerts().listRules() });
     if (pathname === "/api/hub/alerts/rules" && method === "POST") {
       const b = await readJson(request);
@@ -566,7 +566,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       return done ? h.json({ rule: describeRule(hub, m[1]), previousConfirmedEpoch: done.previousConfirmedEpoch }) : h.json({ error: "That rule does not exist." }, 404);
     }
 
-    // ---- T-172: decide flow, on/off toggle, replacement history and the last learning run ----
+    // ---- decide flow, on/off toggle, replacement history and the last learning run ----
     if (pathname === "/api/hub/rules/learning-run" && method === "GET") return h.json({ learningRun: learningRun(hub) });
     if (pathname === "/api/hub/rules/learning-run" && method === "POST") {
       const result = suggestRules(hub, { project: qs(url).project || null });
@@ -672,7 +672,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       return h.json({ ...out, ...pageInfo({ total: out.total, ...paging, count: out.audit.length }) });
     }
 
-    // ---- T-135: the facts table (current by default, history on request) ----
+    // ---- the facts table (current by default, history on request) ----
     if (pathname === "/api/hub/facts" && method === "GET") {
       const q = qs(url);
       const paging = pagingOf(q, { limit: 100 });
@@ -684,7 +684,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       return h.json({ ...out, ...pageInfo({ total: out.total, ...paging, count: out.items.length }), status });
     }
 
-    // ---- T-136: the review queue, near-duplicate pairs and their actions ----
+    // ---- the review queue, near-duplicate pairs and their actions ----
     if (pathname === "/api/hub/review" && method === "GET") {
       const q = qs(url);
       const status = q.status || "pending";
@@ -774,7 +774,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       return h.json({ item: reviewItemView(updated) });
     }
 
-    // ---- T-137: rule suggestions, accept / dismiss / restore ----
+    // ---- rule suggestions, accept / dismiss / restore ----
     if (pathname === "/api/hub/rule-suggestions" && method === "GET") {
       const q = qs(url);
       const paging = pagingOf(q);
@@ -801,10 +801,10 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       }
     }
 
-    // ---- T-138: installer status from doctor data, read only ----
+    // ---- installer status from doctor data, read only ----
     if (pathname === "/api/hub/doctor" && method === "GET") return h.json(await doctorData(h.server));
 
-    // T-144: owner goals are pin/dismiss only; the goal list itself is computed from prompt rows.
+    // owner goals are pin/dismiss only; the goal list itself is computed from prompt rows.
     if ((m = /^\/api\/hub\/goals\/([a-f0-9]{16})$/.exec(pathname)) && method === "POST") {
       const b = await readJson(request);
       try {
@@ -814,7 +814,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       }
     }
 
-    // T-152: requests are computed, so the only write is a reversible dismiss/restore of a request id.
+    // requests are computed, so the only write is a reversible dismiss/restore of a request id.
     if ((m = /^\/api\/hub\/requests\/([a-f0-9]{16})$/.exec(pathname)) && method === "POST") {
       const b = await readJson(request);
       try {
@@ -824,7 +824,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       }
     }
 
-    // T-123: dismiss is reversible; nothing is deleted here.
+    // dismiss is reversible; nothing is deleted here.
     if (pathname === "/api/hub/dismissed" && method === "GET") {
       const q = qs(url);
       const paging = pagingOf(q);
@@ -842,7 +842,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       return h.json(hub.restore(b.type ?? "memory", Number(b.id), { actor: "ui" }));
     }
 
-    // ---- T-102/104: sync status, pairing and revoke for the Tools tab ----
+    // ---- sync status, pairing and revoke for the Tools tab ----
     if (pathname === "/api/hub/sync/status" && method === "GET") {
       const store = getSyncStore();
       const account = store.ensureAccount();
@@ -880,7 +880,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       return h.json({ revoked });
     }
 
-    // ---- T-107: the private remote MCP endpoint, managed from the Tools tab ----
+    // ---- the private remote MCP endpoint, managed from the Tools tab ----
     const mcpLinkView = (token) => ({
       id: token.id,
       scope: token.scope,

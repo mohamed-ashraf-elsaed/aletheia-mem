@@ -1,4 +1,4 @@
-// Alert rules and delivery (T-114). Rules match events from the audit stream, the extraction queue and the sync
+// Alert rules and delivery. Rules match events from the audit stream, the extraction queue and the sync
 // hub; a match queues one delivery to a webhook or a local file. Webhook delivery signs the body with
 // HMAC-SHA256, retries with exponential backoff, times out, and refuses private/loopback/link-local targets
 // unless the rule says --allow-private. A rate limit per rule stops an alert storm. No telemetry.

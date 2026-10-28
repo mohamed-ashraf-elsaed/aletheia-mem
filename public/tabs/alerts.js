@@ -1,4 +1,4 @@
-// T-114: the Alerts tab. Rules, the delivery feed and the test/run buttons over `/api/hub/alerts/*`.
+// the Alerts tab. Rules, the delivery feed and the test/run buttons over `/api/hub/alerts/*`.
 // The one-UI shell wires `renderAlerts`; this module touches no other file.
 import { api, chip, errorCard, errorText, h, run, swap, toast } from "../ui-dom.js";
 

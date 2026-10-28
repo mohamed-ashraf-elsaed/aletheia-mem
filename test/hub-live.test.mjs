@@ -1,4 +1,4 @@
-// T-077: the live feed (a frame reaches the status controller without a reload), the session page (episodes and
+// the live feed (a frame reaches the status controller without a reload), the session page (episodes and
 // facts), and the context preview (the exact block POST /v1/context returns). Retargeted to the public/ SPA.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
@@ -21,7 +21,7 @@ function install(routes) {
 beforeEach(() => { dom = installFakeDom(); });
 afterAll(() => restoreGlobals());
 
-describe("T-077: live feed, session page and context preview", () => {
+describe("live feed, session page and context preview", () => {
   test("a session page lists its episodes and facts", () => {
     const detail = sessionDetailView({
       id: "s1", project: "shop", firstAt: 1000, lastAt: 2000, tool: "claude-code", promptCount: 2, toolCount: 1,

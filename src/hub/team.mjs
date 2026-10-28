@@ -1,4 +1,4 @@
-// Team mode (T-112): named projects, members that are device tokens with a role, shared memory, a board of
+// Team mode: named projects, members that are device tokens with a role, shared memory, a board of
 // pinned facts and decisions, a rule-based brief and shared search. Every access decision is made here, in the
 // store, not only in an HTTP route. A member sees only the projects assigned to it; an owner sees the team's
 // projects. Revoking a member or its sync token takes effect on the next call.

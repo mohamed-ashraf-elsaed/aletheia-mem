@@ -1,4 +1,4 @@
-// T-113: erase, export first, sign a receipt. Erased text must be gone from the hub tables, the FTS tables, the
+// erase, export first, sign a receipt. Erased text must be gone from the hub tables, the FTS tables, the
 // vectors, the sync log (server) and the device replica/outbox, and absent from every export made afterwards.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
@@ -49,7 +49,7 @@ afterAll(() => {
   rmSync(temp, { recursive: true, force: true });
 });
 
-describe("T-113: erase, export and receipt", () => {
+describe("erase, export and receipt", () => {
   test("the report counts rows and lists ids without printing content", () => {
     seed(TEXT, "shop");
     seed(KEEP, "keep");

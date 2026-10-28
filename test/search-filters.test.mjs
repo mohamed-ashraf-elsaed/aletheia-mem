@@ -1,4 +1,4 @@
-// T-008: date range (since/until), order (relevance|date_desc|date_asc) and offset pagination on search, for the
+// date range (since/until), order (relevance|date_desc|date_asc) and offset pagination on search, for the
 // MCP `search` tool and the paged `POST /v1/search` route. The old non-paged shape is untouched and still tested by
 // the existing search suites.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";

@@ -48,7 +48,7 @@ async function runCommand(command, payload, ctx) {
   return { stdout, exitCode };
 }
 
-describe("T-064: Gemini CLI installer and hooks", () => {
+describe("Gemini CLI installer and hooks", () => {
   test("a dry run merges MCP and hooks in one settings step plus GEMINI.md", () => {
     const ctx = setup();
     const plan = installerFor("gemini-cli").plan(ctx.env);

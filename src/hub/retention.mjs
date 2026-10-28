@@ -85,7 +85,7 @@ export function shortenEpisodeText(episode, { head = 200, tail = 200 } = {}) {
 export function prune(store, { now = Date.now(), apply = false, settings = retentionSettings(store) } = {}) {
   const cold = coldCandidates(store, { now, settings });
   const episodes = episodeCandidates(store, { now, settings });
-  // T-123: a dismissal is a reversible hide. Only prune --apply removes the underlying row.
+  // a dismissal is a reversible hide. Only prune --apply removes the underlying row.
   const dismissed = store.dismissedList({ limit: 500 });
   const report = {
     now,

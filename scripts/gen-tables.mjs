@@ -26,7 +26,7 @@ export const TARGETS = [
 const read = (root, path) => readFileSync(join(root, path), "utf8");
 const cell = (value) => String(value ?? "").replace(/\|/g, "\\|").replace(/\s*\n\s*/g, " ").trim();
 
-// Internal task ids (T-123) mean nothing to a reader of the public README.
+// Internal task ids mean nothing to a reader of the public README.
 export function withoutTaskIds(text) {
   return String(text).replace(/ ?\((?:T-\d+(?:,\s*T-\d+)*)\)/g, "").replace(/ T-\d+\b/g, "");
 }

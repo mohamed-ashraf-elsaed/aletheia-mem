@@ -1,4 +1,4 @@
-// T-203: every list route pages on the server with limit, offset and total, a hard maximum, a stable order and the
+// every list route pages on the server with limit, offset and total, a hard maximum, a stable order and the
 // filters the UI offers. Seeded with enough rows to span several pages.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";
@@ -76,7 +76,7 @@ beforeAll(() => {
 });
 afterAll(() => app.stop());
 
-describe("T-203: paging rules", () => {
+describe("paging rules", () => {
   test("pagingOf caps the limit and clamps bad input", () => {
     expect(pagingOf({ limit: "5000", offset: "-3" })).toEqual({ limit: MAX_LIMIT, offset: 0 });
     expect(pagingOf({})).toEqual({ limit: 25, offset: 0 });
@@ -94,7 +94,7 @@ describe("T-203: paging rules", () => {
   });
 });
 
-describe("T-203: memories", () => {
+describe("memories", () => {
   test("pages never overlap and add up to the total (dismissed rows excluded)", async () => {
     const { total } = await walk("/api/hub/memories", "items", (m) => m.id);
     expect(total).toBe(53 - 9);
@@ -148,7 +148,7 @@ describe("T-203: memories", () => {
   });
 });
 
-describe("T-203: facts", () => {
+describe("facts", () => {
   test("current facts page and exclude dismissed rows", async () => {
     const { total } = await walk("/api/hub/facts", "items", (f) => f.id);
     expect(total).toBe(31 - 6);
@@ -177,7 +177,7 @@ describe("T-203: facts", () => {
   });
 });
 
-describe("T-203: review queue", () => {
+describe("review queue", () => {
   test("pending items page with a total", async () => {
     const { total } = await walk("/api/hub/review?status=pending", "items", (r) => r.id, 4);
     expect(total).toBe(14 - 0);
@@ -203,7 +203,7 @@ describe("T-203: review queue", () => {
   });
 });
 
-describe("T-203: rule suggestions", () => {
+describe("rule suggestions", () => {
   test("pending and dismissed page separately", async () => {
     expect((await walk("/api/hub/rule-suggestions?status=pending", "items", (r) => r.id, 5)).total).toBe(12);
     expect((await get("/api/hub/rule-suggestions?status=dismissed&limit=100")).total).toBe(5);
@@ -219,7 +219,7 @@ describe("T-203: rule suggestions", () => {
   });
 });
 
-describe("T-203: dismissed items", () => {
+describe("dismissed items", () => {
   test("pages, labels and type filter", async () => {
     const { total } = await walk("/api/hub/dismissed", "items", (d) => `${d.item_type}:${d.item_id}`, 4);
     expect(total).toBe(15);
@@ -236,7 +236,7 @@ describe("T-203: dismissed items", () => {
   });
 });
 
-describe("T-203: audit", () => {
+describe("audit", () => {
   test("pages newest first with a total", async () => {
     const { seen, total } = await walk("/api/hub/audit", "audit", (a) => a.id, 9);
     expect(total).toBeGreaterThanOrEqual(40);
@@ -250,7 +250,7 @@ describe("T-203: audit", () => {
   });
 });
 
-describe("T-203: sessions", () => {
+describe("sessions", () => {
   test("/v1/work/sessions pages merged sessions", async () => {
     const { total } = await walk("/v1/work/sessions", "items", (s) => `${s.project}:${s.id}`, 5);
     expect(total).toBeGreaterThanOrEqual(12);
@@ -271,7 +271,7 @@ describe("T-203: sessions", () => {
   });
 });
 
-describe("T-203: goals and devices", () => {
+describe("goals and devices", () => {
   test("goals carry paging fields", async () => {
     const data = await get("/v1/work/goals?limit=2");
     expect(data.limit).toBe(2);
@@ -286,7 +286,7 @@ describe("T-203: goals and devices", () => {
   });
 });
 
-describe("T-203: search", () => {
+describe("search", () => {
   test("the unpaged call keeps its old shape", async () => {
     const data = await post("/v1/search", { query: "retry", limit: 5 });
     expect(data.results.length).toBe(5);

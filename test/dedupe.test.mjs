@@ -1,4 +1,4 @@
-// T-028: near-duplicate detection with TF-IDF cosine and an IDF veto. Exact duplicates still collapse on the
+// near-duplicate detection with TF-IDF cosine and an IDF veto. Exact duplicates still collapse on the
 // content hash. The scan is bounded, and the labelled fixture reports precision and recall at the auto threshold.
 import { describe, expect, test } from "bun:test";
 import { AUTO_MERGE, buildVectors, cosine, nearDuplicates, similarity } from "../src/hub/dedupe.mjs";

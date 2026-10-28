@@ -1,4 +1,4 @@
-// T-171: rule strength comes from how often a suggestion was seen, and every suggestion stores its latest date and
+// rule strength comes from how often a suggestion was seen, and every suggestion stores its latest date and
 // dated quotes. Strength thresholds are documented and tested here.
 import { describe, expect, test } from "bun:test";
 import { HubStore } from "../src/hub/store.mjs";
@@ -11,7 +11,7 @@ function prompt(store, sessionId, text, minutes) {
   return store.add({ project: "shop", kind: "prompt", type: "note", title: text, narrative: text, sessionId, tool: "claude-code", createdAtEpoch: at(minutes) });
 }
 
-describe("T-171: rule strength and evidence", () => {
+describe("rule strength and evidence", () => {
   test("strength thresholds are Strong at 5+, Steady at 3-4, Light at 1-2", () => {
     expect(ruleStrength(1)).toBe("Light");
     expect(ruleStrength(2)).toBe("Light");

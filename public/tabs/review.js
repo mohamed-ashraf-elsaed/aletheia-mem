@@ -1,4 +1,4 @@
-// T-136, T-209: the review queue inside the Memory tab. Queue rows, near-duplicate pairs and resolved items are three
+// the review queue inside the Memory tab. Queue rows, near-duplicate pairs and resolved items are three
 // server-paged lists. Accept, Reject, Keep both and Restore change the screen first and can be undone for 8 seconds.
 // Merging rows is the one action that asks first, because it cannot be undone from here.
 import { badge, button, confirmDialog, disclosure, emptyState, promptDialog, segmented, skeleton, timeEl, toast } from "../ui-components.js";

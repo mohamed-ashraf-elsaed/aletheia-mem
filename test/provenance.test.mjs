@@ -1,4 +1,4 @@
-// T-023: every fact resolves to the episodes that produced it, and provenance returns the original turn text.
+// every fact resolves to the episodes that produced it, and provenance returns the original turn text.
 import { describe, expect, test } from "bun:test";
 import { HubStore } from "../src/hub/store.mjs";
 

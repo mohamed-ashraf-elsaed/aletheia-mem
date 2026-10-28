@@ -1,4 +1,4 @@
-// T-087: a translation records the English hash, and the check fails when the English README moves.
+// a translation records the English hash, and the check fails when the English README moves.
 import { afterAll, describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";

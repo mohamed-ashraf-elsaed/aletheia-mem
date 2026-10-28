@@ -1,4 +1,4 @@
-// The Alerts and Team pages inside the Tools tab (T-217). They put the team-mode and alert-rule APIs on the shared
+// The Alerts and Team pages inside the Tools tab. They put the team-mode and alert-rule APIs on the shared
 // components: server-paged delivery feed, rule cards with Test and a confirmed Remove, shared projects with a board, a
 // brief and search. Writing is refused by the server for a viewer; the page says so instead of hiding the buttons.
 import { badge, button, confirmDialog, emptyState, field, markdownView, modal, mono, skeleton, statTile, timeEl, toast } from "../ui-components.js";

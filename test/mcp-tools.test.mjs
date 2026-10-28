@@ -1,4 +1,4 @@
-// T-069: work-state lists over MCP. One named list is stored as a single observation with a reserved type,
+// work-state lists over MCP. One named list is stored as a single observation with a reserved type,
 // a write then read round-trips, a second write replaces the list, and a malformed list is rejected.
 import { describe, expect, test } from "bun:test";
 import { callTool, TOOL_DEFS } from "../src/hub/mcp.mjs";

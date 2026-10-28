@@ -1,4 +1,4 @@
-// The route manifest (T-005/T-006): one row per documented route in docs/03-http-api.md and the docs/06-frontend.md
+// The route manifest: one row per documented route in docs/03-http-api.md and the docs/06-frontend.md
 // paging table. `path` is the concrete URL the contract test fetches; `template` is the OpenAPI path (path parameters
 // written as {name}); `keys` are the response fields the contract test requires for a JSON 200/201. The OpenAPI checker
 // walks this list and asserts every (template, method) is present in docs/openapi.json.

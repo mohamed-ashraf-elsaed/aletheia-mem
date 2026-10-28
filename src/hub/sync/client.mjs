@@ -80,7 +80,7 @@ export class SyncClient {
     return { seq, hlc };
   }
 
-  // ---- end-to-end encryption (T-117) -------------------------------------------------------------
+  // ---- end-to-end encryption -------------------------------------------------------------
 
   /** The local keyring: kid -> data key (base64). The device already holds the plaintext replica. */
   keyRing() {
@@ -222,8 +222,8 @@ export class SyncClient {
   }
 
   /**
-   * Erasure (T-113): remove local replica and outbox rows for a project or a set of entity ids. This is a delete,
-   * not a tombstone; the server writes the tombstone through T-103 purge, and a later pull brings the empty head.
+   * Erasure: remove local replica and outbox rows for a project or a set of entity ids. This is a delete,
+   * not a tombstone; the server writes the tombstone through a purge, and a later pull brings the empty head.
    * Encrypted payloads cannot be matched by project or content id, so callers pass explicit entity ids for E2EE.
    */
   erase({ project = null, ids = [], entityIds = [] } = {}) {

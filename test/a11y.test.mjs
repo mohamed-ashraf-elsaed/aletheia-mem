@@ -1,4 +1,4 @@
-// T-090: accessibility and theme pass on the one-page app. This file covers what is runnable offline with the fake
+// accessibility and theme pass on the one-page app. This file covers what is runnable offline with the fake
 // DOM: the theme persists and is applied before the first paint, and every interactive control the app builds is
 // named and keyboard-reachable. The axe run and the 375 px / 1280 px browser keyboard walk need a browser install and
 // are UNVERIFIED (see the task Evidence).
@@ -43,7 +43,7 @@ function keyboardProblems(container, doc, label) {
 beforeEach(() => { dom = installFakeDom(); });
 afterAll(() => restoreGlobals());
 
-describe("T-090: theme", () => {
+describe("theme", () => {
   test("the preference persists across sessions", () => {
     const storage = memoryStorage();
     expect(applyTheme("dark", { root: dom.documentElement, storage })).toBe("dark");
@@ -65,7 +65,7 @@ describe("T-090: theme", () => {
   });
 });
 
-describe("T-090: keyboard reachability", () => {
+describe("keyboard reachability", () => {
   test("every interactive control in the settings view is named and focusable", async () => {
     const S = await import("../public/tabs/settings.js");
     globalThis.fetch = async () => ({ ok: true, status: 200, headers: { get: () => "application/json" }, json: async () => ({ settings: [{ key: "provider", label: "Provider", kind: "string", secret: false, value: "none" }, { key: "redaction", label: "Redact before storing", kind: "boolean", secret: false, value: false }, { key: "apiKey", label: "API key", kind: "string", secret: true, value: "••••••••", set: true }] }) });

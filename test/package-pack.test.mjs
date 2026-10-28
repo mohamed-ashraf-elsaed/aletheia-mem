@@ -1,4 +1,4 @@
-// T-080: the npm package is prepared, not published. The tarball contains the runtime files, and the CLI
+// the npm package is prepared, not published. The tarball contains the runtime files, and the CLI
 // reports the package version.
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";

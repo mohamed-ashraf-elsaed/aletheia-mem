@@ -137,7 +137,7 @@ flow with no meaning here.
 The exact wording of validation errors (the original uses zod) and the 404 HTML body are reproduced from
 observation, not from source.
 
-## 3.4 Team mode (T-112)
+## 3.4 Team mode
 
 Team routes serve the same store as [31-team.md](31-team.md). `/v1/team/*` needs `Authorization: Bearer <sync token>`;
 a read needs any valid token and a write needs `sync` or `admin`. `/api/hub/team/*` is the guarded local Hub route
@@ -168,7 +168,7 @@ unknown team, member or project; `400` for a duplicate team name, the last owner
 The store check is the gate: `TeamStore.authorize()` runs for the HTTP route, the CLI and a direct store call.
 A route cannot bypass it, and a test calls the store directly to prove that.
 
-## 3.5 Erasure (T-113)
+## 3.5 Erasure
 
 These routes are the guarded local UI/admin path. The CLI is `aletheia erase ...`; both call the same modules.
 
@@ -182,7 +182,7 @@ These routes are the guarded local UI/admin path. The CLI is `aletheia erase ...
 `memory:12`, `fact:12`, `observation:12`, `episode:12`. A plan follows provenance: a memory's episode, its
 observation, the facts on that observation/episode, and the summaries, keys, links, dismissals and review rows
 that point at them. `apply` removes the hub rows and their FTS entries, the vectors, the device replica/outbox
-when one is local, and asks the sync store for a T-103 purge, which drops every op body and leaves a tombstone
+when one is local, and asks the sync store for a purge, which drops every op body and leaves a tombstone
 with a null payload. The receipt records counts and ids, never text; it is signed with
 `HMAC-SHA256` over the key-sorted body with the local key at `~/.aletheia/erasure.key` (mode 0600).
 
@@ -190,7 +190,7 @@ An erasure of an offline device's copy is not possible from here: revoke its tok
 E2EE account cannot be matched by project or content id, so pass the entity ids explicitly or purge on the
 device that holds the key.
 
-## 3.6 Alerts (T-114)
+## 3.6 Alerts
 
 The guarded local UI/admin path. The CLI is `aletheia alerts ...`. Events: `device.paired`, `token.revoked`,
 `quota.hit`, `sync.error`, `extraction.failed`, `queue.depth`. A rule either appends one JSON line to a local
@@ -217,7 +217,7 @@ address is refused unless the rule sets `allowPrivate`. A name that does not res
 `/v1/sync/revoke`; `quota.hit` when a push hits a quota; `extraction.failed` and `queue.depth` from the
 extraction worker. An alert store or delivery failure never takes the server or the queue down.
 
-## 3.7 Requests, goals, story and economics (T-152, T-165 to T-173)
+## 3.7 Requests, goals, story and economics
 
 The universal `/v1` API also answers the Work views. These routes are read-only except for dismiss/restore and the
 rule decide actions. Every number comes from a stored row; an empty store returns empty arrays and `empty: true`.

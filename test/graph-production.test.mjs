@@ -1,4 +1,4 @@
-// T-097: the graph channel stays bounded and timed out, an entity page resolves every link, and turning the flag
+// the graph channel stays bounded and timed out, an entity page resolves every link, and turning the flag
 // off restores the old ranking exactly. Synthetic entities, facts and edges; no model, no network.
 import { describe, expect, test } from "bun:test";
 import { HubStore } from "../src/hub/store.mjs";

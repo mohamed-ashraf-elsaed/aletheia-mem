@@ -1,4 +1,4 @@
-// T-122: prove that install and every capture path leave the project folder byte-identical.
+// prove that install and every capture path leave the project folder byte-identical.
 // The whole run uses a temp HOME, a temp data dir and a temp project, so no real user state is touched.
 import { afterAll, describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
@@ -49,7 +49,7 @@ function snapshot(dir) {
   return out;
 }
 
-describe.skipIf(process.platform === "win32")("T-122: no writes into a project folder (needs a POSIX shell for the hook commands)", () => {
+describe.skipIf(process.platform === "win32")("no writes into a project folder (needs a POSIX shell for the hook commands)", () => {
   test("install writes under HOME only, and a full simulated session leaves the project byte-identical", async () => {
     const original = snapshot(project);
     expect(original.length).toBe(3); // README.md, src/, src/pay.mjs

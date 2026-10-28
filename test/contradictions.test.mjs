@@ -1,4 +1,4 @@
-// T-025: a newer fact on the same subject and predicate supersedes the older one. Nothing is deleted; history
+// a newer fact on the same subject and predicate supersedes the older one. Nothing is deleted; history
 // keeps both rows with their ranges; a same-time disagreement goes to the review queue.
 import { describe, expect, test } from "bun:test";
 import { resolveContradictions, storeFacts } from "../src/hub/facts.mjs";

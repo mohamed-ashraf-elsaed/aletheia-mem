@@ -1,4 +1,4 @@
-// T-167: commits, PRs and branches in stored tool events become "what came out of it" on a request.
+// commits, PRs and branches in stored tool events become "what came out of it" on a request.
 import { describe, expect, test } from "bun:test";
 import { HubStore } from "../src/hub/store.mjs";
 import { cameOutOfIt, detectArtifacts } from "../src/hub/artifacts.mjs";
@@ -7,7 +7,7 @@ import { proposeRequests } from "../src/hub/requests.mjs";
 const NOW = Date.UTC(2026, 9, 26, 12, 0, 0);
 const at = (minutes) => NOW - minutes * 60_000;
 
-describe("T-167: what came out of it", () => {
+describe("what came out of it", () => {
   test("detectArtifacts finds a PR URL, a bracketed commit+branch, a push branch and a PR number", () => {
     const pr = detectArtifacts("https://github.com/acme/shop/pull/42");
     expect(pr).toEqual([{ kind: "pull", value: "#42", number: 42, url: "https://github.com/acme/shop/pull/42" }]);

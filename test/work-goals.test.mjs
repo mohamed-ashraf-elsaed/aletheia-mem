@@ -48,7 +48,7 @@ beforeAll(() => {
 
 afterAll(() => seeded.app.stop());
 
-describe("T-144: owner goals", () => {
+describe("owner goals", () => {
   test("an imperative topic repeated across sessions is a counted goal with dated quote ids", () => {
     const store = new HubStore(join(fx.dir, "goals.db"));
     const data = proposeGoals(store, { project: "shop", now: NOW });

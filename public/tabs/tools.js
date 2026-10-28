@@ -1,4 +1,4 @@
-// T-138, T-211, T-217: the Tools tab. Seven pages: the tools and the commands to set each up, paired devices, remote access
+// the Tools tab. Seven pages: the tools and the commands to set each up, paired devices, remote access
 // links, alert rules and their deliveries, teams, the doctor's checks and the activity log. Install, uninstall and connect stay on the command line. The old
 // viewer is offered only when its database exists.
 import { classicViewerAvailable } from "../ui-core.js";

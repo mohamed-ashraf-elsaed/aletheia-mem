@@ -1,4 +1,4 @@
-// The first-run guide (T-212): three steps shown while the store is empty. Install capture for your tool, start a
+// The first-run guide: three steps shown while the store is empty. Install capture for your tool, start a
 // session, see it here. Step 1 turns done by itself when the doctor sees hooks; step 3 waits for the first event and
 // flips to done the moment data arrives. Every command has a Copy button. Nothing is run for you.
 import { badge, brainLoader, button, copyText, icon, iconButton, statusDot } from "./ui-components.js";

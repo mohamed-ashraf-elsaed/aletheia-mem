@@ -1,4 +1,4 @@
-// T-165: the temp-dir helper registers dirs and removes them, so a test that runs repeatedly never fills the disk.
+// the temp-dir helper registers dirs and removes them, so a test that runs repeatedly never fills the disk.
 import { afterAll, describe, expect, test } from "bun:test";
 import { existsSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

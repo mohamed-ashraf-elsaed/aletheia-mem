@@ -1,4 +1,4 @@
-// Shared team HTTP actions (T-112). Both `/v1/team/*` (bearer token, remote or CLI) and `/api/hub/team/*`
+// Shared team HTTP actions. Both `/v1/team/*` (bearer token, remote or CLI) and `/api/hub/team/*`
 // (the guarded local Hub UI, operator) call this one handler, so the same store-layer ACL runs for both.
 import { TeamAccessError } from "./team.mjs";
 

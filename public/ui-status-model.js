@@ -1,4 +1,4 @@
-// What the status bar shows, as plain data (T-206). Every value comes from an API answer; a source that has not
+// What the status bar shows, as plain data. Every value comes from an API answer; a source that has not
 // answered yet gives state "unknown" and says so, and nothing is guessed. DOM-free, so it is unit-tested.
 import { formatNumber, relativeTime } from "./ui-pure.js";
 

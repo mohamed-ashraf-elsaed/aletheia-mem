@@ -1,4 +1,4 @@
-// T-024: valid time and record time are separate. valid_to is the only way a fact stops being current.
+// valid time and record time are separate. valid_to is the only way a fact stops being current.
 import { describe, expect, test } from "bun:test";
 import { HubStore } from "../src/hub/store.mjs";
 

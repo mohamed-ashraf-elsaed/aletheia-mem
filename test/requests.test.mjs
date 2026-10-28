@@ -1,4 +1,4 @@
-// T-152: sessions of one goal in one project group into a request, with status, stage, running time and
+// sessions of one goal in one project group into a request, with status, stage, running time and
 // "where this came from". Every value is read from a row; an empty store says empty.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";
@@ -57,7 +57,7 @@ beforeAll(() => {
 
 afterAll(() => seeded.app.stop());
 
-describe("T-152: the request layer", () => {
+describe("the request layer", () => {
   test("sessions of one goal in one project form one request; a different goal is another", () => {
     const store = new HubStore(join(fx.dir, "requests.db"));
     const data = proposeRequests(store, { project: "shop", now: NOW, activeMinutes: 5 });

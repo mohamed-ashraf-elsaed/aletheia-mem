@@ -1,4 +1,4 @@
-// T-219: the goals roll-up in the Work tab.
+// the goals roll-up in the Work tab.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 
@@ -42,7 +42,7 @@ beforeEach(async () => {
 });
 afterAll(() => restoreGlobals());
 
-describe("T-219: the goals roll-up", () => {
+describe("the goals roll-up", () => {
   test("shows the roll-up, the open-ask split and the no-goal bucket", async () => {
     install([[/^\/v1\/work\/goals\?/, () => json(rollup())]]);
     const view = G.goalsRollupView();

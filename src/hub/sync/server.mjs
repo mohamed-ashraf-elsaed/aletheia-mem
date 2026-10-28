@@ -1,7 +1,7 @@
 // The Aletheia Sync HTTP server: /v1/sync/* with bearer-token auth, per-operation push results,
 // cursor-based pull, pairing, device management, scoped tokens and an append-only audit log.
 // Binds to loopback by default; a non-loopback bind requires `behindTls` and prints a warning.
-// Also serves the private remote MCP endpoint at /mcp when `hubDb` is given (T-107).
+// Also serves the private remote MCP endpoint at /mcp when `hubDb` is given.
 import { dirname, join } from "node:path";
 import { epochOrNull, exportAudit } from "../audit-export.mjs";
 import { AlertStore, startAlertDelivery } from "../alerts.mjs";
@@ -84,7 +84,7 @@ export function createSyncRoutes({ store, team = null, alerts = null, getPeer = 
     const token = bearer(request);
     const accountForToken = token ? token.account_id : null;
 
-    // ---- T-112: team mode (shared memory, board, brief, search) ---------------------------------
+    // ---- team mode (shared memory, board, brief, search) ---------------------------------
     if (team && (pathname === "/v1/team" || pathname.startsWith("/v1/team/"))) {
       const read = method === "GET" || method === "HEAD";
       const teamDenied = authDenied(token, read ? ["sync", "read", "mcp", "admin"] : ["sync", "admin"]);
@@ -153,7 +153,7 @@ export function createSyncRoutes({ store, team = null, alerts = null, getPeer = 
       return json(store.status(accountForToken));
     }
 
-    // The account's wrapped E2EE keys (T-117): a newly joined device fetches these and unwraps them
+    // The account's wrapped E2EE keys: a newly joined device fetches these and unwraps them
     // locally with the passphrase. Only wrapped keys ever leave the server.
     if (pathname === "/v1/sync/e2ee" && method === "GET") {
       const e2eeDenied = authDenied(token, ["sync", "read", "mcp", "admin"]);
@@ -244,7 +244,7 @@ export function createSyncRoutes({ store, team = null, alerts = null, getPeer = 
 
 /**
  * Start the sync server. Returns {server, store, stop, port, url}.
- * With `hubDb`, the private remote MCP endpoint is served at /mcp (T-107): bearer tokens with an
+ * With `hubDb`, the private remote MCP endpoint is served at /mcp: bearer tokens with an
  * `mcp`/`read`/`sync`/`admin` scope, project scope, per-token rate limit and an audit row per call.
  */
 export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "default", behindTls = false, hubDb = null, teamDb = null, alertsDb = null, alertDeliveryMs = 0, mcpOrigins = null, mcpRateLimitPerMinute = 60 } = {}) {
@@ -263,7 +263,7 @@ export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "
   const routes = createSyncRoutes({ store, team, alerts, behindTls, getPeer: () => "peer" });
   const delivery = Number(alertDeliveryMs) > 0 ? startAlertDelivery(alerts, { intervalMs: Number(alertDeliveryMs) }) : null;
 
-  // ---- the private remote MCP endpoint (T-107) -----------------------------------------------
+  // ---- the private remote MCP endpoint -----------------------------------------------
   const hub = hubDb ? new HubStore(hubDb) : null;
   const mcpWindows = new Map(); // token id -> { start, count }
   const mcpRoutes = hub

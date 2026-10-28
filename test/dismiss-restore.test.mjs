@@ -1,4 +1,4 @@
-// T-123: dismiss hides a memory, observation or fact from search and context, keeps the row, and restore
+// dismiss hides a memory, observation or fact from search and context, keeps the row, and restore
 // brings it back. The CLI, the REST route and the MCP tool all use the same store write. Nothing is deleted
 // until `prune --apply`, which is the only path that purges a dismissed row.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
@@ -53,7 +53,7 @@ afterAll(() => {
   rmSync(temp, { recursive: true, force: true });
 });
 
-describe("T-123: reversible dismiss and restore", () => {
+describe("reversible dismiss and restore", () => {
   test("dismiss hides a memory from search and context without deleting the row", async () => {
     const store = new HubStore(dbPath);
     const memory = store.list({ project: "shop" }).items.find((row) => row.title === "Retry policy");

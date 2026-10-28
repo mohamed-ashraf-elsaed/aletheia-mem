@@ -27,7 +27,7 @@ function setup() {
   };
 }
 
-describe("T-068: OpenCode installer (mcp+rules)", () => {
+describe("OpenCode installer (mcp+rules)", () => {
   test("a dry run plans the documented mcp key and global rules, and writes nothing", () => {
     const ctx = setup();
     const plan = installerFor("opencode").plan(ctx.env);

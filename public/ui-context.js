@@ -1,4 +1,4 @@
-// Context preview (T-077): the exact block a session-start hook would read for this project. It comes from
+// Context preview: the exact block a session-start hook would read for this project. It comes from
 // POST /v1/context, the same route the MCP session_start_context tool and the CLI use, and is rendered as plain
 // text (never innerHTML) so the wrapped memory stays data, not markup.
 import { emptyState, skeleton } from "./ui-components.js";

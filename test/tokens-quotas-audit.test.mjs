@@ -1,4 +1,4 @@
-// T-108: scoped API tokens, quotas and an audit log. Token scopes (sync/read/mcp/admin) are limited to
+// scoped API tokens, quotas and an audit log. Token scopes (sync/read/mcp/admin) are limited to
 // named projects; per-token ops/day and bytes/day quotas are local settings off by default; the audit table
 // is append-only and never holds payloads or secrets.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
@@ -29,7 +29,7 @@ const push = (token, deviceId, ops) => fetch(`${hub.url}/v1/sync/push`, {
   body: JSON.stringify({ ops }),
 });
 
-describe("T-108: scoped tokens, quotas and audit", () => {
+describe("scoped tokens, quotas and audit", () => {
   test("(j) a read token cannot push", async () => {
     const read = hub.store.mintToken(accountId, { scope: "read", deviceId: "device-read", name: "Read" }).token;
     const response = await push(read, "device-read", []);

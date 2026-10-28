@@ -1,4 +1,4 @@
-// T-120: output language. The tag is validated when it is set, stored per project, and added to the extraction
+// output language. The tag is validated when it is set, stored per project, and added to the extraction
 // prompt as OUTPUT_LANGUAGE. Summaries are built from the facts, so they follow the same language.
 import { afterAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
@@ -14,7 +14,7 @@ const root = join(import.meta.dir, "..");
 const temp = mkdtempSync(join(tmpdir(), "aletheia-language-"));
 afterAll(() => rmSync(temp, { recursive: true, force: true }));
 
-describe("T-120: output language", () => {
+describe("output language", () => {
   test("language tags are validated and normalised", () => {
     expect(normalizeLanguage("en")).toBe("en");
     expect(normalizeLanguage("ES")).toBe("es");

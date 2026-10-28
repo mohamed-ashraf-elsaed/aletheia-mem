@@ -1,4 +1,4 @@
-// T-214: accessibility contract. Every page is rendered with realistic API answers (including right-to-left text and a
+// accessibility contract. Every page is rendered with realistic API answers (including right-to-left text and a
 // 200-character unbroken token) and every interactive element is checked for a name, a valid role and a sane tab
 // order. The stylesheets are read for focus rings, touch size and the skip link. A real-browser pass (four widths,
 // a keyboard walk, reduced motion) is recorded in docs/manual-test.md.
@@ -156,7 +156,7 @@ const mount = async (id, render, route) => {
   return holder;
 };
 
-describe("T-214: the audit itself", () => {
+describe("the audit itself", () => {
   test("it finds an unnamed button, a bad role, a duplicate id and an unlabelled dialog", () => {
     const host = dom.createElement("div");
     const bare = dom.createElement("button");
@@ -201,7 +201,7 @@ describe("T-214: the audit itself", () => {
   });
 });
 
-describe("T-214: names, roles and tab order on every page", () => {
+describe("names, roles and tab order on every page", () => {
   const cases = [
     ["memory", "ui-memory", (r) => mods.memory.renderMemory(r), ["memories", "facts", "review", "dismissed", "economics", "search"]],
     ["rules", "ui-rules", (r) => mods.rules.renderRules(r), ["rules", "suggestions", "sync", "import"]],
@@ -265,7 +265,7 @@ describe("T-214: names, roles and tab order on every page", () => {
   });
 });
 
-describe("T-214: the page and the stylesheets", () => {
+describe("the page and the stylesheets", () => {
   const html = read("index.html");
   const css = read("ui-components.css") + read("one-ui.css");
   test("the page declares its language, has a skip link and one main landmark", () => {
@@ -333,9 +333,9 @@ describe("T-214: the page and the stylesheets", () => {
   });
 });
 
-// T-224: the real-browser keyboard and 375 px walk of Requests, Goals, Story, Suggested rules and Economics
+// the real-browser keyboard and 375 px walk of Requests, Goals, Story, Suggested rules and Economics
 // (docs/a11y-walk-requests.md). Each test below pins one fix the walk led to.
-describe("T-224: findings from the keyboard and small-screen walk", () => {
+describe("findings from the keyboard and small-screen walk", () => {
   const css = read("ui-components.css");
   const card = (label) => {
     const el = dom.createElement("article");

@@ -1,4 +1,4 @@
-// DOM-free helpers for the component system (T-201). Nothing here touches document, window or fetch, so each
+// DOM-free helpers for the component system. Nothing here touches document, window or fetch, so each
 // function is covered by a plain unit test. Components import from here; nothing here imports a component.
 
 export const PAGE_SIZES = [10, 25, 50, 100];

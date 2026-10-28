@@ -1,4 +1,4 @@
-/* Aletheia components (T-204). Tokens come from ui-theme.css. Plain CSS, no external file, no inline style needed. */
+/* Aletheia components. Tokens come from ui-theme.css. Plain CSS, no external file, no inline style needed. */
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {

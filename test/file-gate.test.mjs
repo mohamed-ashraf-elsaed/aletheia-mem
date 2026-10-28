@@ -1,4 +1,4 @@
-// T-060: a large file that already has observations is gated; a targeted read still passes and a file with no
+// a large file that already has observations is gated; a targeted read still passes and a file with no
 // history is not gated. Synthetic 32 KB text; no model, no network.
 import { describe, expect, test } from "bun:test";
 import { HubStore } from "../src/hub/store.mjs";

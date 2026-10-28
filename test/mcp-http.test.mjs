@@ -1,4 +1,4 @@
-// T-067: MCP Streamable HTTP transport (spec 2025-03-26). One endpoint, POST for JSON-RPC with Accept
+// MCP Streamable HTTP transport (spec 2025-03-26). One endpoint, POST for JSON-RPC with Accept
 // handling, GET answered with 405 because this server sends no server-initiated stream, Mcp-Session-Id
 // sessions, an Origin allow-list that defaults to loopback, a body cap, a request timeout and JSON-RPC
 // batch handling. Tests speak raw fetch; no MCP SDK dependency is allowed.
@@ -16,7 +16,7 @@ const start = (options = {}) => {
 
 const ACCEPT = "application/json, text/event-stream";
 
-describe("T-067: MCP Streamable HTTP transport", () => {
+describe("MCP Streamable HTTP transport", () => {
   let app;
   beforeAll(() => {
     app = start();

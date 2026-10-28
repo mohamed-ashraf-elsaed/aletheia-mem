@@ -110,7 +110,7 @@ function pendingMemories(store, payload, limit = MAX_MEMORIES_PER_JOB) {
 }
 
 /**
- * Episodes that arrived without a memory row: back-filled transcripts (T-121) and any direct episode write.
+ * Episodes that arrived without a memory row: back-filled transcripts and any direct episode write.
  * Memory-derived episodes are excluded here because they are selected through their memory, so a job never
  * extracts the same turn twice.
  */

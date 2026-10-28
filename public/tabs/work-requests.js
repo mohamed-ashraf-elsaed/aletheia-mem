@@ -1,4 +1,4 @@
-// Requests in the Work tab (T-218): one card per request from T-152, with the T-166 progress and ETA, the T-167
+// Requests in the Work tab: one card per request, with the progress and ETA, the
 // artifacts and a detail page that says where the request came from. Every number is printed from the response.
 // Progress and ETA are chosen rules, so each carries the "estimated" link from ui-estimates.js.
 import { badge, button, disclosure, emptyState, mono, progressBar, skeleton, timeEl } from "../ui-components.js";

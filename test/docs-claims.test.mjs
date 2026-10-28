@@ -8,7 +8,7 @@ const read = (path) => readFileSync(join(root, path), "utf8");
 // Tests about them run where the file exists and are skipped in a fresh clone.
 const whenPresent = (path) => (existsSync(join(root, path)) ? test : test.skip);
 
-describe("T-141: docs and claims match what was tested", () => {
+describe("docs and claims match what was tested", () => {
   test("the README does not claim unbuilt capture or a real install", () => {
     const text = read("README.md");
     expect(text).toContain("## Which tools it connects to");

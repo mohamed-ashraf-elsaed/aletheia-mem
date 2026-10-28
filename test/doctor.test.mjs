@@ -1,4 +1,4 @@
-// T-073: `aletheia doctor` reports host, port and permissions, exits 0 on a healthy install, exits 1 on a
+// `aletheia doctor` reports host, port and permissions, exits 0 on a healthy install, exits 1 on a
 // corrupt database, and never prints a secret.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdirSync, writeFileSync } from "node:fs";

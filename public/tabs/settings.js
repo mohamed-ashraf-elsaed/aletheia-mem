@@ -1,4 +1,4 @@
-// Settings (T-078): a read/write form over GET/PUT /api/hub/settings. Values live in the hub settings table and
+// Settings: a read/write form over GET/PUT /api/hub/settings. Values live in the hub settings table and
 // survive a restart. The API key is a password field: masked on read, replaced only when a non-empty value is sent.
 import { badge, button, emptyState, skeleton, toast } from "../ui-components.js";
 import { api, h } from "../ui-dom.js";

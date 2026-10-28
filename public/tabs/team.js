@@ -1,4 +1,4 @@
-// T-112: the Team tab. Plain list, create and read views over `/api/hub/team/*`. The one-UI shell wires
+// the Team tab. Plain list, create and read views over `/api/hub/team/*`. The one-UI shell wires
 // `renderTeam` into its tab list; this module touches no other file.
 import { api, chip, errorCard, errorText, h, run, swap, toast } from "../ui-dom.js";
 

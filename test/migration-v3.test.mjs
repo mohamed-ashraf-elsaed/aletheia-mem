@@ -1,4 +1,4 @@
-// T-017: schema v3 is additive. A v2 database migrates without losing rows, a broken migration rolls back,
+// schema v3 is additive. A v2 database migrates without losing rows, a broken migration rolls back,
 // the old routes still answer, and the CLI backs up before it writes.
 import { afterAll, describe, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";

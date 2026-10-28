@@ -1,4 +1,4 @@
-// T-029: merge a duplicate into the older id. The loser is kept with status 'merged', its facts move to the
+// merge a duplicate into the older id. The loser is kept with status 'merged', its facts move to the
 // survivor, and the audit trail names both ids.
 import { describe, expect, test } from "bun:test";
 import { mergeDuplicates } from "../src/hub/dedupe.mjs";

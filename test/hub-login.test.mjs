@@ -1,4 +1,4 @@
-// T-110: remote login for the Hub. When the server is not loopback-only, every `/` and `/api` route needs a
+// remote login for the Hub. When the server is not loopback-only, every `/` and `/api` route needs a
 // session: an admin token from the sync account is exchanged for an HttpOnly, SameSite=Strict,
 // Secure-when-HTTPS cookie plus a readable CSRF cookie; state-changing requests echo the CSRF cookie in the
 // X-CSRF-Token header. Sessions expire; failed logins lock out with back-off. Loopback keeps today's behaviour.
@@ -59,7 +59,7 @@ const login = (token, headers = {}) => fetch(`${base}/api/login`, {
   body: JSON.stringify({ token }),
 });
 
-describe("T-110: remote login for the Hub", () => {
+describe("remote login for the Hub", () => {
   test("unauthenticated requests get 401 and the login page is served for /", async () => {
     const api = await fetch(`${base}/api/hub/overview`);
     expect(api.status).toBe(401);

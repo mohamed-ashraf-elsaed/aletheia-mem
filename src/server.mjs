@@ -47,7 +47,7 @@ export function startServer(config, {
 } = {}) {
   const service = new WorkViewService(config, { autoRefresh });
   const hub = new HubStore(config.hubDb);
-  // Remote login (T-110): on by default exactly when the bind is not loopback-only. The sync account's
+  // Remote login: on by default exactly when the bind is not loopback-only. The sync account's
   // admin token is the password. Loopback-only keeps today's behaviour (no login, no sessions).
   const remoteMode = requireLogin ?? !["127.0.0.1", "localhost", "::1"].includes(config.host);
   let loginStore = null;

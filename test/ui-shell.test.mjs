@@ -1,4 +1,4 @@
-// T-205: the shell's logic without a browser: routes, theme, search, shortcuts and the palette's commands.
+// the shell's logic without a browser: routes, theme, search, shortcuts and the palette's commands.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -15,7 +15,7 @@ const memoryStorage = (initial = {}) => {
   return { getItem: (k) => (k in data ? data[k] : null), setItem: (k, v) => { data[k] = String(v); }, removeItem: (k) => { delete data[k]; }, data };
 };
 
-describe("T-205: routes with pages inside tabs", () => {
+describe("routes with pages inside tabs", () => {
   test("tab, page and the rest", () => {
     expect(routeOf("#/memory/facts?page=2")).toMatchObject({ tab: "memory", sub: "facts", rest: [], key: "memory/facts" });
     expect(routeOf("#/memory")).toMatchObject({ tab: "memory", sub: "memories", key: "memory/memories" });
@@ -44,7 +44,7 @@ describe("T-205: routes with pages inside tabs", () => {
   });
 });
 
-describe("T-205: theme preference", () => {
+describe("theme preference", () => {
   test("auto means no attribute; dark and light set it", () => {
     expect(themeAttribute("auto")).toBeNull();
     expect(themeAttribute("dark")).toBe("dark");
@@ -78,7 +78,7 @@ describe("T-205: theme preference", () => {
   });
 });
 
-describe("T-205: the page", () => {
+describe("the page", () => {
   test("index.html has the skip link, the status region, the live announcer and no inline script or style", () => {
     const html = readFileSync(join(import.meta.dir, "..", "public", "index.html"), "utf8");
     expect(html).toContain('class="ui-skip"');
@@ -93,7 +93,7 @@ describe("T-205: the page", () => {
   });
 });
 
-describe("T-205: header search", () => {
+describe("header search", () => {
   async function setup() {
     const S = await import("../public/ui-search.js");
     const input = dom.createElement("input");
@@ -184,7 +184,7 @@ describe("T-205: header search", () => {
   });
 });
 
-describe("T-205: shortcuts", () => {
+describe("shortcuts", () => {
   async function setup() {
     const K = await import("../public/ui-keys.js");
     const calls = { navigate: [], search: 0, palette: 0 };
@@ -274,7 +274,7 @@ describe("T-205: shortcuts", () => {
   });
 });
 
-describe("T-205: the palette", () => {
+describe("the palette", () => {
   test("static commands cover every tab and sub page, and are findable", async () => {
     const K = await import("../public/ui-keys.js");
     const { rankCommands } = await import("../public/ui-pure.js");
@@ -317,7 +317,7 @@ describe("T-205: the palette", () => {
 
 afterAll(() => restoreGlobals());
 
-describe("T-216: demo label and the page's security headers", () => {
+describe("demo label and the page's security headers", () => {
   test("?demo=1 is the only thing that marks demo mode", async () => {
     const { isDemo } = await import("../public/ui-core.js");
     expect(isDemo("?demo=1")).toBe(true);

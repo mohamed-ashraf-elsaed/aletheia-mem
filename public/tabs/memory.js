@@ -1,4 +1,4 @@
-// T-135, T-136, T-208: the Memory tab. One frame (title, counts, page links, New note, Import and export) and the
+// the Memory tab. One frame (title, counts, page links, New note, Import and export) and the
 // pages inside it: memories, facts, review, dismissed and search. The review queue is in ./review.js. The import
 // panel keeps the form that imports from the older claude-mem database (opened read-only).
 import { badge, button, drawer, emptyState, errorState, field, modal, progressBar, skeleton, statTile, tabs, toast } from "../ui-components.js";

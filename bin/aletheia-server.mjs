@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 // Start the work view: bun bin/aletheia-server.mjs [--host 0.0.0.0] [--behind-tls]
-// A non-loopback bind turns on Hub login (T-110); without --behind-tls it prints a warning.
+// A non-loopback bind turns on Hub login; without --behind-tls it prints a warning.
 import { loadConfig } from "../src/config.mjs";
 import { createAutoRefresh } from "../src/refresh/auto-refresh.mjs";
 import { startServer } from "../src/server.mjs";

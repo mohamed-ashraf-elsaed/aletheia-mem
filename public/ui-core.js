@@ -1,4 +1,4 @@
-// DOM-free helpers for the one UI (T-134, T-139). Everything here is a plain function so it can be imported in
+// DOM-free helpers for the one UI. Everything here is a plain function so it can be imported in
 // a test with no browser. The router, the tab list and the view models live here; one-ui.js only touches the DOM.
 
 import { parseHash } from "./ui-pure.js";

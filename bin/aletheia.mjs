@@ -41,7 +41,7 @@
 //             | members <team> | revoke-member <team> <id> | share <team> <id> --projects a,b
 //             | board <team> [--project p] | pin|decision|memory <team> <text> --project p
 //             | brief <team> --project p | search <team> <query> | leave <team> | audit <team>
-//                                                          team mode (T-112); --token-id acts as a member, otherwise the local operator
+//                                                          team mode; --token-id acts as a member, otherwise the local operator
 //   aletheia service install|uninstall|status [--write] [--cpu-quota X] [--memory-max Y]
 //                                                          auto-start unit/plist (dry-run by default; Linux/macOS only)
 //   aletheia audit [--limit n]                          read the sync audit log
@@ -51,7 +51,7 @@
 //   aletheia erase verify <receipt.json>                  check a receipt's HMAC
 //   aletheia alerts add --event E --target webhook|file [--url u|--path p] [--secret s] [--allow-private]
 //                  | list | remove <id> | enable|disable <id> | test <id> | run | feed | check | emit <event> [--value n]
-//                                                          alert rules and delivery (T-114)
+//                                                          alert rules and delivery
 import { Database } from "bun:sqlite";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";

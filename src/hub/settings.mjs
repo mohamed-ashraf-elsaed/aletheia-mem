@@ -1,4 +1,4 @@
-// Editable settings (T-078). Stored in the hub settings table under a namespace, so a saved value survives a
+// Editable settings. Stored in the hub settings table under a namespace, so a saved value survives a
 // restart. Secrets are never returned: GET returns a mask and PUT replaces the value only when a non-empty one
 // is sent. Every other key is validated by kind and range before it is written.
 

@@ -1,6 +1,6 @@
 # 31. Team mode
 
-Status: implemented and tested, 2026-10-26 (T-112). This page describes what the code does. It does not claim
+Status: implemented and tested, 2026-10-26. This page describes what the code does. It does not claim
 SSO, SCIM, compliance certificates or an SLA; none of those are built.
 
 Team mode is a small layer on top of Aletheia Sync ([29-sync.md](29-sync.md)). It stores named projects, members,
@@ -18,7 +18,7 @@ command reads that store; the store makes the access decision.
 | `team_entry` | shared memory (`memory`, `fact`, `note`) and board entries (`pin`, `decision`) with author and time |
 | `team_audit` | append-only team actions; ids and counts, never entry text |
 
-A member is a device token from the sync account (T-104/T-108); the raw token is shown once when the member is
+A member is a device token from the sync account; the raw token is shown once when the member is
 created. A team is isolated by `account_id`. Joining a team shares nothing: a member sees only the projects in
 `team_share`. For an owner, the project list is the team's projects.
 
@@ -50,7 +50,7 @@ store gets `401 token_revoked`; the wrong project gets `403 project_forbidden`.
 ## 31.4 Routes and commands
 
 `/v1/team/*` needs a sync bearer token. `/api/hub/team/*` is the guarded local UI route and acts as the local
-operator. The full table is in [03-http-api.md](03-http-api.md#34-team-mode-t-112). The CLI mirrors it under
+operator. The full table is in [03-http-api.md](03-http-api.md#34-team-mode). The CLI mirrors it under
 `aletheia team ...`; `--token-id <id>` acts as that member, and the default is the local operator.
 
 ## 31.5 Threat list and what is not covered
@@ -68,7 +68,7 @@ operator. The full table is in [03-http-api.md](03-http-api.md#34-team-mode-t-11
 | A stolen device token reads its assigned projects | **NOT covered**: the token is the identity. Revoke it |
 | E2EE team memory | **NOT covered**: a shared brief and shared search need server-readable text. Team mode runs on a plaintext sync account |
 | A removed member's offline replica | **NOT covered**: the device keeps its local copy. Revoke the token and wipe the device |
-| SSO, SCIM, compliance, audit export | **NOT built**: T-115 is not started, and no certificate is claimed |
+| SSO, SCIM, compliance, audit export | **NOT built** and no certificate is claimed |
 
 ## 31.6 Failure modes
 

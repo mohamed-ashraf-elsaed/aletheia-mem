@@ -1,4 +1,4 @@
-// T-206: the status bar's model and controller, without a browser. Time, network and the socket are fakes.
+// the status bar's model and controller, without a browser. Time, network and the socket are fakes.
 import { describe, expect, test } from "bun:test";
 import { POLL_MS, createStatusController } from "../public/ui-status.js";
 import { bannerText, buildIndicators, frameKind, newErrors, overallState, recovered, retryDelaySeconds } from "../public/ui-status-model.js";
@@ -9,7 +9,7 @@ const WORK = { queue: { pending: 0, running: 0, failed: 0, done: 4, depth: 0 }, 
 const SYNC_OFF = { epoch: 1, headSeq: 0, deviceCount: 0, devices: [] };
 const byId = (list, id) => list.find((entry) => entry.id === id);
 
-describe("T-206: indicators", () => {
+describe("indicators", () => {
   test("a healthy store gives the nine indicators plus live", () => {
     const list = buildIndicators({ health: HEALTH_OK, work: WORK, sync: SYNC_OFF, overview: { provider: "none" }, now: NOW });
     expect(list.map((entry) => entry.id)).toEqual(["server", "database", "fts", "vectors", "model", "queue", "extractor", "capture", "sync", "live"]);
@@ -155,7 +155,7 @@ const OK = (data) => ({ ok: true, status: 200, data });
 const GOOD = { "/v1/health": OK(HEALTH_OK), "/v1/work": OK(WORK), "/api/hub/sync/status": OK(SYNC_OFF), "/api/hub/overview": OK({ provider: "none" }) };
 const flush = () => new Promise((resolve) => setTimeout(resolve, 5));
 
-describe("T-206: controller", () => {
+describe("controller", () => {
   test("the first refresh asks every source once and reports indicators", async () => {
     const h = harness({ responses: GOOD });
     await h.controller.start();
@@ -338,7 +338,7 @@ describe("T-206: controller", () => {
   });
 });
 
-describe("T-206: frames reach other views", () => {
+describe("frames reach other views", () => {
   test("each known frame is passed on, once, before the refresh pause", async () => {
     const frames = [];
     const h = harness({ responses: GOOD });

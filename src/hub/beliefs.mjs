@@ -1,4 +1,4 @@
-// Belief tracking (T-098): a belief is a fact with a confidence and a review state. A contested belief (same subject
+// Belief tracking: a belief is a fact with a confidence and a review state. A contested belief (same subject
 // and predicate, different object) is never collapsed — both sides stay visible. Regeneration of an entity summary is
 // deterministic and gated on a >20% change to the source facts. Rule-based only; model-generated prose is UNVERIFIED.
 import { sha256 } from "../lib/hash.mjs";

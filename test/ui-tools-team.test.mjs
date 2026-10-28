@@ -1,4 +1,4 @@
-// T-217: the Alerts and Team pages inside the Tools tab, with fake DOM and fake fetch.
+// the Alerts and Team pages inside the Tools tab, with fake DOM and fake fetch.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 
@@ -47,7 +47,7 @@ const alertRoutes = (extra = []) => [
   [/^\/api\/hub\/alerts\/feed/, () => json({ deliveries: [delivery(5), delivery(4, "failed")], total: 23 })],
 ];
 
-describe("T-217: alerts", () => {
+describe("alerts", () => {
   test("rules with their target, signing and a feed paged from the server", async () => {
     const calls = install(alertRoutes());
     const view = TT.alertsView();
@@ -125,7 +125,7 @@ describe("T-217: alerts", () => {
   });
 });
 
-describe("T-217: team", () => {
+describe("team", () => {
   const TEAM = { id: "t1", name: "Core team", role: "editor", projects: ["shop"] };
   const teamRoutes = (extra = []) => [
     ...extra,

@@ -1,4 +1,4 @@
-// T-121: back-fill from real transcript layouts (verified on this machine 2026-10-26). The source files are
+// back-fill from real transcript layouts (verified on this machine 2026-10-26). The source files are
 // opened read-only; the test hashes them before and after and checks they are byte-identical.
 import { afterAll, describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
@@ -53,7 +53,7 @@ const hashes = new Map(files.map((file) => [file, createHash("sha256").update(re
 
 afterAll(() => rmSync(temp, { recursive: true, force: true }));
 
-describe("T-121: transcript back-fill", () => {
+describe("transcript back-fill", () => {
   test("the verified layout is found and checkpoint/meta files are ignored", () => {
     expect(findTranscripts("claude-code", { home }).map((row) => row.file).sort()).toEqual([join(claudeDir, "session-a.jsonl"), join(claudeDir, "session-b.jsonl"), malformedFile].sort());
     expect(findTranscripts("command-code", { home }).map((row) => row.file)).toEqual([join(ccDir, "cc-1.jsonl")]);

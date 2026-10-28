@@ -1,4 +1,4 @@
-// T-216: the demo seed script writes clearly fake data, only where it is told to, and never over a real store.
+// the demo seed script writes clearly fake data, only where it is told to, and never over a real store.
 import { describe, expect, test } from "bun:test";
 import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -18,7 +18,7 @@ const run = async (args, env = {}) => {
   return { out, err, code };
 };
 
-describe("T-216: seed-demo", () => {
+describe("seed-demo", () => {
   test("fills a folder with the requested number of fake memories, facts, review items and suggestions", () => {
     const dir = temp();
     try {

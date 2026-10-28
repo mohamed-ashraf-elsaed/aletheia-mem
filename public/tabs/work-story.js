@@ -1,5 +1,5 @@
-// The build story in the Work tab (T-221). Counts, shipping velocity and learned habits all come from
-// GET /v1/work/story (T-169). Where a value is absent the panel says so; it never fills a gap with a number.
+// The build story in the Work tab. Counts, shipping velocity and learned habits all come from
+// GET /v1/work/story. Where a value is absent the panel says so; it never fills a gap with a number.
 import { badge, disclosure, emptyState, skeleton, statTile, timeEl } from "../ui-components.js";
 import { api, h, state } from "../ui-dom.js";
 import { region } from "../ui-region.js";

@@ -1,4 +1,4 @@
-// T-086: the docs site is generated from Markdown, uses relative links, and its sitemap matches the pages.
+// the docs site is generated from Markdown, uses relative links, and its sitemap matches the pages.
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";

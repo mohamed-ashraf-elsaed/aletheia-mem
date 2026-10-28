@@ -50,7 +50,7 @@ async function runCommand(command, payload, ctx) {
   return { stdout, exitCode };
 }
 
-describe("T-065: Windsurf installer and hooks", () => {
+describe("Windsurf installer and hooks", () => {
   test("a dry run plans the current MCP path, hooks and global rules", () => {
     const ctx = setup();
     const plan = installerFor("windsurf").plan(ctx.env);

@@ -1,4 +1,4 @@
-// T-050: a bounded retrieval cache keyed on the normalised query + filters + store revision. A revision bump changes
+// a bounded retrieval cache keyed on the normalised query + filters + store revision. A revision bump changes
 // the key, so a write can never return a stale result; the size is bounded and the hit rate is tracked.
 import { describe, expect, test } from "bun:test";
 import { RetrievalCache } from "../src/hub/cache.mjs";

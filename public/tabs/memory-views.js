@@ -1,4 +1,4 @@
-// The pages inside the Memory tab (T-208): memories, facts, dismissed and search. Each is a server-paged list whose
+// The pages inside the Memory tab: memories, facts, dismissed and search. Each is a server-paged list whose
 // page and filters live in the URL hash. Rows come from the API; nothing here invents a number or a row.
 import { badge, button, emptyState, skeleton } from "../ui-components.js";
 import { channelLines, searchReasonText } from "../ui-core.js";

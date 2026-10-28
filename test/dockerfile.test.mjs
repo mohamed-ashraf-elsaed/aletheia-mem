@@ -1,6 +1,6 @@
-// T-081: static checks for the Docker files. `docker build` is NOT RUN BY AUTHOR.
+// static checks for the Docker files. `docker build` is NOT RUN BY AUTHOR.
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 const root = join(import.meta.dir, "..");
@@ -50,10 +50,13 @@ describe("Docker files", () => {
     }
   });
 
-  // The task file is kept only on the maintainers' machines; skipped in a fresh clone.
-  (existsSync(join(root, "docs/tasks/T-081.md")) ? test : test.skip)("docker build is recorded as not run", () => {
-    const task = read("docs/tasks/T-081.md");
-    expect(task).toContain("NOT RUN BY AUTHOR");
-    expect(task).toContain("docker build");
+  // The task note is kept only on the maintainers' machines; skipped in a fresh clone.
+  (existsSync(join(root, "docs", "tasks")) ? test : test.skip)("docker build is recorded as not run", () => {
+    const note = readdirSync(join(root, "docs", "tasks"))
+      .filter((name) => name.endsWith(".md"))
+      .map((name) => read(join("docs", "tasks", name)))
+      .find((text) => text.includes("docker build") && text.includes("NOT RUN BY AUTHOR"));
+    expect(note).toBeDefined();
+    expect(note).toContain("NOT RUN BY AUTHOR");
   });
 });

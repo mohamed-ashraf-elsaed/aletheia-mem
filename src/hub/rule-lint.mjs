@@ -1,4 +1,4 @@
-// Rule hygiene (T-072): find duplicate rules, direct always/never contradictions, over-long rules and rule sets,
+// Rule hygiene: find duplicate rules, direct always/never contradictions, over-long rules and rule sets,
 // rules that tell an agent to ignore safety, secrets inside a rule, and drift between a managed block and the
 // store. Every finding carries the rule id (or the file and line for drift) and a fix hint. Nothing here blocks
 // sync; the checks return warnings.

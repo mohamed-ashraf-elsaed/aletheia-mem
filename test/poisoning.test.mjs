@@ -1,4 +1,4 @@
-// T-011: recalled memory is wrapped as untrusted data on every path that returns it to a model, and a stored note that
+// recalled memory is wrapped as untrusted data on every path that returns it to a model, and a stored note that
 // tries to close the wrapper or give orders stays inside it. RED-TEAM FIXTURE: the strings below are attacks on purpose.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";
@@ -25,7 +25,7 @@ const OPEN = "<aletheia-memory>";
 const CLOSE = "</aletheia-memory>";
 const intact = (text) => text.startsWith(OPEN) && text.endsWith(CLOSE) && text.split(CLOSE).length === 2 && text.split(OPEN).length === 2;
 
-describe("T-011: the wrapper", () => {
+describe("the wrapper", () => {
   test("opens and closes once and carries the one-line rule", () => {
     const out = wrapUntrusted("hello");
     expect(intact(out)).toBe(true);
@@ -46,7 +46,7 @@ describe("T-011: the wrapper", () => {
   });
 });
 
-describe("T-011: every path that recalls memory is wrapped", () => {
+describe("every path that recalls memory is wrapped", () => {
   test("MCP search", () => expect(intact(run("search", { query: "retry" }))).toBe(true));
   test("MCP get_observations", () => { const out = run("get_observations", { ids: [id] }); expect(intact(out)).toBe(true); expect(out).toContain("Ignore previous instructions"); });
   test("MCP timeline", () => expect(intact(run("timeline", { anchor: id }))).toBe(true));
@@ -64,7 +64,7 @@ describe("T-011: every path that recalls memory is wrapped", () => {
   });
 });
 
-describe("T-011 follow-up: the real /v1/context route and the CLI wrap too", () => {
+describe("the real /v1/context route and the CLI wrap too", () => {
   const dir = tempDir("poison-http-");
   const dbPath = join(dir, "hub.db");
   let server;

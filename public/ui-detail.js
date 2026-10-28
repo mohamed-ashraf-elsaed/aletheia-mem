@@ -1,4 +1,4 @@
-// Detail views opened from a list, from search and from the command palette (T-205). A drawer shows the full text
+// Detail views opened from a list, from search and from the command palette. A drawer shows the full text
 // of one memory or fact. Narrative text is rendered as Markdown (safe renderer), ids and paths are monospace with
 // a copy button, and times show the exact moment on hover.
 import { badge, button, clampText, drawer, errorState, markdownView, mono, skeleton, timeEl } from "./ui-components.js";

@@ -1,4 +1,4 @@
-// T-074: folder context files. The generated text sits in a managed block; user text outside it is preserved;
+// folder context files. The generated text sits in a managed block; user text outside it is preserved;
 // a folder with no memories is never written; and the feature is opt-in per project.
 import { afterAll, describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";

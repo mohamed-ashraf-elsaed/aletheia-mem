@@ -1,4 +1,4 @@
-// The pages inside the Rules tab (T-210): the rule list, suggested rules, writing rules into each tool's
+// The pages inside the Rules tab: the rule list, suggested rules, writing rules into each tool's
 // instruction file, and importing rules from one. Writing files asks first and says what will happen; everything
 // else changes the screen first and can be undone.
 import { badge, button, chipFilters, clampText, codeBlock, confirmDialog, disclosure, emptyState, errorState, field, modal, mono, segmented, skeleton, timeEl, toast } from "../ui-components.js";
@@ -55,7 +55,7 @@ function ruleCard(rule, ctx) {
     }).then((ok) => { if (ok) ctx.changed?.({ soft: true }); return ok; });
   };
   const patch = (body) => api(`/api/hub/rules/${rule.id}`, { method: "PATCH", body });
-  // T-172: the on/off write has its own route and keeps the same optimistic Undo.
+  // the on/off write has its own route and keeps the same optimistic Undo.
   const setEnabled = (enabled) => api(`/api/hub/rules/${rule.id}/toggle`, { method: "POST", body: { enabled } });
   const toggle = () => {
     const next = !rule.enabled;
@@ -267,7 +267,7 @@ function suggestionCard(item, ctx, { dismissed }) {
   return card;
 }
 
-/** The last learning run from T-172, and a button that runs it again. */
+/** The last learning run, and a button that runs it again. */
 function learningRunPanel({ onRan }) {
   const out = h("div", { class: "ui-meta", role: "status" });
   const show = (run) => swap(out, run ? `${run.at ?? "unknown time"} · found ${run.found ?? 0} · proposed ${run.proposed ?? 0} · errors ${run.errors ?? 0}` : "No learning run has been recorded yet. Run it to scan your prompts for repeated corrections.");

@@ -1,4 +1,4 @@
-// T-211: the Tools tab with fake DOM and fake fetch.
+// the Tools tab with fake DOM and fake fetch.
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 
@@ -45,7 +45,7 @@ afterAll(() => restoreGlobals());
 const tool = (id, extra = {}) => ({ id, name: id === "claude-code" ? "Claude Code" : id, capabilities: "full", installed: true, hooks: { file: "/home/u/.claude/settings.json", present: 3, expected: 3, events: ["SessionStart", "Stop"], commands: { SessionStart: "aletheia hook claude-code SessionStart" }, error: null }, lastCapture: new Date(Date.now() - 120_000).toISOString(), spool: { items: 2, bytes: 2048, path: "/x" }, commands: { install: `aletheia install ${id} --write`, uninstall: `aletheia uninstall ${id} --write`, doctor: "aletheia doctor", mcp: "bun bin/mcp.mjs" }, ...extra });
 const DOCTOR = (tools = [tool("claude-code")], checks = [{ name: "server", ok: true, detail: "answers" }]) => json({ tools, checks, dataDir: "/data", generatedAt: new Date().toISOString() });
 
-describe("T-211: the tools page", () => {
+describe("the tools page", () => {
   test("a card per tool with hooks status, last capture, spool and a Copy button for every command", async () => {
     install([["/api/hub/doctor", () => DOCTOR()], ["/api/hub/overview", () => json({ provider: "none", claudeMem: { exists: false } })]]);
     const view = TV.toolsView({});
@@ -94,7 +94,7 @@ describe("T-211: the tools page", () => {
   });
 });
 
-describe("T-211: devices", () => {
+describe("devices", () => {
   const SYNC = (devices, extra = {}) => json({ epoch: 2, headSeq: 40, deviceCount: devices.length, e2ee: { enabled: false }, devices, total: devices.length, limit: 10, offset: 0, ...extra });
   const dev = (id, extra = {}) => ({ deviceId: id, name: `Laptop ${id}`, revoked: false, pendingOps: 3, lastSync: new Date(Date.now() - 60_000).toISOString(), ...extra });
   test("pages from the server and shows counts and the encryption line", async () => {
@@ -153,7 +153,7 @@ describe("T-211: devices", () => {
   });
 });
 
-describe("T-211: remote access, checks, activity", () => {
+describe("remote access, checks, activity", () => {
   test("a new link shows its token once with the client snippets", async () => {
     install([["/api/hub/mcp-links/revoke", () => json({})], [/\/api\/hub\/mcp-links$/, (r) => (r.method === "POST" ? json({ token: "tok_123", url: "https://hub/mcp", scope: "mcp", claudeCode: "claude mcp add ...", claudeDesktop: "{ }" }) : json({ links: [] }))]]);
     const view = TV.accessView({});

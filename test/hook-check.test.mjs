@@ -1,4 +1,4 @@
-// T-229 follow-on: scripts/hook-check.mjs reads a hub database left by a real host session and reports the hook
+// scripts/hook-check.mjs reads a hub database left by a real host session and reports the hook
 // artifacts without writing. These tests feed recorded payloads through the real hook command (`aletheia hook`)
 // into a temp data dir, then run the checker on that dir.
 import { afterAll, describe, expect, test } from "bun:test";

@@ -43,15 +43,15 @@ export function loadConfig(overrides = {}) {
     syncPort: Number(overrides.syncPort ?? env.ALETHEIA_SYNC_PORT ?? 37791),
     // The device's own replica, outbox and cursor. Separate from sync.db (the hub's log).
     syncClientDb: overrides.syncClientDb ?? env.ALETHEIA_SYNC_CLIENT_DB ?? join(dataDir, "sync-client.db"),
-    // Team mode (T-112): named projects, members and shared memory. One file next to the sync log.
+    // Team mode: named projects, members and shared memory. One file next to the sync log.
     teamDb: overrides.teamDb ?? env.ALETHEIA_TEAM_DB ?? join(dataDir, "team.db"),
-    // Erasure (T-113): the local HMAC key and the receipt/export folders.
+    // Erasure: the local HMAC key and the receipt/export folders.
     erasureKey: overrides.erasureKey ?? env.ALETHEIA_ERASURE_KEY ?? join(dataDir, "erasure.key"),
     erasureReceiptDir: overrides.erasureReceiptDir ?? join(dataDir, "erasure-receipts"),
     erasureExportDir: overrides.erasureExportDir ?? join(dataDir, "erasure-exports"),
-    // Alert rules and their delivery queue (T-114).
+    // Alert rules and their delivery queue.
     alertsDb: overrides.alertsDb ?? env.ALETHEIA_ALERTS_DB ?? join(dataDir, "alerts.db"),
-    // Transcript watcher offsets, restart-safe (T-063).
+    // Transcript watcher offsets, restart-safe.
     watchDb: overrides.watchDb ?? env.ALETHEIA_WATCH_DB ?? join(dataDir, "watcher.db"),
     // Optional bearer key for /v1 (tools). Leave empty on a single-user machine; the API is loopback-only anyway.
     apiKey: overrides.apiKey ?? env.ALETHEIA_API_KEY ?? "",

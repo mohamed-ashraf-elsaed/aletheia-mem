@@ -1,4 +1,4 @@
-// Graph retrieval (T-048) and its production channel (T-097). The walk starts from top lexical/dense memory ids and
+// Graph retrieval and its production channel. The walk starts from top lexical/dense memory ids and
 // follows memory↔entity edges (memory_keys with owner_type='memory', key_type='entity') to neighbours that share an
 // entity. The walk is project-scoped, bounded by fan-out and a deadline, and returns a fourth ranked list plus the
 // provenance (which entity led to each neighbour). An entity page resolves the entity's aliases, facts and links.

@@ -1,4 +1,4 @@
-// T-072: rule hygiene. Duplicates are reported once, an always/never pair is a contradiction, a size budget and
+// rule hygiene. Duplicates are reported once, an always/never pair is a contradiction, a size budget and
 // a long single rule are warnings, safety instructions and secrets are flagged, and a managed block that differs
 // from the store is drift. Every finding has a rule id and a fix hint; none of them blocks sync.
 import { afterAll, describe, expect, test } from "bun:test";
@@ -14,7 +14,7 @@ afterAll(() => rmSync(temp, { recursive: true, force: true }));
 const rule = (id, then, extra = {}) => ({ id, then, when: "", scopeTier: "everywhere", scopeName: "Everywhere", enabled: true, ...extra });
 const codes = (findings) => findings.map((row) => row.code);
 
-describe("T-072: rule hygiene", () => {
+describe("rule hygiene", () => {
   test("a clean set has zero findings", () => {
     const result = lintRules({ rules: [rule("r1", "Use two-space indentation"), rule("r2", "Run bun test before committing", { scopeTier: "project", scopeName: "shop" })] });
     expect(result.findings).toEqual([]);

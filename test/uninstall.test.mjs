@@ -39,7 +39,7 @@ function tree(dir) {
   return out.sort(([a], [b]) => a.localeCompare(b));
 }
 
-describe("T-071: every installer has one generic uninstall and doctor path", () => {
+describe("every installer has one generic uninstall and doctor path", () => {
   test("install --list names the capability and verification for every installer", () => {
     const { home } = setup();
     const rows = listInstallers({ home });

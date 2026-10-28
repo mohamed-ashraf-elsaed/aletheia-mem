@@ -1,4 +1,4 @@
-// T-009: a SIGKILL during a write leaves a recoverable SQLite database. Each run spawns a child that commits
+// a SIGKILL during a write leaves a recoverable SQLite database. Each run spawns a child that commits
 // batches of 50 rows inside transactions; the parent kills it mid-write, reopens, and asserts integrity plus the
 // absence of any half-committed batch. RED-TEAM NOTE: SIGKILL is used on purpose; the child never exits cleanly.
 import { Database } from "bun:sqlite";
@@ -47,7 +47,7 @@ async function waitForFirstBatch(dbPath) {
   throw new Error("the writer did not commit a batch within 10 seconds");
 }
 
-describe("T-009: kill -9 during writes leaves a recoverable database", () => {
+describe("kill -9 during writes leaves a recoverable database", () => {
   test(`${RUNS} SIGKILL runs reopen with integrity_check ok and no half batch`, async () => {
     const dir = tempDir("crash-");
     const writer = join(dir, "writer.mjs");

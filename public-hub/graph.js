@@ -1,4 +1,4 @@
-// DOM-free entity page and graph trace views (T-097). These return plain objects the DOM layer renders, so the
+// DOM-free entity page and graph trace views. These return plain objects the DOM layer renders, so the
 // link-resolution logic is testable without a browser. Every id in the input must already be a resolved row.
 
 export function entityPageView(data) {

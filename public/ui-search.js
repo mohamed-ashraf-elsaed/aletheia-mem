@@ -1,4 +1,4 @@
-// The header search (T-205): type to see the best matches, Enter for the full results page. Requests are debounced
+// The header search: type to see the best matches, Enter for the full results page. Requests are debounced
 // and the older one is dropped when a newer one starts. Arrow keys move through the list; Esc closes it.
 import { highlight, icon, spinner } from "./ui-components.js";
 import { api, h, later, state, swap } from "./ui-dom.js";

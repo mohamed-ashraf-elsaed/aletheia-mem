@@ -1,4 +1,4 @@
-// T-084: the community files exist, the issue forms name their required fields, and the CoC names a contact.
+// the community files exist, the issue forms name their required fields, and the CoC names a contact.
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";

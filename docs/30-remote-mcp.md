@@ -1,6 +1,6 @@
 # 30. The private remote MCP endpoint
 
-Status: implemented, 2026-10-26 (T-107, on top of T-067 and T-104/T-108). This page describes the code that
+Status: implemented, 2026-10-26. This page describes the code that
 exists and is tested by `test/remote-mcp.test.mjs`.
 
 Aletheia's MCP server (search, timeline, get_observations, save_memory, context, rules) is also reachable over
@@ -9,7 +9,7 @@ the MCP Streamable HTTP transport from other machines. The same tool handlers ru
 ## 30.1 What it is
 
 The sync hub serves one MCP endpoint at `/mcp` when it is started with the Hub database path. Every request needs
-a bearer token from the sync account (the same tokens T-104/T-108 manage), with the token in the
+a bearer token from the sync account, with the token in the
 `Authorization` header — never in the URL, because URLs leak into logs and shell history.
 
 | Token scope | What it can call |
@@ -88,8 +88,8 @@ browser-based client passes the Origin check.
 ## 30.4 What is not covered
 
 - The endpoint authenticates with a bearer token, not OAuth. The ChatGPT/Claude.ai connector (OAuth 2.1) is
-  T-111, not built.
+  not built.
 - TLS itself is delegated to the proxy or tunnel; Aletheia does not terminate TLS.
 - Payloads are plaintext to the hub process (redaction runs before send, but there is no end-to-end encryption
-  on this endpoint; E2EE is T-117, not built, and docs/29 §29.6 states the threat).
+  on this endpoint; E2EE is not built, and docs/29 §29.6 states the threat).
 - A real-client connection test has not been run; see docs/manual-test.md §9 (NOT RUN BY AUTHOR).

@@ -1,5 +1,5 @@
-// Hub login for remote use (T-110). When the server is not loopback-only, every `/` and `/api` route needs
-// a session: an admin token from the sync account (T-104) is exchanged for an HttpOnly, SameSite=Strict,
+// Hub login for remote use. When the server is not loopback-only, every `/` and `/api` route needs
+// a session: an admin token from the sync account is exchanged for an HttpOnly, SameSite=Strict,
 // Secure-when-HTTPS session cookie plus a readable CSRF cookie. State-changing requests must echo the CSRF
 // cookie in the X-CSRF-Token header. Sessions live in memory with an expiry; failed logins back off.
 // Loopback-only servers keep today's behaviour: the guard answers null and the routes are unchanged.

@@ -1,4 +1,4 @@
-// Context economics in the Memory tab (T-221). GET /v1/context/economics reports read tokens per context memory
+// Context economics in the Memory tab. GET /v1/context/economics reports read tokens per context memory
 // and work tokens from the extraction ledger. A null work-token value is printed as "n/a" with the response's own
 // reason; zero is never substituted for an unknown.
 import { badge, emptyState, skeleton, statTile, timeEl } from "../ui-components.js";

@@ -1,4 +1,4 @@
-// T-104: device pairing, device tokens and revoke. Pairing codes are short-lived and single use; tokens are
+// device pairing, device tokens and revoke. Pairing codes are short-lived and single use; tokens are
 // 256-bit random values stored only as hashes, revocable, compared in constant time. The server binds to
 // loopback by default. Revoked and expired tokens are refused; pairing attempts are rate limited.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
@@ -34,7 +34,7 @@ const pushWith = (token, deviceId) => fetch(`${hub.url}/v1/sync/push`, {
   body: JSON.stringify({ ops: [] }),
 });
 
-describe("T-104: device pairing, tokens and revoke", () => {
+describe("device pairing, tokens and revoke", () => {
   test("the hub binds to loopback by default", () => {
     expect(hub.url.startsWith("http://127.0.0.1:")).toBe(true);
   });

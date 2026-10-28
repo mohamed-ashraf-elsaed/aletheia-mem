@@ -1,4 +1,4 @@
-// T-051: the answer-accuracy harness runs the reader and judge over a synthetic fixture with the fake provider,
+// the answer-accuracy harness runs the reader and judge over a synthetic fixture with the fake provider,
 // so the whole path (reader, judge, exact + judge scoring, bootstrap CI and the results JSON) works offline.
 import { afterAll, describe, expect, test } from "bun:test";
 import { readFileSync, writeFileSync } from "node:fs";

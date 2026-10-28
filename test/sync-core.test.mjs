@@ -1,4 +1,4 @@
-// T-102: Aletheia Sync core. A replicated, append-only operation log between devices through a self-hosted
+// Aletheia Sync core. A replicated, append-only operation log between devices through a self-hosted
 // hub, with per-operation accept/reject so one bad op never rejects a batch. Tests use two temp data dirs
 // (device A and device B) and one hub on a random loopback port; the kill -9 test spawns a real hub process.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
@@ -44,7 +44,7 @@ const push = (url, token, ops) => fetch(`${url}/v1/sync/push`, {
 });
 const pull = (url, token, since = 0) => fetch(`${url}/v1/sync/pull?since=${since}`, { headers: { Authorization: `Bearer ${token}`, "X-Device-Id": "device-b", "X-Device-Name": "B" } });
 
-describe("T-102: replicated log with per-operation results", () => {
+describe("replicated log with per-operation results", () => {
   test("(a) A writes, B pulls, same rows", async () => {
     const before = a.outbox().length;
     a.put("memory", { project: "shop", title: "Retry policy", narrative: "Payment retries use exponential backoff and jitter" });
@@ -153,7 +153,7 @@ describe("T-102: replicated log with per-operation results", () => {
   });
 });
 
-describe("T-102: crash safety", () => {
+describe("crash safety", () => {
   test("(e) kill -9 mid-push, restart, no loss and no duplicates", async () => {
     const dir = join(temp, "kill");
     const port = 30000 + Math.floor(Math.random() * 20000);

@@ -1,7 +1,7 @@
-// T-107: the private remote MCP endpoint. Streamable HTTP MCP on the sync server with a sync-style
+// the private remote MCP endpoint. Streamable HTTP MCP on the sync server with a sync-style
 // bearer token (scope `mcp`/`read` reads, `sync`/`admin` writes), project scope, per-token rate
 // limit, an Origin allow-list and one append-only audit row per tool call (no payloads). The token
-// travels in the Authorization header, never in the URL. The non-loopback TLS rule is T-104's.
+// travels in the Authorization header, never in the URL. The non-loopback TLS rule applies here too.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -47,7 +47,7 @@ async function init(url, token) {
 
 const call = (url, session, token, method, params) => post(url, { jsonrpc: "2.0", id: 2, method, params }, { "Mcp-Session-Id": session, ...(token ? { Authorization: `Bearer ${token}` } : {}) });
 
-describe("T-107: the private remote MCP endpoint", () => {
+describe("the private remote MCP endpoint", () => {
   test("an mcp-scoped token completes initialize and tools/list", async () => {
     const token = hub.store.mintToken(accountId, { scope: "mcp", name: "reader" }).token;
     const initRes = await init(hub.url, token);

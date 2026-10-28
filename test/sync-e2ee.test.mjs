@@ -1,4 +1,4 @@
-// T-117: optional end-to-end encryption for sync. The device seals each put payload with the account's
+// optional end-to-end encryption for sync. The device seals each put payload with the account's
 // 256-bit data key (AES-256-GCM, random 96-bit nonce) before it enters the outbox; the hub stores only
 // ciphertext plus ordering metadata. The data key exists on the server only wrapped by a scrypt-derived
 // KEK. Tests prove: no plaintext markers on the wire or in the server DB, tamper rejection, nonce
@@ -62,7 +62,7 @@ function installOldKey(store, id, passphrase, params = OLD_KDF, kid = 1) {
   return dataKey;
 }
 
-describe("T-117: end-to-end encryption for sync", () => {
+describe("end-to-end encryption for sync", () => {
   test("the crypto primitives round-trip, a wrong passphrase fails cleanly, tampering is rejected", () => {
     const dataKey = Buffer.alloc(32, 7);
     const salt = Buffer.alloc(16, 9).toString("base64");

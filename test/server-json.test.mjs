@@ -1,4 +1,4 @@
-// T-082: server.json (the MCP Registry manifest) must agree with package.json. The registry verifies the npm
+// server.json (the MCP Registry manifest) must agree with package.json. The registry verifies the npm
 // ownership marker `mcpName` in package.json against server.json.name, and reads the package's bin for the stdio
 // transport. A field that drifts from package.json makes the manifest unpublishable, so this test fails it here.
 import { existsSync, readFileSync } from "node:fs";

@@ -63,4 +63,16 @@ describe("the public tree", () => {
     }
     expect(missing).toEqual([]);
   });
+
+  test.skipIf(!files)("no tracked file references a private task id", () => {
+    const offenders = files.filter((path) => {
+      if (path === "test/public-tree.test.mjs") return false;
+      try {
+        return /\bT-\d{3}\b/.test(readFileSync(join(root, path), "utf8"));
+      } catch {
+        return false;
+      }
+    });
+    expect(offenders).toEqual([]);
+  });
 });
