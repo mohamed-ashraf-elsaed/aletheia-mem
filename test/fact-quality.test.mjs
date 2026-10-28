@@ -151,4 +151,13 @@ describe("facts clean", () => {
     expect(result.qualityRejected).toMatchObject({ confidence_floor: 1 });
     store.close();
   });
+
+  test("with default settings the rule extractor stores facts from a good summary", async () => {
+    const store = new HubStore(":memory:");
+    store.add({ project: "shop", kind: "summary", title: "s", narrative: "The checkout service uses Postgres 15 for storage. A lead with no available agent keeps waiting and is retried. The API rate limit is 100 requests per minute.", tool: "claude-code", sessionId: "s1" });
+    const result = await executeJob(store, { id: 1, payload: JSON.stringify({ project: "shop", sessionId: "s1" }) }, { ask: null, config: {} });
+    expect(result.facts).toBeGreaterThanOrEqual(3);
+    expect(store.factsCurrent({ project: "shop" }).length).toBeGreaterThanOrEqual(3);
+    store.close();
+  });
 });

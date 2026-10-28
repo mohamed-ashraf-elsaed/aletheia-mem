@@ -1814,7 +1814,7 @@ export class HubStore {
   setSetting(key, value) {
     this.db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key, JSON.stringify(value));
   }
-  factsMinConfidence(fallback = 0.5) {
+  factsMinConfidence(fallback = 0.4) {
     const value = Number(this.setting("ui.settings.facts.minConfidence", fallback));
     return Number.isFinite(value) ? Math.max(0.3, Math.min(0.9, value)) : fallback;
   }

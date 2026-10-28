@@ -39,7 +39,7 @@ The confidence calculation is unchanged; the floor only blocks storage below the
 ## 33.3 Confidence floor
 
 `facts.minConfidence` is stored in the Hub settings table under `ui.settings.facts.minConfidence`. The range is
-0.3 to 0.9 and the default is 0.5. It can be changed through the settings UI, `GET`/`PUT /api/hub/settings`, or
+0.3 to 0.9 and the default is 0.4. The rule-based extractor stores facts at 0.45 (0.35 when the object is inferred), so a floor above 0.45 stops it from storing any fact; raise the floor only with a model provider. It can be changed through the settings UI, `GET`/`PUT /api/hub/settings`, or
 directly in the settings table.
 
 ## 33.4 Cleaning existing facts

@@ -9,7 +9,7 @@ export const SETTINGS_SCHEMA = [
   { key: "providers", kind: "list", label: "Provider chain", secret: false },
   { key: "factBudget.maxEpisodes", kind: "int", label: "Fact episodes budget", min: 1, max: 1000, secret: false },
   { key: "factBudget.maxChars", kind: "int", label: "Fact characters budget", min: 100, max: 200000, secret: false },
-  { key: "facts.minConfidence", kind: "number", label: "Fact confidence floor", min: 0.3, max: 0.9, default: 0.5, secret: false },
+  { key: "facts.minConfidence", kind: "number", label: "Fact confidence floor", min: 0.3, max: 0.9, default: 0.4, secret: false },
   { key: "rules.reviewDays", kind: "int", label: "Rule review window (days)", min: 7, max: 730, default: 90, secret: false },
   { key: "redaction", kind: "boolean", label: "Redact before storing", secret: false },
   { key: "excludedProjects", kind: "list", label: "Excluded projects", secret: false },

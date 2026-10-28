@@ -22,7 +22,8 @@ export const DEFAULT_BUDGET = { maxEpisodes: 20, maxChars: 12_000 };
 export const LIMITS = { subject: 120, predicate: 80, object: 300, text: 400, entityName: 100, confidence: 1 };
 export const ELIGIBLE_FACT_SOURCE_KINDS = new Set(["summary", "note"]);
 export const MIN_CONFIDENCE_SETTING = "ui.settings.facts.minConfidence";
-export const MIN_CONFIDENCE_DEFAULT = 0.5;
+// The rule extractor emits 0.55 and lowers it to 0.45 for an undated fact, so a default of 0.5 would store nothing in rules mode.
+export const MIN_CONFIDENCE_DEFAULT = 0.4;
 export const MIN_CONFIDENCE_MIN = 0.3;
 export const MIN_CONFIDENCE_MAX = 0.9;
 
