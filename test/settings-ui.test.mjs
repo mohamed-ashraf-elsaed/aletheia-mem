@@ -54,6 +54,19 @@ describe("settings store", () => {
     store.close();
   });
 
+  test("context.facts is an enum with a default of auto", () => {
+    const store = new HubStore(":memory:");
+    expect(validateSetting("context.facts", "auto").ok).toBe(true);
+    expect(validateSetting("context.facts", "on").ok).toBe(true);
+    expect(validateSetting("context.facts", "off").ok).toBe(true);
+    expect(validateSetting("context.facts", "sometimes").ok).toBe(false);
+    expect(readSettings(store).find((s) => s.key === "context.facts").value).toBe("auto");
+    const result = writeSettings(store, { "context.facts": "off" });
+    expect(result.errors).toEqual([]);
+    expect(readSettings(store).find((s) => s.key === "context.facts").value).toBe("off");
+    store.close();
+  });
+
   test("a secret is masked and only replaced with a non-empty value", () => {
     const store = new HubStore(":memory:");
     writeSettings(store, { apiKey: "sk-secret-123" });

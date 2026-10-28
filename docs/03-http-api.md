@@ -257,6 +257,10 @@ The setting is stored in the Hub settings table (`context.format`, value `"index
 wrapper, pinned-first order, the active-facts section, flagged-rule notes and the `maxChars` cut are the same in both
 formats.
 
+The active-facts section is further controlled by `context.facts` (`"auto"` default, `"on"`, or `"off"`), stored
+under `ui.settings.context.facts`. `auto` lists only pinned, provider-extracted, or confidence ≥ 0.6 facts; `on`
+keeps the historical behaviour; `off` hides the section.
+
 ### Rule dates, evidence and the re-check flag
 
 Every rule keeps the date it was made, its source, the memories and facts it rests on (its evidence) and the date it

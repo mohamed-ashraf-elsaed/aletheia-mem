@@ -10,6 +10,7 @@ export const SETTINGS_SCHEMA = [
   { key: "factBudget.maxEpisodes", kind: "int", label: "Fact episodes budget", min: 1, max: 1000, secret: false },
   { key: "factBudget.maxChars", kind: "int", label: "Fact characters budget", min: 100, max: 200000, secret: false },
   { key: "facts.minConfidence", kind: "number", label: "Fact confidence floor", min: 0.3, max: 0.9, default: 0.4, secret: false },
+  { key: "context.facts", kind: "enum", label: "Facts in context", options: ["auto", "on", "off"], default: "auto", secret: false },
   { key: "rules.reviewDays", kind: "int", label: "Rule review window (days)", min: 7, max: 730, default: 90, secret: false },
   { key: "redaction", kind: "boolean", label: "Redact before storing", secret: false },
   { key: "excludedProjects", kind: "list", label: "Excluded projects", secret: false },
@@ -18,7 +19,7 @@ export const SETTINGS_SCHEMA = [
 
 const byKey = new Map(SETTINGS_SCHEMA.map((spec) => [spec.key, spec]));
 const keyOf = (key) => `${PREFIX}${key}`;
-const defaultFor = (spec) => (spec.kind === "boolean" ? false : spec.kind === "int" ? spec.default ?? spec.min : spec.kind === "number" ? spec.default ?? spec.min : spec.kind === "list" ? [] : "");
+const defaultFor = (spec) => (spec.kind === "boolean" ? false : spec.kind === "int" ? spec.default ?? spec.min : spec.kind === "number" ? spec.default ?? spec.min : spec.kind === "list" ? [] : spec.kind === "enum" ? spec.default ?? spec.options?.[0] ?? "" : "");
 
 export function validateSetting(key, value) {
   const spec = byKey.get(key);
@@ -29,6 +30,11 @@ export function validateSetting(key, value) {
   if (spec.kind === "list") {
     if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) return { ok: false, error: `${key} must be an array of strings` };
     return { ok: true, value: value.map(String).map((item) => item.trim()).filter(Boolean).slice(0, 200) };
+  }
+  if (spec.kind === "enum") {
+    const options = spec.options ?? [];
+    if (typeof value !== "string" || !options.includes(value)) return { ok: false, error: `${key} must be one of ${options.join(", ")}` };
+    return { ok: true, value };
   }
   if (spec.kind === "int") {
     const number = Number(value);
@@ -50,7 +56,7 @@ export function readSettings(store) {
   return SETTINGS_SCHEMA.map((spec) => {
     const value = store.setting(keyOf(spec.key), defaultFor(spec));
     const hasSecret = spec.secret && value != null && value !== "";
-    return { key: spec.key, label: spec.label, kind: spec.kind, secret: spec.secret, value: hasSecret ? "••••••••" : value, set: hasSecret };
+    return { key: spec.key, label: spec.label, kind: spec.kind, secret: spec.secret, value: hasSecret ? "••••••••" : value, set: hasSecret, ...(spec.options ? { options: spec.options } : {}) };
   });
 }
 
