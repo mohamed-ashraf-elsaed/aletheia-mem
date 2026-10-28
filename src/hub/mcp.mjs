@@ -1,6 +1,7 @@
 // MCP server (JSON-RPC 2.0 over stdio, newline-delimited) so ANY MCP-capable tool can search, read and write
 // the shared memory. Tools follow the token-efficient 3-layer pattern: search (index) -> timeline (context)
 // -> get_observations (full text for chosen ids only).
+import { VERSION } from "../lib/version.mjs";
 import { projectKeyForPath } from "../readmodel/project.mjs";
 import { wrapUntrusted } from "./untrusted.mjs";
 import { redact } from "./capture.mjs";
@@ -188,7 +189,7 @@ export function handleMessage(msg, ctx) {
     case "initialize": {
       const wanted = params?.protocolVersion;
       ctx.tool = ctx.tool ?? params?.clientInfo?.name ?? "mcp";
-      return reply({ protocolVersion: PROTOCOL_VERSIONS.includes(wanted) ? wanted : PROTOCOL_VERSIONS[0], capabilities: { tools: { listChanged: false } }, serverInfo: { name: "aletheia", version: "0.1.0" }, instructions: "Shared, tool-neutral memory. Start with session_start_context, then search -> timeline -> get_observations. Use save_memory for decisions and gotchas worth keeping." });
+      return reply({ protocolVersion: PROTOCOL_VERSIONS.includes(wanted) ? wanted : PROTOCOL_VERSIONS[0], capabilities: { tools: { listChanged: false } }, serverInfo: { name: "aletheia", version: VERSION }, instructions: "Shared, tool-neutral memory. Start with session_start_context, then search -> timeline -> get_observations. Use save_memory for decisions and gotchas worth keeping." });
     }
     case "ping": return reply({});
     case "tools/list": return reply({ tools: TOOL_DEFS });

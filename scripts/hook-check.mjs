@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 // Verify that a real host session left the expected hook artifacts in the hub database, without writing anything.
-//   bun scripts/hook-check.mjs <data-dir> [--tool command-code|claude-code]
+//   bun scripts/hook-check.mjs <data-dir> [--tool claude-code|codex|command-code]
 //
 // Opens hub.db read-only, scans the stored text for redaction leaks (it reports the row and column, never the
 // secret), checks the hook spool, and prints PASS/FAIL per expected event for the chosen tool. Exits 1 on any FAIL.
@@ -9,10 +9,11 @@ import { Database } from "bun:sqlite";
 import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { claudeCode } from "../src/hub/hooks/claude-code.mjs";
+import { codex } from "../src/hub/hooks/codex.mjs";
 import { commandCode } from "../src/hub/hooks/command-code.mjs";
 import { redact } from "../src/hub/redact.mjs";
 
-const ADAPTERS = { "claude-code": claudeCode, "command-code": commandCode };
+const ADAPTERS = { "claude-code": claudeCode, codex, "command-code": commandCode };
 const SPOOL_FILE = "hook-spool.jsonl";
 
 function parseArgs(argv) {
@@ -26,7 +27,7 @@ function parseArgs(argv) {
       dataDir = argv[i];
     }
   }
-  if (!dataDir) return { error: "usage: bun scripts/hook-check.mjs <data-dir> [--tool command-code|claude-code]" };
+  if (!dataDir) return { error: "usage: bun scripts/hook-check.mjs <data-dir> [--tool claude-code|codex|command-code]" };
   if (!ADAPTERS[tool]) return { error: `unknown tool "${tool}"; use ${Object.keys(ADAPTERS).join(" or ")}` };
   return { dataDir: resolve(dataDir), tool };
 }
@@ -82,13 +83,11 @@ export function checkHook({ dataDir, tool = "claude-code" } = {}) {
     db.exec("PRAGMA query_only = ON");
 
     const sessionRows = db.prepare("SELECT DISTINCT project, session_id FROM memories WHERE tool = ? AND session_id IS NOT NULL AND session_id != ''").all(tool);
-    const endRows = db.prepare("SELECT project, session_id, ended_at_epoch, source FROM session_end").all();
+    // session_end has no tool column, so a row belongs to this tool only when the same session has memories from it.
+    const ownSessions = new Set(sessionRows.map((row) => `${row.project}\u0000${row.session_id}`));
+    const endRows = db.prepare("SELECT project, session_id, ended_at_epoch, source FROM session_end").all().filter((row) => ownSessions.has(`${row.project}\u0000${row.session_id}`));
     const seen = new Map();
     for (const row of sessionRows) seen.set(`${row.project}\u0000${row.session_id}`, { project: row.project, sessionId: row.session_id });
-    for (const row of endRows) {
-      const key = `${row.project}\u0000${row.session_id}`;
-      if (!seen.has(key)) seen.set(key, { project: row.project, sessionId: row.session_id });
-    }
     result.sessions = [...seen.values()].sort((a, b) => `${a.project}\u0000${a.sessionId}`.localeCompare(`${b.project}\u0000${b.sessionId}`));
 
     const kindRows = db.prepare("SELECT kind, COUNT(*) AS n, MIN(created_at_epoch) AS min_at, MAX(created_at_epoch) AS max_at FROM memories WHERE tool = ? GROUP BY kind").all(tool);

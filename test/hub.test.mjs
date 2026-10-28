@@ -313,6 +313,7 @@ describe("MCP server", () => {
   test("initialize negotiates, lists seven tools, and notifications get no reply", () => {
     const init = rpc("initialize", { protocolVersion: "2025-06-18", clientInfo: { name: "cursor" } });
     expect(init.result).toMatchObject({ protocolVersion: "2025-06-18", serverInfo: { name: "aletheia" }, capabilities: { tools: {} } });
+    expect(init.result.serverInfo.version).toBe(JSON.parse(readFileSync(join(import.meta.dir, "..", "package.json"), "utf8")).version);
     expect(ctx.tool).toBe("cursor");
     expect(rpc("initialize", { protocolVersion: "1999-01-01" }).result.protocolVersion).toBe("2025-11-25");
     expect(rpc("initialize", { protocolVersion: "2024-11-05" }).result.protocolVersion).toBe("2024-11-05");
@@ -438,6 +439,7 @@ describe("HTTP: hub routes, /v1 and the UI", () => {
     const kb = `http://127.0.0.1:${keyed.server.port}`;
     expect((await fetch(`${kb}/v1/info`)).status).toBe(401);
     expect((await fetch(`${kb}/v1/info`, { headers: { Authorization: "Bearer sekret" } })).status).toBe(200);
+    expect((await (await fetch(`${kb}/v1/info`, { headers: { Authorization: "Bearer sekret" } })).json()).version).toBe(JSON.parse(readFileSync(join(import.meta.dir, "..", "package.json"), "utf8")).version);
     keyed.stop();
   });
   test("/v1: save from one tool, search from another, context, events with redaction", async () => {

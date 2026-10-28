@@ -6,6 +6,11 @@ history.
 
 ## [Unreleased]
 
+### Fixed
+
+- The MCP `initialize` reply and `GET /v1/info` reported version 0.1.0 whatever the installed version. They now report the package version.
+- The hook checker counted session-end rows from every tool for each tool, so a tool with no Stop hook run could still pass. It now counts only rows for that tool's own sessions, and accepts `--tool codex`.
+
 ## [0.1.5] - 2026-10-28
 
 ### Changed

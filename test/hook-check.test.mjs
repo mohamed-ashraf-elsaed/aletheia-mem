@@ -107,6 +107,32 @@ describe("scripts/hook-check.mjs", () => {
     expect(check.stdout).toContain("summary rows or session-end rows");
   });
 
+  test("session-end rows from another tool's sessions do not make a tool's Stop verdict pass", async () => {
+    const { env, proj, dataDir } = makeEnv();
+    const claude = { cwd: proj, session_id: "other-tool" };
+    for (const [event, payload] of [
+      ["PostToolUse", { ...claude, hook_event_name: "PostToolUse", tool_name: "Read", tool_input: { file_path: "README.md" }, tool_response: "the README" }],
+      ["Stop", { ...claude, hook_event_name: "Stop" }],
+      ["SessionEnd", { ...claude, hook_event_name: "SessionEnd", reason: "other" }],
+    ]) {
+      expect((await runHook(env, "claude-code", event, payload)).exitCode).toBe(0);
+    }
+    const own = { cwd: proj, session_id: "cmd-no-stop" };
+    expect((await runHook(env, "command-code", "PostToolUse", { ...own, hook_event_name: "PostToolUse", tool_name: "shell_command", tool_display_name: "SHELL", tool_input: { command: "cat README.md" }, tool_response: "the README" })).exitCode).toBe(0);
+
+    const check = await runCheck(dataDir, "command-code");
+    expect(check.exitCode).toBe(1);
+    expect(check.stdout).toMatch(/\[FAIL\] Stop/);
+    expect(check.stdout).toMatch(/\[PASS\] PostToolUse/);
+  });
+
+  test("the checker accepts codex as a tool name", async () => {
+    const { dataDir } = makeEnv();
+    const check = await runCheck(dataDir, "codex");
+    expect(check.stdout).toContain("hook-check: codex");
+    expect(check.stderr).not.toContain("unknown tool");
+  });
+
   test("a recorded Command Code session passes and names the two hooks it cannot install", async () => {
     const { env, proj, dataDir } = makeEnv();
     const base = { cwd: proj, session_id: "cc-real" };

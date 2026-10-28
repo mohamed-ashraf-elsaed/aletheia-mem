@@ -14,6 +14,7 @@ import { INSTALLERS, doctor } from "./install.mjs";
 import { spoolPath, spoolRead } from "./hooks/shared.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "./rules-sync.mjs";
 import { suggestRules } from "./rule-suggest.mjs";
+import { VERSION } from "../lib/version.mjs";
 import { checkEvidenceInput, describeRule, describeRules, evidenceFromSuggestion, reviewDays } from "./rule-evidence.mjs";
 import { diffRules, diffTargets } from "./rule-diff.mjs";
 import { decideSuggestion, decidedCounts, learningRun, recordLearningRun, replaceRule, toggleRule } from "./rules-decide.mjs";
@@ -346,7 +347,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
         const report = healthReport(hub);
         return h.json({ ...report, ok: report.status === "ok" }, report.status === "ok" ? 200 : 503);
       }
-      if (pathname === "/v1/info" && method === "GET") return h.json({ name: "aletheia-mem", version: "0.1.0", api: "v1", stats: hub.stats() });
+      if (pathname === "/v1/info" && method === "GET") return h.json({ name: "aletheia-mem", version: VERSION, api: "v1", stats: hub.stats() });
       if (pathname === "/v1/work" && method === "GET") {
         const q = qs(url);
         return h.json({ ...workOverview(hub, {
