@@ -6,6 +6,8 @@ history.
 
 ## [Unreleased]
 
+## [0.1.9] - 2026-10-28
+
 ### Added
 
 - A `context.facts` setting (`auto`, `on`, `off`, default `auto`) that controls which facts the session-start Facts section lists. `auto` lists only pinned, provider-extracted or confidence ≥ 0.6 facts, leaving the rule extractor's 0.45/0.35 output out; `on` keeps the historical behaviour; `off` hides the section. The measured context-economics line now counts only what is actually listed.
