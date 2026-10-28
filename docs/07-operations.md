@@ -87,3 +87,25 @@ courtesy, not a lock.)
 | `waiting-for-agent` | (original only) no logged-in agent CLI; the clone reports `failed` with the provider error instead. |
 | Rule saved but Claude Code does not follow it | Click **Load in Claude Code**, or add `@<rules path>` to your CLAUDE.md yourself. |
 | Port in use | `ALETHEIA_PORT=<n>`. |
+
+## Answer-accuracy harness
+
+`bench/accuracy.mjs` measures answer accuracy (not retrieval) with a fixed reader and a blind judge across four
+arms: no-memory, full-context, retrieval and packed. It is not part of `bun test` or CI, and answer accuracy is
+not measured until this harness is run. It makes model calls.
+
+```bash
+bun bench/accuracy.mjs --provider openai --model gpt-4o-mini --data /path/to/questions.json --out /tmp/accuracy.json
+```
+
+- `--data` is a local JSON array of `{ id, question, answer, evidence: [string] }` rows. The harness never
+  downloads a dataset.
+- `--provider` is `fake`, `local`, `openai`, `openrouter` or `claude-cli`, and `--model` names the model. The
+  `openai` and `openrouter` providers read `ALETHEIA_OPENAI_API_KEY`; `local` reads `ALETHEIA_LOCAL_BASE_URL`.
+  The `fake` provider makes no network call and exists for tests.
+- Each of the four arms makes two model calls per question (one reader, one judge), so a run costs model calls.
+- `--limit N` runs the first N questions. `--dry-run` prints the plan and the number of model calls and stops
+  without calling a model.
+- The output JSON records the provider, model, dataset sha256, reader and judge prompt versions and hashes, the
+  date and machine, plus per-arm exact-match and judge accuracy with 95% bootstrap confidence intervals. The
+  judge prompt is blind: it never sees the system name.
