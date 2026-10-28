@@ -1601,6 +1601,15 @@ export class HubStore {
     };
   }
 
+  /** One Facts-section line, capped at 140 characters so a junk fact can never dominate the context. */
+  factLine(fact) {
+    const prefix = `- fact #${fact.id} `;
+    const text = String(fact.text ?? "");
+    const budget = 140 - prefix.length;
+    if (budget <= 0) return prefix;
+    return `${prefix}${text.length > budget ? `${text.slice(0, budget - 1)}…` : text}`;
+  }
+
   /** Markdown a session-start hook can inject into ANY tool: pinned and recent memories, then the rules. */
   context({ project, limit = 20, maxChars = 6000, tool, scope = "current", format } = {}) {
     return (format ?? this.setting("context.format", "index")) === "classic"
@@ -1630,7 +1639,7 @@ export class HubStore {
       factParams.push(project);
     }
     const facts = this.db.prepare(`SELECT * FROM facts WHERE ${factWhere.join(" AND ")} ORDER BY confidence DESC, recorded_at_epoch DESC, id DESC LIMIT 10`).all(...factParams);
-    if (facts.length) parts.push("", "## Facts", ...facts.map((fact) => `- fact #${fact.id} ${fact.text}`));
+    if (facts.length) parts.push("", "## Facts", ...facts.map((fact) => this.factLine(fact)));
     const rules = describeRules(this).filter((r) => r.enabled && (!r.tools || !tool || r.tools.includes(tool)));
     if (rules.length) parts.push("", "## Rules", ...rules.map((r) => (r.when ? `- When ${r.when}: ${r.then}` : `- ${r.then}`) + recheckNote(r)));
     let out = parts.join("\n");
@@ -1697,7 +1706,7 @@ export class HubStore {
       factParams.push(project);
     }
     const facts = this.db.prepare(`SELECT * FROM facts WHERE ${factWhere.join(" AND ")} ORDER BY confidence DESC, recorded_at_epoch DESC, id DESC LIMIT 10`).all(...factParams);
-    if (facts.length) parts.push("", "## Facts", ...facts.map((fact) => `- fact #${fact.id} ${fact.text}`));
+    if (facts.length) parts.push("", "## Facts", ...facts.map((fact) => this.factLine(fact)));
 
     const rules = describeRules(this).filter((r) => r.enabled && (!r.tools || !tool || r.tools.includes(tool)));
     if (rules.length) parts.push("", "## Rules", ...rules.map((r) => (r.when ? `- When ${r.when}: ${r.then}` : `- ${r.then}`) + recheckNote(r)));
@@ -1804,6 +1813,10 @@ export class HubStore {
   }
   setSetting(key, value) {
     this.db.prepare("INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").run(key, JSON.stringify(value));
+  }
+  factsMinConfidence(fallback = 0.5) {
+    const value = Number(this.setting("ui.settings.facts.minConfidence", fallback));
+    return Number.isFinite(value) ? Math.max(0.3, Math.min(0.9, value)) : fallback;
   }
   auditLog(limit = 100) {
     return this.db.prepare("SELECT * FROM audit ORDER BY id DESC LIMIT ?").all(Math.min(limit, 500)).map((r) => ({ ...r, detail: r.detail ? parse(r.detail) : null }));

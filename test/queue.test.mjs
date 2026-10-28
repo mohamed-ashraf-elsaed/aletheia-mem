@@ -60,7 +60,7 @@ describe("queue mechanics", () => {
 
   test("the Stop hook only writes a setting; the worker turns it into jobs", () => {
     const store = new HubStore(":memory:");
-    const memory = store.add({ project: "p", kind: "prompt", title: "t", narrative: "The checkout service uses Postgres." });
+    const memory = store.add({ project: "p", kind: "summary", title: "t", narrative: "The checkout service uses Postgres." });
     expect(enqueueCompression(store, { project: "p", sessionId: "s", at: 1 })).toBe(true);
     expect(compressionQueue(store)).toHaveLength(1);
     expect(store.db.prepare("SELECT COUNT(*) AS n FROM facts").get().n).toBe(0); // nothing extracted in the hook path
@@ -77,7 +77,7 @@ describe("queue mechanics", () => {
 describe("worker", () => {
   test("a provider error is retried later and the job is not lost", async () => {
     const store = new HubStore(":memory:");
-    store.add({ project: "p", kind: "prompt", title: "t", narrative: "The checkout service uses Postgres." });
+    store.add({ project: "p", kind: "summary", title: "t", narrative: "The checkout service uses Postgres." });
     enqueueJob(store, JOB_TYPE, { project: "p", sessionId: null, at: 1 }, { now: 1000 });
 
     let calls = 0;
@@ -108,7 +108,7 @@ describe("worker", () => {
 
   test("executeJob batches by the configured budget and marks each window done", async () => {
     const store = new HubStore(":memory:");
-    for (let i = 0; i < 3; i++) store.add({ project: "p", kind: "prompt", title: `t${i}`, narrative: `The service${i} uses store${i}.` });
+    for (let i = 0; i < 3; i++) store.add({ project: "p", kind: "summary", title: `t${i}`, narrative: `The service${i} uses store${i}.` });
     enqueueJob(store, JOB_TYPE, { project: "p", sessionId: null, at: 1 }, { now: 1000 });
     const job = claimNext(store, { now: 1000 });
     let prompts = 0;
@@ -129,8 +129,8 @@ describe("kill -9 resume", () => {
     const dir = tempDir("aletheia-kill-");
     const dbPath = join(dir, "hub.db");
     const parent = new HubStore(dbPath);
-    const first = parent.add({ project: "p", kind: "prompt", title: "one", narrative: "The checkout service uses Postgres one." });
-    const second = parent.add({ project: "p", kind: "prompt", title: "two", narrative: "The checkout service uses Postgres two." });
+    const first = parent.add({ project: "p", kind: "summary", title: "one", narrative: "The checkout service uses Postgres one." });
+    const second = parent.add({ project: "p", kind: "summary", title: "two", narrative: "The checkout service uses Postgres two." });
     expect(first.created && second.created).toBe(true);
     enqueueJob(parent, JOB_TYPE, { project: "p", sessionId: null, at: 1 }, { now: 1000 });
 

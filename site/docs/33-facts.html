@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>33. Facts · Aletheia docs</title>
+<meta name="description" content="Facts are the atomic, declarative pieces of memory that sit under summaries, search and the session-start context. They are extracted from captured memory, never from a model's ...">
+<meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/33-facts.html">
+<link rel="icon" type="image/png" sizes="64x64" href="../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="stylesheet" href="../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"33. Facts","description":"Facts are the atomic, declarative pieces of memory that sit under summaries, search and the session-start context. They are extracted from captured memory, never from a model's ...","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/33-facts.html","isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../index.html"><img src="../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../index.html">Home</a><a href="index.html">Docs</a><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc">
+<article>
+<h1 id="33-facts">33. Facts</h1>
+<p>Facts are the atomic, declarative pieces of memory that sit under summaries, search and the session-start context. They are extracted from captured memory, never from a model's live output.</p>
+<h2 id="331-eligible-sources">33.1 Eligible sources</h2>
+<p>Only two memory kinds are fact sources:</p>
+<div class="tablewrap"><table><thead><tr><th>Kind</th><th>Meaning</th></tr></thead><tbody><tr><td><code>summary</code></td><td>An assistant's session summary, captured by a Stop/SessionEnd hook.</td></tr><tr><td><code>note</code></td><td>A note saved by a person (UI, CLI or MCP).</td></tr></tbody></table></div>
+<p>Everything else is deliberately not a fact source. A <code>prompt</code> is an instruction or a request, not a fact about the world, and an <code>event</code> is tool output or file contents — it often carries line-number prefixes, code, and other noise that produces junk facts. Raw back-filled transcripts are excluded for the same reason.</p>
+<h2 id="332-quality-gate">33.2 Quality gate</h2>
+<p>Before a candidate fact is stored it must pass this gate. The first failing check is the reason code.</p>
+<div class="tablewrap"><table><thead><tr><th>Reason</th><th>Rule</th></tr></thead><tbody><tr><td><code>unbalanced_quotes</code></td><td>An even number of <code>&quot;</code> and of <code>'</code> in the whole text.</td></tr><tr><td><code>unbalanced_brackets</code></td><td>Matching counts for <code>(</code> and <code>)</code>, and for <code>[</code> and <code>]</code>.</td></tr><tr><td><code>escaped_whitespace</code></td><td>No literal <code>\n</code>, <code>\t</code> or <code>\r</code>.</td></tr><tr><td><code>code_token</code></td><td>No <code>$</code>, <code>-&gt;</code>, <code>::</code>, <code>=&gt;</code>, braces, backticks, HTML tags, or uppercase SQL keywords.</td></tr><tr><td><code>word_count</code></td><td>3–40 words in the whole text.</td></tr><tr><td><code>char_count</code></td><td>At most 200 characters in the whole text.</td></tr><tr><td><code>subject_words</code></td><td>A subject of 1–8 words.</td></tr><tr><td><code>subject_continuation</code></td><td>The subject does not start with <code>and</code>, <code>but</code>, <code>then</code>, <code>how</code>, <code>to</code>, <code>do</code> or <code>not</code>.</td></tr><tr><td><code>subject_pronoun</code></td><td>The subject does not start with a bare pronoun/demonstrative such as <code>There</code>, <code>It</code>, <code>This</code> or <code>Everything</code>.</td></tr><tr><td><code>object_mid_clause</code></td><td>The object does not end on a dangling conjunction, preposition, article, auxiliary or relative word.</td></tr><tr><td><code>confidence_floor</code></td><td>The stored confidence is at least <code>facts.minConfidence</code>.</td></tr></tbody></table></div>
+<p>The confidence calculation is unchanged; the floor only blocks storage below the setting.</p>
+<h2 id="333-confidence-floor">33.3 Confidence floor</h2>
+<p><code>facts.minConfidence</code> is stored in the Hub settings table under <code>ui.settings.facts.minConfidence</code>. The range is 0.3 to 0.9 and the default is 0.5. It can be changed through the settings UI, <code>GET</code>/<code>PUT /api/hub/settings</code>, or directly in the settings table.</p>
+<h2 id="334-cleaning-existing-facts">33.4 Cleaning existing facts</h2>
+<pre><code>aletheia facts clean          # dry run (default): counts and the first 10 examples per reason
+aletheia facts clean --apply  # dismiss each failing fact with reason quality:&lt;reason&gt;</code></pre>
+<p><code>--apply</code> uses the normal dismissal path, so every row is reversible with <code>aletheia restore fact:&lt;id&gt;</code>. Nothing is deleted.</p>
+<h2 id="335-session-start-context">33.5 Session-start context</h2>
+<p>The session-start Facts section already skips dismissed facts. Each fact line is capped at 140 characters so a single long fact cannot dominate the context.</p>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></footer>
+</main>
+</body>
+</html>

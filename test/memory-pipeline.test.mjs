@@ -88,7 +88,7 @@ describe.skipIf(process.platform === "win32")("memory pipeline (needs a POSIX sh
     expect((await runShell(commands.SessionStart, event("SessionStart", { source: "startup" }))).exitCode).toBe(0);
     expect((await runShell(commands.UserPromptSubmit, event("UserPromptSubmit", { prompt: "The checkout retry service uses exponential backoff. Keep the retry policy stable." }))).exitCode).toBe(0);
     expect((await runShell(commands.PostToolUse, event("PostToolUse", { tool_name: "Bash", tool_input: { command: "npm test" }, tool_response: "12 passing" }))).exitCode).toBe(0);
-    expect((await runShell(commands.Stop, event("Stop", { last_assistant_message: "Recorded the retry policy." }))).exitCode).toBe(0);
+    expect((await runShell(commands.Stop, event("Stop", { last_assistant_message: "The checkout retry service uses exponential backoff." }))).exitCode).toBe(0);
 
     let store = new HubStore(dbPath);
     expect(store.setting("compress.queue", []).some((item) => item.sessionId === "pipeline-session")).toBe(true);
@@ -117,7 +117,7 @@ describe.skipIf(process.platform === "win32")("memory pipeline (needs a POSIX sh
 
     // Session 2: a newer fact contradicts the first.
     expect((await runShell(commands.UserPromptSubmit, event("UserPromptSubmit", { session_id: "pipeline-session-2", prompt: "The checkout retry service now uses linear backoff." }))).exitCode).toBe(0);
-    expect((await runShell(commands.Stop, event("Stop", { session_id: "pipeline-session-2", last_assistant_message: "Switched the retry policy." }))).exitCode).toBe(0);
+    expect((await runShell(commands.Stop, event("Stop", { session_id: "pipeline-session-2", last_assistant_message: "The checkout retry service now uses linear backoff." }))).exitCode).toBe(0);
 
     store = new HubStore(dbPath);
     const secondRun = await runWorker({ store, ask: Object.assign(fakeAsk, { modelFor: () => "fake-small" }), config: { ...config, factBudget: { maxEpisodes: 10, maxChars: 12_000 } }, batchSize: 10 });

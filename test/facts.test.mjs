@@ -45,8 +45,8 @@ describe("fact validator", () => {
 describe("rule-based fallback", () => {
   test("a fixture round produces the expected facts", async () => {
     const store = new HubStore(":memory:");
-    const first = store.addEpisode({ project: "shop", kind: "prompt", text: "The checkout service uses Postgres 15 for storage.", createdAtEpoch: 1000 });
-    const second = store.addEpisode({ project: "shop", kind: "prompt", text: "The retry worker requires idempotency keys. It also logs to stderr.", createdAtEpoch: 2000 });
+    const first = store.addEpisode({ project: "shop", kind: "summary", text: "The checkout service uses Postgres 15 for storage.", createdAtEpoch: 1000 });
+    const second = store.addEpisode({ project: "shop", kind: "summary", text: "The retry worker requires idempotency keys. It also logs to stderr.", createdAtEpoch: 2000 });
     const window = [first, second].map((episode) => ({ episodeId: episode.id, text: episode.text, createdAtEpoch: episode.created_at_epoch, kind: episode.kind }));
     const result = await extractWindow({ window, project: "shop", ask: null });
     expect(result.mode).toBe("rules");

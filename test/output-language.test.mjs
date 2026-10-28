@@ -63,7 +63,7 @@ describe("output language", () => {
 
   test("the worker resolves the project language and the summary follows the facts", async () => {
     const store = new HubStore(":memory:");
-    store.add({ project: "shop", kind: "prompt", title: "checkout", narrative: "The checkout uses Postgres.", tool: "claude-code", sessionId: "s1" });
+    store.add({ project: "shop", kind: "summary", title: "checkout", narrative: "The checkout uses Postgres.", tool: "claude-code", sessionId: "s1" });
     store.setOutputLanguage("shop", "es", { actor: "test" });
     const { id } = enqueueJob(store, JOB_TYPE, { project: "shop", sessionId: "s1" });
     const job = store.db.prepare("SELECT * FROM jobs WHERE id = ?").get(id);

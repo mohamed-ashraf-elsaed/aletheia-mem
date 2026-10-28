@@ -87,19 +87,13 @@ describe("transcript back-fill", () => {
     const jobs = store.db.prepare("SELECT payload FROM jobs").all().map((row) => JSON.parse(row.payload));
     expect(jobs).toEqual(expect.arrayContaining([{ project: "shop", sessionId: "session-a", source: "backfill" }]));
 
-    // The queued job must actually extract: a back-filled episode has no memory row, so the worker has to
-    // pick standalone episodes up directly.
+    // Raw back-filled transcripts are no longer fact sources, so the queued job finds no eligible episodes.
     const job = store.db.prepare("SELECT * FROM jobs WHERE type = ? AND payload LIKE ?").get(JOB_TYPE, "%session-a%");
-    const ask = async (prompt) => {
-      const episodeId = Number(/EPISODE_IDS: \[(\d+)/.exec(prompt)?.[1]);
-      return JSON.stringify({ facts: [{ subject: "retry button", predicate: "uses", object: "exponential backoff", text: "The retry button uses exponential backoff", confidence: 0.9, episode_ids: [episodeId] }] });
-    };
+    const ask = async () => JSON.stringify({ facts: [] });
     const extracted = await executeJob(store, job, { ask, config: { mode: "code", factBudget: { maxEpisodes: 50, maxChars: 40_000 } } });
-    expect(extracted.episodes).toBeGreaterThan(0);
-    expect(extracted.facts).toBeGreaterThan(0);
-    const facts = store.factsCurrent({ project: "shop" });
-    expect(facts.length).toBeGreaterThan(0);
-    expect(facts[0].episode_id).toBeGreaterThan(0);
+    expect(extracted.episodes).toBe(0);
+    expect(extracted.facts).toBe(0);
+    expect(store.factsCurrent({ project: "shop" })).toEqual([]);
 
     const second = importTranscripts(store, { tool: "claude-code", home });
     expect(second).toMatchObject({ added: 0, skipped: 5 });

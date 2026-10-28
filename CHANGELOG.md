@@ -6,6 +6,17 @@ history.
 
 ## [Unreleased]
 
+### Added
+
+- `aletheia facts clean --dry-run` (the default) and `aletheia facts clean --apply`. The command applies the fact quality gate to already-stored facts, reports counts and the first ten examples per rejection reason, and `--apply` dismisses the failures with `quality:<reason>` through the normal reversible dismissal path.
+- A `facts.minConfidence` setting (0.3–0.9, default 0.5). The existing confidence calculation is unchanged; the floor only stops weaker facts from being stored.
+
+### Changed
+
+- Fact extraction now keeps only assistant summaries and notes as eligible sources. User prompts and tool output/file contents (including raw back-filled transcripts) are no longer extracted into facts.
+- Every candidate fact passes a quality gate before it is stored: balanced quotes and brackets, no escaped newlines/tabs, no code-like tokens (`$`, `->`, `::`, `=>`, braces, backticks, SQL or HTML tags), 3–40 words and at most 200 characters, a 1–8 word subject that is not a bare pronoun/demonstrative and does not start with a continuation word, and an object that does not end mid-clause. Each rejection returns a stable reason code and is counted.
+- The session-start Facts section caps each fact line at 140 characters (dismissed facts were already skipped).
+
 ## [0.1.7] - 2026-10-28
 
 ### Added

@@ -43,6 +43,17 @@ describe("settings store", () => {
     store.close();
   });
 
+  test("the fact confidence floor is a ranged number setting", () => {
+    const store = new HubStore(":memory:");
+    expect(validateSetting("facts.minConfidence", 0.4).ok).toBe(true);
+    expect(validateSetting("facts.minConfidence", 0.2).ok).toBe(false);
+    expect(validateSetting("facts.minConfidence", 1).ok).toBe(false);
+    const result = writeSettings(store, { "facts.minConfidence": 0.6 });
+    expect(result.errors).toEqual([]);
+    expect(readSettings(store).find((s) => s.key === "facts.minConfidence").value).toBe(0.6);
+    store.close();
+  });
+
   test("a secret is masked and only replaced with a non-empty value", () => {
     const store = new HubStore(":memory:");
     writeSettings(store, { apiKey: "sk-secret-123" });

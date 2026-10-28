@@ -1,6 +1,11 @@
 // Fact extraction: turn a window of episodes into 0-5 atomic facts. The output is untrusted, so every field is
 // validated and capped before it reaches the store. With no provider, a deterministic rule extractor runs instead;
 // each stored fact records which mode and prompt version produced it.
+//
+// Source eligibility: only assistant summaries (kind "summary") and notes (kind "note") are fact sources.
+// Tool output and file contents (kind "event" or raw transcript episodes, which carry line-number prefixes and
+// code) are not facts, and neither is a user's prompt (kind "prompt"): an instruction is a rule or a request,
+// not a fact about the world. Keeping this narrow makes the extractor quiet instead of storing junk.
 import { readFileSync } from "node:fs";
 import { redact } from "./redact.mjs";
 import { attachFactEntities } from "./entities.mjs";
@@ -15,6 +20,24 @@ export const MAX_ENTITIES = 8;
 export const EPISODE_PROMPT_CHARS = 2000;
 export const DEFAULT_BUDGET = { maxEpisodes: 20, maxChars: 12_000 };
 export const LIMITS = { subject: 120, predicate: 80, object: 300, text: 400, entityName: 100, confidence: 1 };
+export const ELIGIBLE_FACT_SOURCE_KINDS = new Set(["summary", "note"]);
+export const MIN_CONFIDENCE_SETTING = "ui.settings.facts.minConfidence";
+export const MIN_CONFIDENCE_DEFAULT = 0.5;
+export const MIN_CONFIDENCE_MIN = 0.3;
+export const MIN_CONFIDENCE_MAX = 0.9;
+
+const CONTINUATION_WORDS = new Set(["and", "but", "then", "how", "to", "do", "not"]);
+const PRONOUN_SUBJECT_WORDS = new Set(["there", "it", "this", "that", "these", "those", "everything", "he", "she", "we", "they", "i"]);
+const MID_CLAUSE_ENDINGS = new Set([
+  "a", "an", "the", "and", "or", "but", "nor", "for", "so", "yet", "to", "of", "in", "on", "at", "by", "with",
+  "from", "into", "onto", "upon", "without", "within", "about", "over", "under", "between", "through", "during",
+  "before", "after", "above", "below", "against", "among", "is", "are", "was", "were", "be", "been", "being", "am",
+  "that", "which", "who", "whom", "whose", "not", "than", "then", "as", "if", "when", "while", "because", "since",
+  "until", "how", "what", "where", "why",
+]);
+const CODE_TOKENS = ["$", "->", "::", "=>", "{", "}", "`"];
+const SQL_KEYWORD = /\b(?:SELECT|INSERT|UPDATE|DELETE|DROP|ALTER|CREATE|FROM|WHERE|JOIN|INTO|VALUES)\b/;
+const HTML_TAG = /<[a-zA-Z][^>]*>/;
 
 const PROMPT_URL = new URL("./prompts/facts.txt", import.meta.url);
 let factPromptText = null;
@@ -144,6 +167,70 @@ export function validateFacts(answer, { episodeIds } = {}) {
   });
 }
 
+const countOf = (text, char) => String(text ?? "").split(char).length - 1;
+const evenCount = (text, char) => countOf(text, char) % 2 === 0;
+const balancedBrackets = (text, open, close) => countOf(text, open) === countOf(text, close);
+
+/**
+ * One rejection reason for a candidate fact, or null when it passes the quality gate. The checks are ordered
+ * so the first failure is the reason returned; the reason codes are stable for the clean command and tests.
+ * `minConfidence` is the facts.minConfidence floor (0 disables the confidence check, used by the rule extractor).
+ */
+export function factGateReason(fact, { minConfidence = 0 } = {}) {
+  const text = String(fact.text ?? "").replace(/\s+/g, " ").trim();
+  const subject = String(fact.subject ?? "").replace(/\s+/g, " ").trim();
+  const object = String(fact.object ?? "").replace(/\s+/g, " ").trim();
+
+  if (!evenCount(text, '"') || !evenCount(text, "'")) return "unbalanced_quotes";
+  if (!balancedBrackets(text, "(", ")") || !balancedBrackets(text, "[", "]")) return "unbalanced_brackets";
+  if (/\\[nrt]/.test(text)) return "escaped_whitespace";
+  if (CODE_TOKENS.some((token) => text.includes(token)) || SQL_KEYWORD.test(text) || HTML_TAG.test(text)) return "code_token";
+
+  const words = text ? text.split(/\s+/).length : 0;
+  if (words < 3 || words > 40) return "word_count";
+  if (text.length > 200) return "char_count";
+
+  const subjectWords = subject ? subject.split(/\s+/).length : 0;
+  if (subjectWords < 1 || subjectWords > 8) return "subject_words";
+  const firstSubjectWord = (subject.split(/\s+/)[0] ?? "").toLowerCase();
+  if (CONTINUATION_WORDS.has(firstSubjectWord)) return "subject_continuation";
+  if (PRONOUN_SUBJECT_WORDS.has(firstSubjectWord)) return "subject_pronoun";
+
+  const lastObjectWord = (object.split(/\s+/).at(-1) ?? "").replace(/[^\p{L}\p{N}]$/u, "").toLowerCase();
+  if (MID_CLAUSE_ENDINGS.has(lastObjectWord)) return "object_mid_clause";
+
+  if (minConfidence > 0 && Number(fact.confidence) < minConfidence) return "confidence_floor";
+  return null;
+}
+
+/**
+ * Apply the same gate to stored facts. `--dry-run` counts and shows examples; `--apply` dismisses each failure
+ * with reason `quality:<code>` through the existing dismissal path, so every row stays restorable.
+ */
+export function cleanFacts(store, { apply = false, now = Date.now(), minConfidence = null } = {}) {
+  const floor = Number.isFinite(minConfidence) ? minConfidence : (store.factsMinConfidence?.() ?? MIN_CONFIDENCE_DEFAULT);
+  const rows = store.db.prepare("SELECT * FROM facts ORDER BY id").all();
+  const counts = {};
+  const examples = {};
+  let failed = 0;
+  let dismissed = 0;
+  let alreadyDismissed = 0;
+  for (const row of rows) {
+    const reason = factGateReason({ subject: row.subject, predicate: row.predicate, object: row.object, text: row.text, confidence: row.confidence }, { minConfidence: floor });
+    if (!reason) continue;
+    failed++;
+    counts[reason] = (counts[reason] ?? 0) + 1;
+    (examples[reason] ??= []).push(row.text);
+    if (apply) {
+      const result = store.dismiss("fact", row.id, { actor: "cli", reason: `quality:${reason}`, now });
+      if (result.changed) dismissed++;
+      else alreadyDismissed++;
+    }
+  }
+  for (const reason of Object.keys(examples)) examples[reason] = examples[reason].slice(0, 10);
+  return { total: rows.length, failed, counts, examples, dismissed, alreadyDismissed, dryRun: !apply };
+}
+
 // ---- rule-based fallback ---------------------------------------------------------------------------------
 
 const SENTENCE = /[^.!?\n]{8,400}(?:[.!?]|$)/g;
@@ -157,9 +244,13 @@ const FACT_PATTERN = /^(?:the\s+)?([\p{L}\p{N}][\p{L}\p{N} _./-]{1,80}?)\s+(uses
 export function extractFactsByRules(window = []) {
   const facts = [];
   const seen = new Set();
+  const qualityRejected = {};
+  const reject = (reason) => { qualityRejected[reason] = (qualityRejected[reason] ?? 0) + 1; };
   for (const episode of window) {
+    const kind = String(episode.kind ?? "").toLowerCase();
+    if (kind && !ELIGIBLE_FACT_SOURCE_KINDS.has(kind)) continue;
     for (const sentence of String(episode.text ?? "").match(SENTENCE) ?? []) {
-      if (facts.length >= MAX_FACTS) return { facts, mode: "rules", raw: null, rejected: false };
+      if (facts.length >= MAX_FACTS) return { facts, mode: "rules", raw: null, rejected: false, qualityRejected };
       const clean = sentence.replace(/\s+/g, " ").trim().replace(/[.!?]$/, "");
       if (clean.length < 10 || isInstruction(clean)) continue;
       if (/^(?:input|output|error|stack|diff|commit)\s*:/i.test(clean)) continue;
@@ -172,15 +263,18 @@ export function extractFactsByRules(window = []) {
       if (object.length < 2) continue;
       const text = `${subject} ${predicate} ${object}`.slice(0, LIMITS.text);
       if (seen.has(text)) continue;
+      const candidate = { subject: subject.slice(0, LIMITS.subject), predicate, object: object.slice(0, LIMITS.object), text, confidence: 0.55 };
+      const reason = factGateReason(candidate);
+      if (reason) { reject(reason); continue; }
       seen.add(text);
       facts.push({
-        subject: subject.slice(0, LIMITS.subject), predicate, object: object.slice(0, LIMITS.object), text,
-        confidence: 0.55, episodeIds: [Number(episode.episodeId)], validFromEpoch: null, validToEpoch: null,
+        ...candidate,
+        episodeIds: [Number(episode.episodeId)], validFromEpoch: null, validToEpoch: null,
         dated: false, entities: [], supersedesId: null,
       });
     }
   }
-  return { facts, mode: "rules", raw: null, rejected: false };
+  return { facts, mode: "rules", raw: null, rejected: false, qualityRejected };
 }
 
 // ---- batching ---------------------------------------------------------------------------------------------
@@ -291,6 +385,8 @@ export function storeFacts(store, { facts, project, mode = "rules", model = null
   const deduped = [];
   const superseded = [];
   const reviews = [];
+  const qualityRejected = {};
+  const minConfidence = store.factsMinConfidence?.() ?? MIN_CONFIDENCE_DEFAULT;
   for (const fact of facts) {
     const subject = redact(fact.subject).slice(0, LIMITS.subject);
     const predicate = redact(fact.predicate).slice(0, LIMITS.predicate);
@@ -303,6 +399,10 @@ export function storeFacts(store, { facts, project, mode = "rules", model = null
     if (!episode) continue;
     const inferred = fact.validFromEpoch == null ? parseTemporal(text, { baseEpoch: episode.created_at_epoch }) : null;
     const dated = fact.dated || !!inferred;
+    // A date inferred from a relative phrase is weaker evidence than an explicit one, so it costs 0.1.
+    const confidence = Math.max(0, Math.min(1, (fact.confidence ?? 0.7) - (dated ? 0 : 0.1) - (inferred?.inferred ? 0.1 : 0)));
+    const reason = factGateReason({ subject, predicate, object, text, confidence }, { minConfidence });
+    if (reason) { qualityRejected[reason] = (qualityRejected[reason] ?? 0) + 1; continue; }
     const result = store.addFact({
       project, subject, predicate, object, text,
       episodeId: episode.id, episodeIds,
@@ -310,8 +410,7 @@ export function storeFacts(store, { facts, project, mode = "rules", model = null
       validFromEpoch: fact.validFromEpoch ?? inferred?.fromEpoch ?? episode.created_at_epoch,
       validToEpoch: fact.validToEpoch ?? inferred?.toEpoch ?? null,
       recordedAtEpoch: now,
-      // A date inferred from a relative phrase is weaker evidence than an explicit one, so it costs 0.1.
-      confidence: Math.max(0, Math.min(1, (fact.confidence ?? 0.7) - (dated ? 0 : 0.1) - (inferred?.inferred ? 0.1 : 0))),
+      confidence,
       extractorMode: mode, promptVersion, model,
     });
     store.addKey({ ownerType: "fact", ownerId: result.id, keyType: "fact", text });
@@ -328,7 +427,7 @@ export function storeFacts(store, { facts, project, mode = "rules", model = null
       for (const episodeId of episodeIds) store.link({ fromType: "fact", fromId: result.id, toType: "episode", toId: episodeId, relation: "mentions" });
     }
   }
-  return { added: added.length, ids: added, deduped, superseded, reviews };
+  return { added: added.length, ids: added, deduped, superseded, reviews, qualityRejected };
 }
 
 // ---- contradiction handling ------------------------------------------------------------------------------

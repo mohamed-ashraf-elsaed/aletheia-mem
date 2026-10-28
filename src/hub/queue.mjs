@@ -99,8 +99,9 @@ export function jobCounts(store) {
 }
 
 function pendingMemories(store, payload, limit = MAX_MEMORIES_PER_JOB) {
-  // A summary memory is derived data, not a source: extracting facts from it would feed the output back in.
-  const where = ["m.kind IN ('prompt', 'event')", "(e.id IS NULL OR e.extracted_at_epoch IS NULL)", "(coalesce(m.narrative, '') <> '' OR coalesce(m.title, '') <> '')"];
+  // Only assistant summaries and notes are fact sources. Prompts are instructions or requests, and events are
+  // tool output/file contents; extracting from either stores junk.
+  const where = ["m.kind IN ('summary', 'note')", "(e.id IS NULL OR e.extracted_at_epoch IS NULL)", "(coalesce(m.narrative, '') <> '' OR coalesce(m.title, '') <> '')"];
   const params = [];
   if (payload.project) { where.push("m.project = ?"); params.push(payload.project); }
   if (payload.sessionId) { where.push("m.session_id = ?"); params.push(payload.sessionId); }
@@ -110,12 +111,13 @@ function pendingMemories(store, payload, limit = MAX_MEMORIES_PER_JOB) {
 }
 
 /**
- * Episodes that arrived without a memory row: back-filled transcripts and any direct episode write.
+ * Episodes that arrived without a memory row: only the eligible assistant summaries and notes. Raw back-filled
+ * transcripts (role user/tool, kind message/raw) are never fact sources, for the same reason as prompts and events.
  * Memory-derived episodes are excluded here because they are selected through their memory, so a job never
  * extracts the same turn twice.
  */
 function pendingEpisodes(store, payload, limit = MAX_MEMORIES_PER_JOB) {
-  const where = ["e.extracted_at_epoch IS NULL", "coalesce(e.text, '') <> ''", "(e.source_ref IS NULL OR e.source_ref NOT LIKE 'memory:%')"];
+  const where = ["e.extracted_at_epoch IS NULL", "coalesce(e.text, '') <> ''", "e.kind IN ('summary', 'note')", "(e.source_ref IS NULL OR e.source_ref NOT LIKE 'memory:%')"];
   const params = [];
   if (payload.project) { where.push("e.project = ?"); params.push(payload.project); }
   if (payload.sessionId) { where.push("e.session_id = ?"); params.push(payload.sessionId); }
