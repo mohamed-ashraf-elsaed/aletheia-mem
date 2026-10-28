@@ -62,3 +62,4 @@ bench/runtime/
 .claude-plugin/
 .codex-plugin/
 .qoder-plugin/
+.playwright-mcp/
