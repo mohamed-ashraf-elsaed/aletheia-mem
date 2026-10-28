@@ -6,6 +6,8 @@ history.
 
 ## [Unreleased]
 
+## [0.1.6] - 2026-10-28
+
 ### Fixed
 
 - The MCP `initialize` reply and `GET /v1/info` reported version 0.1.0 whatever the installed version. They now report the package version.
