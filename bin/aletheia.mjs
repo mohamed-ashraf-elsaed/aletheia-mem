@@ -59,6 +59,7 @@ import { loadConfig } from "../src/config.mjs";
 import { normalizeHook, redact } from "../src/hub/capture.mjs";
 import { importClaudeMem } from "../src/hub/importers.mjs";
 import { applyInstall, applyUninstall, doctor, formatInstallerList, formatPlan, formatUninstall, formatVerify, installerFor, installerIds, planUninstall, verifyInstall } from "../src/hub/install.mjs";
+import { describeRules } from "../src/hub/rule-evidence.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "../src/hub/rules-sync.mjs";
 import { HubStore, inspectMigration, targetSchemaVersion } from "../src/hub/store.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "../src/hub/tools.mjs";
@@ -108,7 +109,7 @@ function installEnv(hub) {
     behindTls: config.behindTls,
     provider: config.provider,
     mode: config.mode,
-    rules: hub ? hub.rules.list() : [],
+    rules: hub ? describeRules(hub) : [],
   };
 }
 
@@ -613,7 +614,7 @@ async function main() {
           const ids = typeof flags.tools === "string" ? flags.tools.split(",") : TOOLS.map((t) => t.id);
           for (const id of ids) if (!toolById(id)) die(`Unknown tool: ${id}`);
           for (const id of ids) {
-            const r = syncTool(hub.rules.list(), id, { scope, projectDir: dir, home: config.home, dryRun: !flags.write });
+            const r = syncTool(describeRules(hub), id, { scope, projectDir: dir, home: config.home, dryRun: !flags.write });
             if (r.skipped) { out(`- ${id}: ${r.skipped}`); continue; }
             out(`- ${id}: ${r.path} — ${r.rules} rules, ${r.written ? `written${r.backup ? ` (backup ${r.backup})` : ""}` : r.changed ? "would change (add --write)" : "already up to date"}`);
           }

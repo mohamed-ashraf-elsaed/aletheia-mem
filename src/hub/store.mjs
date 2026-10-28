@@ -13,6 +13,7 @@ import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVe
 import { epochOrIso } from "./paging.mjs";
 import { graphWalk } from "./graph.mjs";
 import { redact } from "./redact.mjs";
+import { describeRules, recheckNote } from "./rule-evidence.mjs";
 
 const SCHEMA_VERSION = 3; // 3: episodes, observations, facts, entities, keys, links, queue and usage
 
@@ -1598,8 +1599,8 @@ export class HubStore {
     }
     const facts = this.db.prepare(`SELECT * FROM facts WHERE ${factWhere.join(" AND ")} ORDER BY confidence DESC, recorded_at_epoch DESC, id DESC LIMIT 10`).all(...factParams);
     if (facts.length) parts.push("", "## Facts", ...facts.map((fact) => `- fact #${fact.id} ${fact.text}`));
-    const rules = this.rules.list().filter((r) => r.enabled && (!r.tools || !tool || r.tools.includes(tool)));
-    if (rules.length) parts.push("", "## Rules", ...rules.map((r) => (r.when ? `- When ${r.when}: ${r.then}` : `- ${r.then}`)));
+    const rules = describeRules(this).filter((r) => r.enabled && (!r.tools || !tool || r.tools.includes(tool)));
+    if (rules.length) parts.push("", "## Rules", ...rules.map((r) => (r.when ? `- When ${r.when}: ${r.then}` : `- ${r.then}`) + recheckNote(r)));
     let out = parts.join("\n");
     if (out.length > maxChars) out = `${out.slice(0, maxChars - 1).trimEnd()}…`;
     return out;

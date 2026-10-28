@@ -5,6 +5,7 @@
 // Every operation can be previewed (dry run returns before/after) and the first write keeps a backup.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { recheckNote, stripRecheckNote } from "./rule-evidence.mjs";
 import { MARK_BEGIN, MARK_END, toolById } from "./tools.mjs";
 
 const TIER_ORDER = ["everywhere", "project", "situation"];
@@ -23,7 +24,7 @@ export function renderRules(rules, toolId) {
   const lines = ["# Rules", "", "Managed by aletheia-mem. Edit them in the Rules page; this block is rewritten on sync."];
   for (const g of ordered) {
     lines.push("", `## ${g.tier === "project" ? `In ${g.name}` : g.tier === "situation" ? g.name : "Everywhere"}`, "");
-    for (const r of g.rules) lines.push(r.when ? `- When ${r.when}: ${lowerFirst(r.then)}` : `- ${r.then}`);
+    for (const r of g.rules) lines.push((r.when ? `- When ${r.when}: ${lowerFirst(r.then)}` : `- ${r.then}`) + recheckNote(r));
   }
   return { markdown: `${lines.join("\n")}\n`, count: active.length };
 }
@@ -127,7 +128,7 @@ function parseBody(body, firstLine) {
     }
     const bullet = /^\s*[-*]\s+(.+?)\s*$/.exec(raw);
     if (!bullet) continue;
-    const text1 = bullet[1];
+    const text1 = stripRecheckNote(bullet[1]);
     if (text1.length < 4 || text1.length > 800 || /^\[.\]\s*$/.test(text1)) continue;
     const when = /^When\s+(.+?):\s+(.+)$/.exec(text1);
     const line = firstLine + index;

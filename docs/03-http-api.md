@@ -251,7 +251,7 @@ evidence; a rule added through the API or the `add_rule` MCP tool may name evide
 existed has no evidence and keeps working.
 
 A rule is flagged for re-check when any of these holds. The flag is computed on every read and is **a flag, never a
-deletion**: a flagged rule stays enabled, keeps syncing and is never edited or removed.
+deletion**: a flagged rule stays enabled, keeps syncing and is never edited or removed. A synced rules file and the session context append `[re-check: <reasons> Verify before applying.]` to a flagged rule, so an agent that receives the rule also receives the warning. Confirming the rule removes the note on the next sync.
 
 | Code | When |
 |---|---|

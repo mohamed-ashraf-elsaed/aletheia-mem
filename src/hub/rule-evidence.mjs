@@ -124,3 +124,12 @@ export function provenanceLine(rule) {
 }
 
 export const recheckMarker = (rule) => (rule.stale ? ` [re-check: ${rule.reasons.map((reason) => reason.message).join(" ")}]` : "");
+
+/**
+ * The note appended to a flagged rule when it is written into a rules file or handed to an agent as context. A flagged rule
+ * is still delivered (flag, not delete); the note says why it is flagged and tells the reader to verify before applying.
+ */
+export const recheckNote = (rule) => (rule.stale ? ` [re-check: ${rule.reasons.map((reason) => reason.message).join(" ")} Verify before applying.]` : "");
+
+/** Remove a trailing recheckNote from rule text read back from a rules file, so a note never becomes part of the rule. */
+export const stripRecheckNote = (text) => text.replace(/ \[re-check: .*? Verify before applying\.\]\s*$/, "");

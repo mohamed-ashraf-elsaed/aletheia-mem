@@ -13,6 +13,7 @@ import { suggestRules } from "../src/hub/rule-suggest.mjs";
 import { decideSuggestion } from "../src/hub/rules-decide.mjs";
 import { renderRules, syncTool } from "../src/hub/rules-sync.mjs";
 import { readSettings, validateSetting, writeSettings } from "../src/hub/settings.mjs";
+import { MARK_BEGIN, MARK_END } from "../src/hub/tools.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 import { startServer } from "../src/server.mjs";
 import { makeFixture } from "./fixture.mjs";
@@ -519,5 +520,45 @@ describe("HTTP, MCP and CLI", () => {
     store.close();
     const body = JSON.stringify(await get("/api/hub/rules"));
     expect(body).not.toContain("sk-ant-bbbb");
+  });
+});
+
+describe("a flagged rule carries its re-check note into synced files and session context", () => {
+  function overdueRule(store) {
+    const rule = store.rules.add({ then: "Use tabs", when: "", scopeTier: "everywhere", scopeName: "Everywhere", source: "you" });
+    age(store, rule.id, { createdDaysAgo: 200 });
+    return rule.id;
+  }
+
+  test("renderRules appends the reason and 'Verify before applying.' to a flagged rule and nothing to a fresh one", () => {
+    const store = fresh();
+    overdueRule(store);
+    store.rules.add({ then: "Run the tests", when: "", scopeTier: "everywhere", scopeName: "Everywhere", source: "you" });
+    const { markdown, count } = renderRules(describeRules(store), "codex");
+    expect(count).toBe(2);
+    expect(markdown).toMatch(/- Use tabs \[re-check: Not confirmed for \d+ days .* Verify before applying\.\]/);
+    expect(markdown).toContain("- Run the tests\n");
+  });
+
+  test("session context carries the same note, and the flagged rule is still delivered", () => {
+    const store = fresh();
+    overdueRule(store);
+    const context = store.context({ project: "p" });
+    expect(context).toContain("- Use tabs [re-check:");
+    expect(context).toContain("Verify before applying.]");
+  });
+
+  test("the note is not part of the rule when a file is read back, and confirming removes it", () => {
+    const store = fresh();
+    const id = overdueRule(store);
+    const { markdown } = renderRules(describeRules(store), "codex");
+    const dir = tempDir("aletheia-recheck-");
+    const file = join(dir, "AGENTS.md");
+    writeFileSync(file, `${MARK_BEGIN}\n${markdown}${MARK_END}\n`);
+    const diff = diffRules({ rules: store.rules.list(), files: [{ path: file, tool: "codex", scope: "project" }] });
+    expect(diff.files[0].managed).toBe(true);
+    expect(diff.files[0].inSync).toBe(true);
+    store.rules.confirm(id);
+    expect(renderRules(describeRules(store), "codex").markdown).not.toContain("re-check");
   });
 });

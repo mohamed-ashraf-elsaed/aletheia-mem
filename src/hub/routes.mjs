@@ -601,7 +601,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       for (const id of ids) need(toolById(id), `Unknown tool: ${id}`);
       const apply = pathname.endsWith("/sync");
       if (apply) need(b.confirm === true, "Send confirm: true to write files. Preview first.", 400);
-      const results = ids.map((id) => syncTool(hub.rules.list(), id, { scope, projectDir, home: config.home, dryRun: !apply }));
+      const results = ids.map((id) => syncTool(describeRules(hub), id, { scope, projectDir, home: config.home, dryRun: !apply }));
       if (apply) hub.audit("ui", "rules.sync", { tools: ids, scope, projectDir, written: results.filter((r) => r.written).map((r) => r.path) });
       return h.json({ results });
     }

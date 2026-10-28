@@ -6,6 +6,10 @@ history.
 
 ## [Unreleased]
 
+### Changed
+
+- A rule flagged for re-check now carries its reason and "Verify before applying." into synced rules files and into the session context an agent receives, not only into `list_rules`. The rule is still delivered. Reading a rules file back strips the note, so it never becomes part of the rule text.
+
 ## [0.1.4] - 2026-10-28
 
 ### Added
