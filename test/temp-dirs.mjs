@@ -20,7 +20,7 @@ export function removeDir(dir, options = { recursive: true, force: true }) {
     } catch (error) {
       const transient = process.platform === "win32" && ["EBUSY", "EPERM", "ENOTEMPTY"].includes(error?.code);
       if (!transient) throw error;
-      if (attempt >= 20) return;
+      if (attempt >= 3) return;
       Bun.sleepSync(100);
     }
   }
