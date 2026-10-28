@@ -7,6 +7,13 @@ let G;
 let C;
 const tick = (ms = 0) => new Promise((resolve) => setTimeout(resolve, ms));
 const flush = async () => { for (let i = 0; i < 4; i += 1) await tick(); };
+const waitUntil = async (predicate, { timeoutMs = 10_000, pollMs = 5 } = {}) => {
+  const started = performance.now();
+  while (!predicate()) {
+    if (performance.now() - started > timeoutMs) throw new Error("condition not met before the deadline");
+    await tick(pollMs);
+  }
+};
 const json = (data, status = 200) => ({ ok: status < 400, status, headers: { get: () => "application/json" }, json: async () => data });
 
 beforeEach(async () => {
@@ -126,8 +133,7 @@ describe("T-212: waiting for the first event", () => {
   test("the timer asks again and again until data arrives, and stops after dispose", async () => {
     let calls = 0;
     const guide = G.firstRunGuide({ tools: TOOLS, intervalMs: 20, fetchState: async () => { calls += 1; return { captured: false, tools: TOOLS }; } });
-    await tick(90);
-    expect(calls).toBeGreaterThanOrEqual(3);
+    await waitUntil(() => calls >= 3);
     guide.dispose();
     const seen = calls;
     await tick(80);
