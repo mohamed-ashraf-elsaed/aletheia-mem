@@ -29,8 +29,8 @@ while (true) {
 
 // On a busy machine the child can take a while to start. Kill it only after its first batch is committed, so the
 // test never kills a process that has not created the database yet.
-async function waitForFirstBatch(dbPath) {
-  const deadline = Date.now() + 10_000;
+async function waitForFirstBatch(dbPath, child) {
+  const deadline = Date.now() + 30_000;
   while (Date.now() < deadline) {
     try {
       const db = new Database(dbPath, { readonly: true });
@@ -42,9 +42,10 @@ async function waitForFirstBatch(dbPath) {
     } catch {
       // The file or the table does not exist yet.
     }
+    if (child.exitCode !== null) throw new Error(`the writer exited with code ${child.exitCode} before its first batch`);
     await Bun.sleep(20);
   }
-  throw new Error("the writer did not commit a batch within 10 seconds");
+  throw new Error("the writer did not commit a batch within 30 seconds");
 }
 
 describe("kill -9 during writes leaves a recoverable database", () => {
@@ -56,7 +57,7 @@ describe("kill -9 during writes leaves a recoverable database", () => {
     for (let run = 0; run < RUNS; run += 1) {
       const dbPath = join(dir, `crash-${run}.db`);
       const child = Bun.spawn([process.execPath, writer, dbPath], { stdout: "ignore", stderr: "ignore" });
-      await waitForFirstBatch(dbPath);
+      await waitForFirstBatch(dbPath, child);
       await Bun.sleep(Math.floor(Math.random() * 180));
       child.kill("SIGKILL");
       await child.exited;
@@ -72,5 +73,5 @@ describe("kill -9 during writes leaves a recoverable database", () => {
         db.close();
       }
     }
-  }, 60_000);
+  }, 120_000);
 });
