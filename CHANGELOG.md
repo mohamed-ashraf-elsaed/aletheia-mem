@@ -6,6 +6,8 @@ history.
 
 ## [Unreleased]
 
+## [0.1.7] - 2026-10-28
+
 ### Added
 
 - A recall and latency regression gate runs in CI on Linux: it fails a change that loses more than one point of Recall@5 on a seeded synthetic corpus. Its latency check is report-only below a 5 ms baseline.
