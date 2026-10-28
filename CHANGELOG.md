@@ -6,10 +6,16 @@ history.
 
 ## [Unreleased]
 
+## [0.1.8] - 2026-10-28
+
 ### Added
 
 - `aletheia facts clean --dry-run` (the default) and `aletheia facts clean --apply`. The command applies the fact quality gate to already-stored facts, reports counts and the first ten examples per rejection reason, and `--apply` dismisses the failures with `quality:<reason>` through the normal reversible dismissal path.
 - A `facts.minConfidence` setting (0.3–0.9, default 0.4). The existing confidence calculation is unchanged; the floor only stops weaker facts from being stored.
+
+### Fixed
+
+- `scripts/release.mjs --prepare` corrupted the changelog when a release note contained the text `$` followed by a backtick: it expanded as a replacement pattern and copied the header into the note. Notes are now copied literally.
 
 ### Changed
 
