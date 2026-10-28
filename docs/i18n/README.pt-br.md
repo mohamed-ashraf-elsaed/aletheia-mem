@@ -18,7 +18,7 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
 
-**Status: alfa.** O motor de memória e os instaladores funcionam nos testes. Nenhum programa anfitrião foi aberto com uma configuração gerada, e a precisão das respostas não está medida. A CI roda no Linux e no macOS; o Windows ainda não é suportado e não foi testado.
+**Status: alfa.** O motor de memória e os instaladores funcionam nos testes. O Claude Code, o Command Code, o Codex CLI e o OpenCode reais listaram a configuração MCP gerada, mas nenhum hook ou sessão foi executado dentro de qualquer ferramenta ainda, e a precisão das respostas não está medida. A CI roda no Linux e no macOS; o Windows ainda não é suportado e não foi testado.
 
 As traduções automáticas ficam em `docs/i18n/`; a versão em inglês é a canônica. Nenhuma tradução passou por revisão de um falante nativo.
 

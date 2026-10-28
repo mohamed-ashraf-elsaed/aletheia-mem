@@ -18,7 +18,7 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
 
-**状态：alpha。** 记忆引擎和安装器已通过测试。还没有任何宿主被真正打开并加载生成的配置，答案准确率尚未测量。CI 在 Linux 和 macOS 上运行；Windows 暂不支持，也未测试。
+**状态：alpha。** 记忆引擎和安装器已通过测试。真正的 Claude Code、Command Code、Codex CLI 和 OpenCode 已列出生成的 MCP 配置，但还没有钩子或会话在任何工具中运行过，答案准确率尚未测量。CI 在 Linux 和 macOS 上运行；Windows 暂不支持，也未测试。
 
 机器翻译位于 `docs/i18n/`；英文版为准。没有任何翻译经过母语者审校。
 

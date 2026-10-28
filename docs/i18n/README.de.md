@@ -18,7 +18,7 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
 
-**Status: Alpha.** Die Gedächtnis-Engine und die Installer funktionieren in Tests. Noch wurde keine Host-Anwendung mit einer erzeugten Konfiguration geöffnet, und die Antwortgenauigkeit ist nicht gemessen. Die CI läuft unter Linux und macOS; Windows wird noch nicht unterstützt und ist ungetestet.
+**Status: Alpha.** Die Gedächtnis-Engine und die Installer funktionieren in Tests. Die echten Claude Code, Command Code, Codex CLI und OpenCode haben die erzeugte MCP-Konfiguration aufgelistet, aber in keinem Tool wurde bisher ein Hook oder eine Sitzung ausgeführt, und die Antwortgenauigkeit ist nicht gemessen. Die CI läuft unter Linux und macOS; Windows wird noch nicht unterstützt und ist ungetestet.
 
 Maschinelle Übersetzungen liegen in `docs/i18n/`; das englische Original ist maßgeblich. Keine Übersetzung wurde von einem Muttersprachler geprüft.
 

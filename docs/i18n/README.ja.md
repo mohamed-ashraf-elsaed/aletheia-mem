@@ -18,7 +18,7 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
 
-**状態: アルファ。** メモリエンジンとインストーラーはテストで動作します。生成された設定でホストアプリを開いたことはまだなく、回答の正確さは測定していません。CI は Linux と macOS で動作します。Windows は未対応で、未検証です。
+**状態: アルファ。** メモリエンジンとインストーラーはテストで動作します。実際の Claude Code、Command Code、Codex CLI、OpenCode は生成された MCP 設定を一覧表示しましたが、どのツール内でもまだフックもセッションも実行されておらず、回答の正確さは測定していません。CI は Linux と macOS で動作します。Windows は未対応で、未検証です。
 
 機械翻訳は `docs/i18n/` にあります。英語版が正典です。ネイティブ話者によるレビューは受けていません。
 

@@ -18,7 +18,7 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
 
-**상태: 알파.** 메모리 엔진과 설치 프로그램은 테스트에서 동작합니다. 아직 생성된 설정으로 호스트 앱을 열어 본 적이 없고, 답변 정확도는 측정되지 않았습니다. CI는 Linux와 macOS에서 실행되며, Windows는 아직 지원되지 않고 테스트되지 않았습니다.
+**상태: 알파.** 메모리 엔진과 설치 프로그램은 테스트에서 동작합니다. 실제 Claude Code, Command Code, Codex CLI, OpenCode는 생성된 MCP 설정을 나열했지만, 아직 어떤 도구 내부에서도 훅이나 세션이 실행된 적이 없고, 답변 정확도는 측정되지 않았습니다. CI는 Linux와 macOS에서 실행되며, Windows는 아직 지원되지 않고 테스트되지 않았습니다.
 
 기계 번역은 `docs/i18n/`에 있습니다. 영어판이 기준입니다. 어떤 번역도 원어민 검토를 받지 않았습니다.
 
