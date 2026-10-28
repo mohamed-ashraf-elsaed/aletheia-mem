@@ -6,6 +6,10 @@ history.
 
 ## [Unreleased]
 
+### Changed
+
+- `session_start_context`, the SessionStart hook, `/v1/context`, `/api/hub/context` and `aletheia context` now return a compact index by default: recent memories are grouped by day and first file and printed one line each with no narrative, followed by session requests, facts and rules, plus a legend, a fetch-more hint and a measured context-economics line. The previous flat shape stays available through the `context.format = "classic"` setting.
+
 ## [0.1.6] - 2026-10-28
 
 ### Fixed

@@ -88,7 +88,7 @@ export const TOOL_DEFS = [
   {
     name: "session_start_context",
     title: "Load session start context",
-    description: `Load what to know at the start of a session for a project: pinned memories, recent memories, up to 10 active facts and the owner's enabled standing rules, as one text block cut to about 6000 characters. Call it once at the start; use search for anything more specific. Read-only. ${UNTRUSTED}`,
+    description: `Load what to know at the start of a session for a project as a compact index: pinned memories, recent memories grouped by day and first file (one line each, no narrative), the most recent session requests, up to 10 active facts and the owner's enabled standing rules, cut to about 6000 characters. A legend, a fetch-more hint and a measured context-economics line are included. Call it once at the start; use search for anything more specific. Read-only. ${UNTRUSTED}`,
     annotations: annotate("Load session start context", { readOnly: true, idempotent: true }),
     inputSchema: {
       type: "object",

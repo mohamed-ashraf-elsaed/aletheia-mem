@@ -14,6 +14,8 @@ import { epochOrIso } from "./paging.mjs";
 import { graphWalk } from "./graph.mjs";
 import { redact } from "./redact.mjs";
 import { describeRules, recheckNote } from "./rule-evidence.mjs";
+import { estimateTokens } from "./usage.mjs";
+import { sessionRequestText } from "../readmodel/text.mjs";
 
 const SCHEMA_VERSION = 3; // 3: episodes, observations, facts, entities, keys, links, queue and usage
 
@@ -21,6 +23,29 @@ export const EVIDENCE_KINDS = ["memory", "fact", "episode", "suggestion"];
 export const KINDS = ["observation", "summary", "prompt", "note", "event"];
 export const TYPES = ["bugfix", "feature", "refactor", "change", "discovery", "decision", "note", "gotcha", "event"];
 export const BUNDLE_VERSION = 1;
+
+const TYPE_MARKER = {
+  bugfix: "b",
+  feature: "f",
+  refactor: "r",
+  change: "c",
+  discovery: "d",
+  decision: "D",
+  note: "n",
+  gotcha: "g",
+  event: "e",
+  summary: "s",
+};
+const TYPE_LEGEND = "Legend: b=bugfix f=feature r=refactor c=change d=discovery D=decision n=note g=gotcha e=event s=summary ?=other";
+
+const oneLine = (text) => String(text ?? "").replace(/\s+/g, " ").trim();
+const cutTitle = (text, max = 100) => {
+  const flat = oneLine(text);
+  return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}…` : flat;
+};
+const dayOf = (epoch) => new Date(epoch).toISOString().slice(0, 10);
+const timeOf = (epoch) => new Date(epoch).toISOString().slice(11, 16);
+const markerOf = (type) => TYPE_MARKER[type] ?? "?";
 
 const json = (v) => (v == null ? null : typeof v === "string" ? v : JSON.stringify(v));
 const parse = (v) => {
@@ -1577,7 +1602,14 @@ export class HubStore {
   }
 
   /** Markdown a session-start hook can inject into ANY tool: pinned and recent memories, then the rules. */
-  context({ project, limit = 20, maxChars = 6000, tool, scope = "current" } = {}) {
+  context({ project, limit = 20, maxChars = 6000, tool, scope = "current", format } = {}) {
+    return (format ?? this.setting("context.format", "index")) === "classic"
+      ? this.classicContext({ project, limit, maxChars, tool, scope })
+      : this.indexContext({ project, limit, maxChars, tool, scope });
+  }
+
+  /** The previous flat shape, kept available via `context.format = "classic"`. */
+  classicContext({ project, limit = 20, maxChars = 6000, tool, scope = "current" } = {}) {
     const pinned = this.list({ project, pinned: true, limit: 50, scope }).items;
     const scopeClause = scope === "all" ? "" : project ? this.hasGlobal("memories") ? "AND (project = ? OR scope = 'global')" : "AND project = ?" : "";
     const dismissClause = this.hasDismissals("memory") ? "AND NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = memories.id)" : "";
@@ -1601,6 +1633,85 @@ export class HubStore {
     if (facts.length) parts.push("", "## Facts", ...facts.map((fact) => `- fact #${fact.id} ${fact.text}`));
     const rules = describeRules(this).filter((r) => r.enabled && (!r.tools || !tool || r.tools.includes(tool)));
     if (rules.length) parts.push("", "## Rules", ...rules.map((r) => (r.when ? `- When ${r.when}: ${r.then}` : `- ${r.then}`) + recheckNote(r)));
+    let out = parts.join("\n");
+    if (out.length > maxChars) out = `${out.slice(0, maxChars - 1).trimEnd()}…`;
+    return out;
+  }
+
+  /** Compact index: one line per memory, grouped by day and first file, with a legend and measured economics. */
+  indexContext({ project, limit = 20, maxChars = 6000, tool, scope = "current" } = {}) {
+    const pinned = this.list({ project, pinned: true, limit: 50, scope }).items;
+    const scopeClause = scope === "all" ? "" : project ? this.hasGlobal("memories") ? "AND (project = ? OR scope = 'global')" : "AND project = ?" : "";
+    const dismissClause = this.hasDismissals("memory") ? "AND NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = memories.id)" : "";
+    const recent = this.db
+      .prepare(`SELECT * FROM memories WHERE kind IN ('observation','summary','note') AND pinned = 0 ${scopeClause} ${dismissClause} ORDER BY created_at_epoch DESC LIMIT ?`)
+      .all(...(scopeClause ? [project] : []), Math.min(limit, 100))
+      .map((r) => this.row(r));
+
+    const parts = [`# Memory${scope === "all" ? " (all projects)" : project ? ` for ${project}` : ""}`];
+    const memoryLine = (m) => `- #${m.id} ${timeOf(m.created_at_epoch)} [${markerOf(m.type)}] ${cutTitle(m.title)}`;
+
+    if (pinned.length) parts.push("", "## Pinned", ...pinned.map(memoryLine));
+
+    if (recent.length) {
+      const days = [];
+      const dayMap = new Map();
+      for (const m of recent) {
+        const day = dayOf(m.created_at_epoch);
+        let bucket = dayMap.get(day);
+        if (!bucket) { bucket = { day, files: [], byFile: new Map() }; dayMap.set(day, bucket); days.push(bucket); }
+        const file = m.files?.length ? m.files[0] : "General";
+        let fileBucket = bucket.byFile.get(file);
+        if (!fileBucket) { fileBucket = { file, items: [] }; bucket.byFile.set(file, fileBucket); bucket.files.push(fileBucket); }
+        fileBucket.items.push(m);
+      }
+      const recentLines = ["", "## Recent"];
+      for (const bucket of days) {
+        recentLines.push(`### ${bucket.day}`);
+        for (const file of bucket.files) recentLines.push(`**${file.file}**`, ...file.items.map(memoryLine));
+      }
+      parts.push(...recentLines);
+    }
+
+    // Session requests: one line per most recent session with a prompt, request text derived the same way
+    // the Work view derives it (no model call).
+    const sessionScope = scope === "all" ? "" : project ? this.hasGlobal("memories") ? "AND (project = ? OR scope = 'global')" : "AND project = ?" : "";
+    const sessionParams = sessionScope ? [project] : [];
+    const sessionRows = this.db
+      .prepare(`SELECT project, session_id, MAX(created_at_epoch) AS last_at FROM memories WHERE session_id IS NOT NULL AND session_id <> '' AND kind = 'prompt' ${sessionScope} GROUP BY project, session_id ORDER BY last_at DESC LIMIT 5`)
+      .all(...sessionParams);
+    const requestLines = [];
+    for (const row of sessionRows) {
+      const prompt = this.db.prepare("SELECT narrative, title FROM memories WHERE project = ? AND session_id = ? AND kind = 'prompt' ORDER BY created_at_epoch ASC, id ASC LIMIT 1").get(row.project, row.session_id);
+      const text = prompt ? sessionRequestText(prompt.narrative || prompt.title) : null;
+      if (text) requestLines.push(`- ${dayOf(row.last_at)} ${cutTitle(text, 120)}`);
+    }
+    if (requestLines.length) parts.push("", "## Session requests", ...requestLines);
+
+    const now = Date.now();
+    const factWhere = ["status = 'active'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)"];
+    const factParams = [now, now];
+    if (this.hasDismissals("fact")) factWhere.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = facts.id)");
+    if (project && scope !== "all") {
+      if (this.hasGlobal("facts")) { factWhere.push("(project = ? OR scope = 'global')"); } else { factWhere.push("project = ?"); }
+      factParams.push(project);
+    }
+    const facts = this.db.prepare(`SELECT * FROM facts WHERE ${factWhere.join(" AND ")} ORDER BY confidence DESC, recorded_at_epoch DESC, id DESC LIMIT 10`).all(...factParams);
+    if (facts.length) parts.push("", "## Facts", ...facts.map((fact) => `- fact #${fact.id} ${fact.text}`));
+
+    const rules = describeRules(this).filter((r) => r.enabled && (!r.tools || !tool || r.tools.includes(tool)));
+    if (rules.length) parts.push("", "## Rules", ...rules.map((r) => (r.when ? `- When ${r.when}: ${r.then}` : `- ${r.then}`) + recheckNote(r)));
+
+    const exampleId = recent[0]?.id ?? pinned[0]?.id ?? 1;
+    const items = pinned.length + recent.length;
+    const fullTokens = [...pinned, ...recent].reduce((sum, m) => sum + estimateTokens(`${m.title}\n${m.narrative ?? ""}`), 0);
+    const hint = `Fetch more: search(query), timeline(anchor), get_observations(ids) — e.g. get_observations(ids: [#${exampleId}]).`;
+    const blockTokens = estimateTokens([...parts, "", TYPE_LEGEND, hint].join("\n"));
+    const ratio = blockTokens > 0 && fullTokens > 0 ? fullTokens / blockTokens : null;
+    const ratioText = ratio == null ? "n/a" : `~${ratio >= 10 ? Math.round(ratio) : Math.round(ratio * 10) / 10}x smaller (estimate)`;
+    const economicsLine = `Context economics: ${items} memories listed; ~${blockTokens} tokens for this block (estimate, chars/4); ~${fullTokens} tokens for the same items' full text (estimate); saving ratio ${ratioText}.`;
+    parts.push("", TYPE_LEGEND, hint, economicsLine);
+
     let out = parts.join("\n");
     if (out.length > maxChars) out = `${out.slice(0, maxChars - 1).trimEnd()}…`;
     return out;

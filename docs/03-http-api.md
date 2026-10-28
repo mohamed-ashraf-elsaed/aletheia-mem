@@ -243,6 +243,20 @@ Full field descriptions and real samples are in [32-requests.md](32-requests.md)
 
 The CLI equivalents: `aletheia context economics [--project p] [--limit n]` and `aletheia rules suggest`.
 
+### Session start context format
+
+`/v1/context`, `/api/hub/context`, `aletheia context`, the `session_start_context` MCP tool and the SessionStart
+hook all return the same context block. Its shape is controlled by the Hub setting `context.format`:
+
+| Value | Shape |
+|---|---|
+| `index` (default) | Pinned and recent memories as one compact line each (id, time, type marker, title <= 100 chars, no narrative), grouped by day and first file; then session requests, active facts and rules. A legend, a fetch-more hint and a measured context-economics line close the block. |
+| `classic` | The previous flat list: one line per memory with a date, type and a 160-character narrative snippet, then facts and rules. |
+
+The setting is stored in the Hub settings table (`context.format`, value `"index"` or `"classic"`). The untrusted
+wrapper, pinned-first order, the active-facts section, flagged-rule notes and the `maxChars` cut are the same in both
+formats.
+
 ### Rule dates, evidence and the re-check flag
 
 Every rule keeps the date it was made, its source, the memories and facts it rests on (its evidence) and the date it
