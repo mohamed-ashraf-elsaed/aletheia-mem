@@ -285,6 +285,46 @@ from each config, pipes a recorded payload set through it, and checks rows, reda
 2 tests pass, p95 1.24 to 2.48 ms per host (hook work only). This is the real installed command, not a call to
 the adapter; it is still not the host application.
 
+## Check hooks in a real session
+
+The fixtures prove the installed hook command, not the host. To check a real session, use a throwaway HOME, a
+throwaway project and a throwaway data directory so nothing touches the real `~/.aletheia`, `~/.claude` or
+`~/.commandcode`:
+
+```bash
+root=$(mktemp -d /tmp/aletheia-hook-check.XXXXXX)
+mkdir -p "$root/home" "$root/project"
+cd "$root/project"
+export HOME="$root/home"
+export ALETHEIA_DATA_DIR="$root/data"
+export ALETHEIA_PORT=37890
+aletheia install command-code --write
+aletheia install claude-code --write
+```
+
+Start one short session in Command Code (or Claude Code) in this project with the same `HOME`, send one prompt and
+one file-reading tool call, then end the session. Run the checker on the data directory it wrote:
+
+```bash
+bun scripts/hook-check.mjs "$ALETHEIA_DATA_DIR" --tool command-code
+bun scripts/hook-check.mjs "$ALETHEIA_DATA_DIR" --tool claude-code
+```
+
+`scripts/hook-check.mjs` opens `hub.db` read-only and prints the sessions seen, events per hook type, the first
+and last timestamp, whether any stored text still matches a redaction pattern (reported as a row and column, never
+the secret), whether the spool is empty, and a PASS/FAIL per expected event. It exits 1 on any FAIL.
+
+What a real session captures per tool:
+
+| Tool | Captured | Not captured |
+|---|---|---|
+| claude-code | SessionStart context (injected, no stored row), UserPromptSubmit (prompt), PostToolUse (tool event), Stop and SessionEnd (summary and session end) | nothing in its five-event set |
+| command-code | SessionStart context (injected, no stored row), PostToolUse (tool event), Stop (session end) | UserPromptSubmit and SessionEnd: Command Code has no such hooks, so prompts and session-end summaries are not captured |
+
+Command Code has no `UserPromptSubmit` or `SessionEnd` hook, so the checker marks those two events "not installed"
+instead of FAIL. `SessionStart` injects context but stores no row, so it is reported as context-only and cannot be
+confirmed from the database.
+
 ## Sources for the five new hosts
 
 | Source | What it gave | Date |
