@@ -16,6 +16,8 @@ history.
 - Fact extraction now keeps only assistant summaries and notes as eligible sources. User prompts and tool output/file contents (including raw back-filled transcripts) are no longer extracted into facts.
 - Every candidate fact passes a quality gate before it is stored: balanced quotes and brackets, no escaped newlines/tabs, no code-like tokens (`$`, `->`, `::`, `=>`, braces, backticks, SQL or HTML tags), 3–40 words and at most 200 characters, a 1–8 word subject that is not a bare pronoun/demonstrative and does not start with a continuation word, and an object that does not end mid-clause. Each rejection returns a stable reason code and is counted.
 - The session-start Facts section caps each fact line at 140 characters (dismissed facts were already skipped).
+- The CI regression gate now uses a harder seeded corpus (near-duplicate distractors, answers ranked 3rd and 6th, 50,000 rows). Its baseline is Recall@5 0.90 and p95 latency about 7.8 ms, above the 5 ms floor, so a latency regression of more than 20% now fails the build too.
+- The default test timeout is 20 s instead of 5 s, because three installer tests timed out on a slow Windows runner.
 
 ## [0.1.7] - 2026-10-28
 
