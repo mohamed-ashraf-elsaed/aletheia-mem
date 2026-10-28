@@ -2,12 +2,13 @@
 // zero rows and reporting success.
 import { afterAll, describe, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { REQUIRED_SCHEMA, importClaudeMem, probeClaudeMemSchema } from "../src/hub/importers.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 import { makeFixture } from "./fixture.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const dirs = [];
 const tmp = () => {
@@ -32,7 +33,7 @@ function stripped({ omitTable = null, omitColumn = null } = {}) {
 afterAll(() => {
   for (const dir of dirs) {
     try {
-      rmSync(dir, { recursive: true, force: true });
+      removeDir(dir, { recursive: true, force: true });
     } catch {
       // the OS cleans tmp on its own schedule
     }

@@ -2,13 +2,14 @@
 // HMAC-SHA256, retries 5xx with backoff, times out, refuses private/loopback/link-local targets without the
 // per-rule opt-in, and can append to a local file. No external network is used: every receiver is on loopback.
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { AlertStore, deliverDue, signPayload } from "../src/hub/alerts.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 import { runWorker } from "../src/hub/queue.mjs";
 import { startSyncServer } from "../src/hub/sync/server.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-alerts-"));
 let receiver;
@@ -37,7 +38,7 @@ beforeAll(() => {
 
 afterAll(() => {
   receiver.stop(true);
-  rmSync(temp, { recursive: true, force: true });
+  removeDir(temp, { recursive: true, force: true });
 });
 
 let store;

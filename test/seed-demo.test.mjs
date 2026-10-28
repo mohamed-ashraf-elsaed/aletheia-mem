@@ -1,6 +1,6 @@
 // the demo seed script writes clearly fake data, only where it is told to, and never over a real store.
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { HubStore } from "../src/hub/store.mjs";
@@ -9,6 +9,7 @@ import { proposeGoalsRollup } from "../src/hub/goals-rollup.mjs";
 import { proposeRequests } from "../src/hub/requests.mjs";
 import { buildStory } from "../src/hub/story.mjs";
 import { DEMO_PROJECTS, seed } from "../scripts/seed-demo.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const SCRIPT = join(import.meta.dir, "..", "scripts", "seed-demo.mjs");
 const temp = () => mkdtempSync(join(tmpdir(), "aletheia-seed-"));
@@ -32,7 +33,7 @@ describe("seed-demo", () => {
       expect(hub.db.prepare("SELECT COUNT(*) AS n FROM dismissals").get().n).toBeGreaterThan(0);
       hub.close();
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      removeDir(dir, { recursive: true, force: true });
     }
   });
   test("the seed fills the request, goal, story and economics panels", () => {
@@ -62,7 +63,7 @@ describe("seed-demo", () => {
       expect(hub.db.prepare("SELECT COUNT(*) AS n FROM rule_suggestion_quotes").get().n).toBeGreaterThan(5);
       hub.close();
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      removeDir(dir, { recursive: true, force: true });
     }
   });
   test("every row is labelled as demo: projects are demo-*, the tool is demo-seed", () => {
@@ -75,7 +76,7 @@ describe("seed-demo", () => {
       expect(hub.db.prepare("SELECT DISTINCT tool FROM episodes").all().map((r) => r.tool)).toEqual(["demo-seed"]);
       hub.close();
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      removeDir(dir, { recursive: true, force: true });
     }
   });
   test("the data covers what the UI must survive: Arabic, a 200-character token, Markdown, pinned rows", () => {
@@ -91,7 +92,7 @@ describe("seed-demo", () => {
       expect(rows.some((r) => r.pinned === 1)).toBe(true);
       hub.close();
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      removeDir(dir, { recursive: true, force: true });
     }
   });
   test("the same seed gives the same text, so screenshots and numbers repeat", () => {
@@ -103,8 +104,8 @@ describe("seed-demo", () => {
       const titles = (dir) => { const hub = new HubStore(join(dir, "hub.db")); const out = hub.db.prepare("SELECT title FROM memories ORDER BY id").all().map((r) => r.title); hub.close(); return out; };
       expect(titles(a)).toEqual(titles(b));
     } finally {
-      rmSync(a, { recursive: true, force: true });
-      rmSync(b, { recursive: true, force: true });
+      removeDir(a, { recursive: true, force: true });
+      removeDir(b, { recursive: true, force: true });
     }
   });
   test("it refuses a database that holds real rows, and accepts one it seeded itself", () => {
@@ -117,7 +118,7 @@ describe("seed-demo", () => {
       expect(() => seed(dir, { rows: 10 })).toThrow("was not seeded by this script");
       expect(() => seed(dir, { rows: 10, force: true })).not.toThrow();
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      removeDir(dir, { recursive: true, force: true });
     }
   });
   test("--empty marks the store as demo and adds nothing", () => {
@@ -128,7 +129,7 @@ describe("seed-demo", () => {
       expect(hub.db.prepare("SELECT COUNT(*) AS n FROM memories").get().n).toBe(0);
       hub.close();
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      removeDir(dir, { recursive: true, force: true });
     }
   });
   test("the command line needs --data and never guesses a folder", async () => {
@@ -145,7 +146,7 @@ describe("seed-demo", () => {
         expect(result.err).toContain("looks like a real data folder");
       }
     } finally {
-      rmSync(home, { recursive: true, force: true });
+      removeDir(home, { recursive: true, force: true });
     }
   });
   test("the command line seeds a temporary folder and says what it wrote", async () => {
@@ -156,7 +157,7 @@ describe("seed-demo", () => {
       expect(result.out).toContain(`seeded ${dir}/hub.db`);
       expect(result.out).toContain('"memories":30');
     } finally {
-      rmSync(dir, { recursive: true, force: true });
+      removeDir(dir, { recursive: true, force: true });
     }
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { configureLedger, runCli } from "../src/ledger/commands.mjs";
@@ -88,7 +88,7 @@ describe("ledger commands", () => {
     const { fx, config } = setup();
     const all = cli(config, fx, ["candidates"]).candidates.map((c) => c.conversationKey);
     const file = join(fx.dir, "bad.json");
-    Bun.write(file, JSON.stringify({ groups: [{ title: "x", conversations: all.slice(0, 2) }] }));
+    writeFileSync(file, JSON.stringify({ groups: [{ title: "x", conversations: all.slice(0, 2) }] }));
     expect(() => cli(config, fx, ["apply", file])).toThrow(/without a recorded link/);
   });
   test("record-progress refuses a shipped request without 100% and a ship date", () => {
@@ -96,12 +96,12 @@ describe("ledger commands", () => {
     const all = cli(config, fx, ["candidates"]).candidates;
     const one = all[0].conversationKey;
     const file = join(fx.dir, "g.json");
-    Bun.write(file, JSON.stringify({ groups: [{ title: "Solo", conversations: [one] }] }));
+    writeFileSync(file, JSON.stringify({ groups: [{ title: "Solo", conversations: [one] }] }));
     cli(config, fx, ["apply", file]);
     const groupId = Object.keys(readLedger(config.ledgerDir).groups.groups)[0];
     const show = cli(config, fx, ["show", groupId]);
     const bad = join(fx.dir, "p.json");
-    Bun.write(bad, JSON.stringify({ groupId, state: "shipped", percent: 90, summary: "s", reviewBasis: show.reviewBasis }));
+    writeFileSync(bad, JSON.stringify({ groupId, state: "shipped", percent: 90, summary: "s", reviewBasis: show.reviewBasis }));
     expect(() => cli(config, fx, ["record-progress", bad])).toThrow(/shipped request needs percent 100/);
   });
 });

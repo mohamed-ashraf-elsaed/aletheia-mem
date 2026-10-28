@@ -21,7 +21,8 @@ afterAll(() => app.stop());
 
 // Async spawn: the server runs in this process, a blocking spawn would deadlock its event loop.
 async function run(args) {
-  const proc = Bun.spawn(["python3", join(import.meta.dir, "..", "vendor", "owner-goals", "save_goals.py"), ...args], {
+  const PYTHON = Bun.which("python3") ?? Bun.which("python") ?? "python3";
+  const proc = Bun.spawn([PYTHON, join(import.meta.dir, "..", "vendor", "owner-goals", "save_goals.py"), ...args], {
     env: { ...process.env, CLAUDE_MEM_WORKER_PORT: String(app.server.port), CLAUDE_MEM_WORKER_HOST: "127.0.0.1" },
     stdout: "pipe", stderr: "pipe",
   });

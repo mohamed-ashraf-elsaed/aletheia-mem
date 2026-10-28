@@ -1,8 +1,9 @@
 // The comparison script prints the measured table from raw result files, and only says REPRODUCED within 0.5 points.
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { removeDir } from "./temp-dirs.mjs";
 
 const dirs = [];
 const make = () => {
@@ -19,7 +20,7 @@ function run(dir) {
 
 afterAll(() => {
   for (const dir of dirs) {
-    try { rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
+    try { removeDir(dir, { recursive: true, force: true }); } catch { /* ignore */ }
   }
 });
 

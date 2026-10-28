@@ -1,7 +1,7 @@
 // output language. The tag is validated when it is set, stored per project, and added to the extraction
 // prompt as OUTPUT_LANGUAGE. Summaries are built from the facts, so they follow the same language.
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { extractFactsWithProvider, factsPrompt, validateFacts } from "../src/hub/facts.mjs";
@@ -9,10 +9,11 @@ import { languageInstruction, normalizeLanguage } from "../src/hub/language.mjs"
 import { executeJob, enqueueJob, JOB_TYPE } from "../src/hub/queue.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 import { buildProjectSummary } from "../src/hub/summaries.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const root = join(import.meta.dir, "..");
 const temp = mkdtempSync(join(tmpdir(), "aletheia-language-"));
-afterAll(() => rmSync(temp, { recursive: true, force: true }));
+afterAll(() => removeDir(temp, { recursive: true, force: true }));
 
 describe("output language", () => {
   test("language tags are validated and normalised", () => {

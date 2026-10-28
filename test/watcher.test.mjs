@@ -2,11 +2,12 @@
 // keeps byte offsets and turn counters in a state database, survives a restart without duplicates, stores an
 // unknown line as a raw episode, waits for a complete line, and caps a pass by batch size and a 1 s interval.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { tmpdir } from "node:os";
 import { HubStore } from "../src/hub/store.mjs";
 import { TranscriptWatcher } from "../src/hub/watcher.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-watch-"));
 const home = join(temp, "home");
@@ -49,7 +50,7 @@ beforeAll(() => {
 
 afterAll(() => {
   store.close();
-  rmSync(temp, { recursive: true, force: true });
+  removeDir(temp, { recursive: true, force: true });
 });
 
 describe("transcript watcher", () => {

@@ -2,12 +2,13 @@
 // opened read-only; the test hashes them before and after and checks they are byte-identical.
 import { afterAll, describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, utimesSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, utimesSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { HubStore } from "../src/hub/store.mjs";
 import { executeJob, JOB_TYPE } from "../src/hub/queue.mjs";
 import { findTranscripts, importTranscripts, parseTranscript, transcriptRoot } from "../src/hub/transcripts.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const root = join(import.meta.dir, "..");
 const temp = mkdtempSync(join(tmpdir(), "aletheia-transcripts-"));
@@ -51,7 +52,7 @@ write(join(ccDir, "cc-1.meta.json"), [{ type: "meta" }]);
 const files = [join(claudeDir, "session-a.jsonl"), join(claudeDir, "session-b.jsonl"), malformedFile, join(ccDir, "cc-1.jsonl")];
 const hashes = new Map(files.map((file) => [file, createHash("sha256").update(readFileSync(file)).digest("hex")]));
 
-afterAll(() => rmSync(temp, { recursive: true, force: true }));
+afterAll(() => removeDir(temp, { recursive: true, force: true }));
 
 describe("transcript back-fill", () => {
   test("the verified layout is found and checkpoint/meta files are ignored", () => {

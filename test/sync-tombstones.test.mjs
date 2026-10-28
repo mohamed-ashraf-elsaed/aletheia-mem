@@ -3,12 +3,13 @@
 // and leaves only the tombstone. A device whose cursor is behind the retained window re-bootstraps from a
 // snapshot.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SyncClient } from "../src/hub/sync/client.mjs";
 import { SyncStore } from "../src/hub/sync/store.mjs";
 import { startSyncServer } from "../src/hub/sync/server.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-sync-tomb-"));
 let hub;
@@ -33,7 +34,7 @@ afterAll(() => {
   a.close();
   b.close();
   hub.stop();
-  rmSync(temp, { recursive: true, force: true });
+  removeDir(temp, { recursive: true, force: true });
 });
 
 const mint = (deviceId) => hub.store.mintToken(accountId, { scope: "sync", deviceId, name: deviceId }).token;

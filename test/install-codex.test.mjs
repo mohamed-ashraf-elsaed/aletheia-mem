@@ -163,4 +163,17 @@ describe("Codex CLI installer and hooks", () => {
     expect(JSON.stringify(hooks)).not.toContain("aletheia-managed");
     expect(readFileSync(join(ctx.home, ".codex/AGENTS.md"), "utf8")).not.toContain("aletheia:rules");
   });
+
+  test("uninstall removes the TOML block when the command path has backslashes, as on Windows", async () => {
+    const ctx = setup();
+    ctx.env.bun = "C:\\Users\\runner\\.bun\\bin\\bun.exe";
+    mkdirSync(join(ctx.home, ".codex"), { recursive: true });
+    await applyInstall(installerFor("codex").plan(ctx.env), { dataDir: ctx.dataDir });
+    expect(readFileSync(configPath(ctx.home), "utf8")).toContain("C:\\\\Users\\\\runner");
+    // a second plan must see the block as ours, not as a foreign table
+    expect(installerFor("codex").plan(ctx.env).steps?.some?.((step) => step.kind === "mcp" && step.changed) ?? false).toBe(false);
+    const result = applyUninstall(planUninstall("codex", ctx.env, { dataDir: ctx.dataDir }), { dataDir: ctx.dataDir });
+    expect(result.removed).toBe(true);
+    expect(readFileSync(configPath(ctx.home), "utf8")).not.toContain("[mcp_servers.aletheia]");
+  });
 });

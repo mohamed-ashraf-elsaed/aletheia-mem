@@ -2,13 +2,14 @@
 // hub, with per-operation accept/reject so one bad op never rejects a batch. Tests use two temp data dirs
 // (device A and device B) and one hub on a random loopback port; the kill -9 test spawns a real hub process.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SyncClient } from "../src/hub/sync/client.mjs";
 import { SyncStore } from "../src/hub/sync/store.mjs";
 import { startSyncServer } from "../src/hub/sync/server.mjs";
 import { computeContentHash, entityIdFor, mergeOps, replicaContentHash } from "../src/hub/sync/engine.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const root = join(import.meta.dir, "..");
 const temp = mkdtempSync(join(tmpdir(), "aletheia-sync-core-"));
@@ -34,7 +35,7 @@ afterAll(() => {
   a.close();
   b.close();
   hub.stop();
-  rmSync(temp, { recursive: true, force: true });
+  removeDir(temp, { recursive: true, force: true });
 });
 
 const push = (url, token, ops) => fetch(`${url}/v1/sync/push`, {

@@ -1,13 +1,14 @@
 // audit export. The append-only sync audit log renders as JSONL (default) or CSV with an inclusive
 // date range, is admin-only over HTTP, round-trips into a fresh store, and never carries a secret or payload.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SyncClient } from "../src/hub/sync/client.mjs";
 import { SyncStore } from "../src/hub/sync/store.mjs";
 import { startSyncServer } from "../src/hub/sync/server.mjs";
 import { auditExportRows, epochOrNull, exportAudit, exportAuditCsv, exportAuditJsonl } from "../src/hub/audit-export.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-audit-export-"));
 
@@ -136,7 +137,7 @@ describe("audit export over HTTP", () => {
 
   afterAll(() => {
     hub.stop();
-    rmSync(temp, { recursive: true, force: true });
+    removeDir(temp, { recursive: true, force: true });
   });
 
   const exportRequest = (token, query = "") => fetch(`${hub.url}/v1/audit/export${query}`, {

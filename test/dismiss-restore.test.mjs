@@ -2,7 +2,7 @@
 // brings it back. The CLI, the REST route and the MCP tool all use the same store write. Nothing is deleted
 // until `prune --apply`, which is the only path that purges a dismissed row.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
@@ -11,6 +11,7 @@ import { prune } from "../src/hub/retention.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 import { startServer } from "../src/server.mjs";
 import { makeFixture } from "./fixture.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const root = join(import.meta.dir, "..");
 const temp = mkdtempSync(join(tmpdir(), "aletheia-dismiss-"));
@@ -50,7 +51,7 @@ beforeAll(() => {
 
 afterAll(() => {
   app.stop();
-  rmSync(temp, { recursive: true, force: true });
+  removeDir(temp, { recursive: true, force: true });
 });
 
 describe("reversible dismiss and restore", () => {
