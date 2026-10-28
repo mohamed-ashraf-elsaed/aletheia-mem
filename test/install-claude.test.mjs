@@ -87,7 +87,7 @@ describe("install: Claude Code", () => {
     const found = backups(home);
     expect(found.length).toBe(2);
     expect(readFileSync(found.find((file) => file.replaceAll("\\", "/").includes("/.claude/settings.json.aletheia-bak-")), "utf8")).toBe(userSettings);
-    expect(readFileSync(found.find((file) => file.includes("/.claude.json.aletheia-bak-")), "utf8")).toBe(userClaudeJson);
+    expect(readFileSync(found.find((file) => file.replaceAll("\\", "/").includes("/.claude.json.aletheia-bak-")), "utf8")).toBe(userClaudeJson);
 
     const manifest = readManifest(dataDir);
     expect(manifest.tools["claude-code"].steps.map((step) => step.kind)).toEqual(["mcp", "hooks", "rules"]);
