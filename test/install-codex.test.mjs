@@ -35,6 +35,11 @@ function commandsFrom(file) {
   return Object.fromEntries(Object.entries(doc.hooks ?? {}).map(([event, definitions]) => [event, definitions.flatMap((definition) => definition.hooks ?? []).find((handler) => String(handler.command).includes("aletheia-managed"))?.command ?? null]));
 }
 
+function timeoutsFrom(file) {
+  const doc = JSON.parse(readFileSync(file, "utf8"));
+  return Object.fromEntries(Object.entries(doc.hooks ?? {}).map(([event, definitions]) => [event, definitions.flatMap((definition) => definition.hooks ?? []).find((handler) => String(handler.command).includes("aletheia-managed"))?.timeout ?? null]));
+}
+
 async function runCommand(command, payload, ctx) {
   const proc = Bun.spawn(["sh", "-c", command], {
     stdin: "pipe",
@@ -89,6 +94,17 @@ describe("Codex CLI installer and hooks", () => {
     writeFileSync(configPath(ctx.home), "{ not toml");
     expect(() => installerFor("codex").plan(ctx.env)).toThrow(/TOML/);
     expect(readFileSync(configPath(ctx.home), "utf8")).toBe("{ not toml");
+  });
+
+  test("Codex hooks write a 3s SessionEnd timeout and keep 10s elsewhere", async () => {
+    const ctx = setup();
+    await applyInstall(installerFor("codex").plan(ctx.env), { dataDir: ctx.dataDir });
+    const timeouts = timeoutsFrom(hooksPath(ctx.home));
+    expect(timeouts.SessionEnd).toBe(3);
+    expect(timeouts.SessionStart).toBe(10);
+    expect(timeouts.UserPromptSubmit).toBe(10);
+    expect(timeouts.PostToolUse).toBe(10);
+    expect(timeouts.Stop).toBe(10);
   });
 
   test("the installed hooks capture a session without secrets and doctor sees 5/5", async () => {

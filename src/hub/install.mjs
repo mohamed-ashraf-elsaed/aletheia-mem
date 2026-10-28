@@ -75,7 +75,7 @@ export function stripOurHooks(doc) {
   return doc;
 }
 
-function planHooks({ file, events, env, tool, timeout = 10 }) {
+function planHooks({ file, events, env, tool, timeout = 10, timeouts = {} }) {
   const { text, doc } = readJson(file, {});
   const next = clone(doc);
   if (!plainObject(next.hooks)) next.hooks = {};
@@ -85,7 +85,8 @@ function planHooks({ file, events, env, tool, timeout = 10 }) {
   for (const [event, matcher] of Object.entries(events)) {
     const command = hookCommand({ bun: env.bun, hookScript: runnerFor(env), tool, event });
     commands[event] = command;
-    const definition = { ...(matcher ? { matcher } : {}), hooks: [{ type: "command", command, timeout }] };
+    const eventTimeout = timeouts[event] ?? timeout;
+    const definition = { ...(matcher ? { matcher } : {}), hooks: [{ type: "command", command, timeout: eventTimeout }] };
     next.hooks[event] = [...(next.hooks[event] ?? []), definition];
   }
   const after = jsonText(next);
@@ -337,7 +338,7 @@ export const INSTALLERS = [
       const events = { SessionStart: "startup|clear|compact|fork", UserPromptSubmit: null, PostToolUse: null, Stop: null, SessionEnd: null };
       const steps = [
         planMcpToml({ file: join(env.home, ".codex", "config.toml"), entry: { command: env.bun, args: [env.mcpScript] } }),
-        planHooks({ file: join(env.home, ".codex", "hooks.json"), events, env, tool: "codex" }),
+        planHooks({ file: join(env.home, ".codex", "hooks.json"), events, env, tool: "codex", timeouts: { SessionEnd: 3 } }),
         planRules({ tool: "codex", home: env.home, rules: env.rules ?? [] }),
       ].filter(Boolean);
       return { tool: "codex", name: "Codex CLI", env, steps, notes: [
