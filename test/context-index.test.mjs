@@ -42,7 +42,7 @@ describe("context index", () => {
       const ctx = s.context({ project: "p" });
       expect(ctx).toContain("Legend: b=bugfix");
       expect(ctx).toContain("Fetch more: search(query), timeline(anchor), get_observations(ids)");
-      expect(ctx).toMatch(/get_observations\(ids: \[#\d+\]\)/);
+      expect(ctx).toMatch(/get_observations\(ids: \[\d+\]\)/);
       expect(ctx).toContain("Context economics:");
       expect(ctx).toMatch(/memories listed/);
       expect(ctx).toMatch(/tokens for this block \(estimate, chars\/4\)/);

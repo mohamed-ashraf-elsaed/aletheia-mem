@@ -1705,7 +1705,7 @@ export class HubStore {
     const exampleId = recent[0]?.id ?? pinned[0]?.id ?? 1;
     const items = pinned.length + recent.length;
     const fullTokens = [...pinned, ...recent].reduce((sum, m) => sum + estimateTokens(`${m.title}\n${m.narrative ?? ""}`), 0);
-    const hint = `Fetch more: search(query), timeline(anchor), get_observations(ids) — e.g. get_observations(ids: [#${exampleId}]).`;
+    const hint = `Fetch more: search(query), timeline(anchor), get_observations(ids) — e.g. get_observations(ids: [${exampleId}]).`;
     const blockTokens = estimateTokens([...parts, "", TYPE_LEGEND, hint].join("\n"));
     const ratio = blockTokens > 0 && fullTokens > 0 ? fullTokens / blockTokens : null;
     const ratioText = ratio == null ? "n/a" : `~${ratio >= 10 ? Math.round(ratio) : Math.round(ratio * 10) / 10}x smaller (estimate)`;
