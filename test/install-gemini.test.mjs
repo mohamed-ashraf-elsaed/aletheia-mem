@@ -86,7 +86,9 @@ describe("Gemini CLI installer and hooks", () => {
     expect(second.wrote).toEqual([]);
   });
 
-  test("the installed hooks capture prompt, tool and response, and doctor sees 5/5", async () => {
+  // The installed hook command is run through `sh -c`, which does not handle this Windows command line. Which shell Gemini CLI
+  // uses for hooks on Windows is not verified, so this check only runs elsewhere.
+  test.skipIf(process.platform === "win32")("the installed hooks capture prompt, tool and response, and doctor sees 5/5", async () => {
     const ctx = setup();
     const store = new HubStore(join(ctx.dataDir, "hub.db"));
     store.add({ project: ctx.project, title: "Pinned gemini memory", narrative: "the pinned fact survives", kind: "observation", type: "decision", pinned: true, tool: "gemini-cli" });
