@@ -24,7 +24,8 @@ async function run(args) {
   // On Windows "python3" is often a Microsoft Store shim that exits 0 without running the script, so prefer "python" there.
   const PYTHON = (process.platform === "win32" ? Bun.which("python") ?? Bun.which("py") : Bun.which("python3") ?? Bun.which("python")) ?? "python3";
   const proc = Bun.spawn([PYTHON, join(import.meta.dir, "..", "vendor", "owner-goals", "save_goals.py"), ...args], {
-    env: { ...process.env, CLAUDE_MEM_WORKER_PORT: String(app.server.port), CLAUDE_MEM_WORKER_HOST: "127.0.0.1" },
+    // Python on Windows reads text files with the legacy code page unless told to use UTF-8; the fixtures contain non-ASCII text.
+    env: { ...process.env, PYTHONUTF8: "1", CLAUDE_MEM_WORKER_PORT: String(app.server.port), CLAUDE_MEM_WORKER_HOST: "127.0.0.1" },
     stdout: "pipe", stderr: "pipe",
   });
   const [stdout, stderr, exitCode] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text(), proc.exited]);
