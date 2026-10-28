@@ -1,2 +1,4 @@
 [test]
+# Bun's default of 5 s is too short for the installer tests on a slow Windows runner; a hung test still fails, only later.
+timeout = 20000
 preload = ["./test/preload-cleanup.mjs"]
