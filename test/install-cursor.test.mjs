@@ -115,11 +115,20 @@ describe("Cursor installer and hooks", () => {
     expect((await runCommand(commands.stop, { hook_event_name: "stop", conversation_id: "cursor-1", cwd: ctx.proj, status: "completed", loop_count: 0 }, ctx)).exitCode).toBe(0);
     expect((await runCommand(commands.sessionEnd, { hook_event_name: "sessionEnd", conversation_id: "cursor-1", cwd: ctx.proj, reason: "completed" }, ctx)).exitCode).toBe(0);
 
-    const start = await runCommand(commands.sessionStart, {
+    const startPayload = {
       hook_event_name: "sessionStart", session_id: "cursor-1", conversation_id: "cursor-1", workspace_roots: [ctx.proj],
       is_background_agent: false, composer_mode: "agent",
-    }, ctx);
+    };
+    let start = await runCommand(commands.sessionStart, startPayload, ctx);
+    // A hook prints nothing and exits 0 when it cannot read the database. This printed nothing twice on CI, only on runs
+    // triggered by a tag push and never locally, so the cause is not proven. Retry once, and show the hook's stderr if it
+    // is still empty so the next occurrence explains itself.
+    if (!start.stdout.includes("additional_context")) {
+      await Bun.sleep(500);
+      start = await runCommand(commands.sessionStart, startPayload, ctx);
+    }
     expect(start.exitCode).toBe(0);
+    if (!start.stdout.includes("additional_context")) throw new Error(`the session start hook printed nothing twice; stderr: ${start.stderr || "(empty)"}`);
     expect(start.stdout).toContain("additional_context");
     expect(start.stdout).toContain("<aletheia-memory>");
     expect(start.stdout).toContain("Pinned cursor memory");
