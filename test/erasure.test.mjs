@@ -1,7 +1,7 @@
 // erase, export first, sign a receipt. Erased text must be gone from the hub tables, the FTS tables, the
 // vectors, the sync log (server) and the device replica/outbox, and absent from every export made afterwards.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import {
@@ -10,6 +10,7 @@ import {
 import { HubStore } from "../src/hub/store.mjs";
 import { SyncClient } from "../src/hub/sync/client.mjs";
 import { SyncStore } from "../src/hub/sync/store.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-erase-"));
 const TEXT = "ERASE-ME-UNIQUE-LOGIN-TOKEN";
@@ -46,7 +47,7 @@ afterAll(() => {
   client.close();
   sync.close();
   hub.close();
-  rmSync(temp, { recursive: true, force: true });
+  removeDir(temp, { recursive: true, force: true });
 });
 
 describe("erase, export and receipt", () => {
@@ -138,7 +139,8 @@ describe("erase, export and receipt", () => {
     expect(readFileSync(receiptPath, "utf8")).not.toContain(KEEP);
     expect(readFileSync(receiptPath, "utf8")).not.toContain(TEXT);
     // The key file is not world-readable.
-    expect((statSync(keyPath).mode & 0o077)).toBe(0);
+    // Windows has no group or other permission bits, so the mode check only applies elsewhere.
+    if (process.platform !== "win32") expect((statSync(keyPath).mode & 0o077)).toBe(0);
   });
 
   test("erase by id removes only the named memory and its provenance chain", () => {

@@ -3,12 +3,13 @@
 // runs in the store, so a direct store call is refused as well as an HTTP one. A revoked member or token loses
 // access on the next call.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { startSyncServer } from "../src/hub/sync/server.mjs";
 import { SyncStore } from "../src/hub/sync/store.mjs";
 import { TeamAccessError, TeamStore } from "../src/hub/team.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-team-"));
 let sync;
@@ -49,7 +50,7 @@ afterAll(() => {
   server?.stop();
   team.close();
   sync.close();
-  rmSync(temp, { recursive: true, force: true });
+  removeDir(temp, { recursive: true, force: true });
 });
 
 describe("team mode", () => {

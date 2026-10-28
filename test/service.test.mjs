@@ -1,10 +1,11 @@
 // the auto-start service writes text only. It never calls systemctl or launchctl and the real
 // start is NOT RUN BY AUTHOR. Tests use a temp HOME and check the generated unit and plist text.
 import { afterAll, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readServiceManifest, serviceInstall, servicePlan, serviceStatus, serviceUninstall } from "../src/service.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-service-"));
 const home = join(temp, "home");
@@ -15,7 +16,7 @@ const config = {
   port: 37790,
 };
 
-afterAll(() => rmSync(temp, { recursive: true, force: true }));
+afterAll(() => removeDir(temp, { recursive: true, force: true }));
 
 describe("auto-start service", () => {
   test("the Linux unit is loopback-only with Restart, Nice and documented quota defaults", () => {

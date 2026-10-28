@@ -2,12 +2,13 @@
 // 256-bit random values stored only as hashes, revocable, compared in constant time. The server binds to
 // loopback by default. Revoked and expired tokens are refused; pairing attempts are rate limited.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { SyncClient } from "../src/hub/sync/client.mjs";
 import { safeEqualHex, SyncStore } from "../src/hub/sync/store.mjs";
 import { startSyncServer } from "../src/hub/sync/server.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-sync-dev-"));
 let hub;
@@ -20,7 +21,7 @@ beforeAll(() => {
 
 afterAll(() => {
   hub.stop();
-  rmSync(temp, { recursive: true, force: true });
+  removeDir(temp, { recursive: true, force: true });
 });
 
 const joinHub = (code, deviceId, name = deviceId) => fetch(`${hub.url}/v1/sync/join`, {

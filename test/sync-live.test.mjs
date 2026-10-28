@@ -1,13 +1,14 @@
 // live update frames over WebSocket. The server pushes advisory {kind, id, project} frames after a
 // write; the 10-second poll stays the source of truth. Tests use a temp data dir and a loopback server.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { startServer } from "../src/server.mjs";
 import { createLiveHub } from "../src/hub/live.mjs";
 import { HubStore } from "../src/hub/store.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const API_KEY = "test-live-secret";
 const temp = mkdtempSync(join(tmpdir(), "aletheia-live-"));
@@ -39,7 +40,7 @@ beforeAll(() => {
 
 afterAll(() => {
   app.stop();
-  rmSync(temp, { recursive: true, force: true });
+  removeDir(temp, { recursive: true, force: true });
 });
 
 function openSocket(path, { origin, auth = `Bearer ${API_KEY}` } = {}) {

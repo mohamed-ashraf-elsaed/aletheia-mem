@@ -160,11 +160,21 @@ function tomlSection(text, header = "[mcp_servers.aletheia]") {
   return { start, end, body: lines.slice(start, end).join("\n") };
 }
 
+// A TOML basic string escapes backslashes and quotes like JSON does, so a Windows path is written as "C:\\Users\\x".
+// Read it back through JSON.parse; reading the raw text would never match the path the installer wrote.
+function tomlString(raw) {
+  try {
+    return JSON.parse(`"${raw}"`);
+  } catch {
+    return raw;
+  }
+}
+
 function tomlEntry(body) {
-  const command = /^\s*command\s*=\s*"([^"]*)"/m.exec(body)?.[1] ?? null;
+  const command = /^\s*command\s*=\s*"((?:[^"\\]|\\.)*)"/m.exec(body)?.[1];
   const argText = /^\s*args\s*=\s*\[([\s\S]*?)\]/m.exec(body)?.[1] ?? "";
-  const args = [...argText.matchAll(/"([^"]*)"/g)].map((match) => match[1]);
-  return { command, args };
+  const args = [...argText.matchAll(/"((?:[^"\\]|\\.)*)"/g)].map((match) => tomlString(match[1]));
+  return { command: command === undefined ? null : tomlString(command), args };
 }
 
 function planMcpToml({ file, entry }) {

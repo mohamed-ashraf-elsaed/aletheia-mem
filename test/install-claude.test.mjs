@@ -74,7 +74,8 @@ describe("install: Claude Code", () => {
       const ours = commands.filter((command) => command.includes("aletheia-managed"));
       expect(ours.length).toBe(1);
       expect(ours[0]).toContain("/usr/local/bin/bun");
-      expect(ours[0]).toContain("aletheia.bundle.mjs hook claude-code " + event);
+      // The runner path may be quoted (Windows paths contain backslashes and drive letters), so allow a quote after the file name.
+      expect(ours[0]).toMatch(new RegExp(`aletheia\\.bundle\\.mjs'? hook claude-code ${event}`));
     }
     expect(settings.hooks.SessionStart[0].matcher).toBe("startup|clear|compact");
 

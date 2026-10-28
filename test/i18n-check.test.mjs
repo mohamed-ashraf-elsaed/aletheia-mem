@@ -1,14 +1,15 @@
 // a translation records the English hash, and the check fails when the English README moves.
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { check, hashSource, parseHash } from "../scripts/i18n-check.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const dirs = [];
 afterAll(() => {
   for (const dir of dirs) {
-    try { rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
+    try { removeDir(dir, { recursive: true, force: true }); } catch { /* ignore */ }
   }
 });
 

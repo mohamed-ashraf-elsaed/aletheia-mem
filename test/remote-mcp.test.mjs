@@ -3,7 +3,7 @@
 // limit, an Origin allow-list and one append-only audit row per tool call (no payloads). The token
 // travels in the Authorization header, never in the URL. The non-loopback TLS rule applies here too.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
@@ -12,6 +12,7 @@ import { runMcpLinkCommand } from "../src/hub/sync/cli.mjs";
 import { requiresTlsProxy } from "../src/hub/sync/server.mjs";
 import { startSyncServer } from "../src/hub/sync/server.mjs";
 import { HubStore } from "../src/hub/store.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-remote-mcp-"));
 const ACCEPT = "application/json, text/event-stream";
@@ -31,7 +32,7 @@ beforeAll(() => {
 afterAll(() => {
   hub.stop();
   hubStore.close();
-  rmSync(temp, { recursive: true, force: true });
+  removeDir(temp, { recursive: true, force: true });
 });
 
 const post = (url, body, headers = {}) => fetch(`${url}/mcp`, {

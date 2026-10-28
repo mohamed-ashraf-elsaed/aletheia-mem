@@ -2,9 +2,10 @@
 // The whole run uses a temp HOME, a temp data dir and a temp project, so no real user state is touched.
 import { afterAll, describe, expect, test } from "bun:test";
 import { createHash } from "node:crypto";
-import { mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, relative } from "node:path";
+import { removeDir } from "./temp-dirs.mjs";
 
 const root = join(import.meta.dir, "..");
 const temp = mkdtempSync(join(tmpdir(), "aletheia-pollution-"));
@@ -17,7 +18,7 @@ mkdirSync(join(project, "src"), { recursive: true });
 writeFileSync(join(project, "README.md"), "# Shop\n\nHand-written, must not change.\n");
 writeFileSync(join(project, "src", "pay.mjs"), "export const retry = () => 3;\n");
 
-afterAll(() => rmSync(temp, { recursive: true, force: true }));
+afterAll(() => removeDir(temp, { recursive: true, force: true }));
 
 const env = () => ({ ...process.env, HOME: home, ALETHEIA_DATA_DIR: dataDir, ALETHEIA_HUB_DB: join(dataDir, "hub.db"), ALETHEIA_PORT: "0" });
 

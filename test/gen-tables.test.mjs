@@ -1,9 +1,10 @@
 // comparison, tool and benchmark tables come from data, never from hand-edited cells.
 import { afterAll, describe, expect, test } from "bun:test";
-import { existsSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { checkBlocks, renderBench, renderCapabilities, renderTools, replaceBlock } from "../scripts/gen-tables.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const root = join(import.meta.dir, "..");
 const dirs = [];
@@ -15,7 +16,7 @@ const make = () => {
 
 afterAll(() => {
   for (const dir of dirs) {
-    try { rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
+    try { removeDir(dir, { recursive: true, force: true }); } catch { /* ignore */ }
   }
 });
 

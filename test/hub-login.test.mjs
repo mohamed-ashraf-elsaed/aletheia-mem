@@ -3,12 +3,13 @@
 // Secure-when-HTTPS cookie plus a readable CSRF cookie; state-changing requests echo the CSRF cookie in the
 // X-CSRF-Token header. Sessions expire; failed logins lock out with back-off. Loopback keeps today's behaviour.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { startServer } from "../src/server.mjs";
 import { SyncStore } from "../src/hub/sync/store.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-login-"));
 
@@ -50,7 +51,7 @@ beforeAll(() => {
 
 afterAll(() => {
   app.stop();
-  rmSync(temp, { recursive: true, force: true });
+  removeDir(temp, { recursive: true, force: true });
 });
 
 const login = (token, headers = {}) => fetch(`${base}/api/login`, {

@@ -2,14 +2,15 @@
 // a long single rule are warnings, safety instructions and secrets are flagged, and a managed block that differs
 // from the store is drift. Every finding has a rule id and a fix hint; none of them blocks sync.
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { formatFindings, lintRules } from "../src/hub/rule-lint.mjs";
 import { applyBlock } from "../src/hub/rules-sync.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-rulelint-"));
-afterAll(() => rmSync(temp, { recursive: true, force: true }));
+afterAll(() => removeDir(temp, { recursive: true, force: true }));
 
 const rule = (id, then, extra = {}) => ({ id, then, when: "", scopeTier: "everywhere", scopeName: "Everywhere", enabled: true, ...extra });
 const codes = (findings) => findings.map((row) => row.code);

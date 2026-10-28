@@ -5,13 +5,14 @@
 // uniqueness over 10,000 ops, clean wrong-passphrase failure, two-device convergence, the server-compromise
 // view, no plaintext in the audit table, rotation, passphrase change, recovery files and purge-plaintext.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { computeContentHash, stableStringify } from "../src/hub/sync/engine.mjs";
 import { DEFAULT_KDF, decryptPayload, deriveKek, encryptPayload, isEnvelope, randomKey, unwrapKey, wrapKey } from "../src/hub/sync/e2ee.mjs";
 import { SyncClient } from "../src/hub/sync/client.mjs";
 import { startSyncServer } from "../src/hub/sync/server.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-e2ee-"));
 const MARKER = "TOP-SECRET-MARKER-xyzzy-42";
@@ -29,7 +30,7 @@ beforeAll(() => {
 
 afterAll(() => {
   hub.stop();
-  rmSync(temp, { recursive: true, force: true });
+  removeDir(temp, { recursive: true, force: true });
 });
 
 const joinClient = async (dir, code, name = "device") => {

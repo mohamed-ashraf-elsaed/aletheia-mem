@@ -1,12 +1,13 @@
 // Excluded projects store nothing, and context scope separates the current project from all projects.
 import { afterAll, describe, expect, test } from "bun:test";
-import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { isProjectExcluded, normalizeHook, parseExcluded } from "../src/hub/capture.mjs";
 import { runHook } from "../src/hub/hooks/run.mjs";
 import { HubStore } from "../src/hub/store.mjs";
+import { removeDir } from "./temp-dirs.mjs";
 
 const dirs = [];
 const tmp = () => {
@@ -17,7 +18,7 @@ const tmp = () => {
 
 afterAll(() => {
   for (const dir of dirs) {
-    try { rmSync(dir, { recursive: true, force: true }); } catch { /* ignore */ }
+    try { removeDir(dir, { recursive: true, force: true }); } catch { /* ignore */ }
   }
 });
 
