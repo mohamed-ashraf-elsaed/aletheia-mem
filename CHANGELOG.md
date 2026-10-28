@@ -9,6 +9,7 @@ history.
 ### Changed
 
 - A rule flagged for re-check now carries its reason and "Verify before applying." into synced rules files and into the session context an agent receives, not only into `list_rules`. The rule is still delivered. Reading a rules file back strips the note, so it never becomes part of the rule text.
+- Recorded the first real-hook evidence: hooks ran in real Claude Code sessions on the author's machine over two days (prompts and tool events captured, secrets redacted, no leaks), and the hook checker now counts summary memories as the Stop/SessionEnd signal with the session-end table as a fallback.
 
 ## [0.1.4] - 2026-10-28
 

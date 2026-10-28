@@ -15,7 +15,7 @@ describe("docs and claims match what was tested", () => {
     expect(text).not.toContain("## Which tools it works with");
     expect(text).not.toContain("Automatic capture through a tool's hooks | Not built");
     expect(text).toContain("Built for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf");
-    expect(text).toContain("none has been run inside the tool");
+    expect(text).toContain("no other tool has run a hook yet");
     expect(text).toContain("Not tested on a real install");
     expect(text).toContain("install --list");
     expect(text).not.toContain("115 tests");

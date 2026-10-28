@@ -100,7 +100,7 @@
 <table>
 <thead><tr><th>Tool</th><th>Level</th><th>Verification</th><th>Hook events installed</th></tr></thead>
 <tbody>
-<tr><td>claude-code</td><td>full</td><td>MCP connection 2.1.312 on 2026-10-27; hooks not run</td><td>SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd</td></tr>
+<tr><td>claude-code</td><td>full</td><td>MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days (prompts and tool events captured, secrets redacted, no leaks); one user on one machine</td><td>SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd</td></tr>
 <tr><td>command-code</td><td>full</td><td>MCP connection 1.88.1 on 2026-10-27; hooks not run</td><td>SessionStart, PostToolUse, Stop</td></tr>
 <tr><td>cursor</td><td>full</td><td>config written from docs, not tested on a real install</td><td>sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd</td></tr>
 <tr><td>codex</td><td>full</td><td>MCP connection 0.130.0 on 2026-10-27; hooks not run</td><td>SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd</td></tr>
@@ -110,7 +110,7 @@
 </tbody>
 </table>
 
-<p class="note">Generated from src/hub/install.mjs via <code>aletheia install --list</code>. A row says MCP connection only when the real CLI listed the server; hooks have not been run inside any tool.</p>
+<p class="note">Generated from src/hub/install.mjs via <code>aletheia install --list</code>. A row says MCP connection when the real CLI listed the server. Hooks have run only inside real Claude Code sessions so far.</p>
 <!-- /gen:tools -->
   </div>
 </section>

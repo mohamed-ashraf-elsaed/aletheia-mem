@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 4a1110432f3082bebd113b94a2a8580ab4719619c18c79b405d7b5c51de0d2f0
+> Source: [README.md](../../README.md) · source-sha256: 9c4b57e1221ebbf5d369ab883738ff1650098bda3392ef66460f21cdab792c2a
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -18,7 +18,7 @@
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
 
-**상태: 알파.** 메모리 엔진과 설치 프로그램은 테스트에서 동작합니다. 실제 Claude Code, Command Code, Codex CLI, OpenCode는 생성된 MCP 설정을 나열했지만, 아직 어떤 도구 내부에서도 훅이나 세션이 실행된 적이 없고, 답변 정확도는 측정되지 않았습니다. CI는 Linux와 macOS에서 실행되며, Windows는 아직 지원되지 않고 테스트되지 않았습니다.
+**상태: 알파.** 메모리 엔진과 설치 프로그램은 테스트에서 동작합니다. 실제 Claude Code, Command Code, Codex CLI, OpenCode는 생성된 MCP 설정을 나열했습니다. 훅은 저자의 머신에서 실제 Claude Code 세션에서 이틀 동안 실행되어 프롬프트와 도구 이벤트를 캡처했고, 비밀은 가려졌으며, 검사기는 누출을 찾지 못했습니다 — 한 명의 사용자, 한 대의 머신. 다른 도구 내부에서는 아직 훅이나 세션이 실행된 적이 없고, 답변 정확도는 측정되지 않았습니다. CI는 Linux와 macOS에서 실행되며, Windows는 아직 지원되지 않고 테스트되지 않았습니다.
 
 기계 번역은 `docs/i18n/`에 있습니다. 영어판이 기준입니다. 어떤 번역도 원어민 검토를 받지 않았습니다.
 
@@ -66,7 +66,7 @@ Aletheia는 특정 도구에 의존하지 않습니다. MCP(stdio 및 HTTP), 단
 <!-- gen:tools -->
 | Tool | Level | Verification | Hook events installed |
 |---|---|---|---|
-| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks not run | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days (prompts and tool events captured, secrets redacted, no leaks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
 | command-code | full | MCP connection 1.88.1 on 2026-10-27; hooks not run | SessionStart, PostToolUse, Stop |
 | cursor | full | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
 | codex | full | MCP connection 0.130.0 on 2026-10-27; hooks not run | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
@@ -74,7 +74,7 @@ Aletheia는 특정 도구에 의존하지 않습니다. MCP(stdio 및 HTTP), 단
 | windsurf | full | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
 | opencode | mcp+rules | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |
 
-_Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection only when the real CLI listed the server; hooks have not been run inside any tool._
+_Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection when the real CLI listed the server. Hooks have run only inside real Claude Code sessions so far._
 <!-- /gen:tools -->
 
 ## 측정 숫자

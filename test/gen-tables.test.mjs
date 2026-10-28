@@ -37,7 +37,7 @@ describe("gen-tables", () => {
     for (const tool of ["claude-code", "command-code", "cursor", "codex", "gemini-cli", "windsurf", "opencode"]) {
       expect(markdown).toContain(`| ${tool} |`);
     }
-    expect(markdown).toContain("MCP connection 2.1.312 on 2026-10-27; hooks not run");
+    expect(markdown).toContain("MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days");
     expect(markdown).toContain("MCP connection 1.88.1 on 2026-10-27; hooks not run");
     expect(markdown).toContain("MCP connection 0.130.0 on 2026-10-27; hooks not run");
     expect(markdown).toContain("MCP connection 1.18.33 on 2026-10-27; hooks not run");

@@ -69,14 +69,14 @@ export function renderTools(format = "md", installers = INSTALLERS) {
     installer.id,
     installer.capabilities,
     installer.verification === "mcp-verified"
-      ? `MCP connection ${installer.toolVersion} on ${installer.verifiedOn}; hooks not run`
+      ? `MCP connection ${installer.toolVersion} on ${installer.verifiedOn}; ${installer.hookNote ?? "hooks not run"}`
       : installer.verification === "tested-on-real-install"
         ? "tested on a real install"
         : "config written from docs, not tested on a real install",
     installer.events?.length ? installer.events.join(", ") : "none (MCP and rules only)",
   ]);
   const lines = [table(format, headers, rows)];
-  lines.push(note(format, "Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection only when the real CLI listed the server; hooks have not been run inside any tool."));
+  lines.push(note(format, "Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection when the real CLI listed the server. Hooks have run only inside real Claude Code sessions so far."));
   return lines.join("\n\n");
 }
 

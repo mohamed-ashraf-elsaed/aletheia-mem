@@ -236,9 +236,10 @@ export const INSTALLERS = [
     verification: "mcp-verified",
     toolVersion: "2.1.312",
     verifiedOn: "2026-10-27",
-    evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); MCP server listed by Claude Code 2.1.312 on 2026-10-27; hooks not run",
+    hookNote: "hooks ran in real sessions over two days (prompts and tool events captured, secrets redacted, no leaks); one user on one machine",
+    evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); MCP server listed by Claude Code 2.1.312 on 2026-10-27; hooks ran in real sessions over two days (prompts and tool events captured, secrets redacted, no leaks); one user on one machine",
     detection: [".claude"],
-    notes: ["The hook shape was checked against a real installed plugin; a real Claude Code session has not been run here."],
+    notes: ["The hook shape was checked against a real installed plugin; hooks ran in real Claude Code sessions over two days (prompts and tool events captured, secrets redacted, no leaks); one user on one machine."],
     events: ["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop", "SessionEnd"],
     plan(env) {
       const settingsFile = join(env.home, ".claude", "settings.json");
@@ -248,7 +249,7 @@ export const INSTALLERS = [
         planHooks({ file: settingsFile, events: claudeEvents, env, tool: "claude-code" }),
         planRules({ tool: "claude-code", home: env.home, rules: env.rules ?? [] }),
       ].filter(Boolean);
-      return { tool: "claude-code", name: "Claude Code", env, steps, notes: ["The hook shape was checked against a real installed plugin; a real Claude Code session has not been run here."] };
+      return { tool: "claude-code", name: "Claude Code", env, steps, notes: ["The hook shape was checked against a real installed plugin; hooks ran in real Claude Code sessions over two days (prompts and tool events captured, secrets redacted, no leaks); one user on one machine."] };
     },
     expectedHooks(env) {
       return { file: join(env.home, ".claude", "settings.json"), commands: Object.fromEntries(Object.keys(claudeEvents).map((event) => [event, hookCommand({ bun: env.bun, hookScript: runnerFor(env), tool: "claude-code", event })])) };
