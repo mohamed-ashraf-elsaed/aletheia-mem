@@ -6,6 +6,15 @@ history.
 
 ## [Unreleased]
 
+### Added
+
+- A recall and latency regression gate runs in CI on Linux: it fails a change that loses more than one point of Recall@5 on a seeded synthetic corpus. Its latency check is report-only below a 5 ms baseline.
+- The test suite now runs in CI on Windows as well as Linux and macOS. On Windows, the hook-execution checks for Windsurf and Gemini CLI and one temp-folder cleanup check are skipped, and no real tool was tried there.
+
+### Fixed
+
+- On Windows, `aletheia uninstall codex` left its block in `~/.codex/config.toml`: the installer wrote the command path with TOML escapes, but the reader did not unescape them, so it did not recognise its own entry. The reader now parses TOML basic strings.
+
 ### Changed
 
 - `session_start_context`, the SessionStart hook, `/v1/context`, `/api/hub/context` and `aletheia context` now return a compact index by default: recent memories are grouped by day and first file and printed one line each with no narrative, followed by session requests, facts and rules, plus a legend, a fetch-more hint and a measured context-economics line. The previous flat shape stays available through the `context.format = "classic"` setting.

@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 922a57491334f593257c1a92fe3c1ceddb0c9a43f70f7d0365310edb62df451c
+> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -16,9 +16,9 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
 
-**स्थिति: अल्फ़ा।** मेमोरी इंजन और इंस्टॉलर टेस्ट में काम करते हैं। वास्तविक Claude Code, Command Code, Codex CLI और OpenCode ने जनरेट की गई MCP कॉन्फ़िग को सूचीबद्ध किया। लेखक की मशीन पर वास्तविक Claude Code (दो दिनों का उपयोग), Command Code (एक छोटा सत्र) और Codex CLI (एक इंटरैक्टिव सत्र) के सत्रों में हुक चले, सभी एक उपयोगकर्ता के साथ, सीक्रेट रिडैक्ट किए गए और चेकर को कोई लीक नहीं मिला। Cursor, Gemini CLI, Windsurf या OpenCode के अंदर अभी तक कोई हुक नहीं चला है, और उत्तर की सटीकता मापी नहीं गई है। CI Linux और macOS पर चलता है; Windows अभी समर्थित नहीं है और उसका परीक्षण नहीं हुआ है।
+**स्थिति: अल्फ़ा।** मेमोरी इंजन और इंस्टॉलर टेस्ट में काम करते हैं। वास्तविक Claude Code, Command Code, Codex CLI और OpenCode ने जनरेट की गई MCP कॉन्फ़िग को सूचीबद्ध किया। लेखक की मशीन पर वास्तविक Claude Code (दो दिनों का उपयोग), Command Code (एक छोटा सत्र) और Codex CLI (एक इंटरैक्टिव सत्र) के सत्रों में हुक चले, सभी एक उपयोगकर्ता के साथ, सीक्रेट रिडैक्ट किए गए और चेकर को कोई लीक नहीं मिला। Cursor, Gemini CLI, Windsurf या OpenCode के अंदर अभी तक कोई हुक नहीं चला है, और उत्तर की सटीकता मापी नहीं गई है। CI टेस्ट सूट को Linux, macOS और Windows पर चलाता है। Windows पर दो हुक जाँच (Windsurf और Gemini CLI) छोड़ दी जाती हैं और वहाँ कोई वास्तविक टूल आज़माया नहीं गया, इसलिए Windows का परीक्षण केवल CI में हुआ है।
 
 मशीनी अनुवाद `docs/i18n/` में हैं; अंग्रेज़ी संस्करण मानक है। किसी भी अनुवाद की मूल वक्ता द्वारा समीक्षा नहीं हुई है।
 
@@ -187,7 +187,7 @@ _Competitor cells are copied from each project's own public documentation, fetch
 यह सूची README का ईमानदार आधा हिस्सा है।
 
 - कोई भी कॉन्फ़िग उसके होस्ट ऐप के अंदर नहीं चलाई गई। "कॉन्फ़िग दस्तावेज़ों से लिखी गई, असली इंस्टॉल पर परीक्षण नहीं हुआ।"
-- CI Linux और macOS पर चलता है। बेंचमार्क केवल Linux पर चलता है। Windows अभी समर्थित नहीं है और उसका परीक्षण नहीं हुआ।
+- CI टेस्ट सूट को Linux, macOS और Windows पर चलाता है (GitHub का windows-latest रनर, Bun 1.3.10)। Windows पर Windsurf और Gemini CLI की हुक-निष्पादन जाँचें और एक अस्थायी-फ़ोल्डर सफ़ाई जाँच छोड़ दी जाती हैं, और कोई वास्तविक टूल आज़माया नहीं गया। इंस्टॉल स्मोक टेस्ट Linux और macOS पर चलता है और बेंचमार्क गेट केवल Linux पर।
 - उत्तर की सटीकता मापी नहीं गई। Recall@5 रिट्रीवल है, यह नहीं कि उत्तर सही था।
 - 1B मॉडल का एक्सट्रैक्शन रन विफल रहा; हमारे एक्सट्रैक्टर के तथ्य केवल नियम एक्सट्रैक्टर से मापे गए।
 - सिंक और E2EE केवल अस्थायी डेटा डायरेक्टरी और लूपबैक हब पर परीक्षित हैं। कोई असली टनल या दूसरा होस्ट इस्तेमाल नहीं हुआ।

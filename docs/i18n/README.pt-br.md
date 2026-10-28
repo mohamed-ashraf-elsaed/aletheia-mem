@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 922a57491334f593257c1a92fe3c1ceddb0c9a43f70f7d0365310edb62df451c
+> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -16,9 +16,9 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
 
-**Status: alfa.** O motor de memória e os instaladores funcionam nos testes. O Claude Code, o Command Code, o Codex CLI e o OpenCode reais listaram a configuração MCP gerada. Os hooks foram executados em sessões reais do Claude Code (dois dias de uso), do Command Code (uma sessão curta) e do Codex CLI (uma sessão interativa), tudo na máquina do autor e com um único usuário, com segredos redigidos e nenhum vazamento encontrado pelo verificador. Nenhum hook foi executado dentro do Cursor, Gemini CLI, Windsurf ou OpenCode ainda, e a precisão das respostas não está medida. A CI roda no Linux e no macOS; o Windows ainda não é suportado e não foi testado.
+**Status: alfa.** O motor de memória e os instaladores funcionam nos testes. O Claude Code, o Command Code, o Codex CLI e o OpenCode reais listaram a configuração MCP gerada. Os hooks foram executados em sessões reais do Claude Code (dois dias de uso), do Command Code (uma sessão curta) e do Codex CLI (uma sessão interativa), tudo na máquina do autor e com um único usuário, com segredos redigidos e nenhum vazamento encontrado pelo verificador. Nenhum hook foi executado dentro do Cursor, Gemini CLI, Windsurf ou OpenCode ainda, e a precisão das respostas não está medida. A CI executa a suíte de testes no Linux, no macOS e no Windows. No Windows, duas verificações de hooks (Windsurf e Gemini CLI) são ignoradas e nenhuma ferramenta real foi testada lá, então o Windows só foi testado na CI.
 
 As traduções automáticas ficam em `docs/i18n/`; a versão em inglês é a canônica. Nenhuma tradução passou por revisão de um falante nativo.
 
@@ -187,7 +187,7 @@ Todas as configurações são variáveis de ambiente. Os padrões são seguros p
 Esta lista é a metade honesta do README.
 
 - Nenhuma configuração foi executada dentro do aplicativo anfitrião. “Configuração escrita a partir da documentação, não testada em uma instalação real.”
-- A CI roda no Linux e no macOS. O benchmark roda apenas no Linux. O Windows ainda não é suportado e não foi testado.
+- A CI executa a suíte de testes no Linux, no macOS e no Windows (runner windows-latest do GitHub, Bun 1.3.10). No Windows, as verificações de execução de hooks do Windsurf e do Gemini CLI e uma verificação de limpeza de pastas temporárias são ignoradas, e nenhuma ferramenta real foi testada. O teste de fumaça da instalação roda no Linux e no macOS, e o portão do benchmark apenas no Linux.
 - A precisão das respostas não está medida. Recall@5 é recuperação, não se a resposta estava certa.
 - A execução de extração com o modelo de 1B falhou; os fatos do nosso extrator foram medidos apenas com o extrator de regras.
 - A sincronização e a criptografia ponta a ponta foram testadas com diretórios temporários e um hub em loopback. Não foi usado um túnel real nem um segundo host.

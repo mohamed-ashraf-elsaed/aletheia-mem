@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 922a57491334f593257c1a92fe3c1ceddb0c9a43f70f7d0365310edb62df451c
+> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -18,9 +18,9 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
 
-**الحالة: ألفا.** محرك الذاكرة والمثبّتات تعمل في الاختبارات. قامت أدوات Claude Code وCommand Code وCodex CLI وOpenCode الحقيقية بإدراج إعداد MCP المُولّد. شُغِّلت الخطّافات في جلسات حقيقية لكل من Claude Code (يومان من الاستخدام) وCommand Code (جلسة قصيرة واحدة) وCodex CLI (جلسة تفاعلية واحدة)، كل ذلك على جهاز المؤلف وبمستخدم واحد، مع حجب الأسرار وعدم عثور الفاحص على تسريبات. لم يُشغَّل أي خطّاف داخل Cursor أو Gemini CLI أو Windsurf أو OpenCode بعد، ودقة الإجابات غير مقيسة. تعمل CI على Linux وmacOS؛ نظام Windows غير مدعوم بعد ولم يُختبر.
+**الحالة: ألفا.** محرك الذاكرة والمثبّتات تعمل في الاختبارات. قامت أدوات Claude Code وCommand Code وCodex CLI وOpenCode الحقيقية بإدراج إعداد MCP المُولّد. شُغِّلت الخطّافات في جلسات حقيقية لكل من Claude Code (يومان من الاستخدام) وCommand Code (جلسة قصيرة واحدة) وCodex CLI (جلسة تفاعلية واحدة)، كل ذلك على جهاز المؤلف وبمستخدم واحد، مع حجب الأسرار وعدم عثور الفاحص على تسريبات. لم يُشغَّل أي خطّاف داخل Cursor أو Gemini CLI أو Windsurf أو OpenCode بعد، ودقة الإجابات غير مقيسة. تشغّل CI مجموعة الاختبارات على Linux وmacOS وWindows. على Windows يتم تخطي فحصين للخطّافات (Windsurf وGemini CLI) ولم تُجرَّب أي أداة حقيقية هناك، لذا فإن Windows مُختبَر في CI فقط.
 
 الترجمات الآلية موجودة في `docs/i18n/`؛ النسخة الإنجليزية هي المرجع. لم يراجع أي ترجمة متحدث أصلي.
 
@@ -189,7 +189,7 @@ _Competitor cells are copied from each project's own public documentation, fetch
 هذه القائمة هي النصف الصادق من README.
 
 - لم يُشغّل أي إعداد داخل تطبيقه المضيف. «الإعدادات مكتوبة من الوثائق، وغير مختبرة على تثبيت حقيقي.»
-- تعمل CI على Linux وmacOS. يعمل المعيار على Linux فقط. نظام Windows غير مدعوم بعد ولم يُختبر.
+- تشغّل CI مجموعة الاختبارات على Linux وmacOS وWindows (مشغّل windows-latest من GitHub، وBun 1.3.10). على Windows يتم تخطي فحوص تنفيذ الخطّافات لـ Windsurf وGemini CLI وفحص واحد لتنظيف المجلدات المؤقتة، ولم تُجرَّب أي أداة حقيقية. يعمل اختبار الدخان للتثبيت على Linux وmacOS، وبوابة المعيار على Linux فقط.
 - دقة الإجابات غير مقيسة. Recall@5 استرجاع، وليس هل كانت الإجابة صحيحة.
 - فشل تشغيل الاستخراج بنموذج 1B؛ وقِيست حقائق مستخرجنا بمستخرج القواعد فقط.
 - المزامنة والتشفير من طرف إلى طرف مختبران بمجلدات بيانات مؤقتة ومركز محلي فقط. لم يُستخدم نفق حقيقي ولا مضيف ثانٍ.

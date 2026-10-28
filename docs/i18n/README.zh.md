@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 922a57491334f593257c1a92fe3c1ceddb0c9a43f70f7d0365310edb62df451c
+> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -16,9 +16,9 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
 
-**状态：alpha。** 记忆引擎和安装器已通过测试。真正的 Claude Code、Command Code、Codex CLI 和 OpenCode 已列出生成的 MCP 配置。钩子已在作者机器上的真实会话中运行，包括 Claude Code（使用两天）、Command Code（一次简短会话）和 Codex CLI（一次交互式会话），均由同一名用户在同一台机器上完成，密钥已脱敏，检查器未发现泄漏。Cursor、Gemini CLI、Windsurf 或 OpenCode 中还没有运行过钩子，答案准确率尚未测量。CI 在 Linux 和 macOS 上运行；Windows 暂不支持，也未测试。
+**状态：alpha。** 记忆引擎和安装器已通过测试。真正的 Claude Code、Command Code、Codex CLI 和 OpenCode 已列出生成的 MCP 配置。钩子已在作者机器上的真实会话中运行，包括 Claude Code（使用两天）、Command Code（一次简短会话）和 Codex CLI（一次交互式会话），均由同一名用户在同一台机器上完成，密钥已脱敏，检查器未发现泄漏。Cursor、Gemini CLI、Windsurf 或 OpenCode 中还没有运行过钩子，答案准确率尚未测量。CI 在 Linux、macOS 和 Windows 上运行测试套件。在 Windows 上跳过了两项钩子检查（Windsurf 和 Gemini CLI），也没有试用任何真实工具，因此 Windows 仅在 CI 中测试过。
 
 机器翻译位于 `docs/i18n/`；英文版为准。没有任何翻译经过母语者审校。
 
@@ -187,7 +187,7 @@ _Competitor cells are copied from each project's own public documentation, fetch
 这份清单是 README 诚实的一半。
 
 - 没有任何配置在宿主应用内运行过。“配置根据文档编写，未在真实安装中测试。”
-- CI 在 Linux 和 macOS 上运行。基准测试只在 Linux 上运行。Windows 暂不支持，也未测试。
+- CI 在 Linux、macOS 和 Windows（GitHub 的 windows-latest 运行器，Bun 1.3.10）上运行测试套件。在 Windows 上跳过了 Windsurf 和 Gemini CLI 的钩子执行检查以及一项临时文件夹清理检查，也没有试用任何真实工具。安装冒烟测试在 Linux 和 macOS 上运行，基准测试门禁只在 Linux 上运行。
 - 答案准确率尚未测量。Recall@5 是检索，不是答案是否正确。
 - 10 亿参数模型的抽取运行失败了；我们自己的抽取器只用规则抽取器测量过。
 - 同步和端到端加密只用临时数据目录和回环中心测试过。没有使用真实隧道或第二台主机。

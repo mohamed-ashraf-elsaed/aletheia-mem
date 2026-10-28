@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 922a57491334f593257c1a92fe3c1ceddb0c9a43f70f7d0365310edb62df451c
+> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -16,9 +16,9 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
 
-**状態: アルファ。** メモリエンジンとインストーラーはテストで動作します。実際の Claude Code、Command Code、Codex CLI、OpenCode は生成された MCP 設定を一覧表示しました。フックは、作者のマシン上で Claude Code（2 日間の使用）、Command Code（1 回の短いセッション）、Codex CLI（1 回のインタラクティブなセッション）の実際のセッションで実行され、いずれも 1 ユーザーによるもので、シークレットは秘匿化され、チェッカーは漏えいを検出しませんでした。Cursor、Gemini CLI、Windsurf、OpenCode 内ではまだフックが実行されておらず、回答の正確さは測定していません。CI は Linux と macOS で動作します。Windows は未対応で、未検証です。
+**状態: アルファ。** メモリエンジンとインストーラーはテストで動作します。実際の Claude Code、Command Code、Codex CLI、OpenCode は生成された MCP 設定を一覧表示しました。フックは、作者のマシン上で Claude Code（2 日間の使用）、Command Code（1 回の短いセッション）、Codex CLI（1 回のインタラクティブなセッション）の実際のセッションで実行され、いずれも 1 ユーザーによるもので、シークレットは秘匿化され、チェッカーは漏えいを検出しませんでした。Cursor、Gemini CLI、Windsurf、OpenCode 内ではまだフックが実行されておらず、回答の正確さは測定していません。CI はテストスイートを Linux、macOS、Windows で実行します。Windows では 2 件のフック検査（Windsurf と Gemini CLI）をスキップしており、実際のツールは試していないため、Windows は CI でのみ検証されています。
 
 機械翻訳は `docs/i18n/` にあります。英語版が正典です。ネイティブ話者によるレビューは受けていません。
 
@@ -187,7 +187,7 @@ _Competitor cells are copied from each project's own public documentation, fetch
 この一覧は README の正直な半分です。
 
 - どの設定もホストアプリ内では実行されていません。「設定はドキュメントから書き、実インストールでは未検証」です。
-- CI は Linux と macOS で動作します。ベンチマークは Linux のみです。Windows は未対応で、未検証です。
+- CI はテストスイートを Linux、macOS、Windows（GitHub の windows-latest ランナー、Bun 1.3.10）で実行します。Windows では Windsurf と Gemini CLI のフック実行検査と、一時フォルダーの後片付け検査をスキップしており、実際のツールは試していません。インストールのスモークテストは Linux と macOS、ベンチマークのゲートは Linux のみで実行されます。
 - 回答の正確さは未測定です。Recall@5 は検索であり、回答が正しかったかではありません。
 - 10 億パラメータモデルでの抽出実行は失敗しました。私たちの抽出器の事実はルール抽出器でのみ測定しています。
 - 同期と E2EE は一時データディレクトリとループバックハブでのみ検証しています。実際のトンネルや 2 台目のホストは使っていません。

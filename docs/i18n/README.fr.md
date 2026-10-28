@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 922a57491334f593257c1a92fe3c1ceddb0c9a43f70f7d0365310edb62df451c
+> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -16,9 +16,9 @@
 [![Open issues](https://img.shields.io/github/issues/mohamed-ashraf-elsaed/aletheia-mem)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues)
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
-![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%28CI%20tested%29-lightgrey)
+![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
 
-**Statut : alpha.** Le moteur de mémoire et les installateurs fonctionnent dans les tests. Les vrais Claude Code, Command Code, Codex CLI et OpenCode ont listé la configuration MCP générée. Des hooks se sont exécutés dans de vraies sessions de Claude Code (deux jours d'utilisation), de Command Code (une courte session) et de Codex CLI (une session interactive), le tout sur la machine de l'auteur et avec un seul utilisateur, avec des secrets expurgés et aucune fuite détectée par le vérificateur. Aucun hook n'a encore été exécuté dans Cursor, Gemini CLI, Windsurf ou OpenCode, et la précision des réponses n'est pas mesurée. La CI tourne sous Linux et macOS ; Windows n'est pas encore pris en charge et n'est pas testé.
+**Statut : alpha.** Le moteur de mémoire et les installateurs fonctionnent dans les tests. Les vrais Claude Code, Command Code, Codex CLI et OpenCode ont listé la configuration MCP générée. Des hooks se sont exécutés dans de vraies sessions de Claude Code (deux jours d'utilisation), de Command Code (une courte session) et de Codex CLI (une session interactive), le tout sur la machine de l'auteur et avec un seul utilisateur, avec des secrets expurgés et aucune fuite détectée par le vérificateur. Aucun hook n'a encore été exécuté dans Cursor, Gemini CLI, Windsurf ou OpenCode, et la précision des réponses n'est pas mesurée. La CI exécute la suite de tests sous Linux, macOS et Windows. Sous Windows, deux vérifications de hooks (Windsurf et Gemini CLI) sont ignorées et aucun vrai outil n'y a été essayé ; Windows n'est donc testé que dans la CI.
 
 Les traductions automatiques se trouvent dans `docs/i18n/` ; la version anglaise fait référence. Aucune traduction n'a été relue par un locuteur natif.
 
@@ -187,7 +187,7 @@ Tous les réglages sont des variables d'environnement. Les valeurs par défaut c
 Cette liste est la moitié honnête du README.
 
 - Aucune configuration n'a été exécutée dans son application hôte. « Configuration écrite d'après la documentation, non testée sur une installation réelle. »
-- La CI tourne sous Linux et macOS. Le benchmark tourne uniquement sous Linux. Windows n'est pas encore pris en charge et n'est pas testé.
+- La CI exécute la suite de tests sous Linux, macOS et Windows (runner windows-latest de GitHub, Bun 1.3.10). Sous Windows, les vérifications d'exécution des hooks pour Windsurf et Gemini CLI ainsi qu'une vérification de nettoyage des dossiers temporaires sont ignorées, et aucun vrai outil n'a été essayé. Le test de fumée d'installation tourne sous Linux et macOS, et le contrôle de benchmark uniquement sous Linux.
 - La précision des réponses n'est pas mesurée. Recall@5 est la récupération, pas si une réponse était correcte.
 - L'exécution d'extraction avec le modèle 1B a échoué ; les faits de notre extracteur n'ont été mesurés qu'avec l'extracteur de règles.
 - La synchronisation et le chiffrement de bout en bout sont testés avec des répertoires temporaires et un hub en boucle locale. Aucun tunnel réel ni second hôte n'a été utilisé.
