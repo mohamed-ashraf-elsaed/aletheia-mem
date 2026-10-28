@@ -45,6 +45,11 @@ describe("release helpers", () => {
     expect(unpackedMb("Unpacked size: 7.86MB")).toBeCloseTo(7.86);
   });
 
+  test("moveUnreleased copies release notes literally, including text such as $` that a replacement string would expand", () => {
+    const notes = "\n### Changed\n\n- Rejects code tokens (`$`, `->`, `::`) and more.\n";
+    const out = moveUnreleased(CHANGELOG(notes), "0.1.1", "2026-11-01");
+    expect(out).toBe("# Changelog\n\n## [Unreleased]\n\n## [0.1.1] - 2026-11-01\n\n### Changed\n\n- Rejects code tokens (`$`, `->`, `::`) and more.\n\n## [0.1.0] - 2026-10-27\n\nFirst.\n");
+  });
   test("moveUnreleased keeps an empty Unreleased heading and dates the new section", () => {
     const out = moveUnreleased(CHANGELOG("\n### Fixed\n\n- A thing.\n"), "0.1.1", "2026-11-01");
     expect(out).toMatch(/## \[Unreleased\]\n\n## \[0\.1\.1\] - 2026-11-01\n\n### Fixed\n\n- A thing\.\n\n## \[0\.1\.0\]/);

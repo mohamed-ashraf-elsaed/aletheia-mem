@@ -30,7 +30,8 @@ export function unreleasedBody(changelog) {
 export function moveUnreleased(changelog, version, date) {
   const body = unreleasedBody(changelog);
   const pattern = /^## \[Unreleased\][^\n]*\n[\s\S]*?(?=^## \[)/m;
-  return changelog.replace(pattern, `## [Unreleased]\n\n## [${version}] - ${date}\n\n${body}\n\n`);
+  // A function replacer keeps "$`", "$&" and "$'" in the notes literal; a replacement string would expand them.
+  return changelog.replace(pattern, () => `## [Unreleased]\n\n## [${version}] - ${date}\n\n${body}\n\n`);
 }
 
 /** Image URLs in README markdown and HTML, with their line numbers. */
