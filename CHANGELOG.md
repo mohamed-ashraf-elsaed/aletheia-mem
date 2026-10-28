@@ -6,6 +6,16 @@ history.
 
 ## [Unreleased]
 
+### Added
+
+- A `context.facts` setting (`auto`, `on`, `off`, default `auto`) that controls which facts the session-start Facts section lists. `auto` lists only pinned, provider-extracted or confidence ≥ 0.6 facts, leaving the rule extractor's 0.45/0.35 output out; `on` keeps the historical behaviour; `off` hides the section. The measured context-economics line now counts only what is actually listed.
+- `aletheia facts clean --ineligible-sources`, which also dismisses facts whose source episode kind is not `summary` or `note` with reason `quality:ineligible_source`.
+
+### Changed
+
+- The fact quality gate now rejects narration with a `narration` reason: first/second person, moment words (`now`, `today`, `yet`, `currently`, `right now`), progress/status phrases, session/meta references and imperative openings.
+- The rule extractor's sentence splitter no longer cuts on a dot inside a version number, IP address, URL, file name or domain.
+
 ## [0.1.8] - 2026-10-28
 
 ### Added

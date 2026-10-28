@@ -26,6 +26,7 @@ Before a candidate fact is stored it must pass this gate. The first failing chec
 | `unbalanced_brackets` | Matching counts for `(` and `)`, and for `[` and `]`. |
 | `escaped_whitespace` | No literal `\n`, `\t` or `\r`. |
 | `code_token` | No `$`, `->`, `::`, `=>`, braces, backticks, HTML tags, or uppercase SQL keywords. |
+| `narration` | The text is about the project, not the conversation or a moment: no first/second person (`I`, `we`, `you`, `your`, `my`), no `now`, `today`, `yet`, `currently` or `right now`, no progress/status phrases (`is running`, `are running`, `is done`, `are done`, `gone`, `in progress`, `waiting on`, `will be`, `has been`, `was created`, `not allowed`, `denied`), no `this session`, `the owner`, `tell me` or `next session`, and no imperative opening (`Do`, `Don't`, `Run`, `Open`, `Merge`, `Publish`, `Wait`). |
 | `word_count` | 3–40 words in the whole text. |
 | `char_count` | At most 200 characters in the whole text. |
 | `subject_words` | A subject of 1–8 words. |
@@ -36,6 +37,11 @@ Before a candidate fact is stored it must pass this gate. The first failing chec
 
 The confidence calculation is unchanged; the floor only blocks storage below the setting.
 
+The rule-based extractor splits a source into sentences before applying this gate. A dot is a sentence boundary only
+when it is followed by whitespace or the end of the text, so a dot inside a version number (`20.19.6`), an IP address
+(`127.0.0.1`), a file name (`config.toml`), a domain (`example.com`) or a URL stays in its sentence instead of
+fragmenting it.
+
 ## 33.3 Confidence floor
 
 `facts.minConfidence` is stored in the Hub settings table under `ui.settings.facts.minConfidence`. The range is
@@ -45,14 +51,29 @@ directly in the settings table.
 ## 33.4 Cleaning existing facts
 
 ```
-aletheia facts clean          # dry run (default): counts and the first 10 examples per reason
-aletheia facts clean --apply  # dismiss each failing fact with reason quality:<reason>
+aletheia facts clean                           # dry run (default): counts and the first 10 examples per reason
+aletheia facts clean --apply                   # dismiss each failing fact with reason quality:<reason>
+aletheia facts clean --ineligible-sources      # also reject facts whose source episode kind is not summary or note
+aletheia facts clean --apply --ineligible-sources
 ```
 
 `--apply` uses the normal dismissal path, so every row is reversible with `aletheia restore fact:<id>`. Nothing
-is deleted.
+is deleted. `--ineligible-sources` adds the reason `ineligible_source` for a fact whose source episode kind is not
+`summary` or `note`; without the flag those facts are left alone.
 
 ## 33.5 Session-start context
 
 The session-start Facts section already skips dismissed facts. Each fact line is capped at 140 characters so a
 single long fact cannot dominate the context.
+
+The `context.facts` setting controls which facts the section lists, and is stored under
+`ui.settings.context.facts`:
+
+| Value | Behaviour |
+|---|---|
+| `auto` (default) | List a fact only when it is pinned (its owning observation is pinned), its extractor mode is `provider`, or its confidence is at least 0.6. The rule extractor's 0.45/0.35 output is left out. |
+| `on` | Keep the historical behaviour: list up to 10 active facts. |
+| `off` | Hide the Facts section entirely. |
+
+It can be changed through the settings UI, `GET`/`PUT /api/hub/settings`, or directly in the settings table. The
+measured context-economics line counts only what is actually listed.

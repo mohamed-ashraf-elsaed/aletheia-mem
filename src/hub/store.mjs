@@ -1610,6 +1610,30 @@ export class HubStore {
     return `${prefix}${text.length > budget ? `${text.slice(0, budget - 1)}…` : text}`;
   }
 
+  /** The `context.facts` setting: "auto", "on" or "off", default "auto". */
+  contextFactsMode(fallback = "auto") {
+    const value = String(this.setting("ui.settings.context.facts", fallback)).toLowerCase();
+    return ["auto", "on", "off"].includes(value) ? value : "auto";
+  }
+
+  /**
+   * Facts for the session-start context, filtered by `context.facts`. "off" returns nothing; "on" keeps the
+   * historical behaviour; "auto" lists only a pinned-observation fact, a provider-extracted fact or a fact at
+   * confidence 0.6 or higher, which leaves the rule extractor's 0.45/0.35 output out.
+   */
+  contextFacts({ project, scope = "current", now = Date.now(), mode = this.contextFactsMode() } = {}) {
+    if (mode === "off") return [];
+    const factWhere = ["status = 'active'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)"];
+    const factParams = [now, now];
+    if (this.hasDismissals("fact")) factWhere.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = facts.id)");
+    if (project && scope !== "all") {
+      if (this.hasGlobal("facts")) { factWhere.push("(project = ? OR scope = 'global')"); } else { factWhere.push("project = ?"); }
+      factParams.push(project);
+    }
+    if (mode === "auto") factWhere.push("(extractor_mode = 'provider' OR confidence >= 0.6 OR observation_id IN (SELECT id FROM observations WHERE pinned = 1))");
+    return this.db.prepare(`SELECT * FROM facts WHERE ${factWhere.join(" AND ")} ORDER BY confidence DESC, recorded_at_epoch DESC, id DESC LIMIT 10`).all(...factParams);
+  }
+
   /** Markdown a session-start hook can inject into ANY tool: pinned and recent memories, then the rules. */
   context({ project, limit = 20, maxChars = 6000, tool, scope = "current", format } = {}) {
     return (format ?? this.setting("context.format", "index")) === "classic"
@@ -1630,15 +1654,7 @@ export class HubStore {
     const parts = [`# Memory${scope === "all" ? " (all projects)" : project ? ` for ${project}` : ""}`];
     if (pinned.length) parts.push("", "## Pinned", ...pinned.map(line));
     if (recent.length) parts.push("", "## Recent", ...recent.map(line));
-    const now = Date.now();
-    const factWhere = ["status = 'active'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)"];
-    const factParams = [now, now];
-    if (this.hasDismissals("fact")) factWhere.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = facts.id)");
-    if (project && scope !== "all") {
-      if (this.hasGlobal("facts")) { factWhere.push("(project = ? OR scope = 'global')"); } else { factWhere.push("project = ?"); }
-      factParams.push(project);
-    }
-    const facts = this.db.prepare(`SELECT * FROM facts WHERE ${factWhere.join(" AND ")} ORDER BY confidence DESC, recorded_at_epoch DESC, id DESC LIMIT 10`).all(...factParams);
+    const facts = this.contextFacts({ project, scope, now: Date.now() });
     if (facts.length) parts.push("", "## Facts", ...facts.map((fact) => this.factLine(fact)));
     const rules = describeRules(this).filter((r) => r.enabled && (!r.tools || !tool || r.tools.includes(tool)));
     if (rules.length) parts.push("", "## Rules", ...rules.map((r) => (r.when ? `- When ${r.when}: ${r.then}` : `- ${r.then}`) + recheckNote(r)));
@@ -1697,28 +1713,20 @@ export class HubStore {
     }
     if (requestLines.length) parts.push("", "## Session requests", ...requestLines);
 
-    const now = Date.now();
-    const factWhere = ["status = 'active'", "coalesce(valid_from_epoch, recorded_at_epoch) <= ?", "(valid_to_epoch IS NULL OR valid_to_epoch > ?)"];
-    const factParams = [now, now];
-    if (this.hasDismissals("fact")) factWhere.push("NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'fact' AND d.item_id = facts.id)");
-    if (project && scope !== "all") {
-      if (this.hasGlobal("facts")) { factWhere.push("(project = ? OR scope = 'global')"); } else { factWhere.push("project = ?"); }
-      factParams.push(project);
-    }
-    const facts = this.db.prepare(`SELECT * FROM facts WHERE ${factWhere.join(" AND ")} ORDER BY confidence DESC, recorded_at_epoch DESC, id DESC LIMIT 10`).all(...factParams);
+    const facts = this.contextFacts({ project, scope, now: Date.now() });
     if (facts.length) parts.push("", "## Facts", ...facts.map((fact) => this.factLine(fact)));
 
     const rules = describeRules(this).filter((r) => r.enabled && (!r.tools || !tool || r.tools.includes(tool)));
     if (rules.length) parts.push("", "## Rules", ...rules.map((r) => (r.when ? `- When ${r.when}: ${r.then}` : `- ${r.then}`) + recheckNote(r)));
 
     const exampleId = recent[0]?.id ?? pinned[0]?.id ?? 1;
-    const items = pinned.length + recent.length;
+    const items = pinned.length + recent.length + facts.length;
     const fullTokens = [...pinned, ...recent].reduce((sum, m) => sum + estimateTokens(`${m.title}\n${m.narrative ?? ""}`), 0);
     const hint = `Fetch more: search(query), timeline(anchor), get_observations(ids) — e.g. get_observations(ids: [${exampleId}]).`;
     const blockTokens = estimateTokens([...parts, "", TYPE_LEGEND, hint].join("\n"));
     const ratio = blockTokens > 0 && fullTokens > 0 ? fullTokens / blockTokens : null;
     const ratioText = ratio == null ? "n/a" : `~${ratio >= 10 ? Math.round(ratio) : Math.round(ratio * 10) / 10}x smaller (estimate)`;
-    const economicsLine = `Context economics: ${items} memories listed; ~${blockTokens} tokens for this block (estimate, chars/4); ~${fullTokens} tokens for the same items' full text (estimate); saving ratio ${ratioText}.`;
+    const economicsLine = `Context economics: ${items} items listed; ~${blockTokens} tokens for this block (estimate, chars/4); ~${fullTokens} tokens for the same items' full text (estimate); saving ratio ${ratioText}.`;
     parts.push("", TYPE_LEGEND, hint, economicsLine);
 
     let out = parts.join("\n");

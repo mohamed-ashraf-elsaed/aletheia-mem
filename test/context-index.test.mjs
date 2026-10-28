@@ -44,7 +44,7 @@ describe("context index", () => {
       expect(ctx).toContain("Fetch more: search(query), timeline(anchor), get_observations(ids)");
       expect(ctx).toMatch(/get_observations\(ids: \[\d+\]\)/);
       expect(ctx).toContain("Context economics:");
-      expect(ctx).toMatch(/memories listed/);
+      expect(ctx).toMatch(/items listed/);
       expect(ctx).toMatch(/tokens for this block \(estimate, chars\/4\)/);
       expect(ctx).toMatch(/tokens for the same items' full text \(estimate\)/);
       expect(ctx).toMatch(/smaller \(estimate\)/);
@@ -81,6 +81,34 @@ describe("context index", () => {
       expect(ctx).toContain("Retry uses backoff");
       expect(ctx).toContain("- Use tabs [re-check:");
       expect(ctx).toContain("Verify before applying.]");
+    } finally {
+      s.close();
+    }
+  });
+
+  test("context.facts auto hides rule facts, on shows them and off hides the section", () => {
+    const s = new HubStore(":memory:");
+    try {
+      const episode = s.addEpisode({ project: "p", tool: "x", text: "e" });
+      s.addFact({ project: "p", episodeId: episode.id, subject: "rule", predicate: "uses", object: "backoff", text: "Rule uses backoff", extractorMode: "rules", confidence: 0.45 });
+      s.addFact({ project: "p", episodeId: episode.id, subject: "provider", predicate: "uses", object: "backoff", text: "Provider uses backoff", extractorMode: "provider", confidence: 0.9 });
+      const pinned = s.addObservation({ project: "p", type: "note", title: "pinned obs", narrative: "x", pinned: true });
+      s.addFact({ project: "p", episodeId: episode.id, observationId: pinned.id, subject: "pinned", predicate: "uses", object: "backoff", text: "Pinned uses backoff", extractorMode: "rules", confidence: 0.45 });
+
+      const auto = s.context({ project: "p" });
+      expect(auto).toContain("## Facts");
+      expect(auto).toContain("Provider uses backoff");
+      expect(auto).toContain("Pinned uses backoff");
+      expect(auto).not.toContain("Rule uses backoff");
+
+      s.setSetting("ui.settings.context.facts", "on");
+      const on = s.context({ project: "p" });
+      expect(on).toContain("Rule uses backoff");
+
+      s.setSetting("ui.settings.context.facts", "off");
+      const off = s.context({ project: "p" });
+      expect(off).not.toContain("## Facts");
+      expect(off).not.toContain("Provider uses backoff");
     } finally {
       s.close();
     }

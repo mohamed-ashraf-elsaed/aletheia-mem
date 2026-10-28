@@ -8,6 +8,7 @@ function settingField(spec) {
   const id = `ui-setting-${spec.key.replace(/[^a-zA-Z0-9]/g, "-")}`;
   let control;
   if (spec.kind === "boolean") control = h("input", { type: "checkbox", id, "aria-label": spec.label, checked: !!spec.value });
+  else if (spec.kind === "enum") control = h("select", { id, "aria-label": spec.label }, ...(spec.options ?? []).map((opt) => h("option", { value: opt, selected: opt === spec.value }, opt)));
   else if (spec.kind === "int") control = h("input", { type: "number", id, "aria-label": spec.label, value: String(spec.value ?? "") });
   else if (spec.kind === "list") control = h("input", { type: "text", id, "aria-label": spec.label, value: (spec.value ?? []).join(", ") });
   else if (spec.secret) control = h("input", { type: "password", id, "aria-label": spec.label, placeholder: spec.set ? "unchanged" : "set a value" });

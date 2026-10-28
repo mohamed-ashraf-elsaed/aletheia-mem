@@ -29,7 +29,7 @@
 //   aletheia dismiss <id | type:id> [--reason r]        hide a memory, episode, observation or fact (reversible)
 //   aletheia restore <id | type:id>                     undo a dismissal
 //   aletheia dismissed [--limit n]                      list dismissed items
-//   aletheia facts clean [--apply]                      quality-gate stored facts; --apply dismisses failures
+//   aletheia facts clean [--apply] [--ineligible-sources]  quality-gate stored facts; --apply dismisses failures
 //   aletheia language [set <tag> | list] [--project p]  output language for facts and summaries (empty clears)
 //   aletheia optimize                                   rebuild FTS segments after a large import
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
@@ -512,10 +512,10 @@ async function main() {
         return out(`Embedded ${facts} fact(s) and ${memories} memory/memories with ${embedder.model} (${embedder.dim} dims).`);
       }
       case "facts": {
-        if (pos[0] !== "clean") return die("Usage: aletheia facts clean [--apply]");
+        if (pos[0] !== "clean") return die("Usage: aletheia facts clean [--apply] [--ineligible-sources]");
         const { cleanFacts } = await import("../src/hub/facts.mjs");
-        const result = cleanFacts(hub, { apply: !!flags.apply });
-        const lines = [`${result.dryRun ? "Dry run" : "Applied"}: ${result.failed} of ${result.total} fact(s) fail the quality gate.`];
+        const result = cleanFacts(hub, { apply: !!flags.apply, ineligibleSources: !!flags["ineligible-sources"] });
+        const lines = [`${result.dryRun ? "Dry run" : "Applied"}: ${result.failed} of ${result.total} fact(s) fail the quality gate${result.ineligibleSources ? " (including ineligible sources)" : ""}.`];
         for (const reason of Object.keys(result.counts).sort()) {
           lines.push(`${reason}: ${result.counts[reason]}`);
           for (const example of result.examples[reason] ?? []) lines.push(`  - ${example}`);

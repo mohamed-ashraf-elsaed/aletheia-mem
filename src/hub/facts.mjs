@@ -168,6 +168,18 @@ export function validateFacts(answer, { episodeIds } = {}) {
   });
 }
 
+// Narration: facts about the conversation or a moment, not the project. Each pattern is a rejection reason on its
+// own; the whole list lives here so the rules are visible and easy to extend.
+const NARRATION_PATTERNS = [
+  /\b(?:i|we|you|your|my|me|our|us)\b/i,
+  /\b(?:now|today|yet|currently|right now)\b/i,
+  /\b(?:is|are|was|were)\s+(?:running|done|gone|denied|created|in progress|waiting on|not allowed)\b/i,
+  /\bwill be\b/i,
+  /\bhas been\b/i,
+  /\b(?:this session|next session|the owner|tell me)\b/i,
+  /^\s*(?:do|don't|run|open|merge|publish|wait)\b/i,
+];
+
 const countOf = (text, char) => String(text ?? "").split(char).length - 1;
 const evenCount = (text, char) => countOf(text, char) % 2 === 0;
 const balancedBrackets = (text, open, close) => countOf(text, open) === countOf(text, close);
@@ -186,6 +198,7 @@ export function factGateReason(fact, { minConfidence = 0 } = {}) {
   if (!balancedBrackets(text, "(", ")") || !balancedBrackets(text, "[", "]")) return "unbalanced_brackets";
   if (/\\[nrt]/.test(text)) return "escaped_whitespace";
   if (CODE_TOKENS.some((token) => text.includes(token)) || SQL_KEYWORD.test(text) || HTML_TAG.test(text)) return "code_token";
+  if (NARRATION_PATTERNS.some((pattern) => pattern.test(text))) return "narration";
 
   const words = text ? text.split(/\s+/).length : 0;
   if (words < 3 || words > 40) return "word_count";
@@ -206,9 +219,11 @@ export function factGateReason(fact, { minConfidence = 0 } = {}) {
 
 /**
  * Apply the same gate to stored facts. `--dry-run` counts and shows examples; `--apply` dismisses each failure
- * with reason `quality:<code>` through the existing dismissal path, so every row stays restorable.
+ * with reason `quality:<code>` through the existing dismissal path, so every row stays restorable. With
+ * `ineligibleSources` true, a fact whose source episode kind is not `summary` or `note` is also rejected with
+ * reason `ineligible_source`.
  */
-export function cleanFacts(store, { apply = false, now = Date.now(), minConfidence = null } = {}) {
+export function cleanFacts(store, { apply = false, now = Date.now(), minConfidence = null, ineligibleSources = false } = {}) {
   const floor = Number.isFinite(minConfidence) ? minConfidence : (store.factsMinConfidence?.() ?? MIN_CONFIDENCE_DEFAULT);
   const rows = store.db.prepare("SELECT * FROM facts ORDER BY id").all();
   const counts = {};
@@ -217,7 +232,11 @@ export function cleanFacts(store, { apply = false, now = Date.now(), minConfiden
   let dismissed = 0;
   let alreadyDismissed = 0;
   for (const row of rows) {
-    const reason = factGateReason({ subject: row.subject, predicate: row.predicate, object: row.object, text: row.text, confidence: row.confidence }, { minConfidence: floor });
+    let reason = factGateReason({ subject: row.subject, predicate: row.predicate, object: row.object, text: row.text, confidence: row.confidence }, { minConfidence: floor });
+    if (!reason && ineligibleSources) {
+      const episode = row.episode_id ? store.getEpisode(row.episode_id) : null;
+      if (!episode || !ELIGIBLE_FACT_SOURCE_KINDS.has(episode.kind)) reason = "ineligible_source";
+    }
     if (!reason) continue;
     failed++;
     counts[reason] = (counts[reason] ?? 0) + 1;
@@ -229,14 +248,41 @@ export function cleanFacts(store, { apply = false, now = Date.now(), minConfiden
     }
   }
   for (const reason of Object.keys(examples)) examples[reason] = examples[reason].slice(0, 10);
-  return { total: rows.length, failed, counts, examples, dismissed, alreadyDismissed, dryRun: !apply };
+  return { total: rows.length, failed, counts, examples, dismissed, alreadyDismissed, dryRun: !apply, ineligibleSources };
 }
 
 // ---- rule-based fallback ---------------------------------------------------------------------------------
 
-const SENTENCE = /[^.!?\n]{8,400}(?:[.!?]|$)/g;
 const PRONOUN_SUBJECT = /^(?:it|they|this|that|these|those|he|she|we|i)$/i;
 const FACT_PATTERN = /^(?:the\s+)?([\p{L}\p{N}][\p{L}\p{N} _./-]{1,80}?)\s+(uses?|is|are|was|were|runs?|requires?|supports?|stores?|returns?|keeps?|adds?|depends on|consists of|must|should)\s+([\p{L}\p{N}][^.!?\n]{1,180})$/iu;
+
+/**
+ * Split text into candidate sentences without cutting on a dot inside a version number (20.19.6), an IP address
+ * (127.0.0.1), a file name (config.toml), a domain (example.com) or a URL. A `.`, `!` or `?` ends a sentence only
+ * when it is followed by whitespace or the end of the text, so an internal dot (which has no space after it) stays
+ * in the sentence. Newlines always end a sentence. Sentences outside 10-400 characters are dropped.
+ */
+export function splitSentences(text) {
+  const source = String(text ?? "");
+  const out = [];
+  let start = 0;
+  for (let i = 0; i < source.length; i++) {
+    const ch = source[i];
+    if (ch === "\n") { push(start, i + 1); start = i + 1; continue; }
+    if (ch === "." || ch === "!" || ch === "?") {
+      const next = source[i + 1];
+      if (next == null || /\s/.test(next)) { push(start, i + 1); start = i + 1; }
+    }
+  }
+  push(start, source.length);
+  return out;
+
+  function push(from, to) {
+    let sentence = source.slice(from, to).replace(/\s+/g, " ").trim().replace(/[.!?]$/, "");
+    if (sentence.length > 400) sentence = sentence.slice(0, 400);
+    if (sentence.length >= 10) out.push(sentence);
+  }
+}
 
 /**
  * A deterministic extractor for the no-provider path. It only accepts a plain "subject verb object" sentence, so
@@ -250,10 +296,9 @@ export function extractFactsByRules(window = []) {
   for (const episode of window) {
     const kind = String(episode.kind ?? "").toLowerCase();
     if (kind && !ELIGIBLE_FACT_SOURCE_KINDS.has(kind)) continue;
-    for (const sentence of String(episode.text ?? "").match(SENTENCE) ?? []) {
+    for (const clean of splitSentences(episode.text)) {
       if (facts.length >= MAX_FACTS) return { facts, mode: "rules", raw: null, rejected: false, qualityRejected };
-      const clean = sentence.replace(/\s+/g, " ").trim().replace(/[.!?]$/, "");
-      if (clean.length < 10 || isInstruction(clean)) continue;
+      if (isInstruction(clean)) continue;
       if (/^(?:input|output|error|stack|diff|commit)\s*:/i.test(clean)) continue;
       const match = FACT_PATTERN.exec(clean);
       if (!match) continue;

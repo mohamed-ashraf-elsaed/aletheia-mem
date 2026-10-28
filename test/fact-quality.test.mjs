@@ -2,7 +2,7 @@
 // junk categories observed in real rules-extracted rows; the reported rates are fixture numbers, not precision on
 // real data.
 import { describe, expect, test } from "bun:test";
-import { cleanFacts, factGateReason, extractFactsByRules, storeFacts } from "../src/hub/facts.mjs";
+import { cleanFacts, factGateReason, extractFactsByRules, splitSentences, storeFacts } from "../src/hub/facts.mjs";
 import { executeJob, enqueueJob, JOB_TYPE } from "../src/hub/queue.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 
@@ -51,7 +51,7 @@ const junk = [
   { reason: "char_count", fact: { subject: "The worker", predicate: "uses", object: "x".repeat(210), text: `The worker uses ${"x".repeat(210)}`, confidence: 0.9 } },
   { reason: "subject_words", fact: { subject: "one two three four five six seven eight nine", predicate: "uses", object: "Postgres", text: "one two three four five six seven eight nine uses Postgres", confidence: 0.9 } },
   { reason: "subject_words", fact: { subject: "", predicate: "uses", object: "Postgres 15 for storage", text: "uses Postgres 15 for storage", confidence: 0.9 } },
-  { reason: "subject_continuation", fact: { subject: "how", predicate: "is", object: "done", text: "how is done", confidence: 0.9 } },
+  { reason: "subject_continuation", fact: { subject: "how", predicate: "runs", object: "tests", text: "how runs tests", confidence: 0.9 } },
   { reason: "subject_continuation", fact: { subject: "to", predicate: "run", object: "tests", text: "to run tests", confidence: 0.9 } },
   { reason: "subject_pronoun", fact: { subject: "There", predicate: "is", object: "no reply header", text: "There is no reply header", confidence: 0.9 } },
   { reason: "subject_pronoun", fact: { subject: "Everything below", predicate: "is", object: "relative to it", text: "Everything below is relative to it", confidence: 0.9 } },
@@ -74,6 +74,35 @@ describe("fact quality gate", () => {
       kept++;
     }
     console.log(`fixture: junk rejected ${rejected}/${junk.length} (${((rejected / junk.length) * 100).toFixed(0)}%), good kept ${kept}/${good.length} (${((kept / good.length) * 100).toFixed(0)}%). Fixture numbers, not precision on real data.`);
+  });
+
+  test("rejects session chatter and moment narration as narration", () => {
+    const chatter = [
+      "last one was denied",
+      "config/psysh is not allowed",
+      "Windows branch and worktree are gone",
+      "CI watch is running, so do not publish until it reports green",
+      "Your 6 rules are now in Aletheia",
+      "service is running and the UI answers 200 at http://127",
+    ];
+    for (const text of chatter) {
+      const words = text.split(" ");
+      const predicate = words.find((word) => ["is", "are", "was", "were", "running"].includes(word)) ?? "is";
+      const subject = words.slice(0, words.indexOf(predicate)).join(" ");
+      const object = words.slice(words.indexOf(predicate) + 1).join(" ");
+      expect(factGateReason({ subject, predicate, object, text, confidence: 0.9 })).toBe("narration");
+    }
+  });
+
+  test("keeps durable facts including versions, IPs and domains", () => {
+    const durable = [
+      { subject: "deploy script", predicate: "requires", object: "Node 20.19.6", text: "The deploy script requires Node 20.19.6", confidence: 0.9 },
+      { subject: "staging API", predicate: "listens", object: "on 127.0.0.1 port 8080", text: "The staging API listens on 127.0.0.1 port 8080", confidence: 0.9 },
+      { subject: "Catalog campaigns", predicate: "are", object: "Meta only", text: "Catalog campaigns are Meta only", confidence: 0.9 },
+      ...good,
+    ];
+    expect(durable.length).toBeGreaterThanOrEqual(15);
+    for (const fact of durable) expect(factGateReason(fact)).toBeNull();
   });
 
   test("the confidence floor is a gate reason below facts.minConfidence", () => {
@@ -159,5 +188,37 @@ describe("facts clean", () => {
     expect(result.facts).toBeGreaterThanOrEqual(3);
     expect(store.factsCurrent({ project: "shop" }).length).toBeGreaterThanOrEqual(3);
     store.close();
+  });
+
+  test("cleanFacts rejects an ineligible source episode only with the flag", () => {
+    const store = new HubStore(":memory:");
+    const summary = store.addEpisode({ project: "p", kind: "summary", text: "The checkout service uses Postgres 15." });
+    const event = store.addEpisode({ project: "p", kind: "event", text: "input: npm test" });
+    store.addFact({ project: "p", episodeId: summary.id, subject: "checkout service", predicate: "uses", object: "Postgres 15", text: "The checkout service uses Postgres 15", extractorMode: "rules" });
+    store.addFact({ project: "p", episodeId: event.id, subject: "worker", predicate: "uses", object: "Postgres 15", text: "The worker uses Postgres 15", extractorMode: "rules" });
+
+    const without = cleanFacts(store, { apply: false });
+    expect(without.failed).toBe(0);
+    expect(without.counts.ineligible_source).toBeUndefined();
+
+    const withFlag = cleanFacts(store, { apply: false, ineligibleSources: true });
+    expect(withFlag.failed).toBe(1);
+    expect(withFlag.counts.ineligible_source).toBe(1);
+    store.close();
+  });
+});
+
+describe("sentence splitting", () => {
+  test("keeps dots inside version numbers, IPs, URLs, file names and domains", () => {
+    expect(splitSentences("The deploy script requires Node 20.19.6.")).toEqual(["The deploy script requires Node 20.19.6"]);
+    expect(splitSentences("The staging API listens on 127.0.0.1 port 8080.")).toEqual(["The staging API listens on 127.0.0.1 port 8080"]);
+    expect(splitSentences("The docs live at https://example.com/guide.")).toEqual(["The docs live at https://example.com/guide"]);
+    expect(splitSentences("The config file is config.toml.")).toEqual(["The config file is config.toml"]);
+    expect(splitSentences("The domain is example.com.")).toEqual(["The domain is example.com"]);
+    expect(splitSentences("The library pins v1.2.")).toEqual(["The library pins v1.2"]);
+  });
+
+  test("still splits on sentence-ending punctuation followed by whitespace", () => {
+    expect(splitSentences("The service uses Postgres. The cache stores responses.")).toEqual(["The service uses Postgres", "The cache stores responses"]);
   });
 });
