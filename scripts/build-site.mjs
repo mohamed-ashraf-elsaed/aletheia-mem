@@ -273,11 +273,24 @@ export function faqOf(markdown) {
   return out.map((item) => ({ question: item.question, answer: item.lines.join(" ").slice(0, 1500) })).filter((item) => item.answer);
 }
 
-function gitDate(path) {
+// Last commit date of every tracked file, read once. One git call is far faster than one per page, notably on Windows.
+let commitDates = null;
+function loadCommitDates() {
+  commitDates = new Map();
   try {
-    const output = execFileSync("git", ["log", "-1", "--format=%cs", "--", path], { cwd: ROOT, encoding: "utf8" }).trim();
-    if (output) return output;
-  } catch { /* fall through */ }
+    const output = execFileSync("git", ["log", "--format=%x00%cs", "--name-only", "--", "docs", "site"], { cwd: ROOT, encoding: "utf8", maxBuffer: 64 * 1024 * 1024 });
+    let date = "";
+    for (const line of output.split("\n")) {
+      if (line.startsWith("\0")) date = line.slice(1).trim();
+      else if (line.trim() && !commitDates.has(line.trim())) commitDates.set(line.trim(), date);
+    }
+  } catch { /* not a git checkout: fall back to file times */ }
+}
+
+function gitDate(path) {
+  if (!commitDates) loadCommitDates();
+  const key = path.split(sep).join("/");
+  if (commitDates.get(key)) return commitDates.get(key);
   try {
     return statSync(join(ROOT, path)).mtime.toISOString().slice(0, 10);
   } catch {
