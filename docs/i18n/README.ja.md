@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
+> Source: [README.md](../../README.md) · source-sha256: 35da26b55be57a8ee6ceb5fee9bc5c743f0abf99a77835e1ff3e077d805e1402
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -7,7 +7,7 @@
 
 # Aletheia
 
-**AI コーディングツールのための、無料でローカルなメモリとルールのハブ。**
+**AI コーディングツールのための、無料でローカルなメモリとルールのハブ。**<br>Claude Code、Codex CLI、Cursor、Gemini CLI、Windsurf、OpenCode のための永続メモリ。claude-mem に代わる、ローカルで特定のツールに依存しない選択肢です。
 
 [![Licence](https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem)](../../LICENSE)
 [![Tests](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml/badge.svg)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml)
@@ -24,7 +24,7 @@
 
 ## これは何か
 
-Aletheia は、AI コーディングツールのための無料でローカルなメモリとルールのハブです。どのツールも MCP、REST、CLI のいずれかで同じ SQLite ストアを読み、ルールは各ツール自身の指示ファイルに書き込まれます。
+Aletheia は、AI コーディングツールのための無料でローカルなメモリとルールのハブです。どのツールも MCP、REST、CLI のいずれかで同じ SQLite ストアを読み、ルールは各ツール自身の指示ファイルに書き込まれます。Claude Code、Codex CLI、Cursor、Gemini CLI、Windsurf、OpenCode に、共有できる永続的なメモリを 1 つ提供するために作られています。以下のセクションで、このうちどれが実際のインストールで確認済みかを示します。
 
 コーディングエージェントはセッションの間で忘れ、記憶の仕方もそれぞれ違います。Aletheia はメモリとルールを一度だけあなたのマシンに保存し、各ツールがすでに理解する形式で読めるようにします。アカウントもテレメトリもなく、モデルプロバイダーを設定しない限りネットワーク呼び出しも行いません。ループバックのみで待ち受けます。
 
@@ -214,12 +214,34 @@ docs/           the documents
 
 ## ドキュメント
 
-1. [アーキテクチャ](../../docs/01-architecture.md) · [データモデル](../../docs/02-data-model.md) · [HTTP API](../../docs/03-http-api.md)
+完全なドキュメントは <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/> にあります。`docs/` の Markdown が正典です。
+
+1. **はじめに:** [イントロダクション](../../docs/start/introduction.md) · [インストール](../../docs/start/installation.md)
+   · [クイックスタート](../../docs/start/quickstart.md) · [仕組み](../../docs/start/how-it-works.md)
+   · [ダッシュボード](../../docs/start/dashboard.md) · [よくある質問](../../docs/start/faq.md)
+2. **概念:** [メモリモデル](../../docs/concepts/memory-model.md) · [ルール](../../docs/concepts/rules.md)
+   · [検索](../../docs/concepts/search.md) · [セッション開始時のコンテキスト](../../docs/concepts/session-context.md)
+   · [プライバシー](../../docs/concepts/privacy.md) · [ファクト](../../docs/33-facts.md) · [用語集](../../docs/concepts/glossary.md)
+3. **ツールを接続する:** [概要](../../docs/tools/overview.md) · [Claude Code](../../docs/tools/claude-code.md)
+   · [Command Code](../../docs/tools/command-code.md) · [Codex CLI](../../docs/tools/codex.md) · [Cursor](../../docs/tools/cursor.md)
+   · [Gemini CLI](../../docs/tools/gemini-cli.md) · [Windsurf](../../docs/tools/windsurf.md) · [OpenCode](../../docs/tools/opencode.md)
+   · [Claude Desktop](../../docs/claude-desktop.md) · [その他のツール](../../docs/tools/other-tools.md)
+4. **ガイド:** [claude-mem から移行する](../../docs/guides/migrate-from-claude-mem.md)
+   · [ルールを一度だけ書く](../../docs/guides/write-rules-once.md) · [バックアップ、エクスポート、インポート](../../docs/guides/backup-export-import.md)
+   · [サービスとして実行する](../../docs/guides/run-as-a-service.md) · [モデルプロバイダー](../../docs/guides/model-providers.md)
+   · [トラブルシューティング](../../docs/guides/troubleshooting.md) · [同期](../../docs/29-sync.md) · [リモート MCP](../../docs/30-remote-mcp.md)
+   · [チームモード](../../docs/31-team.md) · [リクエストと目標](../../docs/32-requests.md)
+5. **リファレンス:** [CLI](../../docs/reference/cli.md) · [MCP ツール](../../docs/reference/mcp-tools.md)
+   · [設定](../../docs/reference/configuration.md) · [フック](../../docs/reference/hooks.md) · [HTTP API](../../docs/03-http-api.md)
+   · [インストーラー](../../docs/25-installers.md) · [ルールの書き込み先](../../docs/verification/rules-targets.md)
+6. **比較:** [Aletheia と claude-mem の比較](../../docs/compare/aletheia-vs-claude-mem.md)
+   · [その他のメモリツール](../../docs/compare/memory-tools.md) · [Claude Code のメモリの選択肢](../../docs/compare/claude-code-memory.md)
+7. **プロジェクト:** [ベンチマーク](../../docs/project/benchmarks.md) · [状態と制限](../../docs/project/status-and-limits.md)
+   · [依存関係とライセンス](../../docs/dependencies.md)
+8. **内部構造:** [アーキテクチャ](../../docs/01-architecture.md) · [データモデル](../../docs/02-data-model.md)
    · [フロントエンド](../../docs/06-frontend.md) · [運用](../../docs/07-operations.md)
-2. [インストーラー](../../docs/25-installers.md) · [同期](../../docs/29-sync.md) · [リモート MCP](../../docs/30-remote-mcp.md)
-   · [Team mode](../../docs/31-team.md) · [Requests and goals](../../docs/32-requests.md)
-3. [Dependencies and licences](../../docs/dependencies.md) · [Claude Desktop](../../docs/claude-desktop.md)
-   · [Rules targets](../../docs/verification/rules-targets.md)
+
+AI ツールは [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt) を読めます。すべてのページを 1 つにまとめた [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt) もあります。
 
 ## 貢献
 

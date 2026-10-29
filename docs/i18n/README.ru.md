@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
+> Source: [README.md](../../README.md) · source-sha256: 35da26b55be57a8ee6ceb5fee9bc5c743f0abf99a77835e1ff3e077d805e1402
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -7,7 +7,7 @@
 
 # Aletheia
 
-**Бесплатный локальный хаб памяти и правил для инструментов программирования с ИИ.**
+**Бесплатный локальный хаб памяти и правил для инструментов программирования с ИИ.**<br>Постоянная память для Claude Code, Codex CLI, Cursor, Gemini CLI, Windsurf и OpenCode: локальная альтернатива claude-mem, не привязанная к конкретному инструменту.
 
 [![Licence](https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem)](../../LICENSE)
 [![Tests](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml/badge.svg)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml)
@@ -24,7 +24,7 @@
 
 ## Что это
 
-Aletheia — бесплатный локальный хаб памяти и правил для инструментов программирования с ИИ. Любой инструмент читает одно и то же хранилище SQLite через MCP, REST или CLI, а ваши правила записываются в собственный файл инструкций каждого инструмента.
+Aletheia — бесплатный локальный хаб памяти и правил для инструментов программирования с ИИ. Любой инструмент читает одно и то же хранилище SQLite через MCP, REST или CLI, а ваши правила записываются в собственный файл инструкций каждого инструмента. Он создан, чтобы дать Claude Code, Codex CLI, Cursor, Gemini CLI, Windsurf и OpenCode одну общую постоянную память; в разделах ниже сказано, какие из них проверены на реальной установке.
 
 Каждый агент программирования забывает между сессиями, и каждый помнит по-своему. Aletheia хранит память и правила один раз на вашей машине и позволяет каждому инструменту читать их в уже понятном ему формате. Нет учётной записи, телеметрии и сетевых вызовов, если вы не настроили провайдера моделей. Он слушает только loopback.
 
@@ -212,14 +212,36 @@ test/           the test suite and a synthetic fixture database
 docs/           the documents
 ```
 
-## Документы
+## Документация
 
-1. [Архитектура](../../docs/01-architecture.md) · [Модель данных](../../docs/02-data-model.md) · [HTTP API](../../docs/03-http-api.md)
+Полная документация находится по адресу <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>. Основным источником является Markdown в `docs/`.
+
+1. **Начало работы:** [Введение](../../docs/start/introduction.md) · [Установка](../../docs/start/installation.md)
+   · [Быстрый старт](../../docs/start/quickstart.md) · [Как это работает](../../docs/start/how-it-works.md)
+   · [Панель](../../docs/start/dashboard.md) · [Частые вопросы](../../docs/start/faq.md)
+2. **Концепции:** [Модель памяти](../../docs/concepts/memory-model.md) · [Правила](../../docs/concepts/rules.md)
+   · [Поиск](../../docs/concepts/search.md) · [Контекст начала сессии](../../docs/concepts/session-context.md)
+   · [Конфиденциальность](../../docs/concepts/privacy.md) · [Факты](../../docs/33-facts.md) · [Глоссарий](../../docs/concepts/glossary.md)
+3. **Подключение инструментов:** [Обзор](../../docs/tools/overview.md) · [Claude Code](../../docs/tools/claude-code.md)
+   · [Command Code](../../docs/tools/command-code.md) · [Codex CLI](../../docs/tools/codex.md) · [Cursor](../../docs/tools/cursor.md)
+   · [Gemini CLI](../../docs/tools/gemini-cli.md) · [Windsurf](../../docs/tools/windsurf.md) · [OpenCode](../../docs/tools/opencode.md)
+   · [Claude Desktop](../../docs/claude-desktop.md) · [Другие инструменты](../../docs/tools/other-tools.md)
+4. **Руководства:** [Переход с claude-mem](../../docs/guides/migrate-from-claude-mem.md)
+   · [Написать правила один раз](../../docs/guides/write-rules-once.md) · [Резервное копирование, экспорт и импорт](../../docs/guides/backup-export-import.md)
+   · [Запуск в виде службы](../../docs/guides/run-as-a-service.md) · [Провайдеры моделей](../../docs/guides/model-providers.md)
+   · [Устранение неполадок](../../docs/guides/troubleshooting.md) · [Синхронизация](../../docs/29-sync.md) · [Удалённый MCP](../../docs/30-remote-mcp.md)
+   · [Командный режим](../../docs/31-team.md) · [Запросы и цели](../../docs/32-requests.md)
+5. **Справочник:** [CLI](../../docs/reference/cli.md) · [Инструменты MCP](../../docs/reference/mcp-tools.md)
+   · [Конфигурация](../../docs/reference/configuration.md) · [Хуки](../../docs/reference/hooks.md) · [HTTP API](../../docs/03-http-api.md)
+   · [Установщики](../../docs/25-installers.md) · [Цели записи правил](../../docs/verification/rules-targets.md)
+6. **Сравнение:** [Aletheia и claude-mem: сравнение](../../docs/compare/aletheia-vs-claude-mem.md)
+   · [Другие инструменты памяти](../../docs/compare/memory-tools.md) · [Варианты памяти для Claude Code](../../docs/compare/claude-code-memory.md)
+7. **Проект:** [Бенчмарки](../../docs/project/benchmarks.md) · [Состояние и ограничения](../../docs/project/status-and-limits.md)
+   · [Зависимости и лицензии](../../docs/dependencies.md)
+8. **Внутреннее устройство:** [Архитектура](../../docs/01-architecture.md) · [Модель данных](../../docs/02-data-model.md)
    · [Фронтенд](../../docs/06-frontend.md) · [Эксплуатация](../../docs/07-operations.md)
-2. [Установщики](../../docs/25-installers.md) · [Синхронизация](../../docs/29-sync.md) · [Удалённый MCP](../../docs/30-remote-mcp.md)
-   · [Team mode](../../docs/31-team.md) · [Requests and goals](../../docs/32-requests.md)
-3. [Dependencies and licences](../../docs/dependencies.md) · [Claude Desktop](../../docs/claude-desktop.md)
-   · [Rules targets](../../docs/verification/rules-targets.md)
+
+Инструменты ИИ могут читать [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt) или [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt), где все страницы собраны в одном файле.
 
 ## Участие
 

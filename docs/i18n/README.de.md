@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
+> Source: [README.md](../../README.md) · source-sha256: 35da26b55be57a8ee6ceb5fee9bc5c743f0abf99a77835e1ff3e077d805e1402
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -7,7 +7,7 @@
 
 # Aletheia
 
-**Ein kostenloser, lokaler Hub für Gedächtnis und Regeln für KI-Programmierwerkzeuge.**
+**Ein kostenloser, lokaler Hub für Gedächtnis und Regeln für KI-Programmierwerkzeuge.**<br>Dauerhaftes Gedächtnis für Claude Code, Codex CLI, Cursor, Gemini CLI, Windsurf und OpenCode: eine lokale, werkzeugneutrale Alternative zu claude-mem.
 
 [![Licence](https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem)](../../LICENSE)
 [![Tests](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml/badge.svg)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml)
@@ -24,7 +24,7 @@ Maschinelle Übersetzungen liegen in `docs/i18n/`; das englische Original ist ma
 
 ## Was es ist
 
-Aletheia ist ein kostenloser, lokaler Hub für Gedächtnis und Regeln für KI-Programmierwerkzeuge. Jedes Werkzeug liest denselben SQLite-Speicher über MCP, REST oder die CLI, und deine Regeln werden in die eigene Anweisungsdatei jedes Werkzeugs geschrieben.
+Aletheia ist ein kostenloser, lokaler Hub für Gedächtnis und Regeln für KI-Programmierwerkzeuge. Jedes Werkzeug liest denselben SQLite-Speicher über MCP, REST oder die CLI, und deine Regeln werden in die eigene Anweisungsdatei jedes Werkzeugs geschrieben. Es soll Claude Code, Codex CLI, Cursor, Gemini CLI, Windsurf und OpenCode ein gemeinsames, dauerhaftes Gedächtnis geben; die folgenden Abschnitte sagen, welche davon auf einer echten Installation geprüft wurden.
 
 Jeder Programmieragent vergisst zwischen Sitzungen, und jeder erinnert sich anders. Aletheia speichert Gedächtnis und Regeln einmal auf deiner Maschine und lässt jedes Werkzeug sie in dem Format lesen, das es bereits versteht. Es gibt kein Konto, keine Telemetrie und keinen Netzwerkaufruf, außer du konfigurierst einen Modellanbieter. Es lauscht nur auf Loopback.
 
@@ -212,14 +212,36 @@ test/           the test suite and a synthetic fixture database
 docs/           the documents
 ```
 
-## Dokumente
+## Dokumentation
 
-1. [Architektur](../../docs/01-architecture.md) · [Datenmodell](../../docs/02-data-model.md) · [HTTP-API](../../docs/03-http-api.md)
+Die vollständige Dokumentation liegt unter <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>. Maßgeblich ist das Markdown in `docs/`.
+
+1. **Erste Schritte:** [Einführung](../../docs/start/introduction.md) · [Installation](../../docs/start/installation.md)
+   · [Schnellstart](../../docs/start/quickstart.md) · [Wie es funktioniert](../../docs/start/how-it-works.md)
+   · [Dashboard](../../docs/start/dashboard.md) · [FAQ](../../docs/start/faq.md)
+2. **Konzepte:** [Gedächtnismodell](../../docs/concepts/memory-model.md) · [Regeln](../../docs/concepts/rules.md)
+   · [Suche](../../docs/concepts/search.md) · [Kontext beim Sitzungsstart](../../docs/concepts/session-context.md)
+   · [Datenschutz](../../docs/concepts/privacy.md) · [Fakten](../../docs/33-facts.md) · [Glossar](../../docs/concepts/glossary.md)
+3. **Werkzeuge verbinden:** [Übersicht](../../docs/tools/overview.md) · [Claude Code](../../docs/tools/claude-code.md)
+   · [Command Code](../../docs/tools/command-code.md) · [Codex CLI](../../docs/tools/codex.md) · [Cursor](../../docs/tools/cursor.md)
+   · [Gemini CLI](../../docs/tools/gemini-cli.md) · [Windsurf](../../docs/tools/windsurf.md) · [OpenCode](../../docs/tools/opencode.md)
+   · [Claude Desktop](../../docs/claude-desktop.md) · [Weitere Werkzeuge](../../docs/tools/other-tools.md)
+4. **Anleitungen:** [Von claude-mem migrieren](../../docs/guides/migrate-from-claude-mem.md)
+   · [Regeln einmal schreiben](../../docs/guides/write-rules-once.md) · [Sichern, exportieren, importieren](../../docs/guides/backup-export-import.md)
+   · [Als Dienst betreiben](../../docs/guides/run-as-a-service.md) · [Modellanbieter](../../docs/guides/model-providers.md)
+   · [Fehlerbehebung](../../docs/guides/troubleshooting.md) · [Sync](../../docs/29-sync.md) · [Remote-MCP](../../docs/30-remote-mcp.md)
+   · [Team-Modus](../../docs/31-team.md) · [Anfragen und Ziele](../../docs/32-requests.md)
+5. **Referenz:** [CLI](../../docs/reference/cli.md) · [MCP-Werkzeuge](../../docs/reference/mcp-tools.md)
+   · [Konfiguration](../../docs/reference/configuration.md) · [Hooks](../../docs/reference/hooks.md) · [HTTP-API](../../docs/03-http-api.md)
+   · [Installer](../../docs/25-installers.md) · [Regelziele](../../docs/verification/rules-targets.md)
+6. **Vergleiche:** [Aletheia im Vergleich zu claude-mem](../../docs/compare/aletheia-vs-claude-mem.md)
+   · [Weitere Gedächtniswerkzeuge](../../docs/compare/memory-tools.md) · [Gedächtnisoptionen für Claude Code](../../docs/compare/claude-code-memory.md)
+7. **Projekt:** [Benchmarks](../../docs/project/benchmarks.md) · [Status und Grenzen](../../docs/project/status-and-limits.md)
+   · [Abhängigkeiten und Lizenzen](../../docs/dependencies.md)
+8. **Interna:** [Architektur](../../docs/01-architecture.md) · [Datenmodell](../../docs/02-data-model.md)
    · [Frontend](../../docs/06-frontend.md) · [Betrieb](../../docs/07-operations.md)
-2. [Installer](../../docs/25-installers.md) · [Sync](../../docs/29-sync.md) · [Remote-MCP](../../docs/30-remote-mcp.md)
-   · [Team mode](../../docs/31-team.md) · [Requests and goals](../../docs/32-requests.md)
-3. [Dependencies and licences](../../docs/dependencies.md) · [Claude Desktop](../../docs/claude-desktop.md)
-   · [Rules targets](../../docs/verification/rules-targets.md)
+
+KI-Werkzeuge können [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt) lesen, oder [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt) für alle Seiten in einer einzigen Datei.
 
 ## Mitwirken
 
