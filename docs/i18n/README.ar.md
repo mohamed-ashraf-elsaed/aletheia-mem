@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
+> Source: [README.md](../../README.md) · source-sha256: 35da26b55be57a8ee6ceb5fee9bc5c743f0abf99a77835e1ff3e077d805e1402
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -9,7 +9,7 @@
 
 # Aletheia
 
-**مركز مجاني ومحلي للذاكرة والقواعد لأدوات البرمجة بالذكاء الاصطناعي.**
+**مركز مجاني ومحلي للذاكرة والقواعد لأدوات البرمجة بالذكاء الاصطناعي.**<br>ذاكرة دائمة لأدوات Claude Code وCodex CLI وCursor وGemini CLI وWindsurf وOpenCode: بديل محلي لـ claude-mem لا يرتبط بأداة بعينها.
 
 [![Licence](https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem)](../../LICENSE)
 [![Tests](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml/badge.svg)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml)
@@ -26,7 +26,7 @@
 
 ## ما هو
 
-Aletheia مركز مجاني ومحلي للذاكرة والقواعد لأدوات البرمجة بالذكاء الاصطناعي. تقرأ كل أداة نفس مخزن SQLite عبر MCP أو REST أو CLI، وتُكتب قواعدك في ملف التعليمات الخاص بكل أداة.
+Aletheia مركز مجاني ومحلي للذاكرة والقواعد لأدوات البرمجة بالذكاء الاصطناعي. تقرأ كل أداة نفس مخزن SQLite عبر MCP أو REST أو CLI، وتُكتب قواعدك في ملف التعليمات الخاص بكل أداة. صُمّم ليمنح Claude Code وCodex CLI وCursor وGemini CLI وWindsurf وOpenCode ذاكرة واحدة مشتركة ودائمة؛ وتبيّن الأقسام أدناه أيّ هذه الأدوات جرى فحصه على تثبيت حقيقي.
 
 كل وكيل برمجة ينسى بين الجلسات، وكل واحد يتذكر بطريقة مختلفة. يحفظ Aletheia الذاكرة والقواعد مرة واحدة على جهازك، ويترك كل أداة تقرأها بالصيغة التي تفهمها بالفعل. لا يوجد حساب ولا قياس عن بُعد ولا اتصال بالشبكة إلا إذا أعددت مزوّد نماذج. يستمع على الواجهة المحلية فقط.
 
@@ -214,14 +214,36 @@ test/           the test suite and a synthetic fixture database
 docs/           the documents
 ```
 
-## الوثائق
+## التوثيق
 
-1. [البنية](../../docs/01-architecture.md) · [نموذج البيانات](../../docs/02-data-model.md) · [واجهة HTTP](../../docs/03-http-api.md)
+التوثيق الكامل موجود في <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>. ملفات Markdown في `docs/` هي المرجع.
+
+1. **البدء:** [مقدمة](../../docs/start/introduction.md) · [التثبيت](../../docs/start/installation.md)
+   · [البدء السريع](../../docs/start/quickstart.md) · [كيف يعمل](../../docs/start/how-it-works.md)
+   · [لوحة التحكم](../../docs/start/dashboard.md) · [الأسئلة الشائعة](../../docs/start/faq.md)
+2. **المفاهيم:** [نموذج الذاكرة](../../docs/concepts/memory-model.md) · [القواعد](../../docs/concepts/rules.md)
+   · [البحث](../../docs/concepts/search.md) · [سياق بداية الجلسة](../../docs/concepts/session-context.md)
+   · [الخصوصية](../../docs/concepts/privacy.md) · [الحقائق](../../docs/33-facts.md) · [المسرد](../../docs/concepts/glossary.md)
+3. **ربط أدواتك:** [نظرة عامة](../../docs/tools/overview.md) · [Claude Code](../../docs/tools/claude-code.md)
+   · [Command Code](../../docs/tools/command-code.md) · [Codex CLI](../../docs/tools/codex.md) · [Cursor](../../docs/tools/cursor.md)
+   · [Gemini CLI](../../docs/tools/gemini-cli.md) · [Windsurf](../../docs/tools/windsurf.md) · [OpenCode](../../docs/tools/opencode.md)
+   · [Claude Desktop](../../docs/claude-desktop.md) · [أدوات أخرى](../../docs/tools/other-tools.md)
+4. **الأدلة:** [الانتقال من claude-mem](../../docs/guides/migrate-from-claude-mem.md)
+   · [كتابة القواعد مرة واحدة](../../docs/guides/write-rules-once.md) · [النسخ الاحتياطي والتصدير والاستيراد](../../docs/guides/backup-export-import.md)
+   · [التشغيل كخدمة](../../docs/guides/run-as-a-service.md) · [مزوّدو النماذج](../../docs/guides/model-providers.md)
+   · [استكشاف الأخطاء وإصلاحها](../../docs/guides/troubleshooting.md) · [المزامنة](../../docs/29-sync.md) · [MCP البعيد](../../docs/30-remote-mcp.md)
+   · [وضع الفريق](../../docs/31-team.md) · [الطلبات والأهداف](../../docs/32-requests.md)
+5. **المرجع:** [CLI](../../docs/reference/cli.md) · [أدوات MCP](../../docs/reference/mcp-tools.md)
+   · [الإعدادات](../../docs/reference/configuration.md) · [الخطّافات](../../docs/reference/hooks.md) · [واجهة HTTP](../../docs/03-http-api.md)
+   · [المثبّتات](../../docs/25-installers.md) · [أهداف القواعد](../../docs/verification/rules-targets.md)
+6. **المقارنة:** [Aletheia مقابل claude-mem](../../docs/compare/aletheia-vs-claude-mem.md)
+   · [أدوات ذاكرة أخرى](../../docs/compare/memory-tools.md) · [خيارات الذاكرة في Claude Code](../../docs/compare/claude-code-memory.md)
+7. **المشروع:** [اختبارات الأداء](../../docs/project/benchmarks.md) · [الحالة والحدود](../../docs/project/status-and-limits.md)
+   · [التبعيات والتراخيص](../../docs/dependencies.md)
+8. **التفاصيل الداخلية:** [البنية](../../docs/01-architecture.md) · [نموذج البيانات](../../docs/02-data-model.md)
    · [الواجهة الأمامية](../../docs/06-frontend.md) · [التشغيل](../../docs/07-operations.md)
-2. [المثبّتات](../../docs/25-installers.md) · [المزامنة](../../docs/29-sync.md) · [MCP البعيد](../../docs/30-remote-mcp.md)
-   · [Team mode](../../docs/31-team.md) · [Requests and goals](../../docs/32-requests.md)
-3. [Dependencies and licences](../../docs/dependencies.md) · [Claude Desktop](../../docs/claude-desktop.md)
-   · [Rules targets](../../docs/verification/rules-targets.md)
+
+يمكن لأدوات الذكاء الاصطناعي قراءة [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt)، أو [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt) لقراءة كل الصفحات في ملف واحد.
 
 ## المساهمة
 

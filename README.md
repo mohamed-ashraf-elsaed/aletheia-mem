@@ -2,7 +2,7 @@
 
 <h1 align="center">Aletheia</h1>
 
-<p align="center"><strong>A free, local memory and rules hub for AI coding tools.</strong><br>One store on your machine. Any tool reads it over MCP, REST or the CLI.</p>
+<p align="center"><strong>A free, local memory and rules hub for AI coding tools.</strong><br>One store on your machine. Any tool reads it over MCP, REST or the CLI.<br>Persistent memory for Claude Code, Codex CLI, Cursor, Gemini CLI, Windsurf and OpenCode: a local, tool-neutral alternative to claude-mem.</p>
 
 <div align="center">
 
@@ -36,7 +36,7 @@ aletheia-server
 OpenCode listed the generated MCP config. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), all on the author's machine and one user, with secrets redacted and no leaks found by the checker. No hook has run inside Cursor, Gemini CLI, Windsurf or OpenCode yet, and answer accuracy is not measured. CI runs the test suite on Linux, macOS and Windows. On Windows, two hook checks (Windsurf and Gemini CLI) are skipped and no real tool was tried there, so Windows is tested in CI only.
 
 <!-- claims:begin -->
-**1,480 tests** — 0 failures (run `bun test`).
+**1,493 tests** — 0 failures (run `bun test`).
 <!-- claims:end -->
 
 [English](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/README.md) · [中文](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.zh.md) · [Español](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.es.md) · [Português (Brasil)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.pt-br.md) · [日本語](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ja.md) · [Deutsch](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.de.md) · [Français](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.fr.md) · [한국어](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ko.md) · [हिन्दी](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.hi.md) · [العربية](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ar.md) · [Русский](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ru.md).
@@ -45,7 +45,9 @@ Machine translations live in `docs/i18n/`; English is canonical. No translation 
 ## What it is
 
 Aletheia is a free, local memory and rules hub for AI coding tools. One SQLite store is read by any tool over MCP,
-REST or the CLI, and your rules are written into each tool's own instruction file.
+REST or the CLI, and your rules are written into each tool's own instruction file. It is built to give Claude Code,
+Codex CLI, Cursor, Gemini CLI, Windsurf and OpenCode one shared, persistent memory; the sections below say which of
+them has been checked on a real install.
 
 Every coding agent forgets between sessions, and each one remembers differently. Aletheia keeps the memory and the
 rules once, on your machine, and lets each tool read them in the format it already understands. There is no account,
@@ -253,14 +255,38 @@ test/           the test suite and a synthetic fixture database
 docs/           the documents
 ```
 
-## Documents
+## Documentation
 
-1. [Architecture](docs/01-architecture.md) · [Data model](docs/02-data-model.md) · [HTTP API](docs/03-http-api.md)
-   · [Frontend](docs/06-frontend.md) · [Operations](docs/07-operations.md)
-2. [Installers](docs/25-installers.md) · [Sync](docs/29-sync.md) · [Remote MCP](docs/30-remote-mcp.md)
+The full documentation is at <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>. The Markdown in `docs/` is
+canonical.
+
+1. **Get started:** [Introduction](docs/start/introduction.md) · [Installation](docs/start/installation.md)
+   · [Quickstart](docs/start/quickstart.md) · [How it works](docs/start/how-it-works.md)
+   · [Dashboard](docs/start/dashboard.md) · [FAQ](docs/start/faq.md)
+2. **Concepts:** [Memory model](docs/concepts/memory-model.md) · [Rules](docs/concepts/rules.md)
+   · [Search](docs/concepts/search.md) · [Session-start context](docs/concepts/session-context.md)
+   · [Privacy](docs/concepts/privacy.md) · [Facts](docs/33-facts.md) · [Glossary](docs/concepts/glossary.md)
+3. **Connect your tools:** [Overview](docs/tools/overview.md) · [Claude Code](docs/tools/claude-code.md)
+   · [Command Code](docs/tools/command-code.md) · [Codex CLI](docs/tools/codex.md) · [Cursor](docs/tools/cursor.md)
+   · [Gemini CLI](docs/tools/gemini-cli.md) · [Windsurf](docs/tools/windsurf.md) · [OpenCode](docs/tools/opencode.md)
+   · [Claude Desktop](docs/claude-desktop.md) · [Other tools](docs/tools/other-tools.md)
+4. **Guides:** [Migrate from claude-mem](docs/guides/migrate-from-claude-mem.md)
+   · [Write rules once](docs/guides/write-rules-once.md) · [Back up, export, import](docs/guides/backup-export-import.md)
+   · [Run as a service](docs/guides/run-as-a-service.md) · [Model providers](docs/guides/model-providers.md)
+   · [Troubleshooting](docs/guides/troubleshooting.md) · [Sync](docs/29-sync.md) · [Remote MCP](docs/30-remote-mcp.md)
    · [Team mode](docs/31-team.md) · [Requests and goals](docs/32-requests.md)
-3. [Dependencies and licences](docs/dependencies.md) · [Claude Desktop](docs/claude-desktop.md)
-   · [Rules targets](docs/verification/rules-targets.md)
+5. **Reference:** [CLI](docs/reference/cli.md) · [MCP tools](docs/reference/mcp-tools.md)
+   · [Configuration](docs/reference/configuration.md) · [Hooks](docs/reference/hooks.md) · [HTTP API](docs/03-http-api.md)
+   · [Installers](docs/25-installers.md) · [Rules targets](docs/verification/rules-targets.md)
+6. **Compare:** [Aletheia vs claude-mem](docs/compare/aletheia-vs-claude-mem.md)
+   · [Other memory tools](docs/compare/memory-tools.md) · [Claude Code memory options](docs/compare/claude-code-memory.md)
+7. **Project:** [Benchmarks](docs/project/benchmarks.md) · [Status and limits](docs/project/status-and-limits.md)
+   · [Dependencies and licences](docs/dependencies.md)
+8. **Internals:** [Architecture](docs/01-architecture.md) · [Data model](docs/02-data-model.md)
+   · [Frontend](docs/06-frontend.md) · [Operations](docs/07-operations.md)
+
+AI tools can read [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt), or
+[llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt) for every page in one file.
 
 ## Contributing
 

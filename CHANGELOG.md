@@ -6,6 +6,22 @@ history.
 
 ## [Unreleased]
 
+### Added
+
+- A full documentation site: 49 pages in eight sections (Get started, Concepts, Connect your tools, Guides, Reference, Compare, Project, Internals) with a sidebar, breadcrumbs, previous and next links and a search box on the index. Pages cover installation, a quickstart, a page for each tool, the CLI, MCP tools, configuration, hooks, migration from claude-mem, backup, running as a service, model providers, troubleshooting, comparisons and benchmarks.
+- `llms.txt` and `llms-full.txt` for AI readers, a plain Markdown copy beside every page, per-page Open Graph and structured data (`TechArticle`, `BreadcrumbList`, `FAQPage`), and a `robots.txt` that names the main search and AI crawlers.
+- `scripts/build-wiki.mjs` builds a GitHub wiki from the same pages.
+- Search keywords in the package metadata, the registry description and the README tagline.
+
+### Changed
+
+- The landing page no longer shows an old test count, the old "My Work" card or the old latency note.
+- `CONTRIBUTING.md` explains set-up, the checks to run and how to write a documentation page.
+
+### Fixed
+
+- A read-scope token on the HTTP MCP endpoint could call `work_state_write`. It is now a write tool and needs a `sync` or `admin` token.
+
 ## [0.1.10] - 2026-10-29
 
 ### Added

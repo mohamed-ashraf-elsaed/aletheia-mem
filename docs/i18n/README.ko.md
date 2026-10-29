@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
+> Source: [README.md](../../README.md) · source-sha256: 35da26b55be57a8ee6ceb5fee9bc5c743f0abf99a77835e1ff3e077d805e1402
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -7,7 +7,7 @@
 
 # Aletheia
 
-**AI 코딩 도구를 위한 무료 로컬 메모리 및 규칙 허브.**
+**AI 코딩 도구를 위한 무료 로컬 메모리 및 규칙 허브.**<br>Claude Code, Codex CLI, Cursor, Gemini CLI, Windsurf, OpenCode를 위한 영구 메모리. claude-mem을 대체할 수 있는, 로컬 방식이며 특정 도구에 종속되지 않는 대안.
 
 [![Licence](https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem)](../../LICENSE)
 [![Tests](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml/badge.svg)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml)
@@ -24,7 +24,7 @@
 
 ## 무엇인가
 
-Aletheia는 AI 코딩 도구를 위한 무료 로컬 메모리 및 규칙 허브입니다. 모든 도구가 MCP, REST 또는 CLI로 같은 SQLite 저장소를 읽고, 규칙은 각 도구의 자체 지시 파일에 기록됩니다.
+Aletheia는 AI 코딩 도구를 위한 무료 로컬 메모리 및 규칙 허브입니다. 모든 도구가 MCP, REST 또는 CLI로 같은 SQLite 저장소를 읽고, 규칙은 각 도구의 자체 지시 파일에 기록됩니다. Claude Code, Codex CLI, Cursor, Gemini CLI, Windsurf, OpenCode가 함께 쓰는 하나의 영구 메모리를 제공하도록 만들어졌으며, 아래 섹션에서 그중 어떤 도구가 실제 설치에서 확인되었는지 알려 줍니다.
 
 모든 코딩 에이전트는 세션 사이에 잊어버리고, 기억하는 방식도 서로 다릅니다. Aletheia는 메모리와 규칙을 한 번만 당신의 컴퓨터에 저장하고, 각 도구가 이미 이해하는 형식으로 읽게 합니다. 계정도, 텔레메트리도 없으며 모델 제공자를 설정하지 않으면 네트워크 호출도 하지 않습니다. 루프백에서만 수신합니다.
 
@@ -214,12 +214,34 @@ docs/           the documents
 
 ## 문서
 
-1. [아키텍처](../../docs/01-architecture.md) · [데이터 모델](../../docs/02-data-model.md) · [HTTP API](../../docs/03-http-api.md)
+전체 문서는 <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>에 있습니다. `docs/`의 Markdown이 기준입니다.
+
+1. **시작하기:** [소개](../../docs/start/introduction.md) · [설치](../../docs/start/installation.md)
+   · [빠른 시작](../../docs/start/quickstart.md) · [작동 방식](../../docs/start/how-it-works.md)
+   · [대시보드](../../docs/start/dashboard.md) · [자주 묻는 질문](../../docs/start/faq.md)
+2. **개념:** [메모리 모델](../../docs/concepts/memory-model.md) · [규칙](../../docs/concepts/rules.md)
+   · [검색](../../docs/concepts/search.md) · [세션 시작 컨텍스트](../../docs/concepts/session-context.md)
+   · [개인정보 보호](../../docs/concepts/privacy.md) · [사실](../../docs/33-facts.md) · [용어집](../../docs/concepts/glossary.md)
+3. **도구 연결하기:** [개요](../../docs/tools/overview.md) · [Claude Code](../../docs/tools/claude-code.md)
+   · [Command Code](../../docs/tools/command-code.md) · [Codex CLI](../../docs/tools/codex.md) · [Cursor](../../docs/tools/cursor.md)
+   · [Gemini CLI](../../docs/tools/gemini-cli.md) · [Windsurf](../../docs/tools/windsurf.md) · [OpenCode](../../docs/tools/opencode.md)
+   · [Claude Desktop](../../docs/claude-desktop.md) · [기타 도구](../../docs/tools/other-tools.md)
+4. **가이드:** [claude-mem에서 마이그레이션](../../docs/guides/migrate-from-claude-mem.md)
+   · [규칙을 한 번만 쓰기](../../docs/guides/write-rules-once.md) · [백업, 내보내기, 가져오기](../../docs/guides/backup-export-import.md)
+   · [서비스로 실행하기](../../docs/guides/run-as-a-service.md) · [모델 제공자](../../docs/guides/model-providers.md)
+   · [문제 해결](../../docs/guides/troubleshooting.md) · [동기화](../../docs/29-sync.md) · [원격 MCP](../../docs/30-remote-mcp.md)
+   · [팀 모드](../../docs/31-team.md) · [요청과 목표](../../docs/32-requests.md)
+5. **참조:** [CLI](../../docs/reference/cli.md) · [MCP 도구](../../docs/reference/mcp-tools.md)
+   · [설정](../../docs/reference/configuration.md) · [훅](../../docs/reference/hooks.md) · [HTTP API](../../docs/03-http-api.md)
+   · [설치 프로그램](../../docs/25-installers.md) · [규칙 대상](../../docs/verification/rules-targets.md)
+6. **비교:** [Aletheia와 claude-mem 비교](../../docs/compare/aletheia-vs-claude-mem.md)
+   · [기타 메모리 도구](../../docs/compare/memory-tools.md) · [Claude Code 메모리 옵션](../../docs/compare/claude-code-memory.md)
+7. **프로젝트:** [벤치마크](../../docs/project/benchmarks.md) · [상태와 한계](../../docs/project/status-and-limits.md)
+   · [의존성과 라이선스](../../docs/dependencies.md)
+8. **내부 구조:** [아키텍처](../../docs/01-architecture.md) · [데이터 모델](../../docs/02-data-model.md)
    · [프런트엔드](../../docs/06-frontend.md) · [운영](../../docs/07-operations.md)
-2. [설치 프로그램](../../docs/25-installers.md) · [동기화](../../docs/29-sync.md) · [원격 MCP](../../docs/30-remote-mcp.md)
-   · [Team mode](../../docs/31-team.md) · [Requests and goals](../../docs/32-requests.md)
-3. [Dependencies and licences](../../docs/dependencies.md) · [Claude Desktop](../../docs/claude-desktop.md)
-   · [Rules targets](../../docs/verification/rules-targets.md)
+
+AI 도구는 [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt)를 읽을 수 있고, 모든 페이지가 한 파일에 담긴 [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt)도 읽을 수 있습니다.
 
 ## 기여
 

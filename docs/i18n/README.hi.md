@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
+> Source: [README.md](../../README.md) · source-sha256: 35da26b55be57a8ee6ceb5fee9bc5c743f0abf99a77835e1ff3e077d805e1402
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -7,7 +7,7 @@
 
 # Aletheia
 
-**AI कोडिंग टूल के लिए मुफ़्त, लोकल मेमोरी और नियम हब।**
+**AI कोडिंग टूल के लिए मुफ़्त, लोकल मेमोरी और नियम हब।**<br>Claude Code, Codex CLI, Cursor, Gemini CLI, Windsurf और OpenCode के लिए स्थायी मेमोरी: claude-mem का लोकल विकल्प, जो किसी एक टूल से बंधा नहीं है।
 
 [![Licence](https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem)](../../LICENSE)
 [![Tests](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml/badge.svg)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml)
@@ -24,7 +24,7 @@
 
 ## यह क्या है
 
-Aletheia AI कोडिंग टूल के लिए मुफ़्त, लोकल मेमोरी और नियम हब है। कोई भी टूल MCP, REST या CLI से एक ही SQLite स्टोर पढ़ता है, और आपके नियम हर टूल की अपनी निर्देश फ़ाइल में लिखे जाते हैं।
+Aletheia AI कोडिंग टूल के लिए मुफ़्त, लोकल मेमोरी और नियम हब है। कोई भी टूल MCP, REST या CLI से एक ही SQLite स्टोर पढ़ता है, और आपके नियम हर टूल की अपनी निर्देश फ़ाइल में लिखे जाते हैं। इसे Claude Code, Codex CLI, Cursor, Gemini CLI, Windsurf और OpenCode को एक साझा, स्थायी मेमोरी देने के लिए बनाया गया है; नीचे के सेक्शन बताते हैं कि इनमें से किन टूल को वास्तविक इंस्टॉल पर जाँचा गया है।
 
 हर कोडिंग एजेंट सेशन के बीच भूल जाता है, और हर एक अलग तरह से याद रखता है। Aletheia मेमोरी और नियम एक बार आपकी मशीन पर रखता है और हर टूल को उसी प्रारूप में पढ़ने देता है जो वह पहले से समझता है। कोई खाता नहीं, कोई टेलीमेट्री नहीं, और जब तक आप मॉडल प्रदाता कॉन्फ़िगर नहीं करते, कोई नेटवर्क कॉल नहीं। यह केवल लूपबैक पर सुनता है।
 
@@ -212,14 +212,36 @@ test/           the test suite and a synthetic fixture database
 docs/           the documents
 ```
 
-## दस्तावेज़
+## दस्तावेज़ीकरण
 
-1. [आर्किटेक्चर](../../docs/01-architecture.md) · [डेटा मॉडल](../../docs/02-data-model.md) · [HTTP API](../../docs/03-http-api.md)
+पूरा दस्तावेज़ीकरण <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/> पर है। `docs/` का Markdown मानक है।
+
+1. **शुरू करें:** [परिचय](../../docs/start/introduction.md) · [इंस्टॉलेशन](../../docs/start/installation.md)
+   · [क्विकस्टार्ट](../../docs/start/quickstart.md) · [यह कैसे काम करता है](../../docs/start/how-it-works.md)
+   · [डैशबोर्ड](../../docs/start/dashboard.md) · [अक्सर पूछे जाने वाले प्रश्न](../../docs/start/faq.md)
+2. **अवधारणाएँ:** [मेमोरी मॉडल](../../docs/concepts/memory-model.md) · [नियम](../../docs/concepts/rules.md)
+   · [खोज](../../docs/concepts/search.md) · [सेशन शुरू होने पर संदर्भ](../../docs/concepts/session-context.md)
+   · [गोपनीयता](../../docs/concepts/privacy.md) · [तथ्य](../../docs/33-facts.md) · [शब्दावली](../../docs/concepts/glossary.md)
+3. **अपने टूल जोड़ें:** [ओवरव्यू](../../docs/tools/overview.md) · [Claude Code](../../docs/tools/claude-code.md)
+   · [Command Code](../../docs/tools/command-code.md) · [Codex CLI](../../docs/tools/codex.md) · [Cursor](../../docs/tools/cursor.md)
+   · [Gemini CLI](../../docs/tools/gemini-cli.md) · [Windsurf](../../docs/tools/windsurf.md) · [OpenCode](../../docs/tools/opencode.md)
+   · [Claude Desktop](../../docs/claude-desktop.md) · [अन्य टूल](../../docs/tools/other-tools.md)
+4. **गाइड:** [claude-mem से माइग्रेट करें](../../docs/guides/migrate-from-claude-mem.md)
+   · [नियम एक बार लिखें](../../docs/guides/write-rules-once.md) · [बैकअप, एक्सपोर्ट, इम्पोर्ट](../../docs/guides/backup-export-import.md)
+   · [सेवा के रूप में चलाएँ](../../docs/guides/run-as-a-service.md) · [मॉडल प्रदाता](../../docs/guides/model-providers.md)
+   · [समस्या निवारण](../../docs/guides/troubleshooting.md) · [सिंक](../../docs/29-sync.md) · [रिमोट MCP](../../docs/30-remote-mcp.md)
+   · [टीम मोड](../../docs/31-team.md) · [अनुरोध और लक्ष्य](../../docs/32-requests.md)
+5. **संदर्भ:** [CLI](../../docs/reference/cli.md) · [MCP टूल](../../docs/reference/mcp-tools.md)
+   · [कॉन्फ़िगरेशन](../../docs/reference/configuration.md) · [हुक](../../docs/reference/hooks.md) · [HTTP API](../../docs/03-http-api.md)
+   · [इंस्टॉलर](../../docs/25-installers.md) · [नियमों के लक्ष्य](../../docs/verification/rules-targets.md)
+6. **तुलना:** [Aletheia बनाम claude-mem](../../docs/compare/aletheia-vs-claude-mem.md)
+   · [अन्य मेमोरी टूल](../../docs/compare/memory-tools.md) · [Claude Code के मेमोरी विकल्प](../../docs/compare/claude-code-memory.md)
+7. **प्रोजेक्ट:** [बेंचमार्क](../../docs/project/benchmarks.md) · [स्थिति और सीमाएँ](../../docs/project/status-and-limits.md)
+   · [निर्भरताएँ और लाइसेंस](../../docs/dependencies.md)
+8. **आंतरिक संरचना:** [आर्किटेक्चर](../../docs/01-architecture.md) · [डेटा मॉडल](../../docs/02-data-model.md)
    · [फ़्रंटएंड](../../docs/06-frontend.md) · [संचालन](../../docs/07-operations.md)
-2. [इंस्टॉलर](../../docs/25-installers.md) · [सिंक](../../docs/29-sync.md) · [रिमोट MCP](../../docs/30-remote-mcp.md)
-   · [Team mode](../../docs/31-team.md) · [Requests and goals](../../docs/32-requests.md)
-3. [Dependencies and licences](../../docs/dependencies.md) · [Claude Desktop](../../docs/claude-desktop.md)
-   · [Rules targets](../../docs/verification/rules-targets.md)
+
+AI टूल [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt) पढ़ सकते हैं, या सभी पेज एक फ़ाइल में पाने के लिए [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt) पढ़ सकते हैं।
 
 ## योगदान
 

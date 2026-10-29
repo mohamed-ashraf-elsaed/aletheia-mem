@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
+> Source: [README.md](../../README.md) · source-sha256: 35da26b55be57a8ee6ceb5fee9bc5c743f0abf99a77835e1ff3e077d805e1402
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -7,7 +7,7 @@
 
 # Aletheia
 
-**Um hub gratuito e local de memória e regras para ferramentas de programação com IA.**
+**Um hub gratuito e local de memória e regras para ferramentas de programação com IA.**<br>Memória persistente para Claude Code, Codex CLI, Cursor, Gemini CLI, Windsurf e OpenCode: uma alternativa local ao claude-mem, independente de ferramenta.
 
 [![Licence](https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem)](../../LICENSE)
 [![Tests](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml/badge.svg)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml)
@@ -24,7 +24,7 @@ As traduções automáticas ficam em `docs/i18n/`; a versão em inglês é a can
 
 ## O que é
 
-Aletheia é um hub gratuito e local de memória e regras para ferramentas de programação com IA. Qualquer ferramenta lê o mesmo armazenamento SQLite por MCP, REST ou pela CLI, e suas regras são gravadas no arquivo de instruções de cada ferramenta.
+Aletheia é um hub gratuito e local de memória e regras para ferramentas de programação com IA. Qualquer ferramenta lê o mesmo armazenamento SQLite por MCP, REST ou pela CLI, e suas regras são gravadas no arquivo de instruções de cada ferramenta. Ele foi criado para dar ao Claude Code, ao Codex CLI, ao Cursor, ao Gemini CLI, ao Windsurf e ao OpenCode uma memória compartilhada e persistente; as seções abaixo dizem quais deles foram verificados em uma instalação real.
 
 Todo agente de programação esquece entre sessões, e cada um lembra de um jeito diferente. Aletheia guarda a memória e as regras uma vez, na sua máquina, e deixa cada ferramenta lê-las no formato que já entende. Não há conta, telemetria nem chamada de rede, a menos que você configure um provedor de modelos. Ela escuta apenas em loopback.
 
@@ -212,14 +212,36 @@ test/           the test suite and a synthetic fixture database
 docs/           the documents
 ```
 
-## Documentos
+## Documentação
 
-1. [Arquitetura](../../docs/01-architecture.md) · [Modelo de dados](../../docs/02-data-model.md) · [API HTTP](../../docs/03-http-api.md)
+A documentação completa está em <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>. O Markdown em `docs/` é a versão canônica.
+
+1. **Primeiros passos:** [Introdução](../../docs/start/introduction.md) · [Instalação](../../docs/start/installation.md)
+   · [Início rápido](../../docs/start/quickstart.md) · [Como funciona](../../docs/start/how-it-works.md)
+   · [Painel](../../docs/start/dashboard.md) · [Perguntas frequentes](../../docs/start/faq.md)
+2. **Conceitos:** [Modelo de memória](../../docs/concepts/memory-model.md) · [Regras](../../docs/concepts/rules.md)
+   · [Busca](../../docs/concepts/search.md) · [Contexto de início de sessão](../../docs/concepts/session-context.md)
+   · [Privacidade](../../docs/concepts/privacy.md) · [Fatos](../../docs/33-facts.md) · [Glossário](../../docs/concepts/glossary.md)
+3. **Conecte suas ferramentas:** [Visão geral](../../docs/tools/overview.md) · [Claude Code](../../docs/tools/claude-code.md)
+   · [Command Code](../../docs/tools/command-code.md) · [Codex CLI](../../docs/tools/codex.md) · [Cursor](../../docs/tools/cursor.md)
+   · [Gemini CLI](../../docs/tools/gemini-cli.md) · [Windsurf](../../docs/tools/windsurf.md) · [OpenCode](../../docs/tools/opencode.md)
+   · [Claude Desktop](../../docs/claude-desktop.md) · [Outras ferramentas](../../docs/tools/other-tools.md)
+4. **Guias:** [Migrar do claude-mem](../../docs/guides/migrate-from-claude-mem.md)
+   · [Escrever as regras uma vez](../../docs/guides/write-rules-once.md) · [Backup, exportação e importação](../../docs/guides/backup-export-import.md)
+   · [Executar como serviço](../../docs/guides/run-as-a-service.md) · [Provedores de modelos](../../docs/guides/model-providers.md)
+   · [Solução de problemas](../../docs/guides/troubleshooting.md) · [Sincronização](../../docs/29-sync.md) · [MCP remoto](../../docs/30-remote-mcp.md)
+   · [Modo de equipe](../../docs/31-team.md) · [Solicitações e objetivos](../../docs/32-requests.md)
+5. **Referência:** [CLI](../../docs/reference/cli.md) · [Ferramentas MCP](../../docs/reference/mcp-tools.md)
+   · [Configuração](../../docs/reference/configuration.md) · [Hooks](../../docs/reference/hooks.md) · [API HTTP](../../docs/03-http-api.md)
+   · [Instaladores](../../docs/25-installers.md) · [Destinos das regras](../../docs/verification/rules-targets.md)
+6. **Comparações:** [Aletheia versus claude-mem](../../docs/compare/aletheia-vs-claude-mem.md)
+   · [Outras ferramentas de memória](../../docs/compare/memory-tools.md) · [Opções de memória do Claude Code](../../docs/compare/claude-code-memory.md)
+7. **Projeto:** [Benchmarks](../../docs/project/benchmarks.md) · [Status e limites](../../docs/project/status-and-limits.md)
+   · [Dependências e licenças](../../docs/dependencies.md)
+8. **Funcionamento interno:** [Arquitetura](../../docs/01-architecture.md) · [Modelo de dados](../../docs/02-data-model.md)
    · [Frontend](../../docs/06-frontend.md) · [Operações](../../docs/07-operations.md)
-2. [Instaladores](../../docs/25-installers.md) · [Sincronização](../../docs/29-sync.md) · [MCP remoto](../../docs/30-remote-mcp.md)
-   · [Team mode](../../docs/31-team.md) · [Requests and goals](../../docs/32-requests.md)
-3. [Dependencies and licences](../../docs/dependencies.md) · [Claude Desktop](../../docs/claude-desktop.md)
-   · [Rules targets](../../docs/verification/rules-targets.md)
+
+Ferramentas de IA podem ler o [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt), ou o [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt) para todas as páginas em um único arquivo.
 
 ## Contribuir
 

@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
+> Source: [README.md](../../README.md) · source-sha256: 35da26b55be57a8ee6ceb5fee9bc5c743f0abf99a77835e1ff3e077d805e1402
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -7,7 +7,7 @@
 
 # Aletheia
 
-**面向 AI 编程工具的免费本地记忆与规则中心。**
+**面向 AI 编程工具的免费本地记忆与规则中心。**<br>为 Claude Code、Codex CLI、Cursor、Gemini CLI、Windsurf 和 OpenCode 提供持久记忆：claude-mem 的本地替代方案，不绑定任何特定工具。
 
 [![Licence](https://img.shields.io/github/license/mohamed-ashraf-elsaed/aletheia-mem)](../../LICENSE)
 [![Tests](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml/badge.svg)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/actions/workflows/test.yml)
@@ -24,7 +24,7 @@
 
 ## 它是什么
 
-Aletheia 是一个面向 AI 编程工具的免费本地记忆与规则中心。任意工具都可以通过 MCP、REST 或 CLI 读取同一个 SQLite 存储，你的规则会被写入每个工具自己的指令文件。
+Aletheia 是一个面向 AI 编程工具的免费本地记忆与规则中心。任意工具都可以通过 MCP、REST 或 CLI 读取同一个 SQLite 存储，你的规则会被写入每个工具自己的指令文件。它旨在为 Claude Code、Codex CLI、Cursor、Gemini CLI、Windsurf 和 OpenCode 提供一份共享的持久记忆；下面各节会说明其中哪些已在真实安装上检查过。
 
 每个编程代理在会话之间都会遗忘，而且各自的记忆方式不同。Aletheia 把记忆和规则保存一次，放在你的机器上，让每个工具用自己已经理解的格式读取。没有账户、没有遥测，除非你配置模型提供商，否则不会发起网络请求。它只监听回环地址。
 
@@ -214,12 +214,34 @@ docs/           the documents
 
 ## 文档
 
-1. [架构](../../docs/01-architecture.md) · [数据模型](../../docs/02-data-model.md) · [HTTP API](../../docs/03-http-api.md)
+完整文档位于 <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>。以 `docs/` 中的 Markdown 为准。
+
+1. **入门：** [简介](../../docs/start/introduction.md) · [安装](../../docs/start/installation.md)
+   · [快速开始](../../docs/start/quickstart.md) · [工作原理](../../docs/start/how-it-works.md)
+   · [仪表盘](../../docs/start/dashboard.md) · [常见问题](../../docs/start/faq.md)
+2. **概念：** [记忆模型](../../docs/concepts/memory-model.md) · [规则](../../docs/concepts/rules.md)
+   · [搜索](../../docs/concepts/search.md) · [会话开始时的上下文](../../docs/concepts/session-context.md)
+   · [隐私](../../docs/concepts/privacy.md) · [事实](../../docs/33-facts.md) · [术语表](../../docs/concepts/glossary.md)
+3. **连接你的工具：** [概览](../../docs/tools/overview.md) · [Claude Code](../../docs/tools/claude-code.md)
+   · [Command Code](../../docs/tools/command-code.md) · [Codex CLI](../../docs/tools/codex.md) · [Cursor](../../docs/tools/cursor.md)
+   · [Gemini CLI](../../docs/tools/gemini-cli.md) · [Windsurf](../../docs/tools/windsurf.md) · [OpenCode](../../docs/tools/opencode.md)
+   · [Claude Desktop](../../docs/claude-desktop.md) · [其他工具](../../docs/tools/other-tools.md)
+4. **指南：** [从 claude-mem 迁移](../../docs/guides/migrate-from-claude-mem.md)
+   · [一次编写规则](../../docs/guides/write-rules-once.md) · [备份、导出与导入](../../docs/guides/backup-export-import.md)
+   · [作为服务运行](../../docs/guides/run-as-a-service.md) · [模型提供商](../../docs/guides/model-providers.md)
+   · [故障排查](../../docs/guides/troubleshooting.md) · [同步](../../docs/29-sync.md) · [远程 MCP](../../docs/30-remote-mcp.md)
+   · [团队模式](../../docs/31-team.md) · [请求与目标](../../docs/32-requests.md)
+5. **参考：** [CLI](../../docs/reference/cli.md) · [MCP 工具](../../docs/reference/mcp-tools.md)
+   · [配置](../../docs/reference/configuration.md) · [钩子](../../docs/reference/hooks.md) · [HTTP API](../../docs/03-http-api.md)
+   · [安装器](../../docs/25-installers.md) · [规则目标](../../docs/verification/rules-targets.md)
+6. **对比：** [Aletheia 与 claude-mem 对比](../../docs/compare/aletheia-vs-claude-mem.md)
+   · [其他记忆工具](../../docs/compare/memory-tools.md) · [Claude Code 的记忆方案](../../docs/compare/claude-code-memory.md)
+7. **项目：** [基准测试](../../docs/project/benchmarks.md) · [状态与限制](../../docs/project/status-and-limits.md)
+   · [依赖与许可证](../../docs/dependencies.md)
+8. **内部实现：** [架构](../../docs/01-architecture.md) · [数据模型](../../docs/02-data-model.md)
    · [前端](../../docs/06-frontend.md) · [运维](../../docs/07-operations.md)
-2. [安装器](../../docs/25-installers.md) · [同步](../../docs/29-sync.md) · [远程 MCP](../../docs/30-remote-mcp.md)
-   · [Team mode](../../docs/31-team.md) · [Requests and goals](../../docs/32-requests.md)
-3. [Dependencies and licences](../../docs/dependencies.md) · [Claude Desktop](../../docs/claude-desktop.md)
-   · [Rules targets](../../docs/verification/rules-targets.md)
+
+AI 工具可以读取 [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt)，也可以读取 [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt)，后者把所有页面合并在一个文件中。
 
 ## 贡献
 
