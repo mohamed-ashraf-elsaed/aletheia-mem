@@ -36,7 +36,7 @@ aletheia-server
 OpenCode listed the generated MCP config. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), all on the author's machine and one user, with secrets redacted and no leaks found by the checker. No hook has run inside Cursor, Gemini CLI, Windsurf or OpenCode yet, and answer accuracy is not measured. CI runs the test suite on Linux, macOS and Windows. On Windows, two hook checks (Windsurf and Gemini CLI) are skipped and no real tool was tried there, so Windows is tested in CI only.
 
 <!-- claims:begin -->
-**1,457 tests** — 0 failures (run `bun test`).
+**1,480 tests** — 0 failures (run `bun test`).
 <!-- claims:end -->
 
 [English](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/README.md) · [中文](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.zh.md) · [Español](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.es.md) · [Português (Brasil)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.pt-br.md) · [日本語](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ja.md) · [Deutsch](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.de.md) · [Français](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.fr.md) · [한국어](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ko.md) · [हिन्दी](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.hi.md) · [العربية](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ar.md) · [Русский](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ru.md).
@@ -63,8 +63,9 @@ Open <http://127.0.0.1:37790>. Needs [Bun](https://bun.sh) 1.1 or newer. To inst
 run `npm install -g aletheia-mem`, then start it with `aletheia-server`. There are no runtime dependencies to
 install.
 
-The first screen has four tabs: **Work** (Aletheia's own view of captured sessions, facts and goals), **Memory**
-(search, edit, pin, delete, export), **Rules** (write once and sync) and **Tools** (installer status and audit).
+The first screen has five tabs: **Home** (start here: pick a project and see what Aletheia knows about it, its rules and its connected
+tools, in plain words), **Activity** (Aletheia's own view of the requests and sessions your tools worked on), **Knowledge** (search, edit, pin, hide, export),
+**Rules** (write once and sync) and **Connections** (installer status and audit).
 
 ## How capture works
 

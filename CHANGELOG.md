@@ -6,6 +6,16 @@ history.
 
 ## [Unreleased]
 
+### Added
+
+- A **Home** page, now the default. It lists the projects you work in and, for one project, shows in plain words what Aletheia knows about it (readable titles, a Hide button, a box to save a note), the rules that apply (switches, a box to add a rule with example chips, and a preview-first button that writes them into each tool's file), the connected tools (on, needs setup or not installed, with the command to copy) and what happened lately. Every block has a hint and an example.
+
+### Changed
+
+- The tabs now use plain names: Home, Activity (was Work), Knowledge (was Memory), Rules and Connections (was Tools). The addresses (`#/work`, `#/memory`, `#/tools`) are unchanged. Sub-pages are renamed too: Needs a look, Hidden, Savings, Health checks, What tools receive and History.
+- The project list in the header no longer shows worktree folders, temporary folders or folders with almost nothing in them. The Home page lists them under "other folders".
+- Request cards on the Activity page show a readable title instead of pasted text, JSON or a row of numbers, and say "How we worked this out" and "What was done" instead of "Progress evidence" and "Came out of it".
+
 ## [0.1.9] - 2026-10-28
 
 ### Added

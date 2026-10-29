@@ -21,8 +21,9 @@ describe("routes with pages inside tabs", () => {
     expect(routeOf("#/memory")).toMatchObject({ tab: "memory", sub: "memories", key: "memory/memories" });
     expect(routeOf("#/rules/suggestions")).toMatchObject({ tab: "rules", sub: "suggestions" });
     expect(routeOf("#/tools/activity?limit=50").key).toBe("tools/activity");
-    expect(routeOf("")).toMatchObject({ tab: "work", sub: null, key: "work" });
-    expect(routeOf("#/nope/x")).toMatchObject({ tab: "work" });
+    expect(routeOf("")).toMatchObject({ tab: "home", sub: null, key: "home" });
+    expect(routeOf("#/nope/x")).toMatchObject({ tab: "home" });
+    expect(routeOf("#/work/session/s1").tab).toBe("work");
   });
   test("an unknown page falls back to the first page of the tab", () => {
     expect(routeOf("#/memory/zzz").sub).toBe("memories");
@@ -37,7 +38,7 @@ describe("routes with pages inside tabs", () => {
     expect(routeOf("#/memory/facts?page=1").key).toBe(routeOf("#/memory/facts?page=9&status=history").key);
   });
   test("every tab has a shortcut letter and a hint, and the letters are unique", () => {
-    expect(TABS.map((tab) => tab.key)).toEqual(["w", "m", "r", "t"]);
+    expect(TABS.map((tab) => tab.key)).toEqual(["h", "w", "m", "r", "t"]);
     expect(new Set(TABS.map((tab) => tab.key)).size).toBe(TABS.length);
     for (const tab of TABS) { expect(tab.hint.length).toBeGreaterThan(5); expect(tab.hash).toBe(`#/${tab.id}`); }
     expect(Object.keys(SUBVIEWS).sort()).toEqual(TABS.map((tab) => tab.id).sort());
@@ -281,9 +282,9 @@ describe("the palette", () => {
     const items = K.staticCommands({ navigate() {}, setTheme() {}, refresh() {} });
     const labels = items.map((item) => item.label);
     for (const tab of TABS) expect(labels).toContain(`Go to ${tab.label}`);
-    expect(labels).toContain("Memory: Facts");
-    expect(labels).toContain("Rules: Suggested");
-    expect(labels).toContain("Tools: Activity");
+    expect(labels).toContain("Knowledge: Facts");
+    expect(labels).toContain("Rules: Suggestions");
+    expect(labels).toContain("Connections: History");
     expect(rankCommands(items, "dark")[0].label).toBe("Theme: dark");
     expect(rankCommands(items, "short")[0].label).toBe("Show keyboard shortcuts");
     expect(new Set(items.map((item) => item.id)).size).toBe(items.length);

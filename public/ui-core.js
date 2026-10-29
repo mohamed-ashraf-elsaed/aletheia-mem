@@ -4,26 +4,28 @@
 import { parseHash } from "./ui-pure.js";
 
 export const TABS = [
-  { id: "work", label: "Work", hash: "#/work", key: "w", icon: "home", hint: "What your tools are doing now" },
-  { id: "memory", label: "Memory", hash: "#/memory", key: "m", icon: "layers", hint: "Memories, facts and the review queue" },
+  { id: "home", label: "Home", hash: "#/home", key: "h", icon: "home", hint: "What Aletheia knows, your rules and your tools, project by project" },
+  { id: "work", label: "Activity", hash: "#/work", key: "w", icon: "layers", hint: "Every request and session your tools worked on" },
+  { id: "memory", label: "Knowledge", hash: "#/memory", key: "m", icon: "layers", hint: "Everything Aletheia remembered: memories, facts and what needs a look" },
   { id: "rules", label: "Rules", hash: "#/rules", key: "r", icon: "rules", hint: "How you want every tool to work" },
-  { id: "tools", label: "Tools", hash: "#/tools", key: "t", icon: "tool", hint: "Installed tools, sync and activity" },
+  { id: "tools", label: "Connections", hash: "#/tools", key: "t", icon: "tool", hint: "Connected tools, sync, devices and checks" },
 ];
 
 /** The pages inside a tab. The first one is the default. */
 export const SUBVIEWS = {
+  home: [],
   work: [],
   memory: [
     { id: "memories", label: "Memories" },
     { id: "facts", label: "Facts" },
-    { id: "review", label: "Review" },
-    { id: "dismissed", label: "Dismissed" },
-    { id: "economics", label: "Economics" },
+    { id: "review", label: "Needs a look" },
+    { id: "dismissed", label: "Hidden" },
+    { id: "economics", label: "Savings" },
     { id: "search", label: "Search" },
   ],
   rules: [
     { id: "rules", label: "Rules" },
-    { id: "suggestions", label: "Suggested", count: 0 },
+    { id: "suggestions", label: "Suggestions", count: 0 },
     { id: "sync", label: "Write to tools" },
     { id: "import", label: "Import" },
   ],
@@ -33,16 +35,16 @@ export const SUBVIEWS = {
     { id: "access", label: "Remote access" },
     { id: "alerts", label: "Alerts" },
     { id: "team", label: "Team" },
-    { id: "checks", label: "Checks" },
-    { id: "activity", label: "Activity" },
-    { id: "context", label: "Context" },
+    { id: "checks", label: "Health checks" },
+    { id: "activity", label: "History" },
+    { id: "context", label: "What tools receive" },
     { id: "settings", label: "Settings" },
   ],
 };
 
-export const DEFAULT_TAB = "work";
+export const DEFAULT_TAB = "home";
 
-/** "#/memory?x=1" -> "memory"; anything unknown (including "") -> "work". */
+/** "#/memory?x=1" -> "memory"; anything unknown (including "") -> "home". */
 export function parseRoute(hash) {
   const raw = String(hash ?? "").replace(/^#\/?/, "").split("?")[0].trim().toLowerCase();
   return TABS.some((tab) => tab.id === raw) ? raw : DEFAULT_TAB;
@@ -164,6 +166,6 @@ export function routeOf(hash) {
   const tab = parseRoute(`#/${path[0] ?? ""}`);
   const subs = SUBVIEWS[tab] ?? [];
   const sub = subs.some((item) => item.id === path[1]) ? path[1] : subs[0]?.id ?? null;
-  const rest = tab === "work" ? path.slice(1) : path.slice(sub === path[1] ? 2 : 1);
+  const rest = tab === "work" || tab === "home" ? path.slice(1) : path.slice(sub === path[1] ? 2 : 1);
   return { tab, sub, rest, params, key: [tab, sub, ...rest].filter(Boolean).join("/") };
 }

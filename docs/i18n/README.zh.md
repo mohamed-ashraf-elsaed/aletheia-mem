@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
+> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -38,7 +38,7 @@ bun bin/aletheia-server.mjs
 
 打开 <http://127.0.0.1:37790>。需要 [Bun](https://bun.sh) 1.1 或更高版本。没有 `npm install` 步骤，因为没有运行时依赖。
 
-首个界面有四个标签页：**Work**（Aletheia 自己的已捕获会话、事实和目标视图）、**Memory**（搜索、编辑、固定、删除、导出）、**Rules**（写一次并同步）和 **Tools**（安装器状态与审计）。
+首个界面有五个标签页：**Home**（从这里开始：选择一个项目，用平实的语言查看 Aletheia 对它了解什么、它的规则和已连接的工具）、**Activity**（Aletheia 自己的、你的工具处理过的请求和会话视图）、**Knowledge**（搜索、编辑、固定、隐藏、导出）、**Rules**（写一次并同步）和 **Connections**（安装器状态与审计）。
 
 ## 捕获如何工作
 

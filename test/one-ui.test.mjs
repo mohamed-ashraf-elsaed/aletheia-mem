@@ -6,7 +6,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { startServer } from "../src/server.mjs";
-import { channelLines, classicViewerAvailable, duplicateView, factView, healthView, parseRoute, reviewView, routeHash, searchReasonText, TABS } from "../public/ui-core.js";
+import { channelLines, classicViewerAvailable, duplicateView, factView, healthView, parseRoute, reviewView, routeHash, routeOf, searchReasonText, TABS } from "../public/ui-core.js";
 import { makeFixture } from "./fixture.mjs";
 
 const root = join(import.meta.dir, "..");
@@ -220,18 +220,19 @@ describe("tab modules", () => {
 });
 
 describe("DOM-free router and view helpers", () => {
-  test("the four routes parse and anything else falls back to Work", () => {
-    expect(TABS.map((tab) => tab.id)).toEqual(["work", "memory", "rules", "tools"]);
+  test("the five routes parse and anything else falls back to Home", () => {
+    expect(TABS.map((tab) => tab.id)).toEqual(["home", "work", "memory", "rules", "tools"]);
+    expect(parseRoute("#/home")).toBe("home");
     expect(parseRoute("#/work")).toBe("work");
     expect(parseRoute("#/memory")).toBe("memory");
     expect(parseRoute("#/rules?x=1")).toBe("rules");
     expect(parseRoute("#/tools")).toBe("tools");
-    expect(parseRoute("#/work/session/s1?project=shop")).toBe("work");
-    expect(parseRoute("#/nope")).toBe("work");
-    expect(parseRoute("")).toBe("work");
-    expect(parseRoute(null)).toBe("work");
+    expect(routeOf("#/work/session/s1?project=shop").tab).toBe("work");
+    expect(parseRoute("#/nope")).toBe("home");
+    expect(parseRoute("")).toBe("home");
+    expect(parseRoute(null)).toBe("home");
     expect(routeHash("memory")).toBe("#/memory");
-    expect(routeHash("nope")).toBe("#/work");
+    expect(routeHash("nope")).toBe("#/home");
   });
 
   test("health, facts, channels and review rows are shaped for the DOM", () => {

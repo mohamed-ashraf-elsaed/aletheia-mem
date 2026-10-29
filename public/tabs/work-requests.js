@@ -8,10 +8,14 @@ import { region } from "../ui-region.js";
 import { filterBar, hideCard, segmentFilter, selectFilter } from "../ui-views.js";
 import { estimated } from "../ui-estimates.js";
 import { queryString } from "./memory-views.js";
+import { plainTitle } from "../ui-home-model.js";
+
+/** A card needs a title a person can read; raw prompts are often pasted text, JSON or numbers. */
+const requestTitle = (request) => plainTitle(request.title) ?? "A work session (no readable title)";
 
 const STATUS_TONE = { Working: "success", Shipped: "info", "Waiting on you": "warning", Idle: "neutral" };
 const ARTIFACT_LABEL = { commit: "commit", pull: "pull request", branch: "branch" };
-const NO_ETA = "No ETA yet. One is shown only when a request has two session starts, one finished session and work left.";
+const NO_ETA = "No finish estimate yet. One appears once a request has two sessions and one of them has finished.";
 
 export const requestHref = (id) => `#/work/request/${encodeURIComponent(id)}`;
 export const sessionHref = (project, id) => `#/work/session/${encodeURIComponent(id)}?project=${encodeURIComponent(project ?? "")}`;
@@ -61,10 +65,10 @@ export function progressBlock(request = {}) {
     ...(evidence.summaryIds ?? []).map((id) => `summary #${id}`),
   ];
   return h("div", { class: "ui-request-progress" },
-    progressBar({ value: percent, max: 100, label: `Progress for ${request.title ?? request.id ?? "this request"}`, text: `${percent}% · ${completed} of ${total} sessions finished` }),
-    h("div", { class: "ui-row" }, estimated("Progress"), h("span", { class: "ui-meta" }, "the share of sessions that ended or produced a summary")),
+    progressBar({ value: percent, max: 100, label: `Progress for ${requestTitle(request)}`, text: `${percent}% · ${completed} of ${total} sessions finished` }),
+    h("div", { class: "ui-row" }, estimated("Progress"), h("span", { class: "ui-meta" }, "the share of sessions that finished. A rough guide, not a promise.")),
     disclosure({
-      summary: `Progress evidence (${ids.length})`,
+      summary: `How we worked this out (${ids.length})`,
       content: ids.length ? h("div", { class: "ui-meta", dir: "auto" }, ids.join(" · ")) : h("p", { class: "ui-meta" }, "No evidence ids: no session has ended or produced a summary yet."),
     }));
 }
@@ -91,7 +95,7 @@ function sessionLinks(request) {
 
 /** One request card. `onDismiss(request, card)` is supplied by the list so it can refresh itself. */
 export function requestCard(request = {}, { onDismiss = null } = {}) {
-  const title = request.title ?? "Untitled request";
+  const title = requestTitle(request);
   return h("article", { class: "ui-card ui-item ui-request", "data-kind": "request", "data-id": request.id },
     h("div", { class: "ui-item-head" },
       h("a", { class: "ui-work-link ui-item-title", href: requestHref(request.id), dir: "auto" }, title),
@@ -105,7 +109,7 @@ export function requestCard(request = {}, { onDismiss = null } = {}) {
     request.goal ? h("div", { class: "ui-meta" }, h("span", {}, "goal: "), h("span", { dir: "auto" }, request.goal)) : null,
     progressBlock(request),
     etaBlock(request),
-    disclosure({ summary: `Came out of it (${(request.cameOutOfIt ?? []).length})`, content: artifactList(request.cameOutOfIt ?? []) }),
+    disclosure({ summary: `What was done (${(request.cameOutOfIt ?? []).length})`, content: artifactList(request.cameOutOfIt ?? []) }),
     disclosure({ summary: `Sessions (${request.evidence?.sessionIds?.length ?? 0})`, content: sessionLinks(request) }),
     h("div", { class: "ui-acts" },
       h("a", { class: "ui-btn ui-btn-secondary ui-btn-sm", href: requestHref(request.id) }, "Open request"),
@@ -119,7 +123,7 @@ function requestDetailDismissButton(request, onDismiss) {
 
 function dismissedRow(request, reload) {
   return h("article", { class: "ui-card ui-item", "data-kind": "request", "data-id": request.id },
-    h("div", { class: "ui-item-head" }, h("p", { class: "ui-item-title", dir: "auto" }, request.title ?? "Untitled request"), badge(request.status ?? "Unknown", statusTone(request.status))),
+    h("div", { class: "ui-item-head" }, h("p", { class: "ui-item-title", dir: "auto" }, requestTitle(request)), badge(request.status ?? "Unknown", statusTone(request.status))),
     h("div", { class: "ui-meta" }, request.project ? badge(request.project) : null, h("span", {}, `${request.sessionCount ?? 0} session${request.sessionCount === 1 ? "" : "s"}`)),
     h("div", { class: "ui-acts" }, button({ label: "Restore", size: "sm", icon: "undo", onClick: () => optimistic({
       apply: () => {},
@@ -249,12 +253,12 @@ export function requestDetailPage(route) {
       return h("div", {},
         h("div", { class: "ui-page-head" },
           h("div", {},
-            h("h1", { dir: "auto" }, request.title ?? "Untitled request"),
+            h("h1", { dir: "auto" }, requestTitle(request)),
             h("div", { class: "ui-meta" }, badge(request.status ?? "Unknown", statusTone(request.status)), request.project ? badge(request.project) : null, request.tool ? badge(request.tool) : null, h("span", {}, "started "), timeEl(request.startedAt), h("span", {}, `ran ${durationLabel(request.runningTimeMs)}`), h("span", {}, `${request.promptCount ?? 0} prompts`), h("span", {}, `${request.toolCount ?? 0} tool events`))),
           back),
         progressBlock(request),
         etaBlock(request),
-        h("h2", {}, "Came out of it"),
+        h("h2", {}, "What was done"),
         h("div", { class: "ui-card" }, artifactList(request.cameOutOfIt ?? [])),
         h("h2", {}, `Where this came from (${origin.promptCount ?? 0} prompts, ${origin.factCount ?? 0} facts)`),
         h("p", { class: "ui-meta" }, "Each session keeps a link back to its own page."),

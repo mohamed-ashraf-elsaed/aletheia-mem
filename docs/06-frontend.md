@@ -45,10 +45,19 @@ page.
 
 | Tab | Pages (`#/<tab>/<page>`) |
 |---|---|
-| Work | the overview, `#/work/request/<16 hex>`, and `#/work/session/<id>?project=<name>` |
-| Memory | `memories`, `facts`, `review`, `dismissed`, `economics`, `search?q=…` |
+| Home | the project picker, or one project's page: what it knows, its rules, connected tools and recent activity (`#/home`) |
+| Activity (`#/work`) | the overview, `#/work/request/<16 hex>`, and `#/work/session/<id>?project=<name>` |
+| Knowledge (`#/memory`) | `memories`, `facts`, `review`, `dismissed`, `economics`, `search?q=…` |
 | Rules | `rules`, `suggestions`, `sync` (write to tools), `import` |
-| Tools | `tools`, `devices`, `access`, `alerts`, `team`, `checks`, `activity` |
+| Connections (`#/tools`) | `tools`, `devices`, `access`, `alerts`, `team`, `checks`, `activity` |
+
+The tab names are plain words; the addresses keep their short ids. **Home** is the default page. It lists the projects a
+person works in (worktree folders, temporary folders and tiny folders are grouped under "other folders"), and for one project it
+shows four blocks, each with a hint and an example: what Aletheia knows (readable titles, pinned notes first, a Hide button
+and a box to save a note), the rules that apply (switches, a box to add a rule with example chips, and a button that previews
+before it writes into each tool's file), the connected tools (on, needs setup, not installed, with the command to copy) and what
+happened lately. Titles come from `plainTitle` in `public/ui-home-model.js`, which turns pasted text, JSON tool input and
+numbers into a readable line or hides them.
 
 ## 6.3 Every list is paged on the server
 

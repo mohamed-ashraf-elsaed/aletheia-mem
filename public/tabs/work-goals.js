@@ -44,7 +44,7 @@ export function goalRollupCard(goal = {}, { onChanged = null } = {}) {
       view.projects.length ? h("span", {}, `projects: ${view.projects.join(", ")}`) : null),
     h("div", { class: "ui-row" }, progressBar({ value: aggregate, max: 100, label: `Aggregate progress for ${view.label}`, text: `${aggregate}% across ${goal.requestCount ?? 0} request${goal.requestCount === 1 ? "" : "s"}` }), estimated("Goal progress")),
     disclosure({ summary: `Requests (${goal.requestCount ?? 0})`, content: requestRows(goal) }),
-    disclosure({ summary: `Came out of it (${(goal.whatCameOutOfIt ?? []).length})`, content: artifactList(goal.whatCameOutOfIt ?? []) }),
+    disclosure({ summary: `What was done (${(goal.whatCameOutOfIt ?? []).length})`, content: artifactList(goal.whatCameOutOfIt ?? []) }),
     view.quotes.length ? disclosure({ summary: `Dated quotes (${view.quotes.length})`, content: h("div", { class: "ui-quotes" }, ...view.quotes.map((quote) => h("div", { class: "ui-fact-source", dir: "auto" }, `#${quote.id} · ${quote.at} · ${quote.project} · ${quote.text}`))) }) : null,
     h("div", { class: "ui-acts" }, goal.dismissed
       ? button({ label: "Restore", size: "sm", icon: "undo", onClick: () => hide("restore", "dismiss", "Goal restored.") })

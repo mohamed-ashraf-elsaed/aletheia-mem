@@ -165,7 +165,7 @@ function buildOverview() {
   story = storyView();
 
   const root = h("div", { class: "ui-work" },
-    h("div", { class: "ui-work-head" }, h("h1", { id: "ui-work-title", tabindex: "-1" }, "Work"), h("p", { class: "ui-meta" }, `Captured sessions, facts and review items from this hub · project: ${state.project || "all"}`)),
+    h("div", { class: "ui-work-head" }, h("h1", { id: "ui-work-title", tabindex: "-1" }, "Activity"), h("p", { class: "ui-meta" }, `What your AI tools worked on, one card per request. Open a card to see its sessions. Showing: ${state.project || "all projects"}.`)),
     guideSlot,
     strip,
     h("section", { class: "ui-work-requests", "aria-labelledby": "ui-work-requests" },

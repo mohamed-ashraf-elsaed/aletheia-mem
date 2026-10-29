@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
+> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -38,7 +38,7 @@ bun bin/aletheia-server.mjs
 
 Öffne <http://127.0.0.1:37790>. Benötigt [Bun](https://bun.sh) 1.1 oder neuer. Es gibt keinen Schritt `npm install`, weil es keine Laufzeitabhängigkeiten gibt.
 
-Der erste Bildschirm hat vier Tabs: **Work** (Aletheias eigene Ansicht der erfassten Sitzungen, Fakten und Ziele), **Memory** (suchen, bearbeiten, anheften, löschen, exportieren), **Rules** (einmal schreiben und synchronisieren) und **Tools** (Installer-Status und Audit).
+Der erste Bildschirm hat fünf Tabs: **Home** (hier beginnen: ein Projekt wählen und in einfachen Worten sehen, was Aletheia darüber weiß, welche Regeln gelten und welche Werkzeuge verbunden sind), **Activity** (Aletheias eigene Ansicht der Anfragen und Sitzungen, an denen deine Werkzeuge gearbeitet haben), **Knowledge** (suchen, bearbeiten, anheften, ausblenden, exportieren), **Rules** (einmal schreiben und synchronisieren) und **Connections** (Installer-Status und Audit).
 
 ## Wie die Erfassung funktioniert
 

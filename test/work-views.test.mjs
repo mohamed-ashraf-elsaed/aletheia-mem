@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseRoute } from "../public/ui-core.js";
+import { parseRoute, routeOf } from "../public/ui-core.js";
 import { factLineView, goalView, goalsView, sessionCardView, sessionDetailView, workEmptyView, workHeaderView, workNeedsView, WORK_EMPTY } from "../public/work-view.js";
 
 const fact = {
@@ -108,7 +108,7 @@ describe("the Work overview view", () => {
   });
 
   test("the session hash still routes to Work", () => {
-    expect(parseRoute("#/work/session/s1?project=shop")).toBe("work");
+    expect(routeOf("#/work/session/s1?project=shop").tab).toBe("work");
     expect(parseRoute("#/work")).toBe("work");
   });
 });

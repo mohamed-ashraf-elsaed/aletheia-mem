@@ -86,7 +86,7 @@ describe("the overview", () => {
     await W.renderWork();
     await flush();
     const root = dom.getElementById("ui-work");
-    expect(root.querySelector("h1").textContent).toBe("Work");
+    expect(root.querySelector("h1").textContent).toBe("Activity");
     expect(root.querySelector(".ui-work-strip").querySelectorAll(".ui-stat").length).toBe(6);
     expect(root.querySelectorAll(".ui-request").length).toBe(2);
     expect(root.textContent).toContain("2 of 2 requests");
@@ -103,13 +103,13 @@ describe("the overview", () => {
     expect(card.textContent).toContain("Waiting on you");
     expect(card.textContent).toContain("50% · 1 of 2 sessions finished");
     expect(card.textContent).toContain("Estimated finish");
-    expect(card.textContent).toContain("Progress evidence (3)");
+    expect(card.textContent).toContain("How we worked this out (3)");
     expect(card.querySelector("a").getAttribute("href")).toBe("#/work/request/0123456789abcdef");
     const shipped = dom.getElementById("ui-work").querySelectorAll(".ui-request")[1];
-    expect(shipped.textContent).toContain("Came out of it (3)");
+    expect(shipped.textContent).toContain("What was done (3)");
     expect(shipped.textContent).toContain("pull request: ");
     expect(shipped.querySelector('a[href="https://github.com/acme/shop/pull/42"]')).not.toBeNull();
-    expect(shipped.textContent).toContain("No ETA yet");
+    expect(shipped.textContent).toContain("No finish estimate yet");
     W.stopWorkRefresh();
   });
   test("the heuristic labels link to the UNVERIFIED note", async () => {

@@ -8,11 +8,12 @@ import { byId, h, state, swap } from "./ui-dom.js";
 import { installKeys, openPalette, openShortcuts } from "./ui-keys.js";
 import { enter, watchVisibility } from "./ui-motion.js";
 import { parseHash } from "./ui-pure.js";
+import { realProjects } from "./ui-home-model.js";
 import { mountSearch } from "./ui-search.js";
 import { mountStatus } from "./ui-status.js";
 import { applyTheme, readTheme } from "./ui-theme.js";
 
-const RENDERERS = { work: "renderWork", memory: "renderMemory", rules: "renderRules", tools: "renderTools" };
+const RENDERERS = { home: "renderHome", work: "renderWork", memory: "renderMemory", rules: "renderRules", tools: "renderTools" };
 const LABEL = Object.fromEntries(TABS.map((tab) => [tab.id, tab.label]));
 const PROJECT_KEY = "aletheia.project";
 
@@ -37,9 +38,11 @@ async function loadProjects() {
     const select = byId("ui-project");
     const names = data.projects.map((project) => project.name);
     if (state.project && !names.includes(state.project)) state.project = "";
+    // Worktree, temp and tiny folders are not projects a person works in; the Home page lists them under "other folders".
+    const { main } = realProjects(data.projects, { selected: state.project });
     swap(select,
       h("option", { value: "" }, "All projects"),
-      ...data.projects.map((project) => h("option", { value: project.name, selected: state.project === project.name }, `${project.name} (${project.memories})`)));
+      ...main.map((project) => h("option", { value: project.name, selected: state.project === project.name }, `${project.name} (${project.memories})`)));
     select.value = state.project;
   } catch {
     // the status bar already reports an unreachable server

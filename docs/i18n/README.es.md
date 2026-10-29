@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
+> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -38,7 +38,7 @@ bun bin/aletheia-server.mjs
 
 Abre <http://127.0.0.1:37790>. Necesita [Bun](https://bun.sh) 1.1 o posterior. No hay paso `npm install` porque no hay dependencias de ejecución.
 
-La primera pantalla tiene cuatro pestañas: **Work** (la vista propia de Aletheia de sesiones, hechos y objetivos capturados), **Memory** (buscar, editar, fijar, borrar, exportar), **Rules** (escribir una vez y sincronizar) y **Tools** (estado de los instaladores y auditoría).
+La primera pantalla tiene cinco pestañas: **Home** (empieza aquí: elige un proyecto y mira, en palabras sencillas, qué sabe Aletheia de él, sus reglas y las herramientas conectadas), **Activity** (la vista propia de Aletheia de las solicitudes y sesiones en las que trabajaron tus herramientas), **Knowledge** (buscar, editar, fijar, ocultar, exportar), **Rules** (escribir una vez y sincronizar) y **Connections** (estado de los instaladores y auditoría).
 
 ## Cómo funciona la captura
 

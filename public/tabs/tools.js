@@ -25,8 +25,8 @@ function build() {
   const ctx = { classic: classicViewerCard };
   const made = tabFrame({
     tab: "tools",
-    title: "Tools",
-    lede: "The AI tools Aletheia captures from, the devices it syncs with, and a record of what changed.",
+    title: "Connections",
+    lede: "Which AI tools are connected to Aletheia, which devices share your memory, and a history of what changed.",
     build: (sub) => ({ tools: toolsView, devices: devicesView, access: accessView, alerts: alertsView, team: teamView, checks: checksView, activity: activityView, context: contextView, settings: settingsView }[sub] ?? toolsView)(ctx),
   });
   made.project = state.project;

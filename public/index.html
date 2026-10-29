@@ -17,7 +17,7 @@
     <div id="ui-app" class="ui-app">
       <div id="ui-banner-slot" class="ui-banner-slot"></div>
       <header class="ui-top">
-        <a class="ui-brand" href="#/work" aria-label="Aletheia, home">
+        <a class="ui-brand" href="#/home" aria-label="Aletheia, home">
           <span id="ui-brand-mark" class="ui-brand-mark" aria-hidden="true"></span>
           <span class="ui-brand-word">Aletheia</span>
         </a>
@@ -41,16 +41,19 @@
       <div id="ui-status" class="ui-statusbar" role="region" aria-label="System status"></div>
 
       <main id="ui-main" class="ui-main" tabindex="-1">
-        <section id="tab-work" class="ui-page ui-page-work" data-tab="work" role="tabpanel" aria-label="Work">
+        <section id="tab-home" class="ui-page" data-tab="home" role="tabpanel" aria-label="Home">
+          <div id="ui-home"></div>
+        </section>
+        <section id="tab-work" class="ui-page ui-page-work" data-tab="work" role="tabpanel" aria-label="Activity" hidden>
           <div id="ui-work"></div>
         </section>
-        <section id="tab-memory" class="ui-page" data-tab="memory" role="tabpanel" aria-label="Memory" hidden>
+        <section id="tab-memory" class="ui-page" data-tab="memory" role="tabpanel" aria-label="Knowledge" hidden>
           <div id="ui-memory"></div>
         </section>
         <section id="tab-rules" class="ui-page" data-tab="rules" role="tabpanel" aria-label="Rules" hidden>
           <div id="ui-rules"></div>
         </section>
-        <section id="tab-tools" class="ui-page" data-tab="tools" role="tabpanel" aria-label="Tools" hidden>
+        <section id="tab-tools" class="ui-page" data-tab="tools" role="tabpanel" aria-label="Connections" hidden>
           <div id="ui-tools"></div>
         </section>
       </main>

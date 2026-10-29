@@ -422,7 +422,7 @@ describe("the Memory frame", () => {
     await MEM.renderMemory({ tab: "memory", sub: "facts", params: {} });
     await flush();
     await flush();
-    expect(root.querySelector("h1").textContent).toBe("Memory");
+    expect(root.querySelector("h1").textContent).toBe("Knowledge");
     const tiles = root.querySelectorAll(".ui-stat").map((tile) => tile.textContent.replace(/\s+/g, " "));
     expect(tiles.some((text) => text.includes("Facts"))).toBe(true);
     expect(root.querySelectorAll(".ui-tab").map((tab) => tab.getAttribute("data-tab"))).toEqual(["memories", "facts", "review", "dismissed", "economics", "search"]);

@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
+> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -40,7 +40,7 @@ bun bin/aletheia-server.mjs
 
 افتح <http://127.0.0.1:37790>. يحتاج [Bun](https://bun.sh) 1.1 أو أحدث. لا توجد خطوة `npm install` لعدم وجود تبعيات وقت التشغيل.
 
-الشاشة الأولى فيها أربعة تبويبات: **Work** (عرض Aletheia الخاص للجلسات والحقائق والأهداف الملتقطة)، و**Memory** (بحث وتحرير وتثبيت وحذف وتصدير)، و**Rules** (اكتب مرة واحدة وزامن)، و**Tools** (حالة المثبّتات والتدقيق).
+الشاشة الأولى فيها خمسة تبويبات: **Home** (ابدأ من هنا: اختر مشروعًا وشاهد بكلمات بسيطة ما تعرفه Aletheia عنه وقواعده والأدوات المتصلة)، و**Activity** (عرض Aletheia الخاص للطلبات والجلسات التي عملت عليها أدواتك)، و**Knowledge** (بحث وتحرير وتثبيت وإخفاء وتصدير)، و**Rules** (اكتب مرة واحدة وزامن)، و**Connections** (حالة المثبّتات والتدقيق).
 
 ## كيف يعمل الالتقاط
 

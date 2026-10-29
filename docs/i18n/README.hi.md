@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
+> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -38,7 +38,7 @@ bun bin/aletheia-server.mjs
 
 <http://127.0.0.1:37790> खोलें। [Bun](https://bun.sh) 1.1 या नया चाहिए। `npm install` का चरण नहीं है क्योंकि कोई रनटाइम निर्भरता नहीं है।
 
-पहली स्क्रीन पर चार टैब हैं: **Work** (Aletheia का अपना कैप्चर किए गए सेशन, तथ्य और लक्ष्य दृश्य), **Memory** (खोजें, संपादित करें, पिन करें, हटाएँ, निर्यात करें), **Rules** (एक बार लिखें और सिंक करें) और **Tools** (इंस्टॉलर स्थिति और ऑडिट)।
+पहली स्क्रीन पर पाँच टैब हैं: **Home** (यहीं से शुरू करें: एक प्रोजेक्ट चुनें और सरल शब्दों में देखें कि Aletheia उसके बारे में क्या जानता है, उसके नियम क्या हैं और कौन से टूल जुड़े हैं), **Activity** (आपके टूल ने जिन अनुरोधों और सेशन पर काम किया, उनका Aletheia का अपना दृश्य), **Knowledge** (खोजें, संपादित करें, पिन करें, छिपाएँ, निर्यात करें), **Rules** (एक बार लिखें और सिंक करें) और **Connections** (इंस्टॉलर स्थिति और ऑडिट)।
 
 ## कैप्चर कैसे काम करता है
 

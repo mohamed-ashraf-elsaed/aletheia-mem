@@ -111,7 +111,7 @@ function buildFrame() {
 
   swap(el,
     h("div", { class: "ui-page-head" },
-      h("div", {}, h("h1", { id: "ui-memory-title", tabindex: "-1" }, "Memory"), h("p", { class: "ui-page-lede" }, "One store every tool reads. Facts first, raw memories after.")),
+      h("div", {}, h("h1", { id: "ui-memory-title", tabindex: "-1" }, "Knowledge"), h("p", { class: "ui-page-lede" }, "Everything Aletheia has remembered, in one place that all your tools read. Search it, add a note, or hide what is wrong.")),
       h("div", { class: "ui-row" }, button({ label: "Import and export", icon: "download", onClick: () => importExport(data) }), button({ label: "New note", variant: "primary", icon: "plus", onClick: () => newNote() }))),
     guideSlot,
     stats,

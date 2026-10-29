@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
+> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -38,7 +38,7 @@ bun bin/aletheia-server.mjs
 
 <http://127.0.0.1:37790> を開きます。[Bun](https://bun.sh) 1.1 以降が必要です。ランタイム依存がないため `npm install` の手順はありません。
 
-最初の画面には 4 つのタブがあります。**Work**（Aletheia 自身の、取り込んだセッション・事実・目標の表示）、**Memory**（検索、編集、固定、削除、エクスポート）、**Rules**（一度書いて同期）、**Tools**（インストーラーの状態と監査）。
+最初の画面には 5 つのタブがあります。**Home**（ここから始めます。プロジェクトを選ぶと、Aletheia がそれについて知っていること、ルール、接続済みのツールを平易な言葉で見られます）、**Activity**（Aletheia 自身の、ツールが取り組んだリクエストとセッションの表示）、**Knowledge**（検索、編集、固定、非表示、エクスポート）、**Rules**（一度書いて同期）、**Connections**（インストーラーの状態と監査）。
 
 ## キャプチャの仕組み
 

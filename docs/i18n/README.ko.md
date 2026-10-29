@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: c86083f81854d80cb77ae0cec734f77cb75d7fbef0047900917e7923412a908d
+> Source: [README.md](../../README.md) · source-sha256: 8c4bc2ea47cc43155483cc685a4fb5c690a01b01927ab32acbb65d0e43a581e4
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -38,7 +38,7 @@ bun bin/aletheia-server.mjs
 
 <http://127.0.0.1:37790>을 엽니다. [Bun](https://bun.sh) 1.1 이상이 필요합니다. 런타임 의존성이 없으므로 `npm install` 단계가 없습니다.
 
-첫 화면에는 네 개의 탭이 있습니다. **Work**(Aletheia 자체의 캡처된 세션, 사실, 목표 보기), **Memory**(검색, 편집, 고정, 삭제, 내보내기), **Rules**(한 번 쓰고 동기화), **Tools**(설치 프로그램 상태와 감사).
+첫 화면에는 다섯 개의 탭이 있습니다. **Home**(여기서 시작: 프로젝트를 고르면 Aletheia가 그것에 대해 아는 것, 규칙, 연결된 도구를 쉬운 말로 볼 수 있습니다), **Activity**(도구가 작업한 요청과 세션에 대한 Aletheia 자체의 보기), **Knowledge**(검색, 편집, 고정, 숨기기, 내보내기), **Rules**(한 번 쓰고 동기화), **Connections**(설치 프로그램 상태와 감사).
 
 ## 캡처 방식
 
