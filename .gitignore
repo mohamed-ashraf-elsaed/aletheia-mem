@@ -63,3 +63,6 @@ bench/runtime/
 .codex-plugin/
 .qoder-plugin/
 .playwright-mcp/
+
+# Generated GitHub wiki output (scripts/build-wiki.mjs)
+/wiki-out/
