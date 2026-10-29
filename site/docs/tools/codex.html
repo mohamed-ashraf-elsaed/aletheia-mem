@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Codex CLI memory with Aletheia · Aletheia docs</title>
+<meta name="description" content="Install Aletheia memory in Codex CLI: the config.toml MCP entry, five hooks and AGENTS.md rules block it writes, the /hooks review, and what was tested.">
+<meta name="keywords" content="codex cli memory, codex hooks, codex mcp server config.toml, codex agents.md rules, aletheia codex, openai codex persistent memory">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/codex.html">
+<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aletheia">
+<meta property="og:title" content="Codex CLI memory with Aletheia">
+<meta property="og:description" content="Install Aletheia memory in Codex CLI: the config.toml MCP entry, five hooks and AGENTS.md rules block it writes, the /hooks review, and what was tested.">
+<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/codex.html">
+<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Codex CLI memory with Aletheia">
+<meta name="twitter:description" content="Install Aletheia memory in Codex CLI: the config.toml MCP entry, five hooks and AGENTS.md rules block it writes, the /hooks review, and what was tested.">
+<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Codex CLI memory with Aletheia","description":"Install Aletheia memory in Codex CLI: the config.toml MCP entry, five hooks and AGENTS.md rules block it writes, the /hooks review, and what was tested.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/codex.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/codex.html","inLanguage":"en","dateModified":"2026-10-29","keywords":"codex cli memory, codex hooks, codex mcp server config.toml, codex agents.md rules, aletheia codex, openai codex persistent memory","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"Codex CLI memory with Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/codex.html"}]}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../../index.html"><img src="../../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../../index.html">Home</a><a href="../index.html">Docs</a><a href="../start/quickstart.html">Quickstart</a><a href="../compare/aletheia-vs-claude-mem.html">Compare</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc docs-layout">
+<aside class="side" aria-label="Documentation"><a class="side-home" href="../index.html">All documentation</a><details><summary>Get started</summary><ul><li><a href="../start/introduction.html">Introduction to Aletheia, a local memory hub for AI coding tools</a></li><li><a href="../start/installation.html">Install Aletheia with npm, git or Docker</a></li><li><a href="../start/quickstart.html">Quickstart</a></li><li><a href="../start/how-it-works.html">How Aletheia works</a></li><li><a href="../start/dashboard.html">The Aletheia dashboard</a></li><li><a href="../start/faq.html">Aletheia FAQ</a></li></ul></details><details><summary>Concepts</summary><ul><li><a href="../concepts/memory-model.html">Aletheia memory model</a></li><li><a href="../concepts/rules.html">Rules</a></li><li><a href="../concepts/search.html">Search</a></li><li><a href="../concepts/session-context.html">Session-start context</a></li><li><a href="../concepts/privacy.html">Privacy and redaction in Aletheia</a></li><li><a href="../33-facts.html">33. Facts</a></li><li><a href="../concepts/glossary.html">Aletheia glossary</a></li></ul></details><details open><summary>Connect your tools</summary><ul><li><a href="overview.html">Connect AI coding tools to Aletheia</a></li><li><a href="claude-code.html">Claude Code memory with Aletheia</a></li><li><a href="command-code.html">Command Code memory with Aletheia</a></li><li><a href="codex.html" aria-current="page">Codex CLI memory with Aletheia</a></li><li><a href="cursor.html">Cursor memory with Aletheia</a></li><li><a href="gemini-cli.html">Gemini CLI memory with Aletheia</a></li><li><a href="windsurf.html">Windsurf memory with Aletheia</a></li><li><a href="opencode.html">OpenCode memory with Aletheia</a></li><li><a href="../claude-desktop.html">Claude Desktop and the aletheia MCP server</a></li><li><a href="other-tools.html">GitHub Copilot, Aider and any MCP client with Aletheia</a></li><li><a href="../25-installers.html">25. Installers and automatic capture</a></li></ul></details><details><summary>Guides</summary><ul><li><a href="../guides/migrate-from-claude-mem.html">Migrate from claude-mem to Aletheia</a></li><li><a href="../guides/write-rules-once.html">Write your AI coding rules once and sync them to every tool</a></li><li><a href="../guides/backup-export-import.html">Back up, export and move Aletheia memory between machines</a></li><li><a href="../guides/run-as-a-service.html">Run Aletheia as a background service (systemd, launchd, Docker)</a></li><li><a href="../guides/model-providers.html">Model providers</a></li><li><a href="../guides/troubleshooting.html">Troubleshooting Aletheia</a></li><li><a href="../29-sync.html">29. Aletheia Sync</a></li><li><a href="../30-remote-mcp.html">30. The private remote MCP endpoint</a></li><li><a href="../31-team.html">31. Team mode</a></li><li><a href="../32-requests.html">32. Requests, goals, story and economics</a></li></ul></details><details><summary>Reference</summary><ul><li><a href="../reference/cli.html">Aletheia CLI reference</a></li><li><a href="../reference/mcp-tools.html">MCP tools reference</a></li><li><a href="../reference/configuration.html">Aletheia configuration reference</a></li><li><a href="../reference/hooks.html">Aletheia hooks reference</a></li><li><a href="../03-http-api.html">3. HTTP API</a></li></ul></details><details><summary>Compare</summary><ul><li><a href="../compare/aletheia-vs-claude-mem.html">claude-mem alternative</a></li><li><a href="../compare/memory-tools.html">Memory tools compared</a></li><li><a href="../compare/claude-code-memory.html">Claude Code memory options</a></li></ul></details><details><summary>Project</summary><ul><li><a href="../project/benchmarks.html">Aletheia benchmarks</a></li><li><a href="../project/status-and-limits.html">Aletheia status and limits</a></li><li><a href="../dependencies.html">Dependencies</a></li></ul></details><details><summary>Internals</summary><ul><li><a href="../01-architecture.html">1. Architecture</a></li><li><a href="../02-data-model.html">2. Data model</a></li><li><a href="../06-frontend.html">6. Frontend</a></li><li><a href="../07-operations.html">7. Operations</a></li></ul></details></aside>
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../index.html">Aletheia</a> › <a href="../index.html">Docs</a> › <span>Connect your tools</span> › <span>Codex CLI memory with Aletheia</span></nav>
+<h1 id="codex-cli-memory-with-aletheia">Codex CLI memory with Aletheia</h1>
+<p>Aletheia (aletheia-mem) gives Codex CLI a local memory. One command adds an MCP server table to <code>~/.codex/config.toml</code>, five hooks in <code>~/.codex/hooks.json</code> and a managed rules block in <code>~/.codex/AGENTS.md</code>. Codex asks you to review the hooks once before it runs them.</p>
+<nav class="toc" aria-label="On this page"><strong>On this page</strong><ul><li><a href="#what-you-get">What you get</a></li><li><a href="#install">Install</a></li><li><a href="#what-gets-written">What gets written</a></li><li><a href="#hooks-and-events">Hooks and events</a></li><li><a href="#rules-file">Rules file</a></li><li><a href="#verify-it-works">Verify it works</a></li><li><a href="#uninstall">Uninstall</a></li><li><a href="#verification-status">Verification status</a></li><li><a href="#known-limits">Known limits</a></li></ul></nav>
+<h2 id="what-you-get">What you get</h2>
+<ul><li><strong>MCP server.</strong> A <code>[mcp_servers.aletheia]</code> table in <code>~/.codex/config.toml</code>.</li><li><strong>Hooks.</strong> Five events in <code>~/.codex/hooks.json</code>. They store your prompts, tool calls and the final reply of each turn, with secrets redacted.</li><li><strong>Session-start context.</strong> The <code>SessionStart</code> hook prints recalled memory for the current project.</li><li><strong>Rules.</strong> Your rules, written into <code>~/.codex/AGENTS.md</code> between markers.</li></ul>
+<p>Level: <code>full</code>.</p>
+<h2 id="install">Install</h2>
+<pre><code class="language-bash">npm install -g aletheia-mem
+aletheia install codex            # dry run: prints every step, writes nothing
+aletheia install codex --write    # applies it, with backups</code></pre>
+<p>Then start Codex CLI and run <code>/hooks</code>. Codex skips hooks that you have not reviewed and trusted. The Codex hooks page (https://learn.chatgpt.com/docs/hooks, fetched 2026-10-29; <code>developers.openai.com/codex/hooks</code> redirects there) says Codex tracks trust by hash, so a new or changed hook is skipped until you trust it. If you run <code>aletheia install codex --write</code> again and it changes the hook file, review the hooks again.</p>
+<h2 id="what-gets-written">What gets written</h2>
+<p>Real dry-run output from a temporary HOME. Paths start with <code>/tmp/tmp.Ez6NqCkeLC</code>, the temporary home folder of the run. On your machine they start with your own home folder.</p>
+<pre><code>$ aletheia install codex
+Codex CLI (codex) — full, mcp-verified
+  write  mcp      /tmp/tmp.Ez6NqCkeLC/.codex/config.toml  ([mcp_servers.aletheia])
+  write  hooks    /tmp/tmp.Ez6NqCkeLC/.codex/hooks.json  (SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd)
+  write  rules    /tmp/tmp.Ez6NqCkeLC/.codex/AGENTS.md  (1 rule)
+  note  Codex requires non-managed hooks to be reviewed once with /hooks before they run.
+  ...
+  note  apply builds /tmp/tmp.eHRtbNMs5s/aletheia.bundle.mjs so a hook loads one module, not a dozen
+Dry run: nothing was written. Add --write to apply.</code></pre>
+<p>The TOML table that <code>--write</code> appended to <code>config.toml</code>:</p>
+<pre><code class="language-toml">[mcp_servers.aletheia]
+command = &quot;/home/you/.bun/bin/bun&quot;
+args = [&quot;/path/to/aletheia-mem/bin/mcp.mjs&quot;]</code></pre>
+<p>The installer checks the TOML only in a simple way: it refuses a file that looks like JSON, has an unbalanced quote, or already has a <code>[mcp_servers.aletheia]</code> table that is not its own. It does not parse TOML fully.</p>
+<p>Two entries from <code>hooks.json</code>. <code>SessionStart</code> has a matcher, and <code>SessionEnd</code> has a 3 second timeout:</p>
+<pre><code class="language-json">&quot;SessionStart&quot;: [
+  {
+    &quot;matcher&quot;: &quot;startup|clear|compact|fork&quot;,
+    &quot;hooks&quot;: [
+      {
+        &quot;type&quot;: &quot;command&quot;,
+        &quot;command&quot;: &quot;/home/you/.bun/bin/bun /tmp/tmp.eHRtbNMs5s/aletheia.bundle.mjs hook codex SessionStart # aletheia-managed&quot;,
+        &quot;timeout&quot;: 10
+      }
+    ]
+  }
+],
+...
+&quot;SessionEnd&quot;: [
+  {
+    &quot;hooks&quot;: [
+      {
+        &quot;type&quot;: &quot;command&quot;,
+        &quot;command&quot;: &quot;/home/you/.bun/bin/bun /tmp/tmp.eHRtbNMs5s/aletheia.bundle.mjs hook codex SessionEnd # aletheia-managed&quot;,
+        &quot;timeout&quot;: 3
+      }
+    ]
+  }
+]</code></pre>
+<p>The Codex hooks page says <code>SessionEnd</code> has a default timeout of 1 second and a maximum of 3 seconds. The hooks page also lists the <code>SessionStart</code> sources <code>startup</code>, <code>resume</code>, <code>clear</code>, <code>compact</code> and <code>fork</code>; the matcher above leaves out <code>resume</code>.</p>
+<h2 id="hooks-and-events">Hooks and events</h2>
+<div class="tablewrap"><table><thead><tr><th>Event</th><th>Matcher</th><th>What Aletheia does</th></tr></thead><tbody><tr><td><code>SessionStart</code></td><td>`startup\</td><td>clear\</td><td>compact\</td><td>fork`</td><td>Stores nothing. Prints recalled memory as <code>hookSpecificOutput.additionalContext</code>. A <code>resume</code> start prints nothing.</td></tr><tr><td><code>UserPromptSubmit</code></td><td>none</td><td>Stores the prompt as a note, redacted. Prompts under 3 characters are skipped.</td></tr><tr><td><code>PostToolUse</code></td><td>none</td><td>Stores an event: tool name, a one-line input summary, and input plus output cut to 1,500 characters.</td></tr><tr><td><code>Stop</code></td><td>none</td><td>Stores <code>last_assistant_message</code> as a summary when present. Queues the session for compression and marks it ended.</td></tr><tr><td><code>SessionEnd</code></td><td>none</td><td>Stores no text. Queues the session for compression and marks it ended.</td></tr></tbody></table></div>
+<p>The Codex page says <code>SessionEnd</code> runs when you archive or delete an open conversation, when Codex closes normally, or after 30 minutes idle with no connected client. Every hook exits 0 whatever happens, makes no network call and no model call, and redacts before it stores. See <a href="../reference/hooks.html">Hooks reference</a>.</p>
+<h2 id="rules-file">Rules file</h2>
+<p><code>aletheia install codex --write</code> writes your rules into <code>~/.codex/AGENTS.md</code>. For a project file, run <code>aletheia rules sync --tools codex --dir &lt;project&gt; --write</code>, which writes <code>&lt;project&gt;/AGENTS.md</code>.</p>
+<pre><code>&lt;!-- aletheia:rules:begin --&gt;
+# Rules
+
+Managed by aletheia-mem. Edit them in the Rules page; this block is rewritten on sync.
+
+## Everywhere
+
+- Run the narrow test before the full suite.
+&lt;!-- aletheia:rules:end --&gt;</code></pre>
+<p>Text outside the markers is never touched. The Codex page on AGENTS.md (https://learn.chatgpt.com/docs/agent-configuration/agents-md, fetched 2026-10-29) says Codex reads the global file in <code>~/.codex</code> first, then <code>AGENTS.md</code> files from the project root down to the current directory, with files closer to your working directory coming later.</p>
+<h2 id="verify-it-works">Verify it works</h2>
+<pre><code class="language-bash">aletheia install codex --verify
+aletheia doctor
+codex mcp list</code></pre>
+<p><code>--verify</code> prints <code>ok</code>, <code>drift</code> or <code>missing</code> for the three files. In <code>doctor</code>, look for <code>hooks codex    5/5 in ...hooks.json</code>. <code>FAIL server</code> only means the dashboard server is not running; hooks and the MCP server do not need it. The MCP check recorded on 2026-10-27 was against Codex 0.130.0. For this page, <code>codex mcp list</code> was run on 2026-10-29 in the temporary home with the config shown above. The Codex CLI on that machine reports 0.165.0 and printed:</p>
+<pre><code>Name      Command                     Args                                             Env  Cwd  Status   Auth
+aletheia  /home/you/.bun/bin/bun  /path/to/aletheia-mem/bin/mcp.mjs  -    -    enabled  Unsupported</code></pre>
+<p>The status <code>enabled</code> means the server is configured. Codex also printed a warning about helper binaries under <code>/tmp</code>, which comes from running in a temporary folder.</p>
+<p>To see the first captured memory:</p>
+<ol><li>Run <code>/hooks</code> in Codex and trust the Aletheia hooks.</li><li>Send one prompt that makes Codex run a command or read a file.</li><li>Run <code>aletheia search &quot;&lt;a word from your prompt&gt;&quot;</code>, or open <code>http://127.0.0.1:37790</code> and check the Activity and Knowledge tabs. The Connections tab shows <code>hooks 5/5</code> and the time of the last capture.</li></ol>
+<h2 id="uninstall">Uninstall</h2>
+<pre><code class="language-bash">aletheia uninstall codex            # dry run
+aletheia uninstall codex --write</code></pre>
+<p>Real dry-run output:</p>
+<pre><code>Codex CLI (codex)
+  remove mcp      /tmp/tmp.Ez6NqCkeLC/.codex/config.toml
+  remove hooks    /tmp/tmp.Ez6NqCkeLC/.codex/hooks.json  (no aletheia hooks)
+  remove rules    /tmp/tmp.Ez6NqCkeLC/.codex/AGENTS.md
+Dry run: nothing was written. Add --write to remove.</code></pre>
+<p>The <code>(no aletheia hooks)</code> label is the installer's own wording for the hooks line. In the Claude Code test run the same label appeared and the hook entries were removed. Uninstall removes only the <code>[mcp_servers.aletheia]</code> table if it is Aletheia's, the managed hook entries and the rules block. If you edited a file after the install, it refuses and asks for <code>--force</code>.</p>
+<h2 id="verification-status">Verification status</h2>
+<ul><li>The MCP server was listed by the real CLI (Codex 0.130.0) on 2026-10-27.</li><li>Hooks ran in one interactive Codex CLI session (reviewed once with <code>/hooks</code>), one user on one machine.</li><li>The hook, config and AGENTS.md formats were fetched from the OpenAI Codex pages on 2026-10-26 and again on 2026-10-29. The pages now live under <code>learn.chatgpt.com</code>; the old <code>developers.openai.com</code> addresses redirect there.</li><li>Fetched 2026-10-29: the hooks page lists <code>SessionStart</code>, <code>SessionEnd</code>, <code>UserPromptSubmit</code>, <code>PostToolUse</code>, <code>Stop</code> and others, the <code>~/.codex/hooks.json</code> location, the <code>last_assistant_message</code> field on <code>Stop</code>, and the <code>/hooks</code> trust step. The config reference shows <code>[mcp_servers.&lt;id&gt;]</code> with <code>command</code>, <code>args</code> and <code>env</code>.</li><li>No test confirmed that Codex loaded the rules block. The <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/verification/rules-targets.md">rules targets table</a> records &quot;real tool read: not run&quot;.</li><li>Answer accuracy is not measured. Benchmarks are retrieval only.</li></ul>
+<h2 id="known-limits">Known limits</h2>
+<ul><li>One interactive session is the whole real-use evidence. The repository records two Codex versions: 0.130.0 for the MCP listing check on 2026-10-27, and 0.165.0 as the installed CLI in the <a href="../25-installers.html">installer reference</a>. The CLI on the machine used for this page reports 0.165.0. This page does not claim a hook run on a specific version.</li><li>The installer always writes under <code>~/.codex</code>. It does not read <code>CODEX_HOME</code>. If you set <code>CODEX_HOME</code>, the files land in a place Codex does not read.</li><li>The AGENTS.md page says Codex uses <code>AGENTS.override.md</code> in the global folder when that file exists and is not empty, and <code>AGENTS.md</code> otherwise. If you have an override file, Codex does not read the block Aletheia wrote to <code>AGENTS.md</code>.</li><li>The hook command holds absolute paths to Bun and the data dir bundle. If you move either, run <code>aletheia install codex --write</code> again and review the hooks again.</li><li>Compression is queued, not run in the hook. Run <code>aletheia compress</code>, or keep <code>aletheia-server</code> running.</li></ul>
+<h2 id="next-steps">Next steps</h2>
+<ul><li><a href="../reference/hooks.html">Hooks reference</a> - the events, fields and guarantees of every hook.</li><li><a href="../concepts/rules.html">Rules</a> - how the AGENTS.md block is built and synced.</li><li><a href="../guides/troubleshooting.html">Troubleshooting</a> - when Codex skips the hooks.</li><li><a href="overview.html">Tools overview</a> - all hosts and their verification status.</li></ul>
+<nav class="pager" aria-label="Previous and next"><a class="previous" href="command-code.html"><small>Previous</small><span>Command Code memory with Aletheia</span></a><a class="next" href="cursor.html"><small>Next</small><span>Cursor memory with Aletheia</span></a></nav>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+</main>
+</body>
+</html>

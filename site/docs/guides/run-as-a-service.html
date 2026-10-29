@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Run Aletheia as a background service (systemd, launchd, Docker) · Aletheia docs</title>
+<meta name="description" content="Generate a systemd user unit or a macOS launchd plist for the Aletheia server, set CPU and memory limits, read logs, upgrade, or run it in Docker.">
+<meta name="keywords" content="run aletheia as a service, aletheia systemd, aletheia launchd, aletheia docker, aletheia-server autostart, systemd user service bun">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/run-as-a-service.html">
+<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aletheia">
+<meta property="og:title" content="Run Aletheia as a background service (systemd, launchd, Docker)">
+<meta property="og:description" content="Generate a systemd user unit or a macOS launchd plist for the Aletheia server, set CPU and memory limits, read logs, upgrade, or run it in Docker.">
+<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/run-as-a-service.html">
+<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Run Aletheia as a background service (systemd, launchd, Docker)">
+<meta name="twitter:description" content="Generate a systemd user unit or a macOS launchd plist for the Aletheia server, set CPU and memory limits, read logs, upgrade, or run it in Docker.">
+<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Run Aletheia as a background service (systemd, launchd, Docker)","description":"Generate a systemd user unit or a macOS launchd plist for the Aletheia server, set CPU and memory limits, read logs, upgrade, or run it in Docker.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/run-as-a-service.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/run-as-a-service.html","inLanguage":"en","dateModified":"2026-10-29","keywords":"run aletheia as a service, aletheia systemd, aletheia launchd, aletheia docker, aletheia-server autostart, systemd user service bun","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"Run Aletheia as a background service (systemd, launchd, Docker)","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/run-as-a-service.html"}]}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../../index.html"><img src="../../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../../index.html">Home</a><a href="../index.html">Docs</a><a href="../start/quickstart.html">Quickstart</a><a href="../compare/aletheia-vs-claude-mem.html">Compare</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc docs-layout">
+<aside class="side" aria-label="Documentation"><a class="side-home" href="../index.html">All documentation</a><details><summary>Get started</summary><ul><li><a href="../start/introduction.html">Introduction to Aletheia, a local memory hub for AI coding tools</a></li><li><a href="../start/installation.html">Install Aletheia with npm, git or Docker</a></li><li><a href="../start/quickstart.html">Quickstart</a></li><li><a href="../start/how-it-works.html">How Aletheia works</a></li><li><a href="../start/dashboard.html">The Aletheia dashboard</a></li><li><a href="../start/faq.html">Aletheia FAQ</a></li></ul></details><details><summary>Concepts</summary><ul><li><a href="../concepts/memory-model.html">Aletheia memory model</a></li><li><a href="../concepts/rules.html">Rules</a></li><li><a href="../concepts/search.html">Search</a></li><li><a href="../concepts/session-context.html">Session-start context</a></li><li><a href="../concepts/privacy.html">Privacy and redaction in Aletheia</a></li><li><a href="../33-facts.html">33. Facts</a></li><li><a href="../concepts/glossary.html">Aletheia glossary</a></li></ul></details><details><summary>Connect your tools</summary><ul><li><a href="../tools/overview.html">Connect AI coding tools to Aletheia</a></li><li><a href="../tools/claude-code.html">Claude Code memory with Aletheia</a></li><li><a href="../tools/command-code.html">Command Code memory with Aletheia</a></li><li><a href="../tools/codex.html">Codex CLI memory with Aletheia</a></li><li><a href="../tools/cursor.html">Cursor memory with Aletheia</a></li><li><a href="../tools/gemini-cli.html">Gemini CLI memory with Aletheia</a></li><li><a href="../tools/windsurf.html">Windsurf memory with Aletheia</a></li><li><a href="../tools/opencode.html">OpenCode memory with Aletheia</a></li><li><a href="../claude-desktop.html">Claude Desktop and the aletheia MCP server</a></li><li><a href="../tools/other-tools.html">GitHub Copilot, Aider and any MCP client with Aletheia</a></li><li><a href="../25-installers.html">25. Installers and automatic capture</a></li></ul></details><details open><summary>Guides</summary><ul><li><a href="migrate-from-claude-mem.html">Migrate from claude-mem to Aletheia</a></li><li><a href="write-rules-once.html">Write your AI coding rules once and sync them to every tool</a></li><li><a href="backup-export-import.html">Back up, export and move Aletheia memory between machines</a></li><li><a href="run-as-a-service.html" aria-current="page">Run Aletheia as a background service (systemd, launchd, Docker)</a></li><li><a href="model-providers.html">Model providers</a></li><li><a href="troubleshooting.html">Troubleshooting Aletheia</a></li><li><a href="../29-sync.html">29. Aletheia Sync</a></li><li><a href="../30-remote-mcp.html">30. The private remote MCP endpoint</a></li><li><a href="../31-team.html">31. Team mode</a></li><li><a href="../32-requests.html">32. Requests, goals, story and economics</a></li></ul></details><details><summary>Reference</summary><ul><li><a href="../reference/cli.html">Aletheia CLI reference</a></li><li><a href="../reference/mcp-tools.html">MCP tools reference</a></li><li><a href="../reference/configuration.html">Aletheia configuration reference</a></li><li><a href="../reference/hooks.html">Aletheia hooks reference</a></li><li><a href="../03-http-api.html">3. HTTP API</a></li></ul></details><details><summary>Compare</summary><ul><li><a href="../compare/aletheia-vs-claude-mem.html">claude-mem alternative</a></li><li><a href="../compare/memory-tools.html">Memory tools compared</a></li><li><a href="../compare/claude-code-memory.html">Claude Code memory options</a></li></ul></details><details><summary>Project</summary><ul><li><a href="../project/benchmarks.html">Aletheia benchmarks</a></li><li><a href="../project/status-and-limits.html">Aletheia status and limits</a></li><li><a href="../dependencies.html">Dependencies</a></li></ul></details><details><summary>Internals</summary><ul><li><a href="../01-architecture.html">1. Architecture</a></li><li><a href="../02-data-model.html">2. Data model</a></li><li><a href="../06-frontend.html">6. Frontend</a></li><li><a href="../07-operations.html">7. Operations</a></li></ul></details></aside>
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../index.html">Aletheia</a> › <a href="../index.html">Docs</a> › <span>Guides</span> › <span>Run Aletheia as a background service (systemd, launchd, Docker)</span></nav>
+<h1 id="run-aletheia-as-a-background-service-systemd-launchd-docker">Run Aletheia as a background service (systemd, launchd, Docker)</h1>
+<p>Aletheia (aletheia-mem) needs its server running to serve the dashboard, the REST API and the background extraction worker. <code>aletheia service install</code> writes a systemd user unit on Linux or a launchd plist on macOS so that the server starts on its own. It only writes the file. You start the service yourself.</p>
+<nav class="toc" aria-label="On this page"><strong>On this page</strong><ul><li><a href="#what-the-service-command-does">What the service command does</a></li><li><a href="#linux-a-systemd-user-unit">Linux: a systemd user unit</a></li><li><a href="#macos-a-launchd-plist">macOS: a launchd plist</a></li><li><a href="#port-conflicts">Port conflicts</a></li><li><a href="#restart-after-an-upgrade">Restart after an upgrade</a></li><li><a href="#docker">Docker</a></li></ul></nav>
+<p>Hooks and the CLI do not need the server. They open <code>hub.db</code> directly. The server matters for the dashboard, the HTTP API and extraction.</p>
+<h2 id="what-the-service-command-does">What the service command does</h2>
+<pre><code class="language-bash">aletheia service status
+aletheia service install [--write] [--cpu-quota 25%] [--memory-max 512M]
+aletheia service uninstall [--write]</code></pre>
+<ul><li><code>install</code> and <code>uninstall</code> are dry runs until you add <code>--write</code>.</li><li>The command writes a text file and a record, <code>service-manifest.json</code>, in the data directory. It never calls <code>systemctl</code> or <code>launchctl</code>.</li><li>The output says <code>&quot;verification&quot;: &quot;from-docs-only&quot;</code>. The generated unit was written from documentation. I did not start a generated unit for this page. Run the commands below on your own machine and read what they print.</li><li>Windows is not covered. The command prints <code>Windows auto-start is not supported. Start aletheia-server manually or through Task Scheduler.</code></li></ul>
+<h2 id="linux-a-systemd-user-unit">Linux: a systemd user unit</h2>
+<p>Preview the unit. The paths below are placeholders. Your output shows your own Bun path and package path, as absolute paths.</p>
+<pre><code class="language-bash">aletheia service install</code></pre>
+<pre><code class="language-json">{
+  &quot;platform&quot;: &quot;linux&quot;,
+  &quot;supported&quot;: true,
+  &quot;kind&quot;: &quot;systemd&quot;,
+  &quot;label&quot;: &quot;aletheia.service&quot;,
+  &quot;file&quot;: &quot;/home/you/.config/systemd/user/aletheia.service&quot;,
+  &quot;content&quot;: &quot;[Unit]\nDescription=Aletheia memory hub (loopback)\n...&quot;,
+  &quot;verification&quot;: &quot;from-docs-only&quot;,
+  &quot;dryRun&quot;: true,
+  &quot;changed&quot;: true,
+  &quot;note&quot;: &quot;Dry run: nothing was written. Add --write to apply.&quot;
+}</code></pre>
+<p>Write it, then start it with systemd:</p>
+<pre><code class="language-bash">aletheia service install --write
+systemctl --user daemon-reload
+systemctl --user enable --now aletheia</code></pre>
+<p>The <code>systemctl</code> lines are the ones in <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/07-operations.md">the operations notes</a>. The service command does not run them.</p>
+<h3 id="the-unit-the-command-writes">The unit the command writes</h3>
+<pre><code class="language-ini">[Unit]
+Description=Aletheia memory hub (loopback)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/home/you/.bun/bin/bun /path/to/package/bin/aletheia-server.mjs
+Restart=on-failure
+Nice=10
+Environment=ALETHEIA_HOST=127.0.0.1
+Environment=ALETHEIA_DATA_DIR=/home/you/.aletheia
+Environment=ALETHEIA_HUB_DB=/home/you/.aletheia/hub.db
+Environment=ALETHEIA_PORT=37790
+
+# Defaults (override with --cpu-quota / --memory-max):
+# CPUQuota=50%
+# MemoryMax=1G
+
+[Install]
+WantedBy=default.target</code></pre>
+<p>Three things to know:</p>
+<ul><li>The port, data directory and database path are taken from the shell that ran the command. In a test, running the command with <code>ALETHEIA_PORT=37999</code> wrote <code>ALETHEIA_PORT=37999</code>, and running it again without that variable changed the file back to 37790 and made a backup.</li><li><code>ExecStart</code> holds the absolute path of Bun and of the server script at install time. If you move Bun or reinstall the package in a new place, run <code>aletheia service install --write</code> again, then <code>systemctl --user daemon-reload</code>.</li><li>The unit sets only those four <code>Environment</code> lines. Provider settings such as <code>ALETHEIA_PROVIDER</code> are not copied. Add them with <code>systemctl --user edit aletheia</code>, or edit the file and run <code>daemon-reload</code>. See <a href="model-providers.html">Model providers</a>.</li></ul>
+<h3 id="cpu-and-memory-limits">CPU and memory limits</h3>
+<p>Pass limits at install time. They become <code>CPUQuota=</code> and <code>MemoryMax=</code> lines in the <code>[Service]</code> section.</p>
+<pre><code class="language-bash">aletheia service install --write --cpu-quota 25% --memory-max 512M</code></pre>
+<p>Without these flags the two lines are written as comments that show the defaults (50% and 1G). Those defaults are not applied until you pass a flag. <code>Nice=10</code> is always set. The two flags apply to the Linux unit only. The macOS plist has no limit keys.</p>
+<h3 id="check-it-and-read-logs">Check it and read logs</h3>
+<pre><code class="language-bash">aletheia service status
+systemctl --user status aletheia
+journalctl --user -u aletheia -f</code></pre>
+<p><code>aletheia service status</code> prints the plan and whether the unit file exists (<code>&quot;installed&quot;: true</code>) plus the stored record. It does not ask systemd whether the service is running. Use <code>systemctl --user status aletheia</code> for that. The unit sets no log file, so output goes to systemd's default destination for the user service, which <code>journalctl --user -u aletheia</code> reads.</p>
+<p>For a quick liveness check, ask the server directly:</p>
+<pre><code class="language-bash">curl -s http://127.0.0.1:37790/healthz</code></pre>
+<pre><code class="language-json">{&quot;status&quot;:&quot;ok&quot;,&quot;db&quot;:{&quot;ok&quot;:true,&quot;detail&quot;:&quot;quick_check ok&quot;},&quot;fts&quot;:{&quot;ok&quot;:true,&quot;detail&quot;:&quot;FTS5 query answered&quot;},&quot;vectors&quot;:{&quot;memories&quot;:0,&quot;facts&quot;:0},&quot;model&quot;:&quot;Xenova/bge-small-en-v1.5&quot;}</code></pre>
+<p>A <code>503</code> with <code>&quot;status&quot;:&quot;error&quot;</code> means the database check or the search-index check failed. See <a href="troubleshooting.html">Troubleshooting</a>.</p>
+<h3 id="remove-the-unit">Remove the unit</h3>
+<pre><code class="language-bash">systemctl --user disable --now aletheia
+aletheia service uninstall --write
+systemctl --user daemon-reload</code></pre>
+<p>The uninstall copies the unit to <code>aletheia.service.aletheia-bak-&lt;timestamp&gt;</code>, deletes it and deletes the record.</p>
+<h3 id="the-hand-written-unit-in-the-repository">The hand-written unit in the repository</h3>
+<p>A git checkout also has <code>scripts/aletheia.service</code>. It runs from the checkout (<code>WorkingDirectory=%h/Projects/aletheia-mem</code>, <code>ExecStart=%h/.bun/bin/bun bin/aletheia-server.mjs</code>, <code>ALETHEIA_PORT=37790</code>). Edit the paths to match your checkout, then copy it to <code>~/.config/systemd/user/</code>. Use it only if you run from a clone. The command above is the better choice for an installed package.</p>
+<h2 id="macos-a-launchd-plist">macOS: a launchd plist</h2>
+<p>On macOS the command writes <code>~/Library/LaunchAgents/aletheia.plist</code>, label <code>com.aletheia.mem</code>. It sets <code>KeepAlive</code> to true and sends output to <code>&lt;data dir&gt;/aletheia.log</code>. The same four environment variables go into the plist. This is the program section:</p>
+<pre><code class="language-xml">&lt;key&gt;Label&lt;/key&gt;
+&lt;string&gt;com.aletheia.mem&lt;/string&gt;
+&lt;key&gt;ProgramArguments&lt;/key&gt;
+&lt;array&gt;
+  &lt;string&gt;/Users/you/.bun/bin/bun&lt;/string&gt;
+  &lt;string&gt;/path/to/package/bin/aletheia-server.mjs&lt;/string&gt;
+&lt;/array&gt;
+&lt;key&gt;KeepAlive&lt;/key&gt;
+&lt;true/&gt;</code></pre>
+<p>I rendered this plist on Linux by asking the code for the macOS plan. I did not run it on a Mac. Apple's launchd documentation says launchd loads user agents from the <code>LaunchAgents</code> folder in the user's Library (https://developer.apple.com/library/archive/documentation/MacOSX/Conceptual/BPSystemStartup/Chapters/CreatingLaunchdJobs.html, fetched 2026-10-29). That page does not describe <code>launchctl</code> commands, and the command here does not run them. Load the agent the way Apple's <code>launchctl</code> manual describes, and read <code>&lt;data dir&gt;/aletheia.log</code> for output.</p>
+<h2 id="port-conflicts">Port conflicts</h2>
+<p>The server listens on port 37790. If another process holds it, the server stops with <code>EADDRINUSE</code>. Find the owner, or pick another port:</p>
+<pre><code class="language-bash">ss -ltnp | grep 37790
+ALETHEIA_PORT=37791 aletheia-server</code></pre>
+<p>For a service, change the port with <code>ALETHEIA_PORT=37791 aletheia service install --write</code>, then restart. <code>aletheia doctor</code> checks the port in <code>ALETHEIA_PORT</code>, so set the same value in your shell when you run it.</p>
+<h2 id="restart-after-an-upgrade">Restart after an upgrade</h2>
+<p>A running server keeps the old code in memory until you restart it.</p>
+<pre><code class="language-bash">npm install -g aletheia-mem@latest
+systemctl --user restart aletheia
+aletheia --version
+aletheia install claude-code --write</code></pre>
+<p>The last command rebuilds the hook bundle that tools run. The installer rebuilds <code>aletheia.bundle.mjs</code> in the data directory only when the package sources are newer than the bundle. Repeat it for each tool you installed. If the package moved to a new path, run <code>aletheia service install --write</code> and <code>systemctl --user daemon-reload</code> as well.</p>
+<h2 id="docker">Docker</h2>
+<p>The repository has a <code>Dockerfile</code> and a <code>compose.yaml</code>. I did not run <code>docker build</code> or <code>docker compose</code> for this page. The repository's own test (<code>test/dockerfile.test.mjs</code>) only checks the text of the files, and its header says <code>docker build</code> is not run by the author.</p>
+<p>What the files say:</p>
+<ul><li>The image starts from <code>oven/bun:1.3.10-alpine</code>, creates a non-root user <code>aletheia</code>, and copies <code>bin</code>, <code>src</code>, <code>public</code>, <code>public-hub</code>, <code>prompts</code> and <code>vendor</code>.</li><li>It sets <code>ALETHEIA_DATA_DIR=/data</code> and <code>ALETHEIA_PORT=37790</code>, declares <code>/data</code> as a volume, and runs <code>bun bin/aletheia-server.mjs</code>.</li><li>The health check calls <code>http://127.0.0.1:37790/healthz</code> every 30 seconds with <code>wget</code>.</li><li>No secret is baked in.</li><li><code>compose.yaml</code> uses <code>network_mode: host</code>, <code>restart: unless-stopped</code> and a named volume <code>aletheia-data</code> mounted at <code>/data</code>. Host networking works on Linux only. The server then binds <code>127.0.0.1</code> in the host's network, so only your machine reaches it.</li><li>The comments in <code>compose.yaml</code> say that on Docker Desktop you replace <code>network_mode</code> with <code>ports: [&quot;127.0.0.1:37790:37790&quot;]</code> and set <code>ALETHEIA_HOST=0.0.0.0</code>. A non-loopback bind turns on Hub login. Create an admin token first, as <a href="../29-sync.html">Sync</a> describes.</li></ul>
+<p>The usual commands:</p>
+<pre><code class="language-bash">docker compose up -d --build
+docker compose logs -f
+docker compose down</code></pre>
+<p>One limit follows from how the hooks work. A hook or CLI command on your host opens the host's <code>hub.db</code> directly. It does not call the container. A container with its own <code>aletheia-data</code> volume therefore holds a different database from <code>~/.aletheia/hub.db</code>. To share one database you would have to mount the host data directory at <code>/data</code>. I did not test that, and the <code>aletheia</code> user in the container needs write access to the files.</p>
+<h2 id="next-steps">Next steps</h2>
+<ul><li><a href="troubleshooting.html">Troubleshooting</a> - port in use, an old dashboard after an upgrade, and a database that will not open.</li><li><a href="../reference/configuration.html">Configuration reference</a> - every environment variable.</li><li><a href="model-providers.html">Model providers</a> - put provider variables into the unit.</li><li><a href="../07-operations.html">Operations notes</a> - the longer internal notes on running the server.</li></ul>
+<nav class="pager" aria-label="Previous and next"><a class="previous" href="backup-export-import.html"><small>Previous</small><span>Back up, export and move Aletheia memory between machines</span></a><a class="next" href="model-providers.html"><small>Next</small><span>Model providers: none, Claude CLI, OpenAI-compatible and Ollama</span></a></nav>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+</main>
+</body>
+</html>

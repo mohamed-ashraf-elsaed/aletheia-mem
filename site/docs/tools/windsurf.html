@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Windsurf memory with Aletheia · Aletheia docs</title>
+<meta name="description" content="Install Aletheia memory in Windsurf (now documented as Devin Desktop): the MCP entry, four Cascade hooks and rules files, with the status that no hook ran.">
+<meta name="keywords" content="windsurf memory, windsurf cascade hooks, windsurf mcp_config.json, windsurf global_rules.md, devin desktop memory, aletheia windsurf">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/windsurf.html">
+<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aletheia">
+<meta property="og:title" content="Windsurf memory with Aletheia">
+<meta property="og:description" content="Install Aletheia memory in Windsurf (now documented as Devin Desktop): the MCP entry, four Cascade hooks and rules files, with the status that no hook ran.">
+<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/windsurf.html">
+<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Windsurf memory with Aletheia">
+<meta name="twitter:description" content="Install Aletheia memory in Windsurf (now documented as Devin Desktop): the MCP entry, four Cascade hooks and rules files, with the status that no hook ran.">
+<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Windsurf memory with Aletheia","description":"Install Aletheia memory in Windsurf (now documented as Devin Desktop): the MCP entry, four Cascade hooks and rules files, with the status that no hook ran.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/windsurf.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/windsurf.html","inLanguage":"en","dateModified":"2026-10-29","keywords":"windsurf memory, windsurf cascade hooks, windsurf mcp_config.json, windsurf global_rules.md, devin desktop memory, aletheia windsurf","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"Windsurf memory with Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/windsurf.html"}]}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../../index.html"><img src="../../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../../index.html">Home</a><a href="../index.html">Docs</a><a href="../start/quickstart.html">Quickstart</a><a href="../compare/aletheia-vs-claude-mem.html">Compare</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc docs-layout">
+<aside class="side" aria-label="Documentation"><a class="side-home" href="../index.html">All documentation</a><details><summary>Get started</summary><ul><li><a href="../start/introduction.html">Introduction to Aletheia, a local memory hub for AI coding tools</a></li><li><a href="../start/installation.html">Install Aletheia with npm, git or Docker</a></li><li><a href="../start/quickstart.html">Quickstart</a></li><li><a href="../start/how-it-works.html">How Aletheia works</a></li><li><a href="../start/dashboard.html">The Aletheia dashboard</a></li><li><a href="../start/faq.html">Aletheia FAQ</a></li></ul></details><details><summary>Concepts</summary><ul><li><a href="../concepts/memory-model.html">Aletheia memory model</a></li><li><a href="../concepts/rules.html">Rules</a></li><li><a href="../concepts/search.html">Search</a></li><li><a href="../concepts/session-context.html">Session-start context</a></li><li><a href="../concepts/privacy.html">Privacy and redaction in Aletheia</a></li><li><a href="../33-facts.html">33. Facts</a></li><li><a href="../concepts/glossary.html">Aletheia glossary</a></li></ul></details><details open><summary>Connect your tools</summary><ul><li><a href="overview.html">Connect AI coding tools to Aletheia</a></li><li><a href="claude-code.html">Claude Code memory with Aletheia</a></li><li><a href="command-code.html">Command Code memory with Aletheia</a></li><li><a href="codex.html">Codex CLI memory with Aletheia</a></li><li><a href="cursor.html">Cursor memory with Aletheia</a></li><li><a href="gemini-cli.html">Gemini CLI memory with Aletheia</a></li><li><a href="windsurf.html" aria-current="page">Windsurf memory with Aletheia</a></li><li><a href="opencode.html">OpenCode memory with Aletheia</a></li><li><a href="../claude-desktop.html">Claude Desktop and the aletheia MCP server</a></li><li><a href="other-tools.html">GitHub Copilot, Aider and any MCP client with Aletheia</a></li><li><a href="../25-installers.html">25. Installers and automatic capture</a></li></ul></details><details><summary>Guides</summary><ul><li><a href="../guides/migrate-from-claude-mem.html">Migrate from claude-mem to Aletheia</a></li><li><a href="../guides/write-rules-once.html">Write your AI coding rules once and sync them to every tool</a></li><li><a href="../guides/backup-export-import.html">Back up, export and move Aletheia memory between machines</a></li><li><a href="../guides/run-as-a-service.html">Run Aletheia as a background service (systemd, launchd, Docker)</a></li><li><a href="../guides/model-providers.html">Model providers</a></li><li><a href="../guides/troubleshooting.html">Troubleshooting Aletheia</a></li><li><a href="../29-sync.html">29. Aletheia Sync</a></li><li><a href="../30-remote-mcp.html">30. The private remote MCP endpoint</a></li><li><a href="../31-team.html">31. Team mode</a></li><li><a href="../32-requests.html">32. Requests, goals, story and economics</a></li></ul></details><details><summary>Reference</summary><ul><li><a href="../reference/cli.html">Aletheia CLI reference</a></li><li><a href="../reference/mcp-tools.html">MCP tools reference</a></li><li><a href="../reference/configuration.html">Aletheia configuration reference</a></li><li><a href="../reference/hooks.html">Aletheia hooks reference</a></li><li><a href="../03-http-api.html">3. HTTP API</a></li></ul></details><details><summary>Compare</summary><ul><li><a href="../compare/aletheia-vs-claude-mem.html">claude-mem alternative</a></li><li><a href="../compare/memory-tools.html">Memory tools compared</a></li><li><a href="../compare/claude-code-memory.html">Claude Code memory options</a></li></ul></details><details><summary>Project</summary><ul><li><a href="../project/benchmarks.html">Aletheia benchmarks</a></li><li><a href="../project/status-and-limits.html">Aletheia status and limits</a></li><li><a href="../dependencies.html">Dependencies</a></li></ul></details><details><summary>Internals</summary><ul><li><a href="../01-architecture.html">1. Architecture</a></li><li><a href="../02-data-model.html">2. Data model</a></li><li><a href="../06-frontend.html">6. Frontend</a></li><li><a href="../07-operations.html">7. Operations</a></li></ul></details></aside>
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../index.html">Aletheia</a> › <a href="../index.html">Docs</a> › <span>Connect your tools</span> › <span>Windsurf memory with Aletheia</span></nav>
+<h1 id="windsurf-memory-with-aletheia">Windsurf memory with Aletheia</h1>
+<p>Aletheia (aletheia-mem) can write a local memory setup for Windsurf: an MCP server entry, four Cascade hooks, a global rules file and a per-project rules file. This setup is config written from docs, not tested on a real install. No hook ran in Windsurf. Windsurf has no session-start or session-end hook, so Aletheia injects no context there.</p>
+<nav class="toc" aria-label="On this page"><strong>On this page</strong><ul><li><a href="#what-you-get">What you get</a></li><li><a href="#install">Install</a></li><li><a href="#what-gets-written">What gets written</a></li><li><a href="#hooks-and-events">Hooks and events</a></li><li><a href="#rules-file">Rules file</a></li><li><a href="#verify-it-works">Verify it works</a></li><li><a href="#uninstall">Uninstall</a></li><li><a href="#verification-status">Verification status</a></li><li><a href="#known-limits">Known limits</a></li></ul></nav>
+<h2 id="what-you-get">What you get</h2>
+<ul><li><strong>MCP server.</strong> An entry named <code>aletheia</code> in <code>~/.config/devin/mcp_config.json</code>.</li><li><strong>Hooks.</strong> Four events in <code>~/.codeium/windsurf/hooks.json</code>: <code>pre_user_prompt</code>, <code>post_run_command</code>, <code>post_write_code</code> and <code>post_cascade_response</code>.</li><li><strong>Rules.</strong> A managed block in <code>~/.codeium/windsurf/memories/global_rules.md</code>, written by <code>install</code>. A project file <code>.windsurf/rules/aletheia.md</code> is written by <code>aletheia rules sync</code>.</li></ul>
+<p>Level: <code>full</code>. Verification: <code>from-docs-only</code>. No session-start context and no session-end summary, because Cascade has neither event.</p>
+<h2 id="install">Install</h2>
+<pre><code class="language-bash">npm install -g aletheia-mem
+aletheia install windsurf            # dry run: prints every step, writes nothing
+aletheia install windsurf --write    # MCP entry, hooks and global rules, with backups
+aletheia rules sync --tools windsurf --dir &lt;project&gt; --write    # the project rules file</code></pre>
+<p>Restart Windsurf afterwards.</p>
+<h2 id="what-gets-written">What gets written</h2>
+<p>Real dry-run output from a temporary HOME. Paths start with <code>/tmp/tmp.Ez6NqCkeLC</code>, the temporary home folder of the run. On your machine they start with your own home folder.</p>
+<pre><code>$ aletheia install windsurf
+Windsurf (windsurf) — full, from-docs-only
+  write  mcp      /tmp/tmp.Ez6NqCkeLC/.config/devin/mcp_config.json  (mcpServers.aletheia)
+  write  hooks    /tmp/tmp.Ez6NqCkeLC/.codeium/windsurf/hooks.json  (pre_user_prompt, post_run_command, post_write_code, post_cascade_response)
+  write  rules    /tmp/tmp.Ez6NqCkeLC/.codeium/windsurf/memories/global_rules.md  (1 rule)
+  note  Cascade has no session-start/session-end hook: there is no context injection and no session-end summary.
+  note  Hooks run from the workspace root by default; the installer omits working_directory.
+  ...
+Dry run: nothing was written. Add --write to apply.</code></pre>
+<p>The MCP file path is chosen by the code like this: <code>~/.config/devin/mcp_config.json</code> unless the legacy <code>~/.codeium/windsurf/mcp_config.json</code> already exists, or only the legacy folder exists. The code was read, not tested on a machine with the legacy layout.</p>
+<p>The hooks file that <code>--write</code> produced. Windsurf's format is a flat array per event:</p>
+<pre><code class="language-json">{
+  &quot;hooks&quot;: {
+    &quot;pre_user_prompt&quot;: [
+      {
+        &quot;command&quot;: &quot;/home/you/.bun/bin/bun /tmp/tmp.eHRtbNMs5s/aletheia.bundle.mjs hook windsurf pre_user_prompt # aletheia-managed&quot;
+      }
+    ],
+    ...
+  }
+}</code></pre>
+<p>The Windsurf docs have moved. <code>docs.windsurf.com/windsurf/cascade/hooks</code>, <code>/mcp</code> and <code>/memories</code> answered with a redirect to <code>docs.devin.ai/desktop/cascade/...</code> on 2026-10-29, and the product is documented as Devin Desktop. Those pages (fetched 2026-10-29) agree on these points: the user hook file is <code>~/.codeium/windsurf/hooks.json</code>; the MCP file is <code>~/.config/devin/mcp_config.json</code> with a <code>mcpServers</code> object of <code>command</code> and <code>args</code>; the global rules file is <code>~/.codeium/windsurf/memories/global_rules.md</code>.</p>
+<h2 id="hooks-and-events">Hooks and events</h2>
+<div class="tablewrap"><table><thead><tr><th>Event</th><th>What Aletheia does</th></tr></thead><tbody><tr><td><code>pre_user_prompt</code></td><td>Stores <code>tool_info.user_prompt</code> as a note, redacted. Prompts under 3 characters are skipped.</td></tr><tr><td><code>post_run_command</code></td><td>Stores a <code>Shell</code> event with <code>tool_info.command_line</code>. It stores no command output.</td></tr><tr><td><code>post_write_code</code></td><td>Stores a <code>Write</code> event with <code>tool_info.file_path</code> and <code>tool_info.edits</code>. It stores no output.</td></tr><tr><td><code>post_cascade_response</code></td><td>Stores <code>tool_info.response</code> as a summary, once per response. Queues the session for compression.</td></tr></tbody></table></div>
+<p>The Devin Desktop hooks page lists 12 events, including <code>pre_read_code</code>, <code>pre_write_code</code>, <code>pre_run_command</code> and <code>post_mcp_tool_use</code>. Aletheia installs four. The page says <code>pre_user_prompt</code> can block a prompt with exit code 2. Aletheia's hook always exits 0, so it never blocks. The page also says there is no session-start or session-end event.</p>
+<p>Not captured, because the events do not exist or are not installed:</p>
+<ul><li>No <code>SessionStart</code>: no recalled memory is injected into a Windsurf session.</li><li>No <code>SessionEnd</code>: no session-end summary.</li><li>No tool output for commands and file writes.</li></ul>
+<p>Every hook exits 0 whatever happens, makes no network call and no model call, and redacts before it stores. The project name comes from <code>tool_info.cwd</code>, then the payload <code>cwd</code>, then the hook process directory. See <a href="../reference/hooks.html">Hooks reference</a>.</p>
+<h2 id="rules-file">Rules file</h2>
+<p><code>aletheia install windsurf --write</code> adds the managed block to <code>~/.codeium/windsurf/memories/global_rules.md</code>. It is a plain block, with no frontmatter:</p>
+<pre><code>&lt;!-- aletheia:rules:begin --&gt;
+# Rules
+
+Managed by aletheia-mem. Edit them in the Rules page; this block is rewritten on sync.
+
+## Everywhere
+
+- Run the narrow test before the full suite.
+&lt;!-- aletheia:rules:end --&gt;</code></pre>
+<p>For a project, <code>aletheia rules sync --tools windsurf --dir &lt;project&gt; --write</code> writes <code>&lt;project&gt;/.windsurf/rules/aletheia.md</code>. Real output in the test run: <code>- windsurf: /tmp/tmp.e1CAvpmUGV/myproject/.windsurf/rules/aletheia.md — 1 rules, written</code>. The file starts with frontmatter that makes the rule always on:</p>
+<pre><code>---
+trigger: always_on
+---
+
+&lt;!-- aletheia:rules:begin --&gt;
+...
+&lt;!-- aletheia:rules:end --&gt;</code></pre>
+<p>The Devin Desktop memories page (https://docs.devin.ai/desktop/cascade/memories, fetched 2026-10-29) says the global file is always on and limited to 6,000 characters, that workspace rules live in <code>.devin/rules/*.md</code> (preferred) or <code>.windsurf/rules/*.md</code> (fallback), each limited to 12,000 characters, and that the <code>trigger</code> field takes <code>always_on</code>, <code>model_decision</code>, <code>glob</code> or <code>manual</code>. Aletheia writes the fallback path <code>.windsurf/rules/</code>. See <a href="../concepts/rules.html">Rules</a>.</p>
+<h2 id="verify-it-works">Verify it works</h2>
+<pre><code class="language-bash">aletheia install windsurf --verify
+aletheia doctor</code></pre>
+<p><code>--verify</code> prints <code>ok</code>, <code>drift</code> or <code>missing</code> for the MCP file, the hooks file and the global rules file. In <code>doctor</code>, look for <code>hooks windsurf    4/4 in ...hooks.json</code>. The <code>verify windsurf</code> line says <code>verified</code> with the evidence text <code>no working Windsurf/Devin install here</code>. The word <code>verified</code> there means the evidence date is recent. It does not mean a real install was tested.</p>
+<p>Nobody has seen these hooks run in Windsurf. If you try it:</p>
+<ol><li>Run the install, restart Windsurf, and send one prompt to Cascade.</li><li>Run <code>aletheia search &quot;&lt;a word from your prompt&gt;&quot;</code>, or open <code>http://127.0.0.1:37790</code> and check the Activity and Knowledge tabs. The Connections tab shows the hook count and the time of the last capture.</li><li>Report what you saw, with your Windsurf or Devin Desktop version, in an issue at https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues.</li></ol>
+<h2 id="uninstall">Uninstall</h2>
+<pre><code class="language-bash">aletheia uninstall windsurf            # dry run
+aletheia uninstall windsurf --write</code></pre>
+<p>Real dry-run output:</p>
+<pre><code>Windsurf (windsurf)
+  remove mcp      /tmp/tmp.Ez6NqCkeLC/.config/devin/mcp_config.json
+  remove hooks    /tmp/tmp.Ez6NqCkeLC/.codeium/windsurf/hooks.json  (no aletheia hooks)
+  remove rules    /tmp/tmp.Ez6NqCkeLC/.codeium/windsurf/memories/global_rules.md
+Dry run: nothing was written. Add --write to remove.</code></pre>
+<p>The <code>(no aletheia hooks)</code> label is the installer's own wording for the hooks line. In the Claude Code test run the same label appeared and the hook entries were removed. Uninstall does not remove <code>.windsurf/rules/aletheia.md</code>. Delete that file yourself in each project where you ran <code>rules sync</code>.</p>
+<h2 id="verification-status">Verification status</h2>
+<ul><li>Windsurf: config written from docs, not tested on a real install. No hook ran in Windsurf.</li><li>No working Windsurf or Devin Desktop install was available on the test machine.</li><li>The formats come from the three Windsurf pages, fetched 2026-10-26 from <code>docs.windsurf.com</code> and again 2026-10-29 from <code>docs.devin.ai/desktop</code> after the redirect. The 2026-10-29 pages match the user-level paths the installer writes. The workspace rules folder differs; see Known limits.</li><li>The installer and the hook adapter were tested against fixtures and recorded payloads in a temporary HOME. The project README says two hook checks (Windsurf and Gemini CLI) are skipped in CI on Windows, and that no real tool was tried on Windows.</li><li>UNVERIFIED: the docs say <code>command</code> runs on macOS and Linux and <code>powershell</code> on Windows, falling back to <code>command</code> when <code>powershell</code> is missing. Aletheia writes only <code>command</code>. No Windows run exists.</li><li>Answer accuracy is not measured. Benchmarks are retrieval only.</li></ul>
+<h2 id="known-limits">Known limits</h2>
+<ul><li>Nothing here has run in Windsurf. Expect to find differences.</li><li>No context injection and no session-end summary.</li><li>The global rules file is limited to 6,000 characters on the docs page. <code>aletheia rules lint</code> warns when the enabled set passes 4,000 characters.</li><li>The workspace rule goes to <code>.windsurf/rules/</code>, which the docs now call the fallback. The preferred folder is <code>.devin/rules/</code>.</li><li>Aletheia writes the user-level hooks file only, not the workspace hooks file.</li><li>The hook command holds absolute paths to Bun and the data dir bundle. If you move either, run <code>aletheia install windsurf --write</code> again.</li><li>Compression is queued, not run in the hook. Run <code>aletheia compress</code>, or keep <code>aletheia-server</code> running.</li></ul>
+<h2 id="next-steps">Next steps</h2>
+<ul><li><a href="../reference/hooks.html">Hooks reference</a> - the events, fields and guarantees of every hook.</li><li><a href="../concepts/rules.html">Rules</a> - how the rules blocks are built and synced.</li><li><a href="../project/status-and-limits.html">Project status and limits</a> - what is tested and what is not.</li><li><a href="overview.html">Tools overview</a> - all hosts and their verification status.</li></ul>
+<nav class="pager" aria-label="Previous and next"><a class="previous" href="gemini-cli.html"><small>Previous</small><span>Gemini CLI memory with Aletheia</span></a><a class="next" href="opencode.html"><small>Next</small><span>OpenCode memory with Aletheia</span></a></nav>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+</main>
+</body>
+</html>

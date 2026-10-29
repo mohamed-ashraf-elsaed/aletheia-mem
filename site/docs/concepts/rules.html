@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rules: write standing instructions once and sync them to every tool · Aletheia docs</title>
+<meta name="description" content="How Aletheia rules work: scopes, enabled, stale, confirm and retire, the managed block in each tool file, preview, diff, lint, sync and import.">
+<meta name="keywords" content="ai coding rules sync, claude.md agents.md gemini.md sync, cursor rules mdc, aletheia rules, managed block, stale rule recheck, rules diff lint">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/rules.html">
+<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aletheia">
+<meta property="og:title" content="Rules: write standing instructions once and sync them to every tool">
+<meta property="og:description" content="How Aletheia rules work: scopes, enabled, stale, confirm and retire, the managed block in each tool file, preview, diff, lint, sync and import.">
+<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/rules.html">
+<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Rules: write standing instructions once and sync them to every tool">
+<meta name="twitter:description" content="How Aletheia rules work: scopes, enabled, stale, confirm and retire, the managed block in each tool file, preview, diff, lint, sync and import.">
+<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Rules: write standing instructions once and sync them to every tool","description":"How Aletheia rules work: scopes, enabled, stale, confirm and retire, the managed block in each tool file, preview, diff, lint, sync and import.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/rules.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/rules.html","inLanguage":"en","dateModified":"2026-10-29","keywords":"ai coding rules sync, claude.md agents.md gemini.md sync, cursor rules mdc, aletheia rules, managed block, stale rule recheck, rules diff lint","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"Rules: write standing instructions once and sync them to every tool","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/rules.html"}]}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../../index.html"><img src="../../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../../index.html">Home</a><a href="../index.html">Docs</a><a href="../start/quickstart.html">Quickstart</a><a href="../compare/aletheia-vs-claude-mem.html">Compare</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc docs-layout">
+<aside class="side" aria-label="Documentation"><a class="side-home" href="../index.html">All documentation</a><details><summary>Get started</summary><ul><li><a href="../start/introduction.html">Introduction to Aletheia, a local memory hub for AI coding tools</a></li><li><a href="../start/installation.html">Install Aletheia with npm, git or Docker</a></li><li><a href="../start/quickstart.html">Quickstart</a></li><li><a href="../start/how-it-works.html">How Aletheia works</a></li><li><a href="../start/dashboard.html">The Aletheia dashboard</a></li><li><a href="../start/faq.html">Aletheia FAQ</a></li></ul></details><details open><summary>Concepts</summary><ul><li><a href="memory-model.html">Aletheia memory model</a></li><li><a href="rules.html" aria-current="page">Rules</a></li><li><a href="search.html">Search</a></li><li><a href="session-context.html">Session-start context</a></li><li><a href="privacy.html">Privacy and redaction in Aletheia</a></li><li><a href="../33-facts.html">33. Facts</a></li><li><a href="glossary.html">Aletheia glossary</a></li></ul></details><details><summary>Connect your tools</summary><ul><li><a href="../tools/overview.html">Connect AI coding tools to Aletheia</a></li><li><a href="../tools/claude-code.html">Claude Code memory with Aletheia</a></li><li><a href="../tools/command-code.html">Command Code memory with Aletheia</a></li><li><a href="../tools/codex.html">Codex CLI memory with Aletheia</a></li><li><a href="../tools/cursor.html">Cursor memory with Aletheia</a></li><li><a href="../tools/gemini-cli.html">Gemini CLI memory with Aletheia</a></li><li><a href="../tools/windsurf.html">Windsurf memory with Aletheia</a></li><li><a href="../tools/opencode.html">OpenCode memory with Aletheia</a></li><li><a href="../claude-desktop.html">Claude Desktop and the aletheia MCP server</a></li><li><a href="../tools/other-tools.html">GitHub Copilot, Aider and any MCP client with Aletheia</a></li><li><a href="../25-installers.html">25. Installers and automatic capture</a></li></ul></details><details><summary>Guides</summary><ul><li><a href="../guides/migrate-from-claude-mem.html">Migrate from claude-mem to Aletheia</a></li><li><a href="../guides/write-rules-once.html">Write your AI coding rules once and sync them to every tool</a></li><li><a href="../guides/backup-export-import.html">Back up, export and move Aletheia memory between machines</a></li><li><a href="../guides/run-as-a-service.html">Run Aletheia as a background service (systemd, launchd, Docker)</a></li><li><a href="../guides/model-providers.html">Model providers</a></li><li><a href="../guides/troubleshooting.html">Troubleshooting Aletheia</a></li><li><a href="../29-sync.html">29. Aletheia Sync</a></li><li><a href="../30-remote-mcp.html">30. The private remote MCP endpoint</a></li><li><a href="../31-team.html">31. Team mode</a></li><li><a href="../32-requests.html">32. Requests, goals, story and economics</a></li></ul></details><details><summary>Reference</summary><ul><li><a href="../reference/cli.html">Aletheia CLI reference</a></li><li><a href="../reference/mcp-tools.html">MCP tools reference</a></li><li><a href="../reference/configuration.html">Aletheia configuration reference</a></li><li><a href="../reference/hooks.html">Aletheia hooks reference</a></li><li><a href="../03-http-api.html">3. HTTP API</a></li></ul></details><details><summary>Compare</summary><ul><li><a href="../compare/aletheia-vs-claude-mem.html">claude-mem alternative</a></li><li><a href="../compare/memory-tools.html">Memory tools compared</a></li><li><a href="../compare/claude-code-memory.html">Claude Code memory options</a></li></ul></details><details><summary>Project</summary><ul><li><a href="../project/benchmarks.html">Aletheia benchmarks</a></li><li><a href="../project/status-and-limits.html">Aletheia status and limits</a></li><li><a href="../dependencies.html">Dependencies</a></li></ul></details><details><summary>Internals</summary><ul><li><a href="../01-architecture.html">1. Architecture</a></li><li><a href="../02-data-model.html">2. Data model</a></li><li><a href="../06-frontend.html">6. Frontend</a></li><li><a href="../07-operations.html">7. Operations</a></li></ul></details></aside>
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../index.html">Aletheia</a> › <a href="../index.html">Docs</a> › <span>Concepts</span> › <span>Rules: write standing instructions once and sync them to every tool</span></nav>
+<h1 id="rules-write-standing-instructions-once-and-sync-them-to-every-tool">Rules: write standing instructions once and sync them to every tool</h1>
+<p>Aletheia (aletheia-mem) keeps your standing instructions as rules in one list and writes them into the instruction file that each AI coding tool reads. A rule is one instruction, such as &quot;Run the tests before you commit.&quot;</p>
+<nav class="toc" aria-label="On this page"><strong>On this page</strong><ul><li><a href="#what-a-rule-is">What a rule is</a></li><li><a href="#scopes">Scopes</a></li><li><a href="#add-and-list-rules">Add and list rules</a></li><li><a href="#enabled-stale-confirm-and-retire">Enabled, stale, confirm and retire</a></li><li><a href="#the-managed-block">The managed block</a></li><li><a href="#which-files-aletheia-writes">Which files Aletheia writes</a></li><li><a href="#preview-before-you-write">Preview before you write</a></li><li><a href="#check-for-drift-with-diff-and-lint">Check for drift with diff and lint</a></li><li><a href="#import-rules-from-an-existing-file">Import rules from an existing file</a></li><li><a href="#let-aletheia-suggest-rules">Let Aletheia suggest rules</a></li></ul></nav>
+<h2 id="what-a-rule-is">What a rule is</h2>
+<p>A rule has these parts:</p>
+<ul><li><strong>then</strong>: the instruction itself, at most 800 characters.</li><li><strong>when</strong>: an optional situation, such as &quot;running scripts in this repo&quot;. A rule with a situation is written as <code>When &lt;situation&gt;: &lt;instruction&gt;</code>.</li><li><strong>scope</strong>: where it applies. See <a href="#scopes">Scopes</a>.</li><li><strong>tools</strong>: an optional list of tool ids. A rule limited to <code>claude-code</code> and <code>codex</code> is not written into any other tool's file.</li><li><strong>enabled</strong>: on or off. Only enabled rules are synced.</li><li><strong>source</strong>: who made it: <code>you</code>, <code>suggested</code>, <code>import:&lt;tool&gt;</code>, or the name of the tool that called the MCP <code>add_rule</code> tool.</li><li><strong>dates and evidence</strong>: when it was added, when it was last confirmed, and the memories or facts it rests on.</li></ul>
+<p>Rule ids look like <code>r_d459528269</code>. The same text in the same scope is never stored twice.</p>
+<h2 id="scopes">Scopes</h2>
+<p>A rule has one of three scope tiers.</p>
+<ul><li><strong>everywhere</strong>: applies in every project. It is written under <code>## Everywhere</code>.</li><li><strong>project</strong>: applies in one named project. It is written under <code>## In &lt;project&gt;</code>.</li><li><strong>situation</strong>: applies in a named situation, such as &quot;code review&quot;. It is written under a heading with that name.</li></ul>
+<p><code>aletheia rules add</code> creates <code>everywhere</code> rules. Create project and situation rules in the Rules tab, through the MCP <code>add_rule</code> tool (<code>scopeTier</code> and <code>scopeName</code>), or with <code>POST /api/hub/rules</code>.</p>
+<p>Sync does not filter rules by the folder you sync into. A rule for the project <code>demo</code> is written under <code>## In demo</code> in every file you sync, and the tool reads it as text. To make a rule reach only some tools, set its tools list when you create the rule (<code>tools</code> in <code>POST /api/hub/rules</code>).</p>
+<h2 id="add-and-list-rules">Add and list rules</h2>
+<pre><code class="language-bash">aletheia rules add &quot;Run the tests before you commit.&quot;
+aletheia rules add &quot;Use bun, not npm.&quot; --when &quot;running scripts in this repo&quot;
+aletheia rules list</code></pre>
+<pre><code>Added r_d459528269.
+Added r_069d2c0e9e.
+on  r_d459528269  Run the tests before you commit.  [everywhere]  (added 2026-10-29, source: you, last confirmed 2026-10-29)
+on  r_069d2c0e9e  When running scripts in this repo: Use bun, not npm.  [everywhere]  (added 2026-10-29, source: you, last confirmed 2026-10-29)</code></pre>
+<h2 id="enabled-stale-confirm-and-retire">Enabled, stale, confirm and retire</h2>
+<p>A rule is either on or off. <code>aletheia rules retire &lt;id&gt;</code> turns a rule off. It does not delete it, and you turn it back on in the Rules tab. Replacing a rule in the dashboard keeps the old rule and marks it as replaced.</p>
+<p>Use an id from <code>aletheia rules list</code>:</p>
+<pre><code class="language-bash">aletheia rules retire r_dc75399976</code></pre>
+<pre><code>Retired r_dc75399976: turned off, not deleted. Turn it back on in the Rules page.</code></pre>
+<h3 id="the-still-right-re-check">The &quot;still right?&quot; re-check</h3>
+<p>Aletheia computes a stale flag every time it reads a rule. The flag never turns a rule off or edits it. A rule is flagged when any of these is true:</p>
+<ul><li>A fact it rests on was superseded or closed after the rule was last confirmed.</li><li>A fact it rests on expired after the rule was last confirmed.</li><li>A memory it rests on was dismissed after the rule was last confirmed.</li><li>A newer active fact states a different object for the same subject and predicate as a fact it rests on.</li><li>Nobody confirmed the rule for longer than the review window. The default is 90 days. The <code>rules.reviewDays</code> setting changes it, from 7 to 730.</li></ul>
+<pre><code class="language-bash">aletheia rules list --stale</code></pre>
+<pre><code>on  r_d459528269  Run the tests before you commit.  [everywhere]  (added 2026-06-21, source: you, last confirmed 2026-07-01) [re-check: Not confirmed for 120 days (review window 90 days, last confirmed 2026-07-01).]</code></pre>
+<p>(<code>--older-than N</code> lists rules last confirmed more than N days ago. When nothing matches, the command prints <code>No rules yet.</code>)</p>
+<p>If the rule is still right, confirm it. The rule text does not change. Only its last-confirmed date moves to today.</p>
+<pre><code class="language-bash">aletheia rules confirm r_d459528269</code></pre>
+<pre><code>Confirmed r_d459528269 on 2026-10-29. The rule is unchanged.</code></pre>
+<p>The MCP <code>confirm_rule</code> tool does the same. An agent should call it only after you agree the rule still holds.</p>
+<h3 id="the-recheck-note">The recheck note</h3>
+<p>A flagged rule is still delivered. Aletheia adds a recheck note to its text, in synced files and in the session-start context, so the agent knows to verify it before it applies the rule:</p>
+<pre><code>- Run the tests before you commit. [re-check: Not confirmed for 120 days (review window 90 days, last confirmed 2026-07-01). Verify before applying.]</code></pre>
+<p><code>aletheia rules import</code> strips the note again, so it never becomes part of the rule text.</p>
+<h2 id="the-managed-block">The managed block</h2>
+<p>For most tools Aletheia writes one block between two marker comments and leaves everything else in the file alone:</p>
+<pre><code># My project
+
+Existing notes the user wrote.
+
+&lt;!-- aletheia:rules:begin --&gt;
+# Rules
+
+Managed by aletheia-mem. Edit them in the Rules page; this block is rewritten on sync.
+
+## Everywhere
+
+- Run the tests before you commit.
+- When running scripts in this repo: use bun, not npm.
+
+## In demo
+
+- Keep hooks free of network calls.
+&lt;!-- aletheia:rules:end --&gt;</code></pre>
+<p>The next sync replaces whatever sits between the markers, so edit rules in Aletheia, not in the block. When the file already exists, the first change keeps a copy next to it as <code>&lt;file&gt;.aletheia-&lt;timestamp&gt;.bak</code>. A sync that would change nothing writes nothing.</p>
+<p>Two files are owned by Aletheia and written whole, with the front matter the tool expects: the project rules file for Cursor (<code>.cursor/rules/aletheia.mdc</code>) and for Windsurf (<code>.windsurf/rules/aletheia.md</code>). Text you add to those files is lost on the next sync, apart from the backup.</p>
+<h2 id="which-files-aletheia-writes">Which files Aletheia writes</h2>
+<div class="tablewrap"><table><thead><tr><th>Tool id</th><th>Project file</th><th>Global file</th></tr></thead><tbody><tr><td><code>claude-code</code></td><td><code>CLAUDE.md</code></td><td><code>~/.claude/CLAUDE.md</code></td></tr><tr><td><code>command-code</code></td><td><code>AGENTS.md</code></td><td><code>~/.commandcode/AGENTS.md</code></td></tr><tr><td><code>codex</code></td><td><code>AGENTS.md</code></td><td><code>~/.codex/AGENTS.md</code></td></tr><tr><td><code>gemini-cli</code></td><td><code>GEMINI.md</code></td><td><code>~/.gemini/GEMINI.md</code></td></tr><tr><td><code>cursor</code></td><td><code>.cursor/rules/aletheia.mdc</code></td><td>none</td></tr><tr><td><code>windsurf</code></td><td><code>.windsurf/rules/aletheia.md</code></td><td><code>~/.codeium/windsurf/memories/global_rules.md</code></td></tr><tr><td><code>opencode</code></td><td><code>AGENTS.md</code></td><td><code>~/.config/opencode/AGENTS.md</code></td></tr><tr><td><code>copilot</code></td><td><code>.github/copilot-instructions.md</code></td><td>none</td></tr><tr><td><code>aider</code></td><td><code>CONVENTIONS.md</code></td><td>none</td></tr><tr><td><code>agents-md</code></td><td><code>AGENTS.md</code></td><td>none</td></tr></tbody></table></div>
+<p>The paths come from each tool's own documentation as recorded on 2026-10-26 in <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/verification/rules-targets.md">rules-targets.md</a>. They were not fetched again for this page. The Copilot and Aider formats were not verified in that pass. Aletheia's tests write each file in temp folders. No tool was launched to confirm that it read the file it was given.</p>
+<p>Cursor, Gemini CLI and Windsurf: config written from docs, not tested on a real install. No hook ran in Cursor, Gemini CLI, Windsurf or OpenCode.</p>
+<h2 id="preview-before-you-write">Preview before you write</h2>
+<p><code>aletheia rules sync</code> is a dry run until you add <code>--write</code>. It prints one line per tool and changes nothing:</p>
+<pre><code class="language-bash">aletheia rules sync --tools claude-code,cursor,codex,windsurf,copilot,aider,gemini-cli --dir .</code></pre>
+<pre><code>- claude-code: .../w/CLAUDE.md — 3 rules, would change (add --write)
+- cursor: .../w/.cursor/rules/aletheia.mdc — 2 rules, would change (add --write)
+- codex: .../w/AGENTS.md — 3 rules, would change (add --write)
+- windsurf: .../w/.windsurf/rules/aletheia.md — 2 rules, would change (add --write)
+- copilot: .../w/.github/copilot-instructions.md — 2 rules, would change (add --write)
+- aider: .../w/CONVENTIONS.md — 2 rules, would change (add --write)
+- gemini-cli: .../w/GEMINI.md — 2 rules, would change (add --write)</code></pre>
+<p>The counts differ because one rule was limited to <code>claude-code</code> and <code>codex</code>. Add <code>--write</code> to apply the change. Use <code>--global</code> instead of <code>--dir</code> to write the files under your home directory.</p>
+<pre><code class="language-bash">aletheia rules sync --tools claude-code,cursor,windsurf --dir . --write</code></pre>
+<pre><code>- claude-code: .../w/CLAUDE.md — 3 rules, written (backup .../w/CLAUDE.md.aletheia-2026-10-29T19-48-01-019Z.bak)
+- cursor: .../w/.cursor/rules/aletheia.mdc — 2 rules, written
+- windsurf: .../w/.windsurf/rules/aletheia.md — 2 rules, written</code></pre>
+<p>Running the same command again prints <code>already up to date</code> for each file and writes nothing.</p>
+<p>In the dashboard, the Rules tab has a Preview changes button that shows the new content, and a confirmation before Write files. The API follows the same order: <code>POST /api/hub/rules/preview</code> returns the before and after text, and <code>POST /api/hub/rules/sync</code> refuses to write unless the body has <code>&quot;confirm&quot;: true</code>.</p>
+<h2 id="check-for-drift-with-diff-and-lint">Check for drift with diff and lint</h2>
+<p><code>aletheia rules diff</code> compares each tool's managed block with the rules in the store. It reads files and writes nothing. After someone edits the block by hand it reports:</p>
+<pre><code>claude-code  .../w/CLAUDE.md  differs
+  only in store  r_5a235350fa  Write commit messages in the imperative mood.
+  only in file   .../w/CLAUDE.md:18  Never push to main.
+  text differs   r_d459528269 vs .../w/CLAUDE.md:12
+    store: Run the tests before you commit.
+    file:  Run the tests before every commit.
+1 tool out of sync.</code></pre>
+<p>A file with no managed block is reported as not compared.</p>
+<p><code>aletheia rules lint</code> checks the rules themselves and the drift. It prints one finding per problem with a fix hint, and exits with status 1 when it finds any. The checks are:</p>
+<ul><li>duplicate rules, and rules that contradict each other (same scope and situation, &quot;always&quot; against &quot;never&quot;);</li><li>a rule longer than 300 characters, or enabled rules totalling more than 4,000 characters;</li><li>a rule that tells an agent to ignore safety, or that contains something that looks like a secret;</li><li>a stale rule;</li><li>a rule in the store that is missing from a managed block, or a rule in a block that the store does not have.</li></ul>
+<pre><code>r_d459528269  stale_rule  Rule r_d459528269 may be out of date. Not confirmed for 120 days (review window 90 days, last confirmed 2026-07-01).
+  fix: Confirm it with aletheia rules confirm, or retire it with aletheia rules retire.</code></pre>
+<h2 id="import-rules-from-an-existing-file">Import rules from an existing file</h2>
+<p><code>aletheia rules import</code> reads the bullet lines from a tool's file and adds each one as a rule with the source <code>import:&lt;tool&gt;</code>. It reads the managed block when there is one, and the whole file when there is not. A <code>## In &lt;project&gt;</code> heading becomes a project-scoped rule. Rules already in the store are skipped.</p>
+<pre><code class="language-bash">aletheia rules import --tool claude-code --dir .</code></pre>
+<pre><code>{
+  &quot;found&quot;: 4,
+  &quot;added&quot;: 2,
+  &quot;skipped&quot;: 2
+}</code></pre>
+<h2 id="let-aletheia-suggest-rules">Let Aletheia suggest rules</h2>
+<p><code>aletheia rules suggest</code> scans your captured prompts for corrections such as &quot;use X instead of Y&quot;, &quot;always&quot;, &quot;never&quot;, &quot;don't&quot; and &quot;from now on&quot;. Each match becomes a pending suggestion with dated quotes. A suggestion seen once or twice is Light, three or four times is Steady, five or more is Strong. Nothing becomes a rule until you approve it in the Rules tab.</p>
+<pre><code class="language-bash">aletheia rules suggestions</code></pre>
+<pre><code>#1 [pending] Use pnpm, not npm for installs  (demo, confidence 0.8)</code></pre>
+<h2 id="next-steps">Next steps</h2>
+<ul><li><a href="../guides/write-rules-once.html">Write your rules once</a> - a step-by-step guide from first rule to synced files.</li><li><a href="session-context.html">Session-start context</a> - where enabled rules appear at the start of a session.</li><li><a href="memory-model.html">Memory model</a> - the facts and memories that rules can rest on.</li><li><a href="../reference/cli.html">CLI reference</a> - every <code>aletheia rules</code> option.</li></ul>
+<nav class="pager" aria-label="Previous and next"><a class="previous" href="memory-model.html"><small>Previous</small><span>Aletheia memory model: memories, facts, episodes and rules</span></a><a class="next" href="search.html"><small>Next</small><span>Search: keyword, project scope and optional semantic search</span></a></nav>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+</main>
+</body>
+</html>

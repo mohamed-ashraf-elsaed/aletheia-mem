@@ -3,8 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Aletheia · Free local memory and rules for AI coding tools</title>
-<meta name="description" content="Aletheia is a free, local memory and rules hub for AI coding tools. One store any tool reads over MCP, REST or CLI. Write your rules once and sync them to CLAUDE.md, AGENTS.md, Cursor and more. Export and import to move between tools.">
+<title>Aletheia: free local memory for Claude Code and AI coding tools</title>
+<meta name="description" content="Aletheia is a free, local memory and rules hub for Claude Code, Codex, Cursor and Gemini CLI. One SQLite store over MCP, REST and CLI. Apache-2.0, no account.">
+<meta name="keywords" content="claude code memory, claude memory, ai agent memory, mcp memory server, persistent memory for coding agents, claude-mem alternative, rules sync, CLAUDE.md, AGENTS.md, local-first, aletheia-mem">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<link rel="alternate" type="text/plain" href="llms.txt" title="llms.txt">
 <meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
 <meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
 <link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/">
@@ -18,29 +21,26 @@
 <meta property="og:image:height" content="640">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
-<meta property="og:title" content="Aletheia: un-forgetting for AI tools">
-<meta property="og:description" content="Free, local memory and rules for every AI coding tool. MCP, REST and CLI. Measured against claude-mem on LoCoMo.">
+<meta property="og:title" content="Aletheia: free local memory for Claude Code and AI coding tools">
+<meta property="og:description" content="Free, local memory and rules for Claude Code, Codex, Cursor and Gemini CLI. MCP, REST and CLI. Measured against claude-mem on LoCoMo.">
 <meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/">
-<meta name="twitter:title" content="Aletheia: un-forgetting for AI tools">
-<meta name="twitter:description" content="Free, local memory and rules for every AI coding tool. MCP, REST and CLI.">
+<meta name="twitter:title" content="Aletheia: free local memory for Claude Code and AI coding tools">
+<meta name="twitter:description" content="Free, local memory and rules for Claude Code, Codex, Cursor and Gemini CLI. MCP, REST and CLI.">
 <link rel="stylesheet" href="style.css">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Aletheia","applicationCategory":"DeveloperApplication","operatingSystem":"Linux (tested); macOS and Windows untested","description":"A free, local memory and rules hub for AI coding tools, with MCP, REST and CLI interfaces.","license":"https://www.apache.org/licenses/LICENSE-2.0","offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/","codeRepository":"https://github.com/mohamed-ashraf-elsaed/aletheia-mem","author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"}}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","applicationCategory":"DeveloperApplication","applicationSubCategory":"AI agent memory","operatingSystem":"Linux, macOS, Windows (tested in CI; real-tool tests on Linux)","description":"A free, local memory and rules hub for AI coding tools such as Claude Code, Codex CLI, Cursor, Gemini CLI and Windsurf, with MCP, REST and CLI interfaces.","keywords":"claude code memory, claude memory, ai agent memory, mcp memory server, persistent memory, rules sync, CLAUDE.md, AGENTS.md, claude-mem alternative","featureList":["Local SQLite memory store with full-text search","MCP server (stdio and HTTP), REST API and CLI","Hooks capture sessions in Claude Code, Command Code, Codex CLI, Cursor, Gemini CLI and Windsurf","Rules synced to CLAUDE.md, AGENTS.md, GEMINI.md, Cursor, Windsurf, Copilot and Aider files","Import from claude-mem, export and import bundles","Secrets and private blocks removed before storing"],"license":"https://www.apache.org/licenses/LICENSE-2.0","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"USD"},"url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/","installUrl":"https://www.npmjs.com/package/aletheia-mem","softwareHelp":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/","codeRepository":"https://github.com/mohamed-ashraf-elsaed/aletheia-mem","sameAs":["https://github.com/mohamed-ashraf-elsaed/aletheia-mem","https://www.npmjs.com/package/aletheia-mem"],"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"}}
 </script>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
-{"@type":"Question","name":"Is it really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Apache-2.0, no account, no hosted tier, no telemetry. Optional LLM features call the model you configure, and only then."}},
-{"@type":"Question","name":"How is it different from claude-mem?","acceptedAnswer":{"@type":"Answer","text":"Both are open source. claude-mem has more features, including per-tool installers, a live viewer and a smart file reader. Aletheia is smaller and tool-neutral: one store for any tool, rules sync, and migration both ways."}},
-{"@type":"Question","name":"Does it replace claude-mem?","acceptedAnswer":{"@type":"Answer","text":"No. It runs beside it on its own port and never writes to claude-mem's database."}},
-{"@type":"Question","name":"Where is my data?","acceptedAnswer":{"@type":"Answer","text":"In ~/.aletheia/hub.db on your machine. Nothing leaves it unless you turn on an LLM provider or share an export."}},
-{"@type":"Question","name":"Does it work with my tool?","acceptedAnswer":{"@type":"Answer","text":"If your tool speaks MCP or reads an instruction file, probably. Configs are written from documentation and fixture-tested; none has been tested on a real install."}}
-]}
+{"@context":"https://schema.org","@type":"WebSite","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/","description":"Documentation and home of Aletheia, a free local memory and rules hub for AI coding tools."}
+</script>
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"What is Aletheia?","acceptedAnswer":{"@type":"Answer","text":"Aletheia (npm package aletheia-mem) is a free, local memory and rules hub for AI coding tools. Hooks in tools such as Claude Code capture what happened, secrets are removed, and one SQLite file on your machine keeps it. Any tool reads it over MCP, REST or a command line."}},{"@type":"Question","name":"How do I give Claude Code persistent memory with Aletheia?","acceptedAnswer":{"@type":"Answer","text":"Install the package, start the server, then run aletheia install claude-code --write. That writes the MCP server entry, the hooks and the rules block. Hooks have run in real Claude Code sessions over two days of use, one user on one machine."}},{"@type":"Question","name":"Is it really free?","acceptedAnswer":{"@type":"Answer","text":"Yes. Apache-2.0, no account, no hosted tier, no telemetry. Optional LLM features call the model you configure, and only then."}},{"@type":"Question","name":"How is it different from claude-mem?","acceptedAnswer":{"@type":"Answer","text":"Both are open source. claude-mem is much larger, with more features and a far bigger community. Aletheia is smaller and tool-neutral: one store for any tool, rules sync to each tool's instruction file, and import from claude-mem."}},{"@type":"Question","name":"Does it replace claude-mem?","acceptedAnswer":{"@type":"Answer","text":"No. It runs beside it on its own port and never writes to claude-mem's database."}},{"@type":"Question","name":"Where is my data?","acceptedAnswer":{"@type":"Answer","text":"In ~/.aletheia/hub.db on your machine. Nothing leaves it unless you turn on an LLM provider or share an export."}},{"@type":"Question","name":"Can Claude Code, Codex and Cursor share one memory?","acceptedAnswer":{"@type":"Answer","text":"Yes, by design: they all read the same local store through MCP, REST or the CLI. Real-tool checks so far cover Claude Code, Command Code and Codex CLI on one machine; Cursor, Gemini CLI and Windsurf are config written from docs, not tested on a real install."}},{"@type":"Question","name":"Does it work with my tool?","acceptedAnswer":{"@type":"Answer","text":"If your tool speaks MCP or reads an instruction file, probably. Configs are written from documentation and fixture-tested. Only some have been tested on a real install; the tools table on this page says which."}}]}
 </script>
 </head>
 <body>
 <header class="top"><div class="wrap">
   <a class="brand" href="./"><img src="assets/mark.png" alt="" width="26" height="26">Aletheia</a>
-  <nav aria-label="Main"><a href="#features">Features</a><a href="#numbers">Numbers</a><a href="#tools">Tools</a><a href="docs/">Docs</a><a href="#start">Quick start</a><a href="#faq">FAQ</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+  <nav aria-label="Main"><a href="#features">Features</a><a href="#numbers">Numbers</a><a href="#tools">Tools</a><a href="docs/">Docs</a><a href="docs/compare/aletheia-vs-claude-mem.html">Compare</a><a href="#start">Quick start</a><a href="#faq">FAQ</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
 </div></header>
 
 <main>
@@ -49,8 +49,8 @@
   <div class="hero-text">
   <span class="etym">ἀλήθεια · a-lethe · "un-forgetting"</span>
   <h1>One memory for every AI coding tool.</h1>
-  <p class="lead">Aletheia is a free, local memory and rules hub. Your tools read and write the same store over MCP, REST or a CLI. Write your rules once and sync them into each tool's own instruction file. Export everything and move on whenever you like.</p>
-  <div class="btns"><a class="btn primary" href="#start">Quick start</a><a class="btn" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">View on GitHub</a></div>
+  <p class="lead">Aletheia (aletheia-mem) is a free, local memory and rules hub for Claude Code, Codex CLI, Cursor, Gemini CLI and other AI coding tools. They read and write one SQLite store over MCP, REST or a CLI. Write your rules once and sync them into each tool's own instruction file. Export everything and move on whenever you like.</p>
+  <div class="btns"><a class="btn primary" href="#start">Quick start</a><a class="btn" href="docs/">Read the docs</a><a class="btn" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">View on GitHub</a></div>
   </div>
   <img class="hero-logo" src="assets/logo.png" alt="Aletheia: a network brain with a stack of memory layers" width="600" height="525">
 </div>
@@ -59,12 +59,12 @@
   <h2>What it does</h2>
   <p class="sub">A small local server, a CLI and an MCP server over one SQLite file. No account, no telemetry, loopback only.</p>
   <div class="grid">
-    <div class="card"><h3>Memory</h3><p>Search, filter, pin, edit and delete. Observations, summaries, prompts and notes, with full-text search and optional local embeddings.</p></div>
+    <div class="card"><h3>Memory</h3><p>Search, filter, pin, edit and delete. Observations, summaries, prompts and notes, with full-text search and optional local embeddings. Hooks capture sessions in Claude Code, Command Code, Codex CLI, Cursor, Gemini CLI and Windsurf.</p></div>
     <div class="card"><h3>Rules, written once</h3><p>Sync one rule set into <code>CLAUDE.md</code>, <code>AGENTS.md</code>, <code>GEMINI.md</code>, Cursor, Windsurf, Copilot and Aider files. A managed block, so your own text is never touched. Preview and backup first.</p></div>
     <div class="card"><h3>Connect tools</h3><p>Detect installed tools and write the MCP config for each, with a preview and a backup before any write.</p></div>
     <div class="card"><h3>Easy to leave</h3><p>Export a versioned bundle or Markdown. Import a bundle, or import from claude-mem (read-only, repeatable). Importing twice does not duplicate.</p></div>
     <div class="card"><h3>Private by default</h3><p>Secrets and <code>&lt;private&gt;</code> blocks are removed before anything is stored. Optional LLM features are off until you choose a provider.</p></div>
-    <div class="card"><h3>My Work view</h3><p>A re-implementation of claude-mem's "My Work" page (request cards, goals, rules, build story). It reads claude-mem's database read-only.</p></div>
+    <div class="card"><h3>A dashboard in plain words</h3><p>Home shows, per project, what Aletheia knows, which rules apply and which tools are connected, with hints and examples. Activity, Knowledge, Rules and Connections go deeper.</p></div>
   </div>
 </section>
 
@@ -89,7 +89,7 @@
 <p class="note">Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with <code>bun scripts/compare-bench.mjs</code>.</p>
 <!-- /gen:bench -->
   </div>
-  <div class="note"><strong>Read this before comparing.</strong> Recall@5 is retrieval, not answer accuracy. The gap is real but not 2× when both sides see the same extracted facts. At 50,000 memories our keyword search takes 71 to 104 ms (median), which misses our own 50 ms target. Method, baselines and the raw result files are in <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/tree/main/bench/results">bench/results</a>.</div>
+  <div class="note"><strong>Read this before comparing.</strong> Recall@5 is retrieval, not answer accuracy. The gap is real but not 2× when both sides see the same extracted facts. At 50,000 synthetic rows, keyword search p95 is 32.7 ms project-scoped and 58.6 ms across all projects (measured-by-us, Linux). A seeded gate on 50,000 rows holds recall@5 at 0.90 with p95 about 7.8 ms (<code>bun bench/gate.mjs</code>). Method, baselines and the raw result files are in <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/tree/main/bench/results">bench/results</a>.</div>
 </section>
 
 <section id="tools">
@@ -115,32 +115,48 @@
   </div>
 </section>
 
+<section id="docs">
+  <h2>Documentation</h2>
+  <p class="sub">Guides for each tool, concepts, a full CLI, MCP and REST reference, and honest comparisons.</p>
+  <div class="grid">
+    <div class="card"><h3><a href="docs/start/introduction.html">Introduction</a></h3><p>What Aletheia is, how it works and what it does not do.</p></div>
+    <div class="card"><h3><a href="docs/tools/claude-code.html">Claude Code memory</a></h3><p>Install the hooks, MCP entry and rules block, and check them.</p></div>
+    <div class="card"><h3><a href="docs/tools/overview.html">Tools overview</a></h3><p>Codex, Cursor, Gemini CLI, Windsurf, OpenCode and what is verified for each.</p></div>
+    <div class="card"><h3><a href="docs/compare/aletheia-vs-claude-mem.html">Aletheia vs claude-mem</a></h3><p>A fair comparison with measured numbers and where claude-mem is ahead.</p></div>
+    <div class="card"><h3><a href="docs/guides/migrate-from-claude-mem.html">Migrate from claude-mem</a></h3><p>Import your memory read-only and run both side by side.</p></div>
+    <div class="card"><h3><a href="docs/reference/cli.html">CLI and MCP reference</a></h3><p>Every command, every MCP tool, every setting.</p></div>
+  </div>
+</section>
+
 <section id="start">
   <h2>Quick start</h2>
-  <p class="sub">Needs <a href="https://bun.sh">Bun</a> 1.1 or newer. No npm dependencies.</p>
-<pre><code>git clone https://github.com/mohamed-ashraf-elsaed/aletheia-mem
-cd aletheia-mem
-bun test                          # 115 tests
-bun bin/aletheia-server.mjs       # http://localhost:37790  (My Work) and /hub  (Memory Hub)</code></pre>
-<pre><code>bun bin/aletheia.mjs import claude-mem          # bring claude-mem memory in (read-only)
-bun bin/aletheia.mjs search "retry"
-bun bin/aletheia.mjs rules add "Run the tests before saying a task is done"
-bun bin/aletheia.mjs rules sync --tools codex,cursor,claude-code --dir /path/to/project          # preview
-bun bin/aletheia.mjs connect cursor                                                              # preview the MCP config</code></pre>
-  <p>Full reference: <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem#readme">README</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/tree/main/docs">docs</a></p>
+  <p class="sub">Needs <a href="https://bun.sh">Bun</a> 1.1 or newer. No runtime dependencies.</p>
+<pre><code>npm install -g aletheia-mem
+aletheia-server                       # http://127.0.0.1:37790</code></pre>
+<pre><code>aletheia install claude-code          # dry run: prints every file it would change
+aletheia install claude-code --write  # MCP entry, hooks and rules block, with backups
+aletheia save "Deploys need Node 20.19.6" --project my-app --pin
+aletheia search "node version"
+aletheia rules add "Run the tests before saying a task is done"
+aletheia import claude-mem            # optional: bring claude-mem memory in (read-only)</code></pre>
+  <p>Full reference: <a href="docs/start/quickstart.html">Quickstart</a> · <a href="docs/">Docs</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem#readme">README</a></p>
 </section>
 
 <section id="faq">
   <h2>FAQ</h2>
+  <details><summary>What is Aletheia?</summary><p>Aletheia (npm package aletheia-mem) is a free, local memory and rules hub for AI coding tools. Hooks in tools such as Claude Code capture what happened, secrets are removed, and one SQLite file on your machine keeps it. Any tool reads it over MCP, REST or a command line.</p></details>
+  <details><summary>How do I give Claude Code persistent memory with Aletheia?</summary><p>Install the package, start the server, then run aletheia install claude-code --write. That writes the MCP server entry, the hooks and the rules block. Hooks have run in real Claude Code sessions over two days of use, one user on one machine.</p></details>
   <details><summary>Is it really free?</summary><p>Yes. Apache-2.0, no account, no hosted tier, no telemetry. Optional LLM features call the model you configure, and only then.</p></details>
-  <details><summary>How is it different from claude-mem?</summary><p>claude-mem is also open source (Apache-2.0) and has far more features, including per-tool installers, a live viewer and a smart file reader. Aletheia is smaller and tool-neutral: one store for any tool, rules sync, and migration both ways. The README lists what is missing under <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/README.md#limits-and-unverified-claims">Limits and unverified claims</a>.</p></details>
+  <details><summary>How is it different from claude-mem?</summary><p>Both are open source. claude-mem is much larger, with more features and a far bigger community. Aletheia is smaller and tool-neutral: one store for any tool, rules sync to each tool's instruction file, and import from claude-mem.</p></details>
   <details><summary>Does it replace claude-mem?</summary><p>No. It runs beside it on its own port and never writes to claude-mem's database.</p></details>
-  <details><summary>Where is my data?</summary><p>In <code>~/.aletheia/hub.db</code> on your machine. Nothing leaves it unless you turn on an LLM provider or share an export.</p></details>
-  <details><summary>Does it work with my tool?</summary><p>If your tool speaks MCP or reads an instruction file, probably. See the table above for what is tested. The honest answer for a real install is "not tested yet".</p></details>
+  <details><summary>Where is my data?</summary><p>In ~/.aletheia/hub.db on your machine. Nothing leaves it unless you turn on an LLM provider or share an export.</p></details>
+  <details><summary>Can Claude Code, Codex and Cursor share one memory?</summary><p>Yes, by design: they all read the same local store through MCP, REST or the CLI. Real-tool checks so far cover Claude Code, Command Code and Codex CLI on one machine; Cursor, Gemini CLI and Windsurf are config written from docs, not tested on a real install.</p></details>
+  <details><summary>Does it work with my tool?</summary><p>If your tool speaks MCP or reads an instruction file, probably. Configs are written from documentation and fixture-tested. Only some have been tested on a real install; the tools table on this page says which.</p></details>
+  <p>More answers: <a href="docs/start/faq.html">the full FAQ</a>.</p>
 </section>
 </div>
 </main>
 
-<footer><div class="wrap">Aletheia is Apache-2.0. Not affiliated with claude-mem or Anthropic; see <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> for what comes from claude-mem. · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></div></footer>
+<footer><div class="wrap">Aletheia is Apache-2.0. Not affiliated with claude-mem or Anthropic; see <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> for what comes from claude-mem. · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="llms.txt">llms.txt</a></div></footer>
 </body>
 </html>

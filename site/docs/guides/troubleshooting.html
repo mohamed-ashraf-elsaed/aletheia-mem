@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Troubleshooting Aletheia: port in use, MCP closed, no memories and more · Aletheia docs</title>
+<meta name="description" content="Fix common Aletheia problems: EADDRINUSE, MCP CONNECTION_CLOSED, an old dashboard, E404 on install, missing memories, locked or corrupt database.">
+<meta name="keywords" content="aletheia troubleshooting, EADDRINUSE aletheia, mcp CONNECTION_CLOSED aletheia, aletheia doctor, aletheia no memories, database is locked aletheia, aletheia dashboard old version">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/troubleshooting.html">
+<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aletheia">
+<meta property="og:title" content="Troubleshooting Aletheia: port in use, MCP closed, no memories and more">
+<meta property="og:description" content="Fix common Aletheia problems: EADDRINUSE, MCP CONNECTION_CLOSED, an old dashboard, E404 on install, missing memories, locked or corrupt database.">
+<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/troubleshooting.html">
+<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Troubleshooting Aletheia: port in use, MCP closed, no memories and more">
+<meta name="twitter:description" content="Fix common Aletheia problems: EADDRINUSE, MCP CONNECTION_CLOSED, an old dashboard, E404 on install, missing memories, locked or corrupt database.">
+<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Troubleshooting Aletheia: port in use, MCP closed, no memories and more","description":"Fix common Aletheia problems: EADDRINUSE, MCP CONNECTION_CLOSED, an old dashboard, E404 on install, missing memories, locked or corrupt database.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/troubleshooting.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/troubleshooting.html","inLanguage":"en","dateModified":"2026-10-29","keywords":"aletheia troubleshooting, EADDRINUSE aletheia, mcp CONNECTION_CLOSED aletheia, aletheia doctor, aletheia no memories, database is locked aletheia, aletheia dashboard old version","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"Troubleshooting Aletheia: port in use, MCP closed, no memories and more","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/troubleshooting.html"}]}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../../index.html"><img src="../../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../../index.html">Home</a><a href="../index.html">Docs</a><a href="../start/quickstart.html">Quickstart</a><a href="../compare/aletheia-vs-claude-mem.html">Compare</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc docs-layout">
+<aside class="side" aria-label="Documentation"><a class="side-home" href="../index.html">All documentation</a><details><summary>Get started</summary><ul><li><a href="../start/introduction.html">Introduction to Aletheia, a local memory hub for AI coding tools</a></li><li><a href="../start/installation.html">Install Aletheia with npm, git or Docker</a></li><li><a href="../start/quickstart.html">Quickstart</a></li><li><a href="../start/how-it-works.html">How Aletheia works</a></li><li><a href="../start/dashboard.html">The Aletheia dashboard</a></li><li><a href="../start/faq.html">Aletheia FAQ</a></li></ul></details><details><summary>Concepts</summary><ul><li><a href="../concepts/memory-model.html">Aletheia memory model</a></li><li><a href="../concepts/rules.html">Rules</a></li><li><a href="../concepts/search.html">Search</a></li><li><a href="../concepts/session-context.html">Session-start context</a></li><li><a href="../concepts/privacy.html">Privacy and redaction in Aletheia</a></li><li><a href="../33-facts.html">33. Facts</a></li><li><a href="../concepts/glossary.html">Aletheia glossary</a></li></ul></details><details><summary>Connect your tools</summary><ul><li><a href="../tools/overview.html">Connect AI coding tools to Aletheia</a></li><li><a href="../tools/claude-code.html">Claude Code memory with Aletheia</a></li><li><a href="../tools/command-code.html">Command Code memory with Aletheia</a></li><li><a href="../tools/codex.html">Codex CLI memory with Aletheia</a></li><li><a href="../tools/cursor.html">Cursor memory with Aletheia</a></li><li><a href="../tools/gemini-cli.html">Gemini CLI memory with Aletheia</a></li><li><a href="../tools/windsurf.html">Windsurf memory with Aletheia</a></li><li><a href="../tools/opencode.html">OpenCode memory with Aletheia</a></li><li><a href="../claude-desktop.html">Claude Desktop and the aletheia MCP server</a></li><li><a href="../tools/other-tools.html">GitHub Copilot, Aider and any MCP client with Aletheia</a></li><li><a href="../25-installers.html">25. Installers and automatic capture</a></li></ul></details><details open><summary>Guides</summary><ul><li><a href="migrate-from-claude-mem.html">Migrate from claude-mem to Aletheia</a></li><li><a href="write-rules-once.html">Write your AI coding rules once and sync them to every tool</a></li><li><a href="backup-export-import.html">Back up, export and move Aletheia memory between machines</a></li><li><a href="run-as-a-service.html">Run Aletheia as a background service (systemd, launchd, Docker)</a></li><li><a href="model-providers.html">Model providers</a></li><li><a href="troubleshooting.html" aria-current="page">Troubleshooting Aletheia</a></li><li><a href="../29-sync.html">29. Aletheia Sync</a></li><li><a href="../30-remote-mcp.html">30. The private remote MCP endpoint</a></li><li><a href="../31-team.html">31. Team mode</a></li><li><a href="../32-requests.html">32. Requests, goals, story and economics</a></li></ul></details><details><summary>Reference</summary><ul><li><a href="../reference/cli.html">Aletheia CLI reference</a></li><li><a href="../reference/mcp-tools.html">MCP tools reference</a></li><li><a href="../reference/configuration.html">Aletheia configuration reference</a></li><li><a href="../reference/hooks.html">Aletheia hooks reference</a></li><li><a href="../03-http-api.html">3. HTTP API</a></li></ul></details><details><summary>Compare</summary><ul><li><a href="../compare/aletheia-vs-claude-mem.html">claude-mem alternative</a></li><li><a href="../compare/memory-tools.html">Memory tools compared</a></li><li><a href="../compare/claude-code-memory.html">Claude Code memory options</a></li></ul></details><details><summary>Project</summary><ul><li><a href="../project/benchmarks.html">Aletheia benchmarks</a></li><li><a href="../project/status-and-limits.html">Aletheia status and limits</a></li><li><a href="../dependencies.html">Dependencies</a></li></ul></details><details><summary>Internals</summary><ul><li><a href="../01-architecture.html">1. Architecture</a></li><li><a href="../02-data-model.html">2. Data model</a></li><li><a href="../06-frontend.html">6. Frontend</a></li><li><a href="../07-operations.html">7. Operations</a></li></ul></details></aside>
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../index.html">Aletheia</a> › <a href="../index.html">Docs</a> › <span>Guides</span> › <span>Troubleshooting Aletheia: port in use, MCP closed, no memories and more</span></nav>
+<h1 id="troubleshooting-aletheia-port-in-use-mcp-closed-no-memories-and-more">Troubleshooting Aletheia: port in use, MCP closed, no memories and more</h1>
+<p>This page lists problems people hit with Aletheia (aletheia-mem) and the exact command that fixes each one. Every fix was checked against the code, and most were reproduced in a temporary home folder with a temporary data directory.</p>
+<nav class="toc" aria-label="On this page"><strong>On this page</strong><ul><li><a href="#port-37790-is-already-in-use-eaddrinuse">Port 37790 is already in use (EADDRINUSE)</a></li><li><a href="#aletheia-server---help-started-the-server">aletheia-server --help started the server</a></li><li><a href="#claude-code-shows-the-aletheia-mcp-server-as-connection_closed">Claude Code shows the aletheia MCP server as CONNECTION_CLOSED</a></li><li><a href="#the-dashboard-looks-old-after-an-upgrade">The dashboard looks old after an upgrade</a></li><li><a href="#npm-install--g-aletheia-memx-returns-e404-right-after-a-release">npm install -g aletheia-mem@X returns E404 right after a release</a></li><li><a href="#hooks-are-installed-but-no-memories-appear">Hooks are installed but no memories appear</a></li><li><a href="#the-rules-page-is-empty">The rules page is empty</a></li><li><a href="#the-session-start-block-is-too-large">The session-start block is too large</a></li><li><a href="#facts-look-like-noise">Facts look like noise</a></li><li><a href="#database-is-locked-or-busy">Database is locked or busy</a></li><li><a href="#healthz-returns-503-or-doctor-shows-fail-database">/healthz returns 503, or doctor shows FAIL database</a></li><li><a href="#doctor-shows-fail-server">doctor shows FAIL server</a></li><li><a href="#a-line-says-mode-0644---0600">A line says mode 0644 -&gt; 0600</a></li><li><a href="#windows-notes">Windows notes</a></li><li><a href="#collect-a-useful-bug-report">Collect a useful bug report</a></li></ul></nav>
+<p>Start with <code>aletheia doctor</code>. It checks the host and port, the server, the hook entries, the spool, file permissions, the last capture, the job queue and the database.</p>
+<h2 id="port-37790-is-already-in-use-eaddrinuse">Port 37790 is already in use (EADDRINUSE)</h2>
+<p>Cause: another process holds the port. The usual one is the service you already started, or a second <code>aletheia-server</code>.</p>
+<pre><code class="language-text">error: Failed to start server. Is port 37999 in use?
+ syscall: &quot;listen&quot;,
+   errno: 0,
+    code: &quot;EADDRINUSE&quot;</code></pre>
+<p>The number in the message is the port you configured. Fix: find the owner, or use another port.</p>
+<pre><code class="language-bash">ss -ltnp | grep 37790
+systemctl --user status aletheia
+ALETHEIA_PORT=37791 aletheia-server</code></pre>
+<p>On macOS use <code>lsof -nP -iTCP:37790 -sTCP:LISTEN</code> instead of <code>ss</code> (not tested on a Mac). If you run a service, change its port with <code>ALETHEIA_PORT=37791 aletheia service install --write</code>. See <a href="run-as-a-service.html">Run as a service</a>.</p>
+<h2 id="aletheia-server---help-started-the-server"><code>aletheia-server --help</code> started the server</h2>
+<p>Cause: the server binary has no help flag. It reads only <code>--host</code> and <code>--behind-tls</code>, ignores anything else and starts. I ran it with <code>--help</code> on a test port and it printed:</p>
+<pre><code class="language-text">aletheia-mem listening on http://localhost:38417
+  source db : ~/.claude-mem/claude-mem.db (read-only)
+  data dir  : ~/.aletheia
+  refresh   : off (set ALETHEIA_PROVIDER=claude-cli|openai to enable)
+  extraction: worker on (rule-based)</code></pre>
+<p>Fix: press Ctrl-C. For command help, run <code>aletheia</code> with no arguments. It prints the full command list. Settings are environment variables; see the <a href="../reference/configuration.html">Configuration reference</a>.</p>
+<h2 id="claude-code-shows-the-aletheia-mcp-server-as-connection_closed">Claude Code shows the aletheia MCP server as CONNECTION_CLOSED</h2>
+<p>Cause: the entry in <code>~/.claude.json</code> holds the absolute path of Bun and of <code>mcp.mjs</code>. If that path no longer exists, the process cannot start and Claude Code reports the connection as closed. This happens after the package moves, for example when you switch Node versions or the npm prefix. In a test I pointed the entry at a missing path and started it by hand:</p>
+<pre><code class="language-text">error: Module not found &quot;/old/node/lib/node_modules/aletheia-mem/bin/mcp.mjs&quot;</code></pre>
+<p>Fix: write the entry again. The installer replaces the <code>aletheia</code> entry with the current paths.</p>
+<pre><code class="language-bash">aletheia install claude-code --verify
+aletheia install claude-code --write</code></pre>
+<p>The first command printed <code>drift  mcp</code> for the broken entry. The second wrote only <code>~/.claude.json</code> and left the hooks as they were. Start a new Claude Code session afterwards. <code>aletheia connect claude-code</code> is not the fix: for Claude Code it prints a <code>claude mcp add</code> command instead of editing the file.</p>
+<p>To check an entry by hand, read the <code>command</code> and <code>args</code> under <code>mcpServers.aletheia</code> in <code>~/.claude.json</code> and confirm both files exist. The MCP server was listed by the real Claude Code 2.1.312 CLI on 2026-10-27.</p>
+<h2 id="the-dashboard-looks-old-after-an-upgrade">The dashboard looks old after an upgrade</h2>
+<p>Three causes, in the order to check them.</p>
+<ol><li>The installed package is older than you think. More than one install can be on the path.</li></ol>
+<pre><code class="language-bash">   aletheia --version
+   npm ls -g aletheia-mem
+   which -a aletheia</code></pre>
+<ol><li>The running server still has the old code. The server reads <code>index.html</code> once and keeps it in memory, so a running server serves the old page until it restarts.</li></ol>
+<pre><code class="language-bash">   systemctl --user restart aletheia
+   curl -s http://127.0.0.1:37790/v1/info</code></pre>
+<p>The <code>/v1/info</code> answer includes <code>&quot;version&quot;</code>, the version of the code the server runs. If you set <code>ALETHEIA_API_KEY</code>, send <code>Authorization: Bearer &lt;key&gt;</code>.</p>
+<ol><li>The browser kept old files. The page itself is sent with <code>Cache-Control: no-store</code>. The JavaScript and CSS files under <code>/work-view/</code> carry no cache header, so a browser can reuse an old copy. Hard reload the page (Ctrl+Shift+R, or Cmd+Shift+R on macOS).</li></ol>
+<p>After an upgrade, also run <code>aletheia install &lt;tool&gt; --write</code> for each tool, so the hook bundle in the data directory is rebuilt.</p>
+<h2 id="npm-install--g-aletheia-memx-returns-e404-right-after-a-release"><code>npm install -g aletheia-mem@X</code> returns E404 right after a release</h2>
+<p>Cause: the registry does not list that version yet. I could not observe a release delay, but a version the registry does not have gives the same message:</p>
+<pre><code class="language-text">npm error code E404
+npm error 404 No match found for version 0.1.999</code></pre>
+<p>Fix: ask the registry what it has, then wait and retry.</p>
+<pre><code class="language-bash">npm view aletheia-mem version
+npm view aletheia-mem@0.1.10 version
+npm install -g aletheia-mem@latest</code></pre>
+<p>If <code>npm view</code> does not show the new version, wait a few minutes. <code>@latest</code> installs whatever the registry shows as the newest.</p>
+<h2 id="hooks-are-installed-but-no-memories-appear">Hooks are installed but no memories appear</h2>
+<p>Work through these checks in order.</p>
+<ol><li>Read the doctor rows.</li></ol>
+<pre><code class="language-bash">   aletheia doctor | grep -E &quot;hooks|spool|last capture|server&quot;</code></pre>
+<p><code>hooks claude-code  5/5</code> means the five hook entries are in the settings file. It does not mean a hook ran. <code>last capture</code> shows the time of the newest stored prompt, event or summary. <code>no capture yet</code> means nothing has been stored.</p>
+<ol><li>Run a hook by hand. It should store one memory and exit 0.</li></ol>
+<pre><code class="language-bash">   echo '{&quot;hook_event_name&quot;:&quot;UserPromptSubmit&quot;,&quot;session_id&quot;:&quot;s-1&quot;,&quot;cwd&quot;:&quot;/tmp/demo&quot;,&quot;prompt&quot;:&quot;Add a health endpoint&quot;}' | aletheia hook claude-code UserPromptSubmit
+   aletheia search health</code></pre>
+<pre><code class="language-text">   #1 2026-10-29 [note] Add a health endpoint (demo, claude-code)</code></pre>
+<ol><li>Look at the spool. When the database cannot be opened, a hook writes the item to <code>&lt;data dir&gt;/spool/hook-spool.jsonl</code> and the next successful hook replays it. In a test with a broken database path the doctor row read <code>FAIL spool  1 item(s) at .../spool/hook-spool.jsonl</code>, and the next good hook emptied it. A spool that stays full points at a database problem; see the sections below.</li></ol>
+<ol><li>Check that the host and your shell use the same data directory. A hook reads <code>ALETHEIA_DATA_DIR</code> from the environment of the tool that starts it. If you set it only in your shell, the hook and the dashboard use different databases.</li></ol>
+<ol><li>Check excluded projects. A project named in <code>ALETHEIA_EXCLUDED_PROJECTS</code> is skipped before any row is written, and the hook still exits 0. Only the environment variable is read. I found no code that reads the excluded-projects value saved on the Settings page.</li></ol>
+<ol><li>Check what the tool can send. Command Code has no prompt hook and no session-end hook, so prompts are not captured there. <code>SessionStart</code> only injects context and stores no row.</li></ol>
+<ol><li>Codex: Codex requires non-managed hooks to be reviewed and trusted before they run. Its documentation says new or changed hooks are marked for review and skipped until trusted, and that you inspect and trust them with <code>/hooks</code> in the CLI (https://developers.openai.com/codex/hooks, fetched 2026-10-29). I did not test whether a reinstall that changes the hook command asks for a new review.</li></ol>
+<ol><li>Other tools. Cursor, Gemini CLI and Windsurf: config written from docs, not tested on a real install. No hook ran in Cursor, Gemini CLI, Windsurf or OpenCode. OpenCode has MCP and rules only.</li></ol>
+<p>Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine.</p>
+<p>Facts are separate from memories. A memory appears as soon as a hook stores it. Facts need extraction, which the server worker or <code>aletheia compress</code> runs after a session ends.</p>
+<h2 id="the-rules-page-is-empty">The rules page is empty</h2>
+<p>Cause: rules live in the Aletheia database. They are not read from <code>CLAUDE.md</code>, <code>AGENTS.md</code> or any other tool file. A new install has no rules, and <code>aletheia install</code> writes an empty block (<code>0 rules</code>).</p>
+<p>Fix: add rules, or import them from a file you already have.</p>
+<pre><code class="language-bash">aletheia rules list
+aletheia rules import --tool claude-code --global
+aletheia rules import --tool claude-code --dir /path/to/project</code></pre>
+<p>In the dashboard use Rules, then <strong>Import</strong>. Details are in <a href="write-rules-once.html">Write rules once</a>.</p>
+<h2 id="the-session-start-block-is-too-large">The session-start block is too large</h2>
+<p>Cause: the block that a hook injects is capped at 6,000 characters. It holds pinned memories (up to 50), the 20 newest memories, up to 5 recent session requests, up to 10 facts and every enabled rule. The code cuts the text at the end, and the rules come near the end, so a large block can cut off rules first.</p>
+<p>Fix: measure it, then shrink it.</p>
+<pre><code class="language-bash">aletheia context --project shop | wc -c</code></pre>
+<ul><li>Unpin memories you no longer need, in the Knowledge tab.</li><li>Hide a memory: <code>aletheia dismiss &lt;id&gt;</code>. Undo with <code>aletheia restore &lt;id&gt;</code>.</li><li>Retire a rule you do not need: <code>aletheia rules retire &lt;id&gt;</code>.</li><li>Set <strong>Facts in context</strong> to <code>off</code> in Connections, then Settings. The default <code>auto</code> already hides low-confidence rule-extracted facts.</li></ul>
+<p>The Connections page <strong>What tools receive</strong> shows what a tool gets. See <a href="../concepts/session-context.html">Session-start context</a>.</p>
+<h2 id="facts-look-like-noise">Facts look like noise</h2>
+<p>Cause: the extractor stored sentences that read like narration or code. A quality gate now checks new facts. Older rows can still fail it.</p>
+<p>Fix: dry run first. The command is a dry run until you add <code>--apply</code>.</p>
+<pre><code class="language-bash">aletheia facts clean
+aletheia facts clean --apply
+aletheia restore fact:42</code></pre>
+<pre><code class="language-text">Dry run: 0 of 0 fact(s) fail the quality gate.
+Add --apply to dismiss the failures (reversible with aletheia restore fact:&lt;id&gt;).</code></pre>
+<p>On a store with failing facts the command prints a count per reason and up to 10 examples for each. The <code>--dry-run</code> flag is not read; leaving <code>--apply</code> off is the dry run. The gate rules are in <a href="../33-facts.html">Facts and contradictions</a>.</p>
+<h2 id="database-is-locked-or-busy">Database is locked or busy</h2>
+<p>Cause: SQLite allows one writer at a time. Another process holds a write lock for longer than Aletheia waits. The store waits 3 seconds. I held a write transaction open from another process and ran <code>aletheia save</code>:</p>
+<pre><code class="language-text">SQLiteError: database is locked</code></pre>
+<p>The call returned after about 3 seconds. Once its store is open, a hook lowers the wait to 50 milliseconds and spools the item instead of failing the session.</p>
+<p>Fix: find and end the process that holds the lock. Common ones are a long import, a backup tool, or a <code>sqlite3</code> shell with an open transaction. Do not put the data directory on a network drive. SQLite's documentation says WAL mode does not work over a network filesystem and allows one writer at a time (https://www.sqlite.org/wal.html, fetched 2026-10-29). Run <code>aletheia doctor</code> afterwards. The spool row shows whether hooks were waiting.</p>
+<h2 id="healthz-returns-503-or-doctor-shows-fail-database"><code>/healthz</code> returns 503, or doctor shows <code>FAIL database</code></h2>
+<p>Cause: the database or search-index check failed. I reproduced this error by damaging a search-index block in a copy of a test database:</p>
+<pre><code class="language-text">FAIL database             fts5: corruption found reading blob 687194767361 from table &quot;memories_fts&quot;</code></pre>
+<p><code>aletheia optimize</code> fails on such an index with the same message. I do not know what damages an index on a real machine.</p>
+<p>Fix: back up first. Stop the server and copy <code>hub.db</code>, <code>hub.db-wal</code> and <code>hub.db-shm</code> together; see <a href="backup-export-import.html">Backup, export and import</a>. Then rebuild the two search indexes from the stored rows. The <code>sqlite3</code> shell often lacks FTS5, so use Bun:</p>
+<pre><code class="language-bash">cat &gt; rebuild-fts.mjs &lt;&lt;'EOF'
+import { Database } from &quot;bun:sqlite&quot;;
+const db = new Database(process.argv[2]);
+db.exec(&quot;INSERT INTO memories_fts(memories_fts) VALUES('rebuild')&quot;);
+db.exec(&quot;INSERT INTO facts_fts(facts_fts) VALUES('rebuild')&quot;);
+db.close();
+EOF
+bun rebuild-fts.mjs ~/.aletheia/hub.db
+aletheia doctor | grep -E &quot;database|fts&quot;</code></pre>
+<p>SQLite documents the <code>rebuild</code> command as rebuilding an index from the content table (https://www.sqlite.org/fts5.html, fetched 2026-10-29). In my test, <code>database</code> went from FAIL to <code>quick_check ok</code> after the rebuild. If <code>quick_check</code> still fails, restore from a backup or from an export bundle.</p>
+<h2 id="doctor-shows-fail-server">doctor shows <code>FAIL server</code></h2>
+<p>Cause: the server is not running, or it listens on a port other than the one doctor checks. Doctor reads <code>ALETHEIA_PORT</code> from your shell. Hooks and the CLI do not need the server, so this row alone is not a capture problem.</p>
+<p>Fix: start the server or the service, or set the port.</p>
+<pre><code class="language-bash">ALETHEIA_PORT=37791 aletheia doctor</code></pre>
+<p>An <code>HTTP 503</code> detail means the server answered and its health check failed; see the section above.</p>
+<h2 id="a-line-says-mode-0644---0600">A line says <code>mode 0644 -&gt; 0600</code></h2>
+<pre><code class="language-text">aletheia: file ~/.aletheia/hub.db mode 0644 -&gt; 0600</code></pre>
+<p>Cause: Aletheia tightens the data directory to <code>0700</code> and the database files to <code>0600</code> when it opens them, and prints one line when it changes a mode. It is a notice, not an error. <code>aletheia doctor</code> has a <code>permissions</code> row that reports loose modes.</p>
+<h2 id="windows-notes">Windows notes</h2>
+<ul><li>Continuous integration runs the test suite on Windows (GitHub's <code>windows-latest</code> runner, Bun 1.3.10). Two hook checks (Windsurf and Gemini CLI) and one temp-folder cleanup check are skipped there. No real tool was tried on Windows. Treat Windows as tested in CI only.</li><li><code>aletheia service install</code> writes nothing on Windows. Start <code>aletheia-server</code> yourself or use Task Scheduler.</li><li><code>aletheia doctor</code> skips the permissions check on Windows, because there are no POSIX mode bits.</li><li>The CLI runs on Bun, not Node. Install Bun 1.1 or newer.</li></ul>
+<h2 id="collect-a-useful-bug-report">Collect a useful bug report</h2>
+<p>Open an issue at https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues and choose the Bug report template. Collect this first:</p>
+<pre><code class="language-bash">aletheia --version
+bun --version
+uname -a
+aletheia doctor | sed &quot;s#$HOME#~#g&quot;
+aletheia install --list</code></pre>
+<ul><li>Add the host tool and its version, for example <code>claude --version</code>.</li><li>Add the exact command, what you expected and what happened, with the error text.</li><li><code>aletheia doctor --json</code> gives the same checks as JSON.</li><li>Replace your home folder with <code>~</code>, as the <code>sed</code> above does. Doctor output holds file paths and your user name. It is built not to include API keys, but read it before you paste it.</li><li>Do not paste <code>~/.claude.json</code>, a settings file or an environment dump without removing tokens. Remove prompts and <code>&lt;private&gt;</code> content.</li><li>For a security problem, do not open a public issue. Use GitHub's private vulnerability reporting on the repository (Security tab), as <code>SECURITY.md</code> describes.</li></ul>
+<h2 id="next-steps">Next steps</h2>
+<ul><li><a href="run-as-a-service.html">Run as a service</a> - ports, logs and restarts for the server.</li><li><a href="backup-export-import.html">Backup, export and import</a> - copy the database files safely before a repair.</li><li><a href="../tools/overview.html">Tools overview</a> - what was checked on a real install, per tool.</li><li><a href="../reference/hooks.html">Reference: hooks</a> - the events each hook handles.</li></ul>
+<nav class="pager" aria-label="Previous and next"><a class="previous" href="model-providers.html"><small>Previous</small><span>Model providers: none, Claude CLI, OpenAI-compatible and Ollama</span></a><a class="next" href="../29-sync.html"><small>Next</small><span>29. Aletheia Sync</span></a></nav>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+</main>
+</body>
+</html>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gemini CLI memory with Aletheia · Aletheia docs</title>
+<meta name="description" content="Install Aletheia memory in Gemini CLI: the settings.json MCP entry and five hooks, the GEMINI.md rules block, and the status that no hook ran.">
+<meta name="keywords" content="gemini cli memory, gemini cli hooks, gemini cli mcp server, gemini.md rules, aletheia gemini cli, gemini cli persistent memory">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/gemini-cli.html">
+<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aletheia">
+<meta property="og:title" content="Gemini CLI memory with Aletheia">
+<meta property="og:description" content="Install Aletheia memory in Gemini CLI: the settings.json MCP entry and five hooks, the GEMINI.md rules block, and the status that no hook ran.">
+<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/gemini-cli.html">
+<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Gemini CLI memory with Aletheia">
+<meta name="twitter:description" content="Install Aletheia memory in Gemini CLI: the settings.json MCP entry and five hooks, the GEMINI.md rules block, and the status that no hook ran.">
+<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Gemini CLI memory with Aletheia","description":"Install Aletheia memory in Gemini CLI: the settings.json MCP entry and five hooks, the GEMINI.md rules block, and the status that no hook ran.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/gemini-cli.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/gemini-cli.html","inLanguage":"en","dateModified":"2026-10-29","keywords":"gemini cli memory, gemini cli hooks, gemini cli mcp server, gemini.md rules, aletheia gemini cli, gemini cli persistent memory","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"Gemini CLI memory with Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/gemini-cli.html"}]}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../../index.html"><img src="../../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../../index.html">Home</a><a href="../index.html">Docs</a><a href="../start/quickstart.html">Quickstart</a><a href="../compare/aletheia-vs-claude-mem.html">Compare</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc docs-layout">
+<aside class="side" aria-label="Documentation"><a class="side-home" href="../index.html">All documentation</a><details><summary>Get started</summary><ul><li><a href="../start/introduction.html">Introduction to Aletheia, a local memory hub for AI coding tools</a></li><li><a href="../start/installation.html">Install Aletheia with npm, git or Docker</a></li><li><a href="../start/quickstart.html">Quickstart</a></li><li><a href="../start/how-it-works.html">How Aletheia works</a></li><li><a href="../start/dashboard.html">The Aletheia dashboard</a></li><li><a href="../start/faq.html">Aletheia FAQ</a></li></ul></details><details><summary>Concepts</summary><ul><li><a href="../concepts/memory-model.html">Aletheia memory model</a></li><li><a href="../concepts/rules.html">Rules</a></li><li><a href="../concepts/search.html">Search</a></li><li><a href="../concepts/session-context.html">Session-start context</a></li><li><a href="../concepts/privacy.html">Privacy and redaction in Aletheia</a></li><li><a href="../33-facts.html">33. Facts</a></li><li><a href="../concepts/glossary.html">Aletheia glossary</a></li></ul></details><details open><summary>Connect your tools</summary><ul><li><a href="overview.html">Connect AI coding tools to Aletheia</a></li><li><a href="claude-code.html">Claude Code memory with Aletheia</a></li><li><a href="command-code.html">Command Code memory with Aletheia</a></li><li><a href="codex.html">Codex CLI memory with Aletheia</a></li><li><a href="cursor.html">Cursor memory with Aletheia</a></li><li><a href="gemini-cli.html" aria-current="page">Gemini CLI memory with Aletheia</a></li><li><a href="windsurf.html">Windsurf memory with Aletheia</a></li><li><a href="opencode.html">OpenCode memory with Aletheia</a></li><li><a href="../claude-desktop.html">Claude Desktop and the aletheia MCP server</a></li><li><a href="other-tools.html">GitHub Copilot, Aider and any MCP client with Aletheia</a></li><li><a href="../25-installers.html">25. Installers and automatic capture</a></li></ul></details><details><summary>Guides</summary><ul><li><a href="../guides/migrate-from-claude-mem.html">Migrate from claude-mem to Aletheia</a></li><li><a href="../guides/write-rules-once.html">Write your AI coding rules once and sync them to every tool</a></li><li><a href="../guides/backup-export-import.html">Back up, export and move Aletheia memory between machines</a></li><li><a href="../guides/run-as-a-service.html">Run Aletheia as a background service (systemd, launchd, Docker)</a></li><li><a href="../guides/model-providers.html">Model providers</a></li><li><a href="../guides/troubleshooting.html">Troubleshooting Aletheia</a></li><li><a href="../29-sync.html">29. Aletheia Sync</a></li><li><a href="../30-remote-mcp.html">30. The private remote MCP endpoint</a></li><li><a href="../31-team.html">31. Team mode</a></li><li><a href="../32-requests.html">32. Requests, goals, story and economics</a></li></ul></details><details><summary>Reference</summary><ul><li><a href="../reference/cli.html">Aletheia CLI reference</a></li><li><a href="../reference/mcp-tools.html">MCP tools reference</a></li><li><a href="../reference/configuration.html">Aletheia configuration reference</a></li><li><a href="../reference/hooks.html">Aletheia hooks reference</a></li><li><a href="../03-http-api.html">3. HTTP API</a></li></ul></details><details><summary>Compare</summary><ul><li><a href="../compare/aletheia-vs-claude-mem.html">claude-mem alternative</a></li><li><a href="../compare/memory-tools.html">Memory tools compared</a></li><li><a href="../compare/claude-code-memory.html">Claude Code memory options</a></li></ul></details><details><summary>Project</summary><ul><li><a href="../project/benchmarks.html">Aletheia benchmarks</a></li><li><a href="../project/status-and-limits.html">Aletheia status and limits</a></li><li><a href="../dependencies.html">Dependencies</a></li></ul></details><details><summary>Internals</summary><ul><li><a href="../01-architecture.html">1. Architecture</a></li><li><a href="../02-data-model.html">2. Data model</a></li><li><a href="../06-frontend.html">6. Frontend</a></li><li><a href="../07-operations.html">7. Operations</a></li></ul></details></aside>
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../index.html">Aletheia</a> › <a href="../index.html">Docs</a> › <span>Connect your tools</span> › <span>Gemini CLI memory with Aletheia</span></nav>
+<h1 id="gemini-cli-memory-with-aletheia">Gemini CLI memory with Aletheia</h1>
+<p>Aletheia (aletheia-mem) can write a local memory setup for Gemini CLI: an MCP server entry and five hooks in <code>~/.gemini/settings.json</code>, and a managed rules block in <code>~/.gemini/GEMINI.md</code>. This setup is config written from docs, not tested on a real install. No hook ran in Gemini CLI.</p>
+<nav class="toc" aria-label="On this page"><strong>On this page</strong><ul><li><a href="#what-you-get">What you get</a></li><li><a href="#install">Install</a></li><li><a href="#what-gets-written">What gets written</a></li><li><a href="#hooks-and-events">Hooks and events</a></li><li><a href="#rules-file">Rules file</a></li><li><a href="#verify-it-works">Verify it works</a></li><li><a href="#uninstall">Uninstall</a></li><li><a href="#verification-status">Verification status</a></li><li><a href="#known-limits">Known limits</a></li></ul></nav>
+<h2 id="what-you-get">What you get</h2>
+<ul><li><strong>MCP server.</strong> An entry named <code>aletheia</code> under <code>mcpServers</code> in <code>~/.gemini/settings.json</code>.</li><li><strong>Hooks.</strong> Five events under <code>hooks</code> in the same file: <code>SessionStart</code>, <code>BeforeAgent</code>, <code>AfterTool</code>, <code>AfterAgent</code> and <code>SessionEnd</code>.</li><li><strong>Session-start context.</strong> The <code>SessionStart</code> hook prints recalled memory for the current project.</li><li><strong>Rules.</strong> Your rules, written into <code>~/.gemini/GEMINI.md</code> between markers.</li></ul>
+<p>Level: <code>full</code>. Verification: <code>from-docs-only</code>.</p>
+<h2 id="install">Install</h2>
+<pre><code class="language-bash">npm install -g aletheia-mem
+aletheia install gemini-cli            # dry run: prints every step, writes nothing
+aletheia install gemini-cli --write    # applies it, with backups</code></pre>
+<p>Start a new Gemini CLI session afterwards.</p>
+<h2 id="what-gets-written">What gets written</h2>
+<p>Real dry-run output from a temporary HOME. Paths start with <code>/tmp/tmp.Ez6NqCkeLC</code>, the temporary home folder of the run. On your machine they start with your own home folder.</p>
+<pre><code>$ aletheia install gemini-cli
+Gemini CLI (gemini-cli) — full, from-docs-only
+  write  settings /tmp/tmp.Ez6NqCkeLC/.gemini/settings.json  (MCP + hooks)
+  write  rules    /tmp/tmp.Ez6NqCkeLC/.gemini/GEMINI.md  (1 rule)
+  note  Gemini keeps hooks and MCP servers in the same ~/.gemini/settings.json; the installer merges both.
+  note  Gemini hook timeouts are milliseconds; the installer writes 10000.
+  note  No real Gemini hook has run here.
+  ...
+Dry run: nothing was written. Add --write to apply.</code></pre>
+<p>Gemini keeps MCP servers and hooks in one file, so the installer changes both in one step and keeps one backup. The result of <code>--write</code>:</p>
+<pre><code class="language-json">{
+  &quot;mcpServers&quot;: {
+    &quot;aletheia&quot;: {
+      &quot;command&quot;: &quot;/home/you/.bun/bin/bun&quot;,
+      &quot;args&quot;: [&quot;/path/to/aletheia-mem/bin/mcp.mjs&quot;]
+    }
+  },
+  &quot;hooks&quot;: {
+    &quot;SessionStart&quot;: [
+      {
+        &quot;hooks&quot;: [
+          {
+            &quot;type&quot;: &quot;command&quot;,
+            &quot;command&quot;: &quot;/home/you/.bun/bin/bun /tmp/tmp.eHRtbNMs5s/aletheia.bundle.mjs hook gemini-cli SessionStart # aletheia-managed&quot;,
+            &quot;timeout&quot;: 10000
+          }
+        ]
+      }
+    ],
+    ...
+  }
+}</code></pre>
+<p>The Gemini pages (fetched 2026-10-29) agree on these points: hooks live in <code>settings.json</code> under <code>hooks</code>, shaped <code>hooks.&lt;Event&gt;[].hooks[]</code> with a <code>type</code> of <code>command</code>, a <code>command</code> and an optional <code>timeout</code>; the timeout is in milliseconds with a default of 60000; MCP servers live under a top-level <code>mcpServers</code> object in <code>~/.gemini/settings.json</code> (user) or <code>.gemini/settings.json</code> (project). If <code>mcpServers.aletheia</code> already exists and is not Aletheia's, the installer stops with an error and leaves it alone.</p>
+<h2 id="hooks-and-events">Hooks and events</h2>
+<div class="tablewrap"><table><thead><tr><th>Event</th><th>What Aletheia does</th></tr></thead><tbody><tr><td><code>SessionStart</code></td><td>Stores nothing. Prints recalled memory as <code>hookSpecificOutput.additionalContext</code>. A <code>resume</code> start prints nothing.</td></tr><tr><td><code>BeforeAgent</code></td><td>Stores the <code>prompt</code> field as a note, redacted. Prompts under 3 characters are skipped.</td></tr><tr><td><code>AfterTool</code></td><td>Stores an event from <code>tool_name</code>, <code>tool_input</code> and <code>tool_response</code>, cut to 1,500 characters.</td></tr><tr><td><code>AfterAgent</code></td><td>Stores <code>prompt_response</code> as a summary, once per agent turn. Queues the session for compression.</td></tr><tr><td><code>SessionEnd</code></td><td>Stores no text. Queues the session for compression and marks it ended.</td></tr></tbody></table></div>
+<p>The Gemini hooks reference (https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/hooks/reference.md, fetched 2026-10-29) lists these fields: <code>source</code> on <code>SessionStart</code> (<code>startup</code>, <code>resume</code> or <code>clear</code>), <code>prompt</code> on <code>BeforeAgent</code>, <code>tool_name</code>, <code>tool_input</code> and <code>tool_response</code> on <code>AfterTool</code>, <code>prompt</code> and <code>prompt_response</code> on <code>AfterAgent</code>, and <code>reason</code> on <code>SessionEnd</code>. It says a <code>SessionStart</code> hook reads <code>hookSpecificOutput.additionalContext</code> from the JSON on stdout, and that a hook must print nothing but that JSON. Aletheia's <code>SessionStart</code> hook prints only that JSON. The page lists more events than the five installed, such as <code>BeforeTool</code>, <code>BeforeModel</code> and <code>PreCompress</code>. Aletheia installs none of them.</p>
+<p>Every hook exits 0 whatever happens, makes no network call and no model call, and redacts before it stores. See <a href="../reference/hooks.html">Hooks reference</a>.</p>
+<h2 id="rules-file">Rules file</h2>
+<p><code>aletheia install gemini-cli --write</code> writes your rules into <code>~/.gemini/GEMINI.md</code>. For a project file, run <code>aletheia rules sync --tools gemini-cli --dir &lt;project&gt; --write</code>, which writes <code>&lt;project&gt;/GEMINI.md</code>.</p>
+<pre><code>&lt;!-- aletheia:rules:begin --&gt;
+# Rules
+
+Managed by aletheia-mem. Edit them in the Rules page; this block is rewritten on sync.
+
+## Everywhere
+
+- Run the narrow test before the full suite.
+&lt;!-- aletheia:rules:end --&gt;</code></pre>
+<p>Text outside the markers is never touched. The Gemini context page (https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/cli/gemini-md.md, fetched 2026-10-29) says Gemini CLI loads <code>GEMINI.md</code> from <code>~/.gemini/GEMINI.md</code>, from the workspace and its parent directories, and just in time when a tool touches a file or directory, and joins them. See <a href="../concepts/rules.html">Rules</a>.</p>
+<h2 id="verify-it-works">Verify it works</h2>
+<pre><code class="language-bash">aletheia install gemini-cli --verify
+aletheia doctor</code></pre>
+<p><code>--verify</code> prints <code>ok</code>, <code>drift</code> or <code>missing</code> for the settings file and the rules file. In <code>doctor</code>, look for <code>hooks gemini-cli    5/5 in ...settings.json</code>.</p>
+<p>Nobody has seen these hooks run in Gemini CLI. If you try it:</p>
+<ol><li>Run the install, start Gemini CLI, and send one prompt.</li><li>Run <code>aletheia search &quot;&lt;a word from your prompt&gt;&quot;</code>, or open <code>http://127.0.0.1:37790</code> and check the Activity and Knowledge tabs. The Connections tab shows the hook count and the time of the last capture.</li><li>Report what you saw, with your Gemini CLI version, in an issue at https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues.</li></ol>
+<h2 id="uninstall">Uninstall</h2>
+<pre><code class="language-bash">aletheia uninstall gemini-cli            # dry run
+aletheia uninstall gemini-cli --write</code></pre>
+<p>Real dry-run output:</p>
+<pre><code>Gemini CLI (gemini-cli)
+  remove settings /tmp/tmp.Ez6NqCkeLC/.gemini/settings.json
+  remove rules    /tmp/tmp.Ez6NqCkeLC/.gemini/GEMINI.md
+Dry run: nothing was written. Add --write to remove.</code></pre>
+<p>Uninstall removes the <code>aletheia</code> MCP entry only if it is Aletheia's, the managed hook entries, and the rules block. Other settings stay. If you edited a file after the install, it refuses and asks for <code>--force</code>.</p>
+<h2 id="verification-status">Verification status</h2>
+<ul><li>Gemini CLI: config written from docs, not tested on a real install. No hook ran in Gemini CLI.</li><li>Gemini CLI 0.37.0 was present on the test machine. No hook was run with it.</li><li>The formats come from the three Gemini pages named above, fetched 2026-10-26 and again 2026-10-29.</li><li>The installer and the hook adapter were tested against fixtures and recorded payloads in a temporary HOME. The project README says two hook checks (Windsurf and Gemini CLI) are skipped in CI on Windows.</li><li>Answer accuracy is not measured. Benchmarks are retrieval only.</li></ul>
+<h2 id="known-limits">Known limits</h2>
+<ul><li>Nothing here has run in Gemini CLI. Expect to find differences.</li><li>One summary memory is stored per agent turn, not per session.</li><li>The installer refuses a <code>settings.json</code> that is not plain JSON. If yours has comments, move them out first.</li><li>The hook command holds absolute paths to Bun and the data dir bundle. If you move either, run <code>aletheia install gemini-cli --write</code> again.</li><li>Compression is queued, not run in the hook. Run <code>aletheia compress</code>, or keep <code>aletheia-server</code> running.</li><li>Aletheia writes user-level files only.</li></ul>
+<h2 id="next-steps">Next steps</h2>
+<ul><li><a href="../reference/hooks.html">Hooks reference</a> - the events, fields and guarantees of every hook.</li><li><a href="../concepts/rules.html">Rules</a> - how the GEMINI.md block is built and synced.</li><li><a href="../project/status-and-limits.html">Project status and limits</a> - what is tested and what is not.</li><li><a href="overview.html">Tools overview</a> - all hosts and their verification status.</li></ul>
+<nav class="pager" aria-label="Previous and next"><a class="previous" href="cursor.html"><small>Previous</small><span>Cursor memory with Aletheia</span></a><a class="next" href="windsurf.html"><small>Next</small><span>Windsurf memory with Aletheia</span></a></nav>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+</main>
+</body>
+</html>

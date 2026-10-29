@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Migrate from claude-mem to Aletheia · Aletheia docs</title>
+<meta name="description" content="Import your claude-mem observations, summaries and prompts into Aletheia, run both side by side, switch the Claude Code hook and roll back.">
+<meta name="keywords" content="migrate from claude-mem, import claude-mem, claude-mem alternative, claude-mem database, switch from claude-mem, claude-mem to aletheia">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/migrate-from-claude-mem.html">
+<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aletheia">
+<meta property="og:title" content="Migrate from claude-mem to Aletheia">
+<meta property="og:description" content="Import your claude-mem observations, summaries and prompts into Aletheia, run both side by side, switch the Claude Code hook and roll back.">
+<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/migrate-from-claude-mem.html">
+<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Migrate from claude-mem to Aletheia">
+<meta name="twitter:description" content="Import your claude-mem observations, summaries and prompts into Aletheia, run both side by side, switch the Claude Code hook and roll back.">
+<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Migrate from claude-mem to Aletheia","description":"Import your claude-mem observations, summaries and prompts into Aletheia, run both side by side, switch the Claude Code hook and roll back.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/migrate-from-claude-mem.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/migrate-from-claude-mem.html","inLanguage":"en","dateModified":"2026-10-29","keywords":"migrate from claude-mem, import claude-mem, claude-mem alternative, claude-mem database, switch from claude-mem, claude-mem to aletheia","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"Migrate from claude-mem to Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/migrate-from-claude-mem.html"}]}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../../index.html"><img src="../../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../../index.html">Home</a><a href="../index.html">Docs</a><a href="../start/quickstart.html">Quickstart</a><a href="../compare/aletheia-vs-claude-mem.html">Compare</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc docs-layout">
+<aside class="side" aria-label="Documentation"><a class="side-home" href="../index.html">All documentation</a><details><summary>Get started</summary><ul><li><a href="../start/introduction.html">Introduction to Aletheia, a local memory hub for AI coding tools</a></li><li><a href="../start/installation.html">Install Aletheia with npm, git or Docker</a></li><li><a href="../start/quickstart.html">Quickstart</a></li><li><a href="../start/how-it-works.html">How Aletheia works</a></li><li><a href="../start/dashboard.html">The Aletheia dashboard</a></li><li><a href="../start/faq.html">Aletheia FAQ</a></li></ul></details><details><summary>Concepts</summary><ul><li><a href="../concepts/memory-model.html">Aletheia memory model</a></li><li><a href="../concepts/rules.html">Rules</a></li><li><a href="../concepts/search.html">Search</a></li><li><a href="../concepts/session-context.html">Session-start context</a></li><li><a href="../concepts/privacy.html">Privacy and redaction in Aletheia</a></li><li><a href="../33-facts.html">33. Facts</a></li><li><a href="../concepts/glossary.html">Aletheia glossary</a></li></ul></details><details><summary>Connect your tools</summary><ul><li><a href="../tools/overview.html">Connect AI coding tools to Aletheia</a></li><li><a href="../tools/claude-code.html">Claude Code memory with Aletheia</a></li><li><a href="../tools/command-code.html">Command Code memory with Aletheia</a></li><li><a href="../tools/codex.html">Codex CLI memory with Aletheia</a></li><li><a href="../tools/cursor.html">Cursor memory with Aletheia</a></li><li><a href="../tools/gemini-cli.html">Gemini CLI memory with Aletheia</a></li><li><a href="../tools/windsurf.html">Windsurf memory with Aletheia</a></li><li><a href="../tools/opencode.html">OpenCode memory with Aletheia</a></li><li><a href="../claude-desktop.html">Claude Desktop and the aletheia MCP server</a></li><li><a href="../tools/other-tools.html">GitHub Copilot, Aider and any MCP client with Aletheia</a></li><li><a href="../25-installers.html">25. Installers and automatic capture</a></li></ul></details><details open><summary>Guides</summary><ul><li><a href="migrate-from-claude-mem.html" aria-current="page">Migrate from claude-mem to Aletheia</a></li><li><a href="write-rules-once.html">Write your AI coding rules once and sync them to every tool</a></li><li><a href="backup-export-import.html">Back up, export and move Aletheia memory between machines</a></li><li><a href="run-as-a-service.html">Run Aletheia as a background service (systemd, launchd, Docker)</a></li><li><a href="model-providers.html">Model providers</a></li><li><a href="troubleshooting.html">Troubleshooting Aletheia</a></li><li><a href="../29-sync.html">29. Aletheia Sync</a></li><li><a href="../30-remote-mcp.html">30. The private remote MCP endpoint</a></li><li><a href="../31-team.html">31. Team mode</a></li><li><a href="../32-requests.html">32. Requests, goals, story and economics</a></li></ul></details><details><summary>Reference</summary><ul><li><a href="../reference/cli.html">Aletheia CLI reference</a></li><li><a href="../reference/mcp-tools.html">MCP tools reference</a></li><li><a href="../reference/configuration.html">Aletheia configuration reference</a></li><li><a href="../reference/hooks.html">Aletheia hooks reference</a></li><li><a href="../03-http-api.html">3. HTTP API</a></li></ul></details><details><summary>Compare</summary><ul><li><a href="../compare/aletheia-vs-claude-mem.html">claude-mem alternative</a></li><li><a href="../compare/memory-tools.html">Memory tools compared</a></li><li><a href="../compare/claude-code-memory.html">Claude Code memory options</a></li></ul></details><details><summary>Project</summary><ul><li><a href="../project/benchmarks.html">Aletheia benchmarks</a></li><li><a href="../project/status-and-limits.html">Aletheia status and limits</a></li><li><a href="../dependencies.html">Dependencies</a></li></ul></details><details><summary>Internals</summary><ul><li><a href="../01-architecture.html">1. Architecture</a></li><li><a href="../02-data-model.html">2. Data model</a></li><li><a href="../06-frontend.html">6. Frontend</a></li><li><a href="../07-operations.html">7. Operations</a></li></ul></details></aside>
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../index.html">Aletheia</a> › <a href="../index.html">Docs</a> › <span>Guides</span> › <span>Migrate from claude-mem to Aletheia</span></nav>
+<h1 id="migrate-from-claude-mem-to-aletheia">Migrate from claude-mem to Aletheia</h1>
+<p>Aletheia (aletheia-mem) can copy your claude-mem history into its own store with one command, <code>aletheia import claude-mem</code>. The import opens the claude-mem database read-only, so your old memory stays where it is.</p>
+<nav class="toc" aria-label="On this page"><strong>On this page</strong><ul><li><a href="#import-your-claude-mem-history">Import your claude-mem history</a></li><li><a href="#what-maps-to-what">What maps to what</a></li><li><a href="#run-claude-mem-and-aletheia-side-by-side">Run claude-mem and Aletheia side by side</a></li><li><a href="#switch-the-claude-code-hook-to-aletheia">Switch the Claude Code hook to Aletheia</a></li><li><a href="#what-you-keep-and-what-you-lose">What you keep and what you lose</a></li><li><a href="#roll-back">Roll back</a></li></ul></nav>
+<p>This page covers the import, what maps to what, running both tools side by side, switching the Claude Code hook, and rolling back.</p>
+<h2 id="import-your-claude-mem-history">Import your claude-mem history</h2>
+<p>Run the importer. With no flags it reads <code>~/.claude-mem/claude-mem.db</code>, the default database path in the claude-mem installation page (https://docs.claude-mem.ai/installation, fetched 2026-10-29).</p>
+<pre><code class="language-bash">aletheia import claude-mem</code></pre>
+<p>The command prints how many rows it added and how many it skipped. This output comes from a small test database (2 observations, 1 summary, 1 prompt) in a temporary home folder, not from real data.</p>
+<pre><code class="language-json">{
+  &quot;observations&quot;: {
+    &quot;added&quot;: 2,
+    &quot;skipped&quot;: 0
+  },
+  &quot;summaries&quot;: {
+    &quot;added&quot;: 1,
+    &quot;skipped&quot;: 0
+  },
+  &quot;prompts&quot;: {
+    &quot;added&quot;: 1,
+    &quot;skipped&quot;: 0
+  }
+}</code></pre>
+<p>Run it again and every row is skipped. The import is idempotent: the store drops a memory when a memory with the same project, kind, title and text already exists.</p>
+<pre><code class="language-bash">aletheia import claude-mem
+# &quot;observations&quot;: { &quot;added&quot;: 0, &quot;skipped&quot;: 2 } ... &quot;prompts&quot;: { &quot;added&quot;: 0, &quot;skipped&quot;: 1 }</code></pre>
+<h3 id="flags">Flags</h3>
+<div class="tablewrap"><table><thead><tr><th>Flag</th><th>Effect</th></tr></thead><tbody><tr><td><code>--path &lt;file&gt;</code></td><td>Read a database at another path. The default is <code>~/.claude-mem/claude-mem.db</code>, or the value of <code>CLAUDE_MEM_DB</code>.</td></tr><tr><td><code>--no-prompts</code></td><td>Skip the <code>user_prompts</code> table. Observations and summaries are still imported.</td></tr><tr><td><code>--project &lt;name&gt;</code></td><td>Import only rows whose project is <code>&lt;name&gt;</code>.</td></tr></tbody></table></div>
+<p>A missing file stops the command with <code>No claude-mem database at &lt;path&gt;.</code> The command prints a stack trace after that line; the message is the part to read.</p>
+<h3 id="import-from-the-dashboard">Import from the dashboard</h3>
+<p>Open the dashboard, go to the Knowledge tab, click <strong>Import and export</strong>, then click <strong>Import from claude-mem</strong>. The section appears only when the database file exists. I checked these labels in a real browser against a temporary server.</p>
+<h3 id="schema-check">Schema check</h3>
+<p>Before it reads any row, the importer checks that the tables <code>sdk_sessions</code>, <code>observations</code>, <code>session_summaries</code> and <code>user_prompts</code> exist and have the columns it needs. If claude-mem changes its schema, the import stops with a message that names the missing table or column, instead of importing nothing. Aletheia's tests use a synthetic database with the table shapes of claude-mem 15.2.0. I did not run the importer against a real claude-mem 15.x database for this page.</p>
+<h2 id="what-maps-to-what">What maps to what</h2>
+<div class="tablewrap"><table><thead><tr><th>claude-mem</th><th>Aletheia memory</th><th>Notes</th></tr></thead><tbody><tr><td><code>observations</code> row</td><td>kind <code>observation</code></td><td>Keeps type (<code>bugfix</code>, <code>feature</code>, <code>refactor</code>, <code>change</code>, <code>discovery</code>, <code>decision</code>; other types pass through), title, subtitle, narrative, facts, concepts, and the union of files read and modified.</td></tr><tr><td><code>session_summaries</code> row</td><td>kind <code>summary</code>, type <code>note</code></td><td>The fields request, investigated, learned, completed, next steps and notes become one text with a bold label per field. An empty summary is skipped.</td></tr><tr><td><code>user_prompts</code> row</td><td>kind <code>prompt</code></td><td>The prompt text becomes the title and the body.</td></tr></tbody></table></div>
+<p>Every imported memory keeps its original timestamp, the project name, the session id and the tool name from <code>platform_source</code> (default <code>claude</code>). The <code>origin</code> field records the source row, for example <code>claude-mem:obs:3</code>.</p>
+<p>The importer reads only those four tables. Every other table in the claude-mem database is ignored, and so are claude-mem's settings and its vector index. claude-mem's installation page lists <code>uv</code> as the provider of Python for Chroma's embedding service (https://docs.claude-mem.ai/installation, fetched 2026-10-29). Aletheia does not import vectors. Imported memories are found by keyword search unless you install the optional embedding package and run <code>aletheia embed</code>.</p>
+<h3 id="the-import-does-not-redact-secrets">The import does not redact secrets</h3>
+<p>Capture hooks redact secrets before they store text. The importer does not. It copies the text exactly as claude-mem stored it. In a test I added an observation containing a fake AWS key id and a <code>password=</code> value to the test database. After the import, <code>aletheia export</code> showed both values in clear text.</p>
+<p>Check what you imported before you rely on it:</p>
+<pre><code class="language-bash">aletheia search &quot;password&quot;
+aletheia search &quot;AKIA&quot;</code></pre>
+<p>Remove a memory you do not want. Report first, then apply:</p>
+<pre><code class="language-bash">aletheia erase --id 12
+aletheia erase --id 12 --apply</code></pre>
+<p>Fact extraction redacts text again before it sends it to a model provider. See <a href="model-providers.html">Model providers</a> for what is and is not redacted on each path.</p>
+<h2 id="run-claude-mem-and-aletheia-side-by-side">Run claude-mem and Aletheia side by side</h2>
+<p>The two tools keep separate stores.</p>
+<ul><li>Aletheia writes only under its data directory (<code>~/.aletheia</code> by default). It listens on port 37790.</li><li>claude-mem keeps <code>~/.claude-mem/</code>. Its worker port defaults to <code>37700 + (uid % 100)</code> (https://docs.claude-mem.ai/troubleshooting, fetched 2026-10-29). The two defaults collide only when <code>uid % 100</code> is 90. Change Aletheia's port with <code>ALETHEIA_PORT</code>.</li><li>Aletheia never writes to the claude-mem database. It opens the file with <code>readonly</code> and <code>query_only</code>. In my test the file's checksum was identical before and after two imports.</li></ul>
+<p>I did not test an import while claude-mem was writing to its database. Run the import while claude-mem is idle.</p>
+<p>If both tools have hooks in Claude Code, each one captures the same prompts and each one adds its own context block at session start. Expect duplicate context until you turn one off.</p>
+<h2 id="switch-the-claude-code-hook-to-aletheia">Switch the Claude Code hook to Aletheia</h2>
+<ol><li>Preview the install. Without <code>--write</code> the command is a dry run and writes nothing.</li></ol>
+<pre><code class="language-bash">   aletheia install claude-code</code></pre>
+<pre><code class="language-text">   Claude Code (claude-code) — full, mcp-verified
+     write  mcp      ~/.claude.json  (mcpServers.aletheia)
+     write  hooks    ~/.claude/settings.json  (SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd)
+     write  rules    ~/.claude/CLAUDE.md  (0 rules)
+   ...
+   Dry run: nothing was written. Add --write to apply.</code></pre>
+<ol><li>Apply it. Each changed file gets a timestamped backup.</li></ol>
+<pre><code class="language-bash">   aletheia install claude-code --write</code></pre>
+<p>The installer adds its own hook entries and leaves other hooks alone. In a test, a hook I had put in <code>settings.json</code> by hand was still there after install and after uninstall.</p>
+<ol><li>Turn off the claude-mem plugin so only one tool captures. Claude Code's documentation describes <code>/plugin disable</code> inside a session and <code>claude plugin disable &lt;name&gt;@&lt;marketplace&gt;</code> on the command line (https://code.claude.com/docs/en/discover-plugins, fetched 2026-10-29). On the machine where I wrote this page, <code>claude plugin list</code> shows the plugin as <code>claude-mem@thedotmack</code>:</li></ol>
+<pre><code class="language-bash">   claude plugin disable claude-mem@thedotmack</code></pre>
+<p>I did not run this command, because <code>claude plugin list</code> already showed that plugin as disabled, and I did not check the exact screens of the <code>/plugin</code> panel. If you installed claude-mem with <code>npx claude-mem install</code> instead of the plugin marketplace, the plugin id may not exist. Follow claude-mem's own documentation to remove its hooks. Whether disabling the plugin also stops claude-mem's background worker is UNVERIFIED; check the worker port from your claude-mem settings.</p>
+<ol><li>Confirm the install.</li></ol>
+<pre><code class="language-bash">   aletheia doctor
+   aletheia install claude-code --verify</code></pre>
+<p><code>doctor</code> should show <code>hooks claude-code  5/5</code>. <code>--verify</code> compares the files with the install record. These checks read configuration files. They do not prove a hook ran. Start a new Claude Code session, send one prompt, then run <code>aletheia search &lt;word from the prompt&gt;</code>.</p>
+<p>Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine.</p>
+<h2 id="what-you-keep-and-what-you-lose">What you keep and what you lose</h2>
+<p>You keep:</p>
+<ul><li>Observations, summaries and prompts as searchable memories, in the Knowledge tab, in <code>aletheia search</code> and through the MCP <code>search</code> tool.</li><li>Your claude-mem database, untouched.</li></ul>
+<p>You do not get from the import:</p>
+<ul><li>claude-mem's vector index. Aletheia's vector search is optional and builds its own vectors.</li><li>Tool-use records and work-state entries. The importer does not read those tables.</li><li>Facts. Imported observations are not turned into facts, because fact extraction reads only summaries and notes.</li><li>claude-mem's own viewer and modes. Aletheia has its own dashboard.</li></ul>
+<h2 id="roll-back">Roll back</h2>
+<ol><li>Remove Aletheia's entries from Claude Code. This is a dry run until you add <code>--write</code>, and it removes only the entries listed in Aletheia's install record.</li></ol>
+<pre><code class="language-bash">   aletheia uninstall claude-code --write</code></pre>
+<ol><li>Turn the claude-mem plugin back on.</li></ol>
+<pre><code class="language-bash">   claude plugin enable claude-mem@thedotmack</code></pre>
+<ol><li>Remove the imported memories if you want a clean slate. Pick the project name, check the report, then apply.</li></ol>
+<pre><code class="language-bash">   aletheia erase --project shop
+   aletheia erase --project shop --apply</code></pre>
+<p>Nothing in these steps changes the claude-mem database.</p>
+<h2 id="next-steps">Next steps</h2>
+<ul><li><a href="write-rules-once.html">Write rules once</a> - turn the rules you repeat in every tool into one list.</li><li><a href="../tools/claude-code.html">Claude Code</a> - what the Claude Code installer writes and what was checked.</li><li><a href="../compare/aletheia-vs-claude-mem.html">Aletheia vs claude-mem</a> - a sourced comparison of the two tools.</li><li><a href="backup-export-import.html">Backup, export and import</a> - copy your new store to another machine.</li><li><a href="troubleshooting.html">Troubleshooting</a> - fixes for the problems people hit after an install.</li></ul>
+<nav class="pager" aria-label="Previous and next"><a class="previous" href="../25-installers.html"><small>Previous</small><span>25. Installers and automatic capture</span></a><a class="next" href="write-rules-once.html"><small>Next</small><span>Write your AI coding rules once and sync them to every tool</span></a></nav>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+</main>
+</body>
+</html>
