@@ -3,7 +3,8 @@
 // sessions, an Origin allow-list that defaults to loopback, a body cap, a request timeout and JSON-RPC
 // batch handling. Tests speak raw fetch; no MCP SDK dependency is allowed.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { createMcpHttpHandler } from "../src/hub/mcp-http.mjs";
+import { createMcpHttpHandler, WRITE_TOOLS } from "../src/hub/mcp-http.mjs";
+import { TOOL_DEFS } from "../src/hub/mcp-tools.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 
 const start = (options = {}) => {
@@ -176,5 +177,12 @@ describe("MCP Streamable HTTP transport", () => {
       slow.stop();
     }
     expect(chunks.join("")).toContain("408");
+  });
+});
+
+describe("MCP write-scope list", () => {
+  test("every tool that is not read-only needs a write-scope token", () => {
+    const writes = TOOL_DEFS.filter((tool) => tool.annotations.readOnlyHint === false).map((tool) => tool.name).sort();
+    expect([...WRITE_TOOLS].sort()).toEqual(writes);
   });
 });

@@ -6,7 +6,7 @@
 import { randomUUID } from "node:crypto";
 import { handleMessage } from "./mcp.mjs";
 
-const WRITE_TOOLS = new Set(["save_memory", "add_rule", "confirm_rule", "dismiss_memory", "restore_memory"]);
+const WRITE_TOOLS = new Set(["save_memory", "add_rule", "confirm_rule", "dismiss_memory", "restore_memory", "work_state_write"]);
 
 /** The default allow-list: no Origin header (non-browser clients) or an http loopback origin. */
 export function loopbackOriginsOnly(origin) {
