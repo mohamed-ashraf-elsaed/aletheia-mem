@@ -6,6 +6,8 @@ history.
 
 ## [Unreleased]
 
+## [0.1.10] - 2026-10-29
+
 ### Added
 
 - A **Home** page, now the default. It lists the projects you work in and, for one project, shows in plain words what Aletheia knows about it (readable titles, a Hide button, a box to save a note), the rules that apply (switches, a box to add a rule with example chips, and a preview-first button that writes them into each tool's file), the connected tools (on, needs setup or not installed, with the command to copy) and what happened lately. Every block has a hint and an example.
