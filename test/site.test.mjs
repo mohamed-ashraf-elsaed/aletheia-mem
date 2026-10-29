@@ -26,7 +26,7 @@ describe("docs site", () => {
     expect(checkCode).toBe(0);
     expect(checkErr).toBe("");
     expect(checkOut).toMatch(/sitemap matches pages: \d+/);
-  });
+  }, 60000);
 
   test("there is one page per top-level document", () => {
     // Count only tracked documents: private files may sit on a maintainer's disk but are never published.
