@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cursor memory with Aletheia · Aletheia docs</title>
+<meta name="description" content="Install Aletheia memory in Cursor: the mcp.json entry, six hooks in hooks.json and the .mdc rules file, with the status that none of it ran in Cursor.">
+<meta name="keywords" content="cursor memory, cursor hooks memory, cursor mcp.json, cursor rules mdc, aletheia cursor, cursor persistent memory">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/cursor.html">
+<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aletheia">
+<meta property="og:title" content="Cursor memory with Aletheia">
+<meta property="og:description" content="Install Aletheia memory in Cursor: the mcp.json entry, six hooks in hooks.json and the .mdc rules file, with the status that none of it ran in Cursor.">
+<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/cursor.html">
+<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Cursor memory with Aletheia">
+<meta name="twitter:description" content="Install Aletheia memory in Cursor: the mcp.json entry, six hooks in hooks.json and the .mdc rules file, with the status that none of it ran in Cursor.">
+<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Cursor memory with Aletheia","description":"Install Aletheia memory in Cursor: the mcp.json entry, six hooks in hooks.json and the .mdc rules file, with the status that none of it ran in Cursor.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/cursor.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/cursor.html","inLanguage":"en","dateModified":"2026-10-29","keywords":"cursor memory, cursor hooks memory, cursor mcp.json, cursor rules mdc, aletheia cursor, cursor persistent memory","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"Cursor memory with Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/cursor.html"}]}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../../index.html"><img src="../../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../../index.html">Home</a><a href="../index.html">Docs</a><a href="../start/quickstart.html">Quickstart</a><a href="../compare/aletheia-vs-claude-mem.html">Compare</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc docs-layout">
+<aside class="side" aria-label="Documentation"><a class="side-home" href="../index.html">All documentation</a><details><summary>Get started</summary><ul><li><a href="../start/introduction.html">Introduction to Aletheia, a local memory hub for AI coding tools</a></li><li><a href="../start/installation.html">Install Aletheia with npm, git or Docker</a></li><li><a href="../start/quickstart.html">Quickstart</a></li><li><a href="../start/how-it-works.html">How Aletheia works</a></li><li><a href="../start/dashboard.html">The Aletheia dashboard</a></li><li><a href="../start/faq.html">Aletheia FAQ</a></li></ul></details><details><summary>Concepts</summary><ul><li><a href="../concepts/memory-model.html">Aletheia memory model</a></li><li><a href="../concepts/rules.html">Rules</a></li><li><a href="../concepts/search.html">Search</a></li><li><a href="../concepts/session-context.html">Session-start context</a></li><li><a href="../concepts/privacy.html">Privacy and redaction in Aletheia</a></li><li><a href="../33-facts.html">33. Facts</a></li><li><a href="../concepts/glossary.html">Aletheia glossary</a></li></ul></details><details open><summary>Connect your tools</summary><ul><li><a href="overview.html">Connect AI coding tools to Aletheia</a></li><li><a href="claude-code.html">Claude Code memory with Aletheia</a></li><li><a href="command-code.html">Command Code memory with Aletheia</a></li><li><a href="codex.html">Codex CLI memory with Aletheia</a></li><li><a href="cursor.html" aria-current="page">Cursor memory with Aletheia</a></li><li><a href="gemini-cli.html">Gemini CLI memory with Aletheia</a></li><li><a href="windsurf.html">Windsurf memory with Aletheia</a></li><li><a href="opencode.html">OpenCode memory with Aletheia</a></li><li><a href="../claude-desktop.html">Claude Desktop and the aletheia MCP server</a></li><li><a href="other-tools.html">GitHub Copilot, Aider and any MCP client with Aletheia</a></li><li><a href="../25-installers.html">25. Installers and automatic capture</a></li></ul></details><details><summary>Guides</summary><ul><li><a href="../guides/migrate-from-claude-mem.html">Migrate from claude-mem to Aletheia</a></li><li><a href="../guides/write-rules-once.html">Write your AI coding rules once and sync them to every tool</a></li><li><a href="../guides/backup-export-import.html">Back up, export and move Aletheia memory between machines</a></li><li><a href="../guides/run-as-a-service.html">Run Aletheia as a background service (systemd, launchd, Docker)</a></li><li><a href="../guides/model-providers.html">Model providers</a></li><li><a href="../guides/troubleshooting.html">Troubleshooting Aletheia</a></li><li><a href="../29-sync.html">29. Aletheia Sync</a></li><li><a href="../30-remote-mcp.html">30. The private remote MCP endpoint</a></li><li><a href="../31-team.html">31. Team mode</a></li><li><a href="../32-requests.html">32. Requests, goals, story and economics</a></li></ul></details><details><summary>Reference</summary><ul><li><a href="../reference/cli.html">Aletheia CLI reference</a></li><li><a href="../reference/mcp-tools.html">MCP tools reference</a></li><li><a href="../reference/configuration.html">Aletheia configuration reference</a></li><li><a href="../reference/hooks.html">Aletheia hooks reference</a></li><li><a href="../03-http-api.html">3. HTTP API</a></li></ul></details><details><summary>Compare</summary><ul><li><a href="../compare/aletheia-vs-claude-mem.html">claude-mem alternative</a></li><li><a href="../compare/memory-tools.html">Memory tools compared</a></li><li><a href="../compare/claude-code-memory.html">Claude Code memory options</a></li></ul></details><details><summary>Project</summary><ul><li><a href="../project/benchmarks.html">Aletheia benchmarks</a></li><li><a href="../project/status-and-limits.html">Aletheia status and limits</a></li><li><a href="../dependencies.html">Dependencies</a></li></ul></details><details><summary>Internals</summary><ul><li><a href="../01-architecture.html">1. Architecture</a></li><li><a href="../02-data-model.html">2. Data model</a></li><li><a href="../06-frontend.html">6. Frontend</a></li><li><a href="../07-operations.html">7. Operations</a></li></ul></details></aside>
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../index.html">Aletheia</a> › <a href="../index.html">Docs</a> › <span>Connect your tools</span> › <span>Cursor memory with Aletheia</span></nav>
+<h1 id="cursor-memory-with-aletheia">Cursor memory with Aletheia</h1>
+<p>Aletheia (aletheia-mem) can write a local memory setup for Cursor: an MCP server entry in <code>~/.cursor/mcp.json</code>, six hooks in <code>~/.cursor/hooks.json</code>, and a rules file in each project. This setup is config written from docs, not tested on a real install. No hook ran in Cursor.</p>
+<nav class="toc" aria-label="On this page"><strong>On this page</strong><ul><li><a href="#what-you-get">What you get</a></li><li><a href="#install">Install</a></li><li><a href="#what-gets-written">What gets written</a></li><li><a href="#hooks-and-events">Hooks and events</a></li><li><a href="#rules-file">Rules file</a></li><li><a href="#verify-it-works">Verify it works</a></li><li><a href="#uninstall">Uninstall</a></li><li><a href="#verification-status">Verification status</a></li><li><a href="#known-limits">Known limits</a></li></ul></nav>
+<h2 id="what-you-get">What you get</h2>
+<ul><li><strong>MCP server.</strong> An entry named <code>aletheia</code> in <code>~/.cursor/mcp.json</code>.</li><li><strong>Hooks.</strong> Six events in <code>~/.cursor/hooks.json</code>: <code>sessionStart</code>, <code>beforeSubmitPrompt</code>, <code>postToolUse</code>, <code>afterAgentResponse</code>, <code>stop</code> and <code>sessionEnd</code>.</li><li><strong>Session-start context.</strong> The <code>sessionStart</code> hook prints recalled memory in the <code>additional_context</code> field.</li><li><strong>Rules.</strong> A project file <code>.cursor/rules/aletheia.mdc</code>, written by <code>aletheia rules sync</code>. <code>aletheia install cursor</code> writes no rules, because Cursor has no global rules file.</li></ul>
+<p>Level: <code>full</code>. Verification: <code>from-docs-only</code>.</p>
+<h2 id="install">Install</h2>
+<pre><code class="language-bash">npm install -g aletheia-mem
+aletheia install cursor            # dry run: prints every step, writes nothing
+aletheia install cursor --write    # MCP entry and hooks, with backups
+aletheia rules sync --tools cursor --dir &lt;project&gt; --write    # the project rules file</code></pre>
+<p>Restart Cursor after the install so it reads the new files.</p>
+<h2 id="what-gets-written">What gets written</h2>
+<p>Real dry-run output from a temporary HOME. Paths start with <code>/tmp/tmp.Ez6NqCkeLC</code>, the temporary home folder of the run. On your machine they start with your own home folder.</p>
+<pre><code>$ aletheia install cursor
+Cursor (cursor) — full, from-docs-only
+  write  mcp      /tmp/tmp.Ez6NqCkeLC/.cursor/mcp.json  (mcpServers.aletheia)
+  write  hooks    /tmp/tmp.Ez6NqCkeLC/.cursor/hooks.json  (sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd)
+  note  Cursor is not installed here: the config and payloads were tested against fixtures, not a real Cursor install.
+  note  The stop hook carries no assistant text; afterAgentResponse stores the summary and stop queues compression.
+  note  Cursor has no global rules file. Use `aletheia rules sync --tools cursor --dir &lt;project&gt; --write` for .cursor/rules/aletheia.mdc.
+  ...
+Dry run: nothing was written. Add --write to apply.</code></pre>
+<p>The MCP entry that <code>--write</code> produced:</p>
+<pre><code class="language-json">{
+  &quot;mcpServers&quot;: {
+    &quot;aletheia&quot;: {
+      &quot;command&quot;: &quot;/home/you/.bun/bin/bun&quot;,
+      &quot;args&quot;: [&quot;/path/to/aletheia-mem/bin/mcp.mjs&quot;]
+    }
+  }
+}</code></pre>
+<p>The start of <code>hooks.json</code>. Cursor's format is a flat array per event:</p>
+<pre><code class="language-json">{
+  &quot;version&quot;: 1,
+  &quot;hooks&quot;: {
+    &quot;sessionStart&quot;: [
+      {
+        &quot;command&quot;: &quot;/home/you/.bun/bin/bun /tmp/tmp.eHRtbNMs5s/aletheia.bundle.mjs hook cursor sessionStart # aletheia-managed&quot;,
+        &quot;timeout&quot;: 10
+      }
+    ],
+    ...
+  }
+}</code></pre>
+<p>The Cursor pages (fetched 2026-10-29) agree on these points: user hooks live in <code>~/.cursor/hooks.json</code> with a top-level <code>version</code> of 1 and a <code>hooks</code> object that maps each event to an array of definitions with a required <code>command</code> and an optional <code>timeout</code>; global MCP servers live in <code>~/.cursor/mcp.json</code>.</p>
+<h2 id="hooks-and-events">Hooks and events</h2>
+<div class="tablewrap"><table><thead><tr><th>Event</th><th>What Aletheia does</th></tr></thead><tbody><tr><td><code>sessionStart</code></td><td>Stores nothing. Prints <code>{&quot;additional_context&quot;: &quot;&lt;recalled memory&gt;&quot;}</code>.</td></tr><tr><td><code>beforeSubmitPrompt</code></td><td>Stores the prompt as a note, redacted. Prompts under 3 characters are skipped.</td></tr><tr><td><code>postToolUse</code></td><td>Stores an event from <code>tool_name</code>, <code>tool_input</code> and <code>tool_output</code>, cut to 1,500 characters.</td></tr><tr><td><code>afterAgentResponse</code></td><td>Stores the <code>text</code> field as a summary, once per agent response.</td></tr><tr><td><code>stop</code></td><td>Stores no text. Queues the session for compression and marks it ended.</td></tr><tr><td><code>sessionEnd</code></td><td>Does the same as <code>stop</code>.</td></tr></tbody></table></div>
+<p>The project name comes from the first entry of <code>workspace_roots</code> in the payload. Cursor's <code>stop</code> payload has no assistant text (it carries <code>status</code> and <code>loop_count</code>), which is why the summary comes from <code>afterAgentResponse</code>. The Cursor hooks page lists many more events than the six installed, for example <code>preToolUse</code>, <code>afterFileEdit</code> and <code>preCompact</code>. Aletheia installs none of them.</p>
+<p>Every hook exits 0 whatever happens, makes no network call and no model call, and redacts before it stores. The project README says each installed hook command was exercised with a recorded payload in a temporary HOME. That is not a Cursor session. See <a href="../reference/hooks.html">Hooks reference</a>.</p>
+<h2 id="rules-file">Rules file</h2>
+<p>Cursor has no global rules file, so <code>aletheia install cursor</code> writes none. Run this once per project:</p>
+<pre><code class="language-bash">aletheia rules sync --tools cursor --dir &lt;project&gt; --write</code></pre>
+<p>It writes <code>&lt;project&gt;/.cursor/rules/aletheia.mdc</code>. Real output of that command in the test run:</p>
+<pre><code>- cursor: /tmp/tmp.e1CAvpmUGV/myproject/.cursor/rules/aletheia.mdc — 1 rules, written</code></pre>
+<p>The file:</p>
+<pre><code>---
+description: Standing rules managed by aletheia-mem
+alwaysApply: true
+---
+
+&lt;!-- aletheia:rules:begin --&gt;
+# Rules
+
+Managed by aletheia-mem. Edit them in the Rules page; this block is rewritten on sync.
+
+## Everywhere
+
+- Run the narrow test before the full suite.
+&lt;!-- aletheia:rules:end --&gt;</code></pre>
+<p>The Cursor rules page (https://cursor.com/docs/context/rules, fetched 2026-10-29) says project rules live in <code>.cursor/rules</code> as <code>.mdc</code> files, with the frontmatter fields <code>description</code>, <code>globs</code> and <code>alwaysApply</code>, and that <code>alwaysApply: true</code> applies the rule to every chat. It says there is no global rules file; User Rules are set in Cursor's settings, and Aletheia does not write them. See <a href="../concepts/rules.html">Rules</a>.</p>
+<h2 id="verify-it-works">Verify it works</h2>
+<pre><code class="language-bash">aletheia install cursor --verify
+aletheia doctor</code></pre>
+<p><code>--verify</code> prints <code>ok</code>, <code>drift</code> or <code>missing</code> for the MCP file and the hooks file. In <code>doctor</code>, look for <code>hooks cursor    6/6 in ...hooks.json</code>. The same run prints this line, which is easy to misread:</p>
+<pre><code>ok   verify cursor        verified: verified 2026-10-26 — Cursor docs fetched 2026-10-26; Cursor is not installed on this machine</code></pre>
+<p>The word <code>verified</code> here means the evidence date is recent. The evidence text says Cursor was not installed on the test machine.</p>
+<p>Nobody has seen these hooks run in Cursor. If you try it:</p>
+<ol><li>Run the install, restart Cursor, and send one prompt.</li><li>Run <code>aletheia search &quot;&lt;a word from your prompt&gt;&quot;</code>, or open <code>http://127.0.0.1:37790</code> and check the Activity and Knowledge tabs. The Connections tab shows the hook count and the time of the last capture.</li><li>Report what you saw, with your Cursor version, in an issue at https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues.</li></ol>
+<h2 id="uninstall">Uninstall</h2>
+<pre><code class="language-bash">aletheia uninstall cursor            # dry run
+aletheia uninstall cursor --write</code></pre>
+<p>Real dry-run output:</p>
+<pre><code>Cursor (cursor)
+  remove mcp      /tmp/tmp.Ez6NqCkeLC/.cursor/mcp.json
+  remove hooks    /tmp/tmp.Ez6NqCkeLC/.cursor/hooks.json  (no aletheia hooks)
+Dry run: nothing was written. Add --write to remove.</code></pre>
+<p>The <code>(no aletheia hooks)</code> label is the installer's own wording for the hooks line. In the Claude Code test run the same label appeared and the hook entries were removed. Uninstall does not remove <code>.cursor/rules/aletheia.mdc</code>, because install did not write it. Delete that file yourself in each project where you ran <code>rules sync</code>.</p>
+<h2 id="verification-status">Verification status</h2>
+<ul><li>Cursor: config written from docs, not tested on a real install. No hook ran in Cursor.</li><li>The formats come from https://cursor.com/docs/agent/hooks, https://cursor.com/docs/context/mcp and https://cursor.com/docs/context/rules, fetched 2026-10-26 and again 2026-10-29. Cursor is not installed on the machine used for the tests.</li><li>The installer and the hook adapter were tested against fixtures and recorded payloads in a temporary HOME.</li><li>UNVERIFIED: the MCP docs field table lists <code>&quot;type&quot;: &quot;stdio&quot;</code> as a required field, while its examples omit it. Aletheia writes no <code>type</code>. A real Cursor install would settle whether the entry loads.</li><li>UNVERIFIED: the hooks page lists <code>continue</code> as an output field of <code>beforeSubmitPrompt</code>. Aletheia's hook prints nothing for that event. Whether Cursor lets the prompt through when a hook prints nothing was not checked.</li><li>Answer accuracy is not measured. Benchmarks are retrieval only.</li></ul>
+<h2 id="known-limits">Known limits</h2>
+<ul><li>Nothing here has run in Cursor. Expect to find differences.</li><li>No global rules file. You need one <code>rules sync</code> per project.</li><li>One summary memory is stored per agent response, not per session.</li><li>The <code>sessionStart</code> hook prints context on every start. The adapter has no special case for resumed sessions.</li><li>The hook command holds absolute paths to Bun and the data dir bundle. If you move either, run <code>aletheia install cursor --write</code> again.</li><li>Compression is queued, not run in the hook. Run <code>aletheia compress</code>, or keep <code>aletheia-server</code> running.</li></ul>
+<h2 id="next-steps">Next steps</h2>
+<ul><li><a href="../reference/hooks.html">Hooks reference</a> - the events, fields and guarantees of every hook.</li><li><a href="../concepts/rules.html">Rules</a> - how the <code>.mdc</code> block is built and synced.</li><li><a href="../project/status-and-limits.html">Project status and limits</a> - what is tested and what is not.</li><li><a href="overview.html">Tools overview</a> - all hosts and their verification status.</li></ul>
+<nav class="pager" aria-label="Previous and next"><a class="previous" href="codex.html"><small>Previous</small><span>Codex CLI memory with Aletheia</span></a><a class="next" href="gemini-cli.html"><small>Next</small><span>Gemini CLI memory with Aletheia</span></a></nav>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+</main>
+</body>
+</html>

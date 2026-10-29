@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OpenCode memory with Aletheia · Aletheia docs</title>
+<meta name="description" content="Connect OpenCode to Aletheia: the opencode.json MCP entry and AGENTS.md rules block it writes, why no hooks are installed, and what was tested.">
+<meta name="keywords" content="opencode memory, opencode mcp server, opencode agents.md rules, opencode.json mcp local, aletheia opencode, opencode persistent memory">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/opencode.html">
+<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aletheia">
+<meta property="og:title" content="OpenCode memory with Aletheia">
+<meta property="og:description" content="Connect OpenCode to Aletheia: the opencode.json MCP entry and AGENTS.md rules block it writes, why no hooks are installed, and what was tested.">
+<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/opencode.html">
+<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="OpenCode memory with Aletheia">
+<meta name="twitter:description" content="Connect OpenCode to Aletheia: the opencode.json MCP entry and AGENTS.md rules block it writes, why no hooks are installed, and what was tested.">
+<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"OpenCode memory with Aletheia","description":"Connect OpenCode to Aletheia: the opencode.json MCP entry and AGENTS.md rules block it writes, why no hooks are installed, and what was tested.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/opencode.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/opencode.html","inLanguage":"en","dateModified":"2026-10-29","keywords":"opencode memory, opencode mcp server, opencode agents.md rules, opencode.json mcp local, aletheia opencode, opencode persistent memory","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"OpenCode memory with Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/opencode.html"}]}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../../index.html"><img src="../../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../../index.html">Home</a><a href="../index.html">Docs</a><a href="../start/quickstart.html">Quickstart</a><a href="../compare/aletheia-vs-claude-mem.html">Compare</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc docs-layout">
+<aside class="side" aria-label="Documentation"><a class="side-home" href="../index.html">All documentation</a><details><summary>Get started</summary><ul><li><a href="../start/introduction.html">Introduction to Aletheia, a local memory hub for AI coding tools</a></li><li><a href="../start/installation.html">Install Aletheia with npm, git or Docker</a></li><li><a href="../start/quickstart.html">Quickstart</a></li><li><a href="../start/how-it-works.html">How Aletheia works</a></li><li><a href="../start/dashboard.html">The Aletheia dashboard</a></li><li><a href="../start/faq.html">Aletheia FAQ</a></li></ul></details><details><summary>Concepts</summary><ul><li><a href="../concepts/memory-model.html">Aletheia memory model</a></li><li><a href="../concepts/rules.html">Rules</a></li><li><a href="../concepts/search.html">Search</a></li><li><a href="../concepts/session-context.html">Session-start context</a></li><li><a href="../concepts/privacy.html">Privacy and redaction in Aletheia</a></li><li><a href="../33-facts.html">33. Facts</a></li><li><a href="../concepts/glossary.html">Aletheia glossary</a></li></ul></details><details open><summary>Connect your tools</summary><ul><li><a href="overview.html">Connect AI coding tools to Aletheia</a></li><li><a href="claude-code.html">Claude Code memory with Aletheia</a></li><li><a href="command-code.html">Command Code memory with Aletheia</a></li><li><a href="codex.html">Codex CLI memory with Aletheia</a></li><li><a href="cursor.html">Cursor memory with Aletheia</a></li><li><a href="gemini-cli.html">Gemini CLI memory with Aletheia</a></li><li><a href="windsurf.html">Windsurf memory with Aletheia</a></li><li><a href="opencode.html" aria-current="page">OpenCode memory with Aletheia</a></li><li><a href="../claude-desktop.html">Claude Desktop and the aletheia MCP server</a></li><li><a href="other-tools.html">GitHub Copilot, Aider and any MCP client with Aletheia</a></li><li><a href="../25-installers.html">25. Installers and automatic capture</a></li></ul></details><details><summary>Guides</summary><ul><li><a href="../guides/migrate-from-claude-mem.html">Migrate from claude-mem to Aletheia</a></li><li><a href="../guides/write-rules-once.html">Write your AI coding rules once and sync them to every tool</a></li><li><a href="../guides/backup-export-import.html">Back up, export and move Aletheia memory between machines</a></li><li><a href="../guides/run-as-a-service.html">Run Aletheia as a background service (systemd, launchd, Docker)</a></li><li><a href="../guides/model-providers.html">Model providers</a></li><li><a href="../guides/troubleshooting.html">Troubleshooting Aletheia</a></li><li><a href="../29-sync.html">29. Aletheia Sync</a></li><li><a href="../30-remote-mcp.html">30. The private remote MCP endpoint</a></li><li><a href="../31-team.html">31. Team mode</a></li><li><a href="../32-requests.html">32. Requests, goals, story and economics</a></li></ul></details><details><summary>Reference</summary><ul><li><a href="../reference/cli.html">Aletheia CLI reference</a></li><li><a href="../reference/mcp-tools.html">MCP tools reference</a></li><li><a href="../reference/configuration.html">Aletheia configuration reference</a></li><li><a href="../reference/hooks.html">Aletheia hooks reference</a></li><li><a href="../03-http-api.html">3. HTTP API</a></li></ul></details><details><summary>Compare</summary><ul><li><a href="../compare/aletheia-vs-claude-mem.html">claude-mem alternative</a></li><li><a href="../compare/memory-tools.html">Memory tools compared</a></li><li><a href="../compare/claude-code-memory.html">Claude Code memory options</a></li></ul></details><details><summary>Project</summary><ul><li><a href="../project/benchmarks.html">Aletheia benchmarks</a></li><li><a href="../project/status-and-limits.html">Aletheia status and limits</a></li><li><a href="../dependencies.html">Dependencies</a></li></ul></details><details><summary>Internals</summary><ul><li><a href="../01-architecture.html">1. Architecture</a></li><li><a href="../02-data-model.html">2. Data model</a></li><li><a href="../06-frontend.html">6. Frontend</a></li><li><a href="../07-operations.html">7. Operations</a></li></ul></details></aside>
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../index.html">Aletheia</a> › <a href="../index.html">Docs</a> › <span>Connect your tools</span> › <span>OpenCode memory with Aletheia</span></nav>
+<h1 id="opencode-memory-with-aletheia">OpenCode memory with Aletheia</h1>
+<p>Aletheia (aletheia-mem) connects OpenCode through an MCP server entry in <code>~/.config/opencode/opencode.json</code> and a managed rules block in <code>~/.config/opencode/AGENTS.md</code>. It installs no hooks and no plugin, so nothing is captured automatically. Memory enters when the model calls an Aletheia MCP tool, or when you save it yourself.</p>
+<nav class="toc" aria-label="On this page"><strong>On this page</strong><ul><li><a href="#what-you-get">What you get</a></li><li><a href="#install">Install</a></li><li><a href="#what-gets-written">What gets written</a></li><li><a href="#hooks-and-events">Hooks and events</a></li><li><a href="#rules-file">Rules file</a></li><li><a href="#verify-it-works">Verify it works</a></li><li><a href="#uninstall">Uninstall</a></li><li><a href="#verification-status">Verification status</a></li><li><a href="#known-limits">Known limits</a></li></ul></nav>
+<h2 id="what-you-get">What you get</h2>
+<ul><li><strong>MCP server.</strong> An entry named <code>aletheia</code> under the <code>mcp</code> key, with <code>type</code> set to <code>local</code>.</li><li><strong>Rules.</strong> Your rules, written into <code>~/.config/opencode/AGENTS.md</code> between markers.</li><li><strong>No hooks.</strong> No capture of prompts, tool calls or summaries.</li></ul>
+<p>Level: <code>mcp+rules</code>. This is the only host at that level. With the entry in place, OpenCode can call tools such as <code>search</code>, <code>save_memory</code> and <code>session_start_context</code> (see <a href="../reference/mcp-tools.html">MCP tools</a>).</p>
+<h2 id="install">Install</h2>
+<pre><code class="language-bash">npm install -g aletheia-mem
+aletheia install opencode            # dry run: prints every step, writes nothing
+aletheia install opencode --write    # applies it, with backups</code></pre>
+<p>Restart OpenCode afterwards.</p>
+<h2 id="what-gets-written">What gets written</h2>
+<p>Real dry-run output from a temporary HOME. Paths start with <code>/tmp/tmp.Ez6NqCkeLC</code>, the temporary home folder of the run. On your machine they start with your own home folder.</p>
+<pre><code>$ aletheia install opencode
+OpenCode (opencode) — mcp+rules, mcp-verified
+  write  mcp      /tmp/tmp.Ez6NqCkeLC/.config/opencode/opencode.json  (mcp.aletheia)
+  write  rules    /tmp/tmp.Ez6NqCkeLC/.config/opencode/AGENTS.md  (1 rule)
+  note  OpenCode ships as mcp+rules only. Its plugin system exists, but the official plugin page does not document the event payload fields, so this installer does not write a plugin.
+  ...
+Dry run: nothing was written. Add --write to apply.</code></pre>
+<p>The MCP entry that <code>--write</code> produced. OpenCode's format differs from the others: the key is <code>mcp</code>, and <code>command</code> is one array:</p>
+<pre><code class="language-json">{
+  &quot;mcp&quot;: {
+    &quot;aletheia&quot;: {
+      &quot;type&quot;: &quot;local&quot;,
+      &quot;command&quot;: [
+        &quot;/home/you/.bun/bin/bun&quot;,
+        &quot;/path/to/aletheia-mem/bin/mcp.mjs&quot;
+      ],
+      &quot;enabled&quot;: true
+    }
+  }
+}</code></pre>
+<p>The OpenCode MCP page (https://opencode.ai/docs/mcp-servers/, fetched 2026-10-29) shows the same shape: a local server under <code>mcp</code> with <code>type: &quot;local&quot;</code>, a <code>command</code> array and <code>enabled</code>. That page does not say where the global config file is. The installer uses <code>~/.config/opencode/opencode.json</code>.</p>
+<p>If <code>opencode.json</code> is missing and <code>opencode.jsonc</code> exists, the installer refuses instead of parsing JSONC as JSON. Real output:</p>
+<pre><code>$ aletheia install opencode --write
+/tmp/tmp.JrWkDYo6Yx/.config/opencode/opencode.jsonc is JSONC; this installer only writes opencode.json. Move the settings or remove the comments.</code></pre>
+<p>The exit code is 1 and no file is changed.</p>
+<h2 id="hooks-and-events">Hooks and events</h2>
+<p>No hook and no plugin is installed. The OpenCode plugin page (https://opencode.ai/docs/plugins/, fetched 2026-10-29) lists plugin folders (<code>.opencode/plugins/</code> and <code>~/.config/opencode/plugins/</code>) and event names such as <code>session.idle</code>, <code>message.updated</code> and <code>tool.execute.after</code>. It does not document the fields inside any event payload. Reading a guessed field would be fabrication, so Aletheia writes no plugin.</p>
+<div class="tablewrap"><table><thead><tr><th>Way memory gets in</th><th>Automatic</th></tr></thead><tbody><tr><td>The model calls the <code>save_memory</code> MCP tool</td><td>No. The model decides.</td></tr><tr><td>You run <code>aletheia save &quot;&lt;text&gt;&quot;</code></td><td>No. You run it.</td></tr><tr><td>You add a note in the dashboard</td><td>No. You do it.</td></tr><tr><td>Prompts, tool calls, session summaries</td><td>Not captured for OpenCode.</td></tr></tbody></table></div>
+<p><code>aletheia watch</code> and <code>aletheia import transcripts</code> read session files, but they are verified only for Claude Code, Command Code and Codex CLI. OpenCode is not on that list.</p>
+<h2 id="rules-file">Rules file</h2>
+<p><code>aletheia install opencode --write</code> writes your rules into <code>~/.config/opencode/AGENTS.md</code>. For a project file, run <code>aletheia rules sync --tools opencode --dir &lt;project&gt; --write</code>, which writes <code>&lt;project&gt;/AGENTS.md</code>.</p>
+<pre><code>&lt;!-- aletheia:rules:begin --&gt;
+# Rules
+
+Managed by aletheia-mem. Edit them in the Rules page; this block is rewritten on sync.
+
+## Everywhere
+
+- Run the narrow test before the full suite.
+&lt;!-- aletheia:rules:end --&gt;</code></pre>
+<p>Text outside the markers is never touched. The OpenCode rules page (https://opencode.ai/docs/rules/, fetched 2026-10-29) says OpenCode reads a project <code>AGENTS.md</code> by searching upward from the current directory, and a global <code>~/.config/opencode/AGENTS.md</code>. It also says OpenCode falls back to <code>CLAUDE.md</code>: <code>~/.claude/CLAUDE.md</code> is used only if <code>~/.config/opencode/AGENTS.md</code> does not exist. Creating the global <code>AGENTS.md</code> therefore stops OpenCode from reading <code>~/.claude/CLAUDE.md</code>. If you relied on that fallback, copy what you need into the new file. See <a href="../concepts/rules.html">Rules</a>.</p>
+<h2 id="verify-it-works">Verify it works</h2>
+<pre><code class="language-bash">aletheia install opencode --verify
+aletheia doctor
+opencode mcp list</code></pre>
+<p><code>--verify</code> prints <code>ok</code>, <code>drift</code> or <code>missing</code> for the MCP file and the rules file. In <code>doctor</code>, the OpenCode line reads <code>tool opencode  mcp+rules; no hook system shipped</code>.</p>
+<p>For this page, <code>opencode mcp list</code> was run on 2026-10-29 in the temporary home, with the config shown above. OpenCode 1.18.33 printed this (terminal color codes removed):</p>
+<pre><code>┌  MCP Servers
+│
+●  ✓ aletheia connected
+│      /home/you/.bun/bin/bun /path/to/aletheia-mem/bin/mcp.mjs
+│
+└  1 server(s)</code></pre>
+<p>To see a memory arrive, ask OpenCode to save one with the <code>save_memory</code> tool, then run <code>aletheia search &quot;&lt;a word from it&gt;&quot;</code> or open <code>http://127.0.0.1:37790</code> and check the Knowledge tab. How reliably OpenCode's model calls the tool was not measured.</p>
+<h2 id="uninstall">Uninstall</h2>
+<pre><code class="language-bash">aletheia uninstall opencode            # dry run
+aletheia uninstall opencode --write</code></pre>
+<p>Real dry-run output:</p>
+<pre><code>OpenCode (opencode)
+  remove mcp      /tmp/tmp.Ez6NqCkeLC/.config/opencode/opencode.json
+  remove rules    /tmp/tmp.Ez6NqCkeLC/.config/opencode/AGENTS.md
+Dry run: nothing was written. Add --write to remove.</code></pre>
+<p>Uninstall removes the <code>aletheia</code> MCP entry only if it is Aletheia's, and the rules block. If you edited a file after the install, it refuses and asks for <code>--force</code>.</p>
+<h2 id="verification-status">Verification status</h2>
+<ul><li>The MCP server was listed by the real CLI (OpenCode 1.18.33) on 2026-10-27, and again on 2026-10-29 as shown above.</li><li>Hooks not run. There are none to run: this host is <code>mcp+rules</code>. No hook ran in OpenCode.</li><li>The formats come from https://opencode.ai/docs/mcp-servers/, https://opencode.ai/docs/rules/ and https://opencode.ai/docs/plugins/, fetched 2026-10-26 and again 2026-10-29.</li><li>No test confirmed that OpenCode loaded the rules block. The <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/verification/rules-targets.md">rules targets table</a> records &quot;real tool read: not run&quot;.</li><li>Answer accuracy is not measured. Benchmarks are retrieval only.</li></ul>
+<h2 id="known-limits">Known limits</h2>
+<ul><li>No automatic capture. This is the main difference from Claude Code, Command Code and Codex CLI.</li><li>A JSONC-only config (<code>opencode.jsonc</code> without <code>opencode.json</code>) is refused.</li><li>Creating <code>~/.config/opencode/AGENTS.md</code> disables OpenCode's fallback to <code>~/.claude/CLAUDE.md</code>, per the rules page.</li><li>OpenCode's plugin payload fields are undocumented on the fetched page. A capture plugin needs those fields. Re-fetch the page after each OpenCode release.</li><li>Aletheia writes user-level files only.</li></ul>
+<h2 id="next-steps">Next steps</h2>
+<ul><li><a href="../reference/mcp-tools.html">MCP tools</a> - the tools OpenCode can call once connected.</li><li><a href="../concepts/rules.html">Rules</a> - how the AGENTS.md block is built and synced.</li><li><a href="claude-code.html">Claude Code</a> - a host with hooks, for comparison.</li><li><a href="overview.html">Tools overview</a> - all hosts and their verification status.</li></ul>
+<nav class="pager" aria-label="Previous and next"><a class="previous" href="windsurf.html"><small>Previous</small><span>Windsurf memory with Aletheia</span></a><a class="next" href="../claude-desktop.html"><small>Next</small><span>Claude Desktop and the aletheia MCP server</span></a></nav>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+</main>
+</body>
+</html>

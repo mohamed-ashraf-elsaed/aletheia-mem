@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Back up, export and move Aletheia memory between machines · Aletheia docs</title>
+<meta name="description" content="Export Aletheia memory and rules as JSONL or Markdown, copy hub.db safely with its WAL files, import on another machine, and erase with a receipt.">
+<meta name="keywords" content="aletheia backup, export ai memory, import memory bundle, copy sqlite wal database, move memory to another machine, erase memory receipt">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
+<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/backup-export-import.html">
+<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aletheia">
+<meta property="og:title" content="Back up, export and move Aletheia memory between machines">
+<meta property="og:description" content="Export Aletheia memory and rules as JSONL or Markdown, copy hub.db safely with its WAL files, import on another machine, and erase with a receipt.">
+<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/backup-export-import.html">
+<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Back up, export and move Aletheia memory between machines">
+<meta name="twitter:description" content="Export Aletheia memory and rules as JSONL or Markdown, copy hub.db safely with its WAL files, import on another machine, and erase with a receipt.">
+<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<link rel="stylesheet" href="../../style.css">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Back up, export and move Aletheia memory between machines","description":"Export Aletheia memory and rules as JSONL or Markdown, copy hub.db safely with its WAL files, import on another machine, and erase with a receipt.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/backup-export-import.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/backup-export-import.html","inLanguage":"en","dateModified":"2026-10-29","keywords":"aletheia backup, export ai memory, import memory bundle, copy sqlite wal database, move memory to another machine, erase memory receipt","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"Back up, export and move Aletheia memory between machines","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/backup-export-import.html"}]}</script>
+</head>
+<body>
+<header class="top"><div class="wrap">
+  <a class="brand" href="../../index.html"><img src="../../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <nav aria-label="Main"><a href="../../index.html">Home</a><a href="../index.html">Docs</a><a href="../start/quickstart.html">Quickstart</a><a href="../compare/aletheia-vs-claude-mem.html">Compare</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+</div></header>
+<main class="wrap doc docs-layout">
+<aside class="side" aria-label="Documentation"><a class="side-home" href="../index.html">All documentation</a><details><summary>Get started</summary><ul><li><a href="../start/introduction.html">Introduction to Aletheia, a local memory hub for AI coding tools</a></li><li><a href="../start/installation.html">Install Aletheia with npm, git or Docker</a></li><li><a href="../start/quickstart.html">Quickstart</a></li><li><a href="../start/how-it-works.html">How Aletheia works</a></li><li><a href="../start/dashboard.html">The Aletheia dashboard</a></li><li><a href="../start/faq.html">Aletheia FAQ</a></li></ul></details><details><summary>Concepts</summary><ul><li><a href="../concepts/memory-model.html">Aletheia memory model</a></li><li><a href="../concepts/rules.html">Rules</a></li><li><a href="../concepts/search.html">Search</a></li><li><a href="../concepts/session-context.html">Session-start context</a></li><li><a href="../concepts/privacy.html">Privacy and redaction in Aletheia</a></li><li><a href="../33-facts.html">33. Facts</a></li><li><a href="../concepts/glossary.html">Aletheia glossary</a></li></ul></details><details><summary>Connect your tools</summary><ul><li><a href="../tools/overview.html">Connect AI coding tools to Aletheia</a></li><li><a href="../tools/claude-code.html">Claude Code memory with Aletheia</a></li><li><a href="../tools/command-code.html">Command Code memory with Aletheia</a></li><li><a href="../tools/codex.html">Codex CLI memory with Aletheia</a></li><li><a href="../tools/cursor.html">Cursor memory with Aletheia</a></li><li><a href="../tools/gemini-cli.html">Gemini CLI memory with Aletheia</a></li><li><a href="../tools/windsurf.html">Windsurf memory with Aletheia</a></li><li><a href="../tools/opencode.html">OpenCode memory with Aletheia</a></li><li><a href="../claude-desktop.html">Claude Desktop and the aletheia MCP server</a></li><li><a href="../tools/other-tools.html">GitHub Copilot, Aider and any MCP client with Aletheia</a></li><li><a href="../25-installers.html">25. Installers and automatic capture</a></li></ul></details><details open><summary>Guides</summary><ul><li><a href="migrate-from-claude-mem.html">Migrate from claude-mem to Aletheia</a></li><li><a href="write-rules-once.html">Write your AI coding rules once and sync them to every tool</a></li><li><a href="backup-export-import.html" aria-current="page">Back up, export and move Aletheia memory between machines</a></li><li><a href="run-as-a-service.html">Run Aletheia as a background service (systemd, launchd, Docker)</a></li><li><a href="model-providers.html">Model providers</a></li><li><a href="troubleshooting.html">Troubleshooting Aletheia</a></li><li><a href="../29-sync.html">29. Aletheia Sync</a></li><li><a href="../30-remote-mcp.html">30. The private remote MCP endpoint</a></li><li><a href="../31-team.html">31. Team mode</a></li><li><a href="../32-requests.html">32. Requests, goals, story and economics</a></li></ul></details><details><summary>Reference</summary><ul><li><a href="../reference/cli.html">Aletheia CLI reference</a></li><li><a href="../reference/mcp-tools.html">MCP tools reference</a></li><li><a href="../reference/configuration.html">Aletheia configuration reference</a></li><li><a href="../reference/hooks.html">Aletheia hooks reference</a></li><li><a href="../03-http-api.html">3. HTTP API</a></li></ul></details><details><summary>Compare</summary><ul><li><a href="../compare/aletheia-vs-claude-mem.html">claude-mem alternative</a></li><li><a href="../compare/memory-tools.html">Memory tools compared</a></li><li><a href="../compare/claude-code-memory.html">Claude Code memory options</a></li></ul></details><details><summary>Project</summary><ul><li><a href="../project/benchmarks.html">Aletheia benchmarks</a></li><li><a href="../project/status-and-limits.html">Aletheia status and limits</a></li><li><a href="../dependencies.html">Dependencies</a></li></ul></details><details><summary>Internals</summary><ul><li><a href="../01-architecture.html">1. Architecture</a></li><li><a href="../02-data-model.html">2. Data model</a></li><li><a href="../06-frontend.html">6. Frontend</a></li><li><a href="../07-operations.html">7. Operations</a></li></ul></details></aside>
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../index.html">Aletheia</a> › <a href="../index.html">Docs</a> › <span>Guides</span> › <span>Back up, export and move Aletheia memory between machines</span></nav>
+<h1 id="back-up-export-and-move-aletheia-memory-between-machines">Back up, export and move Aletheia memory between machines</h1>
+<p>Aletheia (aletheia-mem) stores everything in one SQLite database, <code>hub.db</code>, in <code>~/.aletheia</code> by default. You can export your memories and rules as a portable file, copy the database itself, or keep two machines in step with sync.</p>
+<nav class="toc" aria-label="On this page"><strong>On this page</strong><ul><li><a href="#pick-a-method">Pick a method</a></li><li><a href="#export-a-bundle">Export a bundle</a></li><li><a href="#export-markdown">Export Markdown</a></li><li><a href="#import-a-bundle">Import a bundle</a></li><li><a href="#copy-hubdb-safely">Copy hub.db safely</a></li><li><a href="#move-to-another-machine">Move to another machine</a></li><li><a href="#erase-memory-and-keep-a-receipt">Erase memory and keep a receipt</a></li></ul></nav>
+<p>Each method keeps different things, so pick by what you need to move.</p>
+<h2 id="pick-a-method">Pick a method</h2>
+<div class="tablewrap"><table><thead><tr><th>Method</th><th>What it carries</th><th>Use it when</th></tr></thead><tbody><tr><td>Export bundle (<code>.jsonl</code>)</td><td>Memories and rules</td><td>You move to another machine or tool and want a small, readable file.</td></tr><tr><td>Export Markdown</td><td>Rules and notes, as text</td><td>You want to paste your memory into a chat tool or read it.</td></tr><tr><td>Copy <code>hub.db</code></td><td>Everything in the database: memories, facts, episodes, settings, dismissals</td><td>You want an exact backup or a full move.</td></tr><tr><td>Sync</td><td>Live changes between devices</td><td>You use two machines every day. See <a href="../29-sync.html">Sync</a>.</td></tr></tbody></table></div>
+<h2 id="export-a-bundle">Export a bundle</h2>
+<pre><code class="language-bash">aletheia export --out bundle.jsonl
+aletheia export --project shop --out shop.jsonl
+aletheia export --events --out everything.jsonl</code></pre>
+<p>Without <code>--out</code> the bundle goes to the terminal. The first line is a manifest; then comes one line per memory and one per rule. This is the manifest line from a test hub:</p>
+<pre><code class="language-json">{&quot;type&quot;:&quot;manifest&quot;,&quot;format&quot;:&quot;aletheia-bundle&quot;,&quot;version&quot;:1,&quot;exportedAt&quot;:&quot;2026-10-29T19:46:20.267Z&quot;,&quot;project&quot;:null,&quot;counts&quot;:{&quot;memories&quot;:5,&quot;rules&quot;:2}}</code></pre>
+<p>What the bundle holds, from <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/src/hub/store.mjs">the export code</a>:</p>
+<ul><li>Memories: project, kind, type, title, subtitle, text, facts, concepts, files, tool, session id, pinned flag, origin and creation time.</li><li>Rules: scope, text, enabled flag, tool filter and source. <code>--project</code> filters memories only. Every export contains all rules.</li><li>Tool events (<code>kind</code> event) only with <code>--events</code>. They are left out by default.</li><li>Prompts are included by default.</li></ul>
+<p>What it does not hold: facts, episodes, settings, sync data, and which memories you dismissed. A dismissed memory is still exported. In a test, <code>aletheia dismiss 1</code> followed by an export still showed all 5 memories.</p>
+<p>In the dashboard, open Knowledge, click <strong>Import and export</strong>, then <strong>Export bundle (.jsonl)</strong> or <strong>Export Markdown</strong>.</p>
+<h2 id="export-markdown">Export Markdown</h2>
+<pre><code class="language-bash">aletheia export --format markdown --out memory.md</code></pre>
+<p>The file starts with your enabled rules, then one section per project, newest first. It skips events and prompts and lists at most 500 items per project. It is for reading and pasting. It is not an import format.</p>
+<h2 id="import-a-bundle">Import a bundle</h2>
+<pre><code class="language-bash">aletheia import bundle bundle.jsonl</code></pre>
+<pre><code class="language-json">{
+  &quot;memories&quot;: {
+    &quot;added&quot;: 5,
+    &quot;skipped&quot;: 0
+  },
+  &quot;rules&quot;: {
+    &quot;added&quot;: 2,
+    &quot;skipped&quot;: 0
+  },
+  &quot;errors&quot;: []
+}</code></pre>
+<p>Import is idempotent. Run it again and every row is skipped, because the store compares project, kind, title and text.</p>
+<p>Memory ids and rule ids are new in the target hub. The importer stops with <code>Not an aletheia bundle</code> when the first line is not a manifest, and with a version message when the bundle is newer than the program. A bad line inside the file is reported in <code>errors</code> and the rest still imports.</p>
+<p>In the dashboard, use <strong>Import bundle</strong> in the same panel. After a large import, run:</p>
+<pre><code class="language-bash">aletheia optimize</code></pre>
+<p>It rebuilds the full-text index segments. Search stays correct without it. The step keeps query time low.</p>
+<h2 id="copy-hubdb-safely">Copy hub.db safely</h2>
+<p><code>hub.db</code> runs in write-ahead log (WAL) mode. Recent writes can live in <code>hub.db-wal</code>, not in <code>hub.db</code>. A copy of <code>hub.db</code> alone can be missing everything.</p>
+<p>I checked this on a test hub after a few commands. The data directory held:</p>
+<pre><code class="language-text">hub.db       4096 bytes
+hub.db-shm  32768 bytes
+hub.db-wal  1079472 bytes</code></pre>
+<p>A copy of <code>hub.db</code> alone opened with <code>no such table: memories</code>. SQLite's documentation says the same: the WAL file is part of the database and must stay with it when you copy or move it; a database separated from its WAL can lose committed transactions or become corrupt (https://www.sqlite.org/wal.html, fetched 2026-10-29).</p>
+<p>Do not assume that stopping the server empties the WAL. In my test the CLI commands had all exited and the <code>-wal</code> file was still there. Use one of these methods.</p>
+<h3 id="method-1-copy-all-three-files-together">Method 1: copy all three files together</h3>
+<p>Stop the server and every hook-driven tool, then copy <code>hub.db</code>, <code>hub.db-wal</code> and <code>hub.db-shm</code> as a set. In the test, a copy of all three opened with all rows present.</p>
+<pre><code class="language-bash">cp ~/.aletheia/hub.db ~/.aletheia/hub.db-wal ~/.aletheia/hub.db-shm /backup/</code></pre>
+<h3 id="method-2-make-a-consistent-copy-with-sqlite">Method 2: make a consistent copy with SQLite</h3>
+<p>These work while the server runs. I ran each one on a test hub and the copy held every row; <code>PRAGMA integrity_check</code> returned <code>ok</code>.</p>
+<pre><code class="language-bash">sqlite3 ~/.aletheia/hub.db &quot;.backup /backup/hub.db&quot;
+sqlite3 ~/.aletheia/hub.db &quot;VACUUM INTO '/backup/hub.db'&quot;</code></pre>
+<p>Aletheia does not ship the <code>sqlite3</code> program. If you do not have it, Bun can run <code>VACUUM INTO</code>:</p>
+<pre><code class="language-bash">bun -e 'import { Database } from &quot;bun:sqlite&quot;; new Database(process.argv[1], { readonly: true }).exec(`VACUUM INTO &quot;${process.argv[2]}&quot;`)' ~/.aletheia/hub.db /backup/hub.db</code></pre>
+<p><code>VACUUM INTO</code> needs a target that does not exist yet, or one that is empty (https://www.sqlite.org/lang_vacuum.html, fetched 2026-10-29). The <code>.backup</code> command is documented in the SQLite shell page (https://www.sqlite.org/cli.html, fetched 2026-10-29).</p>
+<h3 id="method-3-checkpoint-then-copy">Method 3: checkpoint, then copy</h3>
+<p><code>aletheia migrate</code> uses this approach when it backs up before a schema change: it runs <code>PRAGMA wal_checkpoint(TRUNCATE)</code> and then copies the main file. You can do the same by hand:</p>
+<pre><code class="language-bash">sqlite3 ~/.aletheia/hub.db &quot;PRAGMA wal_checkpoint(TRUNCATE);&quot;
+cp ~/.aletheia/hub.db /backup/hub.db</code></pre>
+<p>In the test the command printed <code>0|0|0</code> and the copy held every row. A write that lands between the checkpoint and the copy is not in the copy.</p>
+<h3 id="related-files">Related files</h3>
+<p>The data directory also holds <code>sync.db</code>, <code>team.db</code>, <code>alerts.db</code>, <code>watcher.db</code>, <code>erasure.key</code> and folders for spool, erasure receipts and models. Copy them only if you use those features. Keep <code>erasure.key</code> private: it signs erasure receipts.</p>
+<h2 id="move-to-another-machine">Move to another machine</h2>
+<ol><li>Install the same or a newer version of Aletheia on the new machine. A database with a newer schema than the program stops with <code>This database is schema v&lt;N&gt;; this build understands up to v&lt;M&gt;.</code> Check a database with <code>aletheia migrate --dry-run</code>.</li><li>Move the data with a bundle (see &quot;Export a bundle&quot; and &quot;Import a bundle&quot; above) or with a copy of the database files.</li><li>Run <code>aletheia doctor</code>. It checks the data folder and database file permissions (folder <code>0700</code>, files <code>0600</code>) and reports loose ones.</li><li>Install your tools again. Do not copy <code>install-manifest.json</code> or <code>aletheia.bundle.mjs</code> from the old machine. The hook commands in tool settings hold absolute paths to Bun and to that bundle.</li></ol>
+<pre><code class="language-bash">   aletheia install claude-code --write</code></pre>
+<ol><li>Write your rules into the tool files again. See <a href="write-rules-once.html">Write rules once</a>.</li></ol>
+<h2 id="erase-memory-and-keep-a-receipt">Erase memory and keep a receipt</h2>
+<p><code>aletheia erase</code> removes rows and signs a receipt. It reports first. It deletes only when you add <code>--apply</code>.</p>
+<pre><code class="language-bash">aletheia erase --project shop</code></pre>
+<pre><code class="language-text">Erasure report for project &quot;shop&quot;
+
+  memories              5  ids 1, 2, 3, 4, 5
+  observations          0
+  episodes              0
+  facts                 0
+  summaries             0
+  rule suggestions      0
+
+Nothing was deleted. Add --apply to erase, export first with --export &lt;file&gt;.
+Report only. Add --apply to erase.</code></pre>
+<p>Pick what to erase with <code>--project &lt;name&gt;</code>, <code>--id 12,fact:3</code> or <code>--before 2026-01-31</code>. Apply with an export and a receipt path:</p>
+<pre><code class="language-bash">aletheia erase --project shop --apply --export pre-erase.jsonl --receipt receipt.json
+aletheia erase verify receipt.json</code></pre>
+<pre><code class="language-text">Pre-erase export: pre-erase.jsonl
+Erased {&quot;memories&quot;:5,&quot;observations&quot;:0,&quot;episodes&quot;:0,&quot;facts&quot;:0,&quot;summaries&quot;:0,&quot;ruleSuggestions&quot;:0}; sync entities purged 0, local sync rows 0.
+Receipt: receipt.json
+Verify: aletheia erase verify receipt.json
+ok receipt.json</code></pre>
+<p>Without <code>--export</code> and <code>--receipt</code>, the files go to <code>erasure-exports/</code> and <code>erasure-receipts/</code> in the data directory. The receipt lists counts and ids, never content, and carries an HMAC-SHA256 signature made with <code>erasure.key</code>. Verification needs that key.</p>
+<p>Limits:</p>
+<ul><li>Erase does not delete rules. It does delete rule suggestions for the scope you pick.</li><li>It deletes rows. I found no <code>VACUUM</code> or secure-delete step in the erase code. SQLite's <code>secure_delete</code> setting is normally off, so deleted text can stay in free pages of the file until they are reused (https://www.sqlite.org/pragma.html, fetched 2026-10-29). If you must remove text from the file, make a <code>VACUUM INTO</code> copy after the erase and use that copy.</li><li>A backup or bundle you made earlier still holds the data.</li></ul>
+<h2 id="next-steps">Next steps</h2>
+<ul><li><a href="../29-sync.html">Sync</a> - keep two machines in step instead of moving files.</li><li><a href="../concepts/privacy.html">Privacy and redaction</a> - what is redacted before it is stored.</li><li><a href="run-as-a-service.html">Run as a service</a> - stop and restart the server around a copy.</li><li><a href="troubleshooting.html">Troubleshooting</a> - database locked, corruption and permission problems.</li></ul>
+<nav class="pager" aria-label="Previous and next"><a class="previous" href="write-rules-once.html"><small>Previous</small><span>Write your AI coding rules once and sync them to every tool</span></a><a class="next" href="run-as-a-service.html"><small>Next</small><span>Run Aletheia as a background service (systemd, launchd, Docker)</span></a></nav>
+</article>
+<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+</main>
+</body>
+</html>
