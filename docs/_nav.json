@@ -1,0 +1,93 @@
+{
+  "sections": [
+    {
+      "title": "Get started",
+      "pages": [
+        "start/introduction.md",
+        "start/installation.md",
+        "start/quickstart.md",
+        "start/how-it-works.md",
+        "start/dashboard.md",
+        "start/faq.md"
+      ]
+    },
+    {
+      "title": "Concepts",
+      "pages": [
+        "concepts/memory-model.md",
+        "concepts/rules.md",
+        "concepts/search.md",
+        "concepts/session-context.md",
+        "concepts/privacy.md",
+        "33-facts.md",
+        "concepts/glossary.md"
+      ]
+    },
+    {
+      "title": "Connect your tools",
+      "pages": [
+        "tools/overview.md",
+        "tools/claude-code.md",
+        "tools/command-code.md",
+        "tools/codex.md",
+        "tools/cursor.md",
+        "tools/gemini-cli.md",
+        "tools/windsurf.md",
+        "tools/opencode.md",
+        "claude-desktop.md",
+        "tools/other-tools.md",
+        "25-installers.md"
+      ]
+    },
+    {
+      "title": "Guides",
+      "pages": [
+        "guides/migrate-from-claude-mem.md",
+        "guides/write-rules-once.md",
+        "guides/backup-export-import.md",
+        "guides/run-as-a-service.md",
+        "guides/model-providers.md",
+        "guides/troubleshooting.md",
+        "29-sync.md",
+        "30-remote-mcp.md",
+        "31-team.md",
+        "32-requests.md"
+      ]
+    },
+    {
+      "title": "Reference",
+      "pages": [
+        "reference/cli.md",
+        "reference/mcp-tools.md",
+        "reference/configuration.md",
+        "reference/hooks.md",
+        "03-http-api.md"
+      ]
+    },
+    {
+      "title": "Compare",
+      "pages": [
+        "compare/aletheia-vs-claude-mem.md",
+        "compare/memory-tools.md",
+        "compare/claude-code-memory.md"
+      ]
+    },
+    {
+      "title": "Project",
+      "pages": [
+        "project/benchmarks.md",
+        "project/status-and-limits.md",
+        "dependencies.md"
+      ]
+    },
+    {
+      "title": "Internals",
+      "pages": [
+        "01-architecture.md",
+        "02-data-model.md",
+        "06-frontend.md",
+        "07-operations.md"
+      ]
+    }
+  ]
+}

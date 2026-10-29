@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // Check that site/sitemap.xml lists exactly the pages the site build produced.
 //   bun scripts/check-sitemap.mjs
-import { existsSync, readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
 const ROOT = process.env.SITE_ROOT ? process.env.SITE_ROOT : join(import.meta.dir, "..");
@@ -9,13 +9,18 @@ const SITE = join(ROOT, "site");
 const BASE = "https://mohamed-ashraf-elsaed.github.io/aletheia-mem/";
 
 const locs = [...readFileSync(join(SITE, "sitemap.xml"), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
+const pagesUnder = (dir) =>
+  readdirSync(join(SITE, dir))
+    .sort()
+    .flatMap((name) => {
+      const rel = `${dir}/${name}`;
+      if (statSync(join(SITE, rel)).isDirectory()) return pagesUnder(rel);
+      return name.endsWith(".html") && rel !== "docs/index.html" ? [rel] : [];
+    });
 const expected = [
   { loc: BASE, file: "index.html" },
   { loc: `${BASE}docs/`, file: "docs/index.html" },
-  ...readdirSync(join(SITE, "docs"))
-    .filter((name) => name.endsWith(".html") && name !== "index.html")
-    .sort()
-    .map((name) => ({ loc: `${BASE}docs/${name}`, file: `docs/${name}` })),
+  ...pagesUnder("docs").map((file) => ({ loc: `${BASE}${file}`, file })),
 ];
 
 const problems = [];
@@ -34,6 +39,14 @@ for (const loc of locs) {
 if (locs.length !== expected.length) problems.push(`sitemap has ${locs.length} URLs, site has ${expected.length} pages`);
 const robots = readFileSync(join(SITE, "robots.txt"), "utf8");
 if (!robots.includes(`${BASE}sitemap.xml`)) problems.push("robots.txt does not point at the sitemap");
+for (const name of ["llms.txt", "llms-full.txt"]) {
+  if (!existsSync(join(SITE, name))) problems.push(`missing ${name}`);
+}
+const llms = existsSync(join(SITE, "llms.txt")) ? readFileSync(join(SITE, "llms.txt"), "utf8") : "";
+for (const match of llms.matchAll(/\((https:\/\/mohamed-ashraf-elsaed\.github\.io\/aletheia-mem\/[^)\s]+)\)/g)) {
+  const target = match[1].slice(BASE.length);
+  if (target && !existsSync(join(SITE, target))) problems.push(`llms.txt links to a missing file: ${target}`);
+}
 
 if (problems.length) {
   for (const problem of problems) console.error(`sitemap: ${problem}`);
