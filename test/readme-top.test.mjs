@@ -12,7 +12,7 @@ const RAW = "https://raw.githubusercontent.com/mohamed-ashraf-elsaed/aletheia-me
 
 describe("README top block", () => {
   test("every image in the top lines is a raw GitHub URL for a file that exists here", () => {
-    const refs = imageRefs(top).filter((r) => !/img\.shields\.io|badge\.svg|glama\.ai\/mcp\/servers\/mohamed-ashraf-elsaed\/aletheia-mem\/badges\/score\.svg|badge\.socket\.dev\/npm\/package\/aletheia-mem/.test(r.url));
+    const refs = imageRefs(top).filter((r) => !/img\.shields\.io|badge\.svg|glama\.ai\/mcp\/servers\/mohamed-ashraf-elsaed\/aletheia-mem\/badges\/score\.svg|badge\.socket\.dev\/npm\/package\/aletheia-mem|opensourcealternatives\.to\/badge-osa\.svg/.test(r.url));
     expect(refs.length).toBeGreaterThanOrEqual(3);
     for (const { url } of refs) {
       expect(url.startsWith(RAW)).toBe(true);
