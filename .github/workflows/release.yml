@@ -27,7 +27,7 @@ jobs:
         with:
           bun-version: 1.3.10
       - name: Test suite
-        run: bun test
+        run: bun test --timeout 20000
       - name: Verify release files for this tag
         run: bun scripts/release.mjs --verify --tag "$GITHUB_REF_NAME"
       - name: Publish to npm

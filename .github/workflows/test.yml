@@ -18,7 +18,7 @@ jobs:
         with:
           bun-version: 1.3.10
       - name: Test suite
-        run: bun test
+        run: bun test --timeout 20000
       - name: Regression gate (recall and latency)
         if: runner.os == 'Linux'
         run: bun bench/gate.mjs

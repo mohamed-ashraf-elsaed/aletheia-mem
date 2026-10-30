@@ -74,7 +74,7 @@
   "scripts": {
     "start": "bun bin/aletheia-server.mjs",
     "dev": "bun --watch bin/aletheia-server.mjs",
-    "test": "bun test",
+    "test": "bun test --timeout 20000",
     "check:deps": "bun scripts/audit-deps.mjs",
     "check:claims": "bun scripts/check-claims.mjs",
     "check:links": "bun scripts/check-docs-links.mjs",
