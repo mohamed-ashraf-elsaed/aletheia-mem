@@ -719,7 +719,7 @@ function planUninstallStep(step, env, { force = false } = {}) {
       before: text,
       after,
       changed: text !== after,
-      note: foreign ? `the ${SERVER_NAME} entry is not ours; left alone` : removedMcp || step.kind === "settings" ? "" : "no aletheia hooks",
+      note: foreign ? `the ${SERVER_NAME} entry is not ours; left alone` : removedMcp || text !== after ? "" : "no aletheia hooks",
     };
   }
   if (step.kind === "mcp") {

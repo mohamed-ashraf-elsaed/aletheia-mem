@@ -159,7 +159,9 @@ describe("scripts/hook-check.mjs", () => {
     await runHook(env, "claude-code", "UserPromptSubmit", { ...base, hook_event_name: "UserPromptSubmit", prompt: "hello there" });
     const secret = "sk-ant-api03-abcdefghijklmnopqrstuvwx";
     const store = new HubStore(dbPath);
-    store.add({ project: "shop", kind: "prompt", type: "note", title: "leaked", narrative: `token ${secret} leaked`, tool: "claude-code", sessionId: "cc-leak" });
+    // add() redacts, so plant the raw secret with SQL: this simulates a row written before redaction existed.
+    const { id } = store.add({ project: "shop", kind: "prompt", type: "note", title: "leaked", narrative: "placeholder", tool: "claude-code", sessionId: "cc-leak" });
+    store.db.prepare("UPDATE memories SET narrative = ? WHERE id = ?").run(`token ${secret} leaked`, id);
     store.close();
 
     const check = await runCheck(dataDir, "claude-code");

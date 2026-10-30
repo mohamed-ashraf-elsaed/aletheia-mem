@@ -27,7 +27,7 @@ export const TOOL_DEFS = [
         query: str("Words to search for. Required unless file is given; ignored when file is given."),
         file: str("Exact file path. Returns memories that touched that path; only project, file_suffix and limit still apply."),
         file_suffix: bool("With file: match paths that end with the given text (for example a file name) instead of the exact path. Default false."),
-        project: str(PROJECT),
+        project: str("Project key to scope to (for example a repository name). Omitted: all projects, or the one allowed project for a remote token limited to a single project. A remote token limited to some projects is refused for any other project."),
         type: str("Only memories of this type, for example decision, gotcha, bugfix, feature, refactor, change, discovery or note."),
         kind: str("Only memories of this kind, for example observation, summary or note."),
         limit: num("Maximum rows to return, 1 to 100. Default 20."),

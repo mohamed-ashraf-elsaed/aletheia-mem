@@ -52,7 +52,7 @@ export function seed(dataDir, { rows = 120, empty = false, force = false } = {})
       const project = DEMO_PROJECTS[i % DEMO_PROJECTS.length];
       const topic = pick(TOPICS);
       const kind = pick(KINDS);
-      const special = i % 40 === 0 ? ARABIC : i % 53 === 0 ? `Unbroken token: ${LONG_TOKEN}` : "";
+      const special = i % 40 === 0 ? ARABIC : i % 53 === 0 ? `Unbroken run: ${LONG_TOKEN}` : "";
       const narrative = [
         `We looked at **${topic}** in ${project}. The team ${pick(VERBS)} ${pick(OBJECTS)}.`,
         i % 7 === 0 ? "```sh\nbun test --filter retry\n```" : "",

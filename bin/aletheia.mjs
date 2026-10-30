@@ -32,6 +32,7 @@
 //   aletheia facts clean [--apply] [--ineligible-sources]  quality-gate stored facts; --apply dismisses failures
 //   aletheia language [set <tag> | list] [--project p]  output language for facts and summaries (empty clears)
 //   aletheia optimize                                   rebuild FTS segments after a large import
+//   aletheia scrub [--apply]                            find (and with --apply, redact) secrets in rows stored before redaction covered every write path
 //   aletheia importance recompute [--project p]         recompute the transparent importance score
 //   aletheia sync pair | join <url> <code> | status | devices | revoke <device> | push | pull | run | compact | purge <entity_id> | export <dir> | import <dir>
 //   aletheia sync enable-e2ee | unlock-e2ee | rotate-key | change-passphrase | upgrade-kdf | export-recovery-key --out <file> | purge-plaintext [--apply]
@@ -551,6 +552,14 @@ async function main() {
         return out(hub.promote(pos[0], Number(pos[1]), { actor: "cli" }));
       }
       case "optimize": return out(hub.optimizeFts());
+      case "scrub": {
+        const result = hub.scrubStored({ apply: !!flags.apply });
+        return out(result.changed === 0
+          ? `Scanned ${result.scanned} memories: nothing to redact.`
+          : result.applied
+            ? `Scanned ${result.scanned} memories: redacted ${result.changed}. Ids (first 20): ${result.sampleIds.join(", ")}.`
+            : `Scanned ${result.scanned} memories: ${result.changed} contain text that redaction would change (ids, first 20: ${result.sampleIds.join(", ")}). Run again with --apply to redact them. Back up hub.db first.`);
+      }
       case "save": {
         const text = pos.join(" ");
         if (!text) die("Usage: aletheia save <text>");
@@ -732,7 +741,9 @@ async function main() {
         }
         const mode = ask ? config.provider : "rules";
         let embedder = null;
-        if (process.env.ALETHEIA_EMBED_FACTS !== "0") {
+        // Embeddings download a model on first use, so they are opt-in here: set ALETHEIA_EMBED_FACTS=1.
+        // `aletheia embed` and `aletheia search --semantic` are explicit requests and still load the model.
+        if (process.env.ALETHEIA_EMBED_FACTS === "1") {
           const { createEmbedderIfAvailable } = await import("../src/hub/embed.mjs");
           embedder = await createEmbedderIfAvailable();
         }

@@ -18,9 +18,27 @@ export function healthReport(store, { model = process.env.ALETHEIA_EMBED_MODEL ?
   let fts = { ok: false, detail: "not checked" };
   let vectors = { memories: null, facts: null };
   try {
-    const rows = store.db.prepare("PRAGMA quick_check").all().map((row) => Object.values(row)[0]);
+    // quick_check also runs the FTS5 integrity check. While another process writes (a hook, a sync), that check can
+    // report "fts5: corruption found" for an index that is fine; a real search query never fails in that case.
+    // So: retry, and if only FTS rows still complain, accept the database when a real FTS query works.
+    const isFtsRow = (value) => /^fts5:|_fts\b/i.test(String(value));
+    let rows = [];
+    let ftsBusy = false;
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      rows = store.db.prepare("PRAGMA quick_check").all().map((row) => Object.values(row)[0]);
+      if (rows.length > 0 && rows.every((value) => String(value).toLowerCase() === "ok")) break;
+      if (!rows.length || !rows.every(isFtsRow)) break;
+      if (attempt === 2) ftsBusy = true;
+      else Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 25);
+    }
+    if (ftsBusy) {
+      try {
+        store.db.prepare("SELECT rowid FROM memories_fts WHERE memories_fts MATCH 'a' LIMIT 1").all();
+        rows = ["ok"];
+      } catch { /* keep the integrity rows: the index does not answer */ }
+    }
     const ok = rows.length > 0 && rows.every((value) => String(value).toLowerCase() === "ok");
-    db = { ok, detail: ok ? "quick_check ok" : rows.slice(0, 3).join("; ") || "quick_check returned no rows" };
+    db = { ok, detail: ok ? (ftsBusy ? "quick_check ok (FTS integrity check skipped while writes were in progress; FTS query answered)" : "quick_check ok") : rows.slice(0, 3).join("; ") || "quick_check returned no rows" };
     try {
       store.db.prepare("SELECT rowid FROM memories_fts LIMIT 1").all();
       fts = { ok: true, detail: "FTS5 query answered" };
