@@ -253,9 +253,8 @@ docs/           the documents
 
 Apache-2.0. راجع [NOTICE.md](../../NOTICE.md) لما يأتي من claude-mem. غير تابع لمؤلفي claude-mem أو Anthropic وغير معتمد منهم.
 
-
-</div>
-
 ## المؤلف
 
 من تطوير [Mohamed Ashraf Elsaed](https://mohamedashrafelsaed.com)، قائد تقني ومعماري أنظمة خلفية في القاهرة. صفحة المشروع ومزيد من الأدوات: [mohamedashrafelsaed.com/projects/aletheia/](https://mohamedashrafelsaed.com/projects/aletheia/).
+
+</div>
