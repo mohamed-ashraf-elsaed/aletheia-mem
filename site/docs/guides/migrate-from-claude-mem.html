@@ -73,9 +73,11 @@
 <div class="tablewrap"><table><thead><tr><th>claude-mem</th><th>Aletheia memory</th><th>Notes</th></tr></thead><tbody><tr><td><code>observations</code> row</td><td>kind <code>observation</code></td><td>Keeps type (<code>bugfix</code>, <code>feature</code>, <code>refactor</code>, <code>change</code>, <code>discovery</code>, <code>decision</code>; other types pass through), title, subtitle, narrative, facts, concepts, and the union of files read and modified.</td></tr><tr><td><code>session_summaries</code> row</td><td>kind <code>summary</code>, type <code>note</code></td><td>The fields request, investigated, learned, completed, next steps and notes become one text with a bold label per field. An empty summary is skipped.</td></tr><tr><td><code>user_prompts</code> row</td><td>kind <code>prompt</code></td><td>The prompt text becomes the title and the body.</td></tr></tbody></table></div>
 <p>Every imported memory keeps its original timestamp, the project name, the session id and the tool name from <code>platform_source</code> (default <code>claude</code>). The <code>origin</code> field records the source row, for example <code>claude-mem:obs:3</code>.</p>
 <p>The importer reads only those four tables. Every other table in the claude-mem database is ignored, and so are claude-mem's settings and its vector index. claude-mem's installation page lists <code>uv</code> as the provider of Python for Chroma's embedding service (https://docs.claude-mem.ai/installation, fetched 2026-10-29). Aletheia does not import vectors. Imported memories are found by keyword search unless you install the optional embedding package and run <code>aletheia embed</code>.</p>
-<h3 id="the-import-does-not-redact-secrets">The import does not redact secrets</h3>
-<p>Capture hooks redact secrets before they store text. The importer does not. It copies the text exactly as claude-mem stored it. In a test I added an observation containing a fake AWS key id and a <code>password=</code> value to the test database. After the import, <code>aletheia export</code> showed both values in clear text.</p>
-<p>Check what you imported before you rely on it:</p>
+<h3 id="the-import-redacts-secrets">The import redacts secrets</h3>
+<p>The store redacts every text it saves, imports included, so a fake AWS key id or a <code>password=</code> value in claude-mem's database is stored as <code>[redacted:...]</code>. Versions before this change copied the text exactly. If you imported with an older version, redact those rows in place:</p>
+<pre><code class="language-bash">aletheia scrub            # count the rows that redaction would change
+aletheia scrub --apply    # redact them (back up hub.db first)</code></pre>
+<p>Redaction is pattern based, so check what you imported before you rely on it:</p>
 <pre><code class="language-bash">aletheia search &quot;password&quot;
 aletheia search &quot;AKIA&quot;</code></pre>
 <p>Remove a memory you do not want. Report first, then apply:</p>

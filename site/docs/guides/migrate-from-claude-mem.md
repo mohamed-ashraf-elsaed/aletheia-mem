@@ -71,11 +71,16 @@ Every imported memory keeps its original timestamp, the project name, the sessio
 
 The importer reads only those four tables. Every other table in the claude-mem database is ignored, and so are claude-mem's settings and its vector index. claude-mem's installation page lists `uv` as the provider of Python for Chroma's embedding service (https://docs.claude-mem.ai/installation, fetched 2026-10-29). Aletheia does not import vectors. Imported memories are found by keyword search unless you install the optional embedding package and run `aletheia embed`.
 
-### The import does not redact secrets
+### The import redacts secrets
 
-Capture hooks redact secrets before they store text. The importer does not. It copies the text exactly as claude-mem stored it. In a test I added an observation containing a fake AWS key id and a `password=` value to the test database. After the import, `aletheia export` showed both values in clear text.
+The store redacts every text it saves, imports included, so a fake AWS key id or a `password=` value in claude-mem's database is stored as `[redacted:...]`. Versions before this change copied the text exactly. If you imported with an older version, redact those rows in place:
 
-Check what you imported before you rely on it:
+```bash
+aletheia scrub            # count the rows that redaction would change
+aletheia scrub --apply    # redact them (back up hub.db first)
+```
+
+Redaction is pattern based, so check what you imported before you rely on it:
 
 ```bash
 aletheia search "password"

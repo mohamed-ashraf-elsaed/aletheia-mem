@@ -20,6 +20,12 @@ history.
 
 ### Fixed
 
+- Redaction now covers every write path. The store redacts in `add()` and `update()`, so notes written through `POST /v1/memories` or the dashboard, edits, `import bundle` and `import claude-mem` no longer store secrets as typed. Names with a prefix (`MY_API_KEY`, `DB_PASSWORD`, `AUTH_TOKEN`), JSON-quoted keys (`{"password":"..."}`) and `secret_key` are matched, and a redacted JSON value stays valid JSON. An unclosed `<private>` tag drops the rest of the text.
+- New `aletheia scrub [--apply]` redacts rows stored by earlier versions.
+- `/healthz` and `aletheia doctor` no longer report `fts5: corruption found` while another process writes. `quick_check` was the cause: it failed about 1 time in 40 on a busy database, while real searches never failed. The check now retries and confirms with a real search query.
+- `aletheia compress` no longer downloads an embedding model by default. Set `ALETHEIA_EMBED_FACTS=1` to embed new facts. `aletheia embed` and `aletheia search --semantic` still load the model because you ask for vectors.
+- The MCP `search` tool description now says that an omitted `project` searches all projects, which is what the code does.
+- `aletheia uninstall` no longer prints `(no aletheia hooks)` on a line that removes hooks.
 - A read-scope token on the HTTP MCP endpoint could call `work_state_write`. It is now a write tool and needs a `sync` or `admin` token.
 
 ## [0.1.10] - 2026-10-29

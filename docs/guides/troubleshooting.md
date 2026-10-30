@@ -208,7 +208,11 @@ Fix: find and end the process that holds the lock. Common ones are a long import
 
 ## `/healthz` returns 503, or doctor shows `FAIL database`
 
-Cause: the database or search-index check failed. I reproduced this error by damaging a search-index block in a copy of a test database:
+Cause: the database or search-index check failed. There are two very different reasons.
+
+**A false alarm while something writes.** Before this change, `quick_check` could print `fts5: corruption found reading blob ...` for a healthy index while a hook or sync wrote at the same moment. On the author's service it appeared in about 1 of 40 `/healthz` calls; a snapshot copy of the same database passed `quick_check` and the FTS integrity check, and real search queries never failed (0 errors in 400,000 queries during the test). The health check now retries three times, and if only search-index rows still complain it runs a real search query. When that works it reports `quick_check ok (FTS integrity check skipped while writes were in progress; FTS query answered)`. If your version is older, upgrade.
+
+**A damaged index.** I reproduced this error by damaging a search-index block in a copy of a test database. It stays after the retries and a real search query fails too:
 
 ```text
 FAIL database             fts5: corruption found reading blob 687194767361 from table "memories_fts"

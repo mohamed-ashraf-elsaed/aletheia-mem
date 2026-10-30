@@ -61,34 +61,27 @@ The patterns are in [redact.mjs](https://github.com/mohamed-ashraf-elsaed/alethe
 
 ### Which paths redact
 
-These paths redact before they store: hooks (`aletheia hook`), `aletheia capture`, `POST /v1/events`, `aletheia save`, the MCP `save_memory` tool, transcript import and `aletheia watch`, and rule evidence quotes. Fact extraction redacts again, once before it builds a prompt for a provider and once more before it stores each fact. Sync redacts every payload before it leaves the device.
+Every write ends in the store's `add()` or `update()`, and both redact. That covers hooks (`aletheia hook`), `aletheia capture`, `aletheia save`, `POST /v1/events`, `POST /v1/memories`, the note box in the dashboard (`POST /api/hub/memories`), edits (`PATCH /api/hub/memories/<id>`), the MCP `save_memory` tool, transcript import, `aletheia watch`, `aletheia import bundle` and `aletheia import claude-mem`. Rule evidence quotes are redacted too. Fact extraction redacts again, once before it builds a prompt for a provider and once more before it stores each fact. Sync redacts every payload before it leaves the device.
 
-These paths store the text exactly as given:
-
-- `POST /v1/memories`, and the note box in the dashboard, which calls `POST /api/hub/memories`;
-- edits made with `PATCH /api/hub/memories/<id>`;
-- `aletheia import bundle` and `aletheia import claude-mem`;
-- the text of a rule. `aletheia rules lint` warns when a rule looks like it holds a secret.
-
-A test against a temporary store showed it. The same string sent to `/v1/events` was redacted, and sent to `/v1/memories` it was not:
+Two things are not redacted: the text of a rule (`aletheia rules lint` warns when a rule looks like it holds a secret) and rows stored by an earlier version. Before this change, notes written through REST or the dashboard, edits and imports were stored as given. Find and fix those rows:
 
 ```
-rest save     deploy key is token=abcdef1234567890 for prod
-events route  use token=[redacted] please
+aletheia scrub            # count the rows that redaction would change
+aletheia scrub --apply    # redact them in place (back up hub.db first)
 ```
 
 ## Limits of redaction
 
-Redaction is pattern based. It misses secrets that do not look like one of the patterns above. These gaps were observed with the shipped code:
+Redaction is pattern based. It misses secrets that do not look like one of the patterns above:
 
-- **JSON-quoted keys.** Tool input is stored as JSON text. A secret under a JSON key is not matched by the generic rule, because the quote sits between the key and the colon. This input was stored as typed: `{"password":"hunter2hunter2"}`. A secret that matches a vendor pattern, such as a GitHub token, is still caught inside JSON.
-- **Prefixed variable names.** `API_KEY=...`, `token: ...` and `password: ...` are redacted. `MY_API_KEY=...`, `AUTH_TOKEN=...` and `DB_PASSWORD='...'` are not, because the keyword has to start at a word boundary and `_` counts as part of a word.
-- **Short values.** A value shorter than 6 characters after a keyword is left alone.
-- **Personal data.** Nothing matches email addresses, card numbers, national ids, names, addresses or hostnames. `4111 1111 1111 1111` passed through unchanged.
-- **An unclosed `<private>` tag.** The block is dropped only when the closing tag is present. `Unclosed <private>this text has no closing tag` was stored whole.
+- **Names.** A value is redacted when it follows a name that contains `password`, `passwd`, `secret`, `secret_key`, `token`, `api_key`, `access_key` or `private_key`, with or without a prefix (`MY_API_KEY`, `DB_PASSWORD`, `AUTH_TOKEN`) and with or without quotes around the name. A JSON value keeps its quotes, so redacted JSON stays valid: `{"password":"[redacted]"}`. A name such as `max_tokens` is left alone.
+- **Short values.** An unquoted value shorter than 6 characters after a name is left alone, and a quoted value shorter than 3.
+- **Prose.** "The password is hunter2" is not matched: there is no `:` or `=` after the name.
+- **Personal data.** Nothing matches email addresses, card numbers, national ids, names, addresses or hostnames. `4111 1111 1111 1111` passes through unchanged.
+- **`<private>` tags.** A closed block is replaced with `[private]`. An opening tag with no closing tag drops everything after it.
 - **Secrets inside tool output.** A tool call's input and output are stored together, cut to 1,500 characters in total. They are checked against the same patterns and nothing more.
 
-Do not rely on redaction for material that must never be stored. Keep secrets in the environment, close every `<private>` tag, and exclude a project you do not want captured by setting `ALETHEIA_EXCLUDED_PROJECTS=name1,name2` in the environment the host runs in.
+Do not rely on redaction for material that must never be stored. Keep secrets in the environment, and exclude a project you do not want captured by setting `ALETHEIA_EXCLUDED_PROJECTS=name1,name2` in the environment the host runs in.
 
 The Settings screen lists "Redact before storing" and "Excluded projects". The capture code does not read either value. Redaction is always on in the paths listed above, and exclusion works through the environment variable.
 
