@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/</loc><lastmod>2026-10-29</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/</loc><lastmod>2026-10-29</lastmod></url>
+  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/introduction.html</loc><lastmod>2026-10-29</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/installation.html</loc><lastmod>2026-10-29</lastmod></url>
+  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/installation.html</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/quickstart.html</loc><lastmod>2026-10-29</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/how-it-works.html</loc><lastmod>2026-10-29</lastmod></url>
+  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/how-it-works.html</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/dashboard.html</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/faq.html</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/memory-model.html</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/rules.html</loc><lastmod>2026-10-29</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/search.html</loc><lastmod>2026-10-29</lastmod></url>
+  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/search.html</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/session-context.html</loc><lastmod>2026-10-29</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/privacy.html</loc><lastmod>2026-10-29</lastmod></url>
+  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/privacy.html</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/33-facts.html</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/glossary.html</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/overview.html</loc><lastmod>2026-10-29</lastmod></url>
@@ -26,20 +26,20 @@
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/claude-desktop.html</loc><lastmod>2026-10-26</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/other-tools.html</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/25-installers.html</loc><lastmod>2026-10-28</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/migrate-from-claude-mem.html</loc><lastmod>2026-10-29</lastmod></url>
+  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/migrate-from-claude-mem.html</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/write-rules-once.html</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/backup-export-import.html</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/run-as-a-service.html</loc><lastmod>2026-10-29</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/model-providers.html</loc><lastmod>2026-10-29</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/troubleshooting.html</loc><lastmod>2026-10-29</lastmod></url>
+  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/model-providers.html</loc><lastmod>2026-10-31</lastmod></url>
+  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/troubleshooting.html</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/29-sync.html</loc><lastmod>2026-10-28</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/30-remote-mcp.html</loc><lastmod>2026-10-28</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/31-team.html</loc><lastmod>2026-10-28</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/32-requests.html</loc><lastmod>2026-10-28</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/reference/cli.html</loc><lastmod>2026-10-29</lastmod></url>
+  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/reference/cli.html</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/reference/mcp-tools.html</loc><lastmod>2026-10-29</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/reference/configuration.html</loc><lastmod>2026-10-29</lastmod></url>
-  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/reference/hooks.html</loc><lastmod>2026-10-29</lastmod></url>
+  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/reference/configuration.html</loc><lastmod>2026-10-31</lastmod></url>
+  <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/reference/hooks.html</loc><lastmod>2026-10-31</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/03-http-api.html</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/compare/aletheia-vs-claude-mem.html</loc><lastmod>2026-10-29</lastmod></url>
   <url><loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/compare/memory-tools.html</loc><lastmod>2026-10-29</lastmod></url>

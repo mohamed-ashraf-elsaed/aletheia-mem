@@ -6,6 +6,8 @@ history.
 
 ## [Unreleased]
 
+## [0.1.11] - 2026-10-30
+
 ### Added
 
 - A full documentation site: 49 pages in eight sections (Get started, Concepts, Connect your tools, Guides, Reference, Compare, Project, Internals) with a sidebar, breadcrumbs, previous and next links and a search box on the index. Pages cover installation, a quickstart, a page for each tool, the CLI, MCP tools, configuration, hooks, migration from claude-mem, backup, running as a service, model providers, troubleshooting, comparisons and benchmarks.

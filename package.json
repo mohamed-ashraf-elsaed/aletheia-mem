@@ -1,6 +1,6 @@
 {
   "name": "aletheia-mem",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "mcpName": "io.github.mohamed-ashraf-elsaed/aletheia-mem",
   "description": "Aletheia: a free, local memory and rules hub for AI coding tools such as Claude Code, Codex, Cursor and Gemini CLI. One store any tool reads over MCP, REST or CLI; rules synced to CLAUDE.md, AGENTS.md, Cursor and more; export and import to move between tools.",
   "keywords": [
