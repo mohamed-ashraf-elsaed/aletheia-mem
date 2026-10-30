@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 35da26b55be57a8ee6ceb5fee9bc5c743f0abf99a77835e1ff3e077d805e1402
+> Source: [README.md](../../README.md) · source-sha256: 5e99c552b3f0ffd2e8c156ad87b25130ae71db15ea39db8ad52c7a5c669203f2
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -251,3 +251,6 @@ A contribuição mais útil é um relatório de uma instalação real: abra um i
 
 Apache-2.0. Veja [NOTICE.md](../../NOTICE.md) para o que vem do claude-mem. Não é afiliado nem endossado pelos autores do claude-mem ou pela Anthropic.
 
+## Autor
+
+Criado por [Mohamed Ashraf Elsaed](https://mohamedashrafelsaed.com), líder técnico e arquiteto de backend no Cairo. Página do projeto e mais ferramentas: [mohamedashrafelsaed.com/projects/aletheia/](https://mohamedashrafelsaed.com/projects/aletheia/).

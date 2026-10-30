@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 35da26b55be57a8ee6ceb5fee9bc5c743f0abf99a77835e1ff3e077d805e1402
+> Source: [README.md](../../README.md) · source-sha256: 5e99c552b3f0ffd2e8c156ad87b25130ae71db15ea39db8ad52c7a5c669203f2
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -251,3 +251,6 @@ AI 도구는 [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llm
 
 Apache-2.0. claude-mem에서 온 부분은 [NOTICE.md](../../NOTICE.md)를 참고하세요. claude-mem 저자나 Anthropic과 제휴하거나 그들의 승인을 받지 않았습니다.
 
+## 작성자
+
+[Mohamed Ashraf Elsaed](https://mohamedashrafelsaed.com)가 만들었습니다. 카이로의 테크니컬 리드이자 백엔드 아키텍트입니다. 프로젝트 페이지와 다른 도구: [mohamedashrafelsaed.com/projects/aletheia/](https://mohamedashrafelsaed.com/projects/aletheia/).
