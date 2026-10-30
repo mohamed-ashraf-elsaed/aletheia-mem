@@ -47,7 +47,7 @@ bun bin/aletheia-server.mjs
 
 Inside a clone, run the command line as `bun bin/aletheia.mjs <command>`. Other pages write `aletheia <command>`, which is the npm form.
 
-A clone has no `node_modules` folder. Bun's auto-install then fetches any package a command imports and finds missing (https://bun.sh/docs/runtime/auto-install, fetched 2026-10-29). Three Aletheia commands import the optional vector package `@huggingface/transformers`: `aletheia compress`, `aletheia embed` and `aletheia search --semantic`. In a test on 2026-10-29, `aletheia compress` run from a clone with an empty Bun cache took 99 seconds and added about 502 MB to that cache. The npm-installed copy, run the same way, stayed keyword-only and downloaded nothing. Starting the server, installing a tool and running a hook did not download anything in either layout. To stop `compress` from loading the package, set `ALETHEIA_EMBED_FACTS=0`.
+A clone has no `node_modules` folder. Bun's auto-install then fetches any package a command imports and finds missing (https://bun.sh/docs/runtime/auto-install, fetched 2026-10-29). Two Aletheia commands import the optional vector package `@huggingface/transformers` because you ask for vectors: `aletheia embed` and `aletheia search --semantic`. `aletheia compress` does so only when you set `ALETHEIA_EMBED_FACTS=1`. In a test on 2026-10-29, `aletheia compress` run from a clone with an empty Bun cache (before this default changed) took 99 seconds and added about 502 MB to that cache. Starting the server, installing a tool and running a hook did not download anything in either layout.
 
 ## Run with Docker
 

@@ -178,7 +178,7 @@ What the redaction does not cover:
 
 ### Embeddings are separate
 
-Semantic search and fact vectors use an optional package, `@huggingface/transformers`. They need no provider. They run only from `aletheia compress`, `aletheia embed` and `aletheia search --semantic`, and only when the package can be found. The first use downloads a model, about 35 MB according to the code comment. In a temporary home, my first `aletheia compress` with no provider set created a 34 MB model folder at `~/.aletheia/models`, because the package was available on this machine. That is a network download you did not configure a provider for. Set `ALETHEIA_EMBED_FACTS=0` to skip it in `aletheia compress`. Without the package installed, none of this runs.
+Semantic search and fact vectors use an optional package, `@huggingface/transformers`. They need no provider. They run from `aletheia embed` and `aletheia search --semantic` (which you start on purpose) and, only if you set `ALETHEIA_EMBED_FACTS=1`, from `aletheia compress`. The first use downloads a model, about 35 MB according to the code comment, into `~/.aletheia/models`. Without the package installed, none of this runs. `aletheia compress` creates no embeddings by default, so it makes no download.
 
 ## Output language
 

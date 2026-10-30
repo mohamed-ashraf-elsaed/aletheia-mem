@@ -150,7 +150,7 @@ bun bin/aletheia-server.mjs
 
 Inside a clone, run the command line as `bun bin/aletheia.mjs <command>`. Other pages write `aletheia <command>`, which is the npm form.
 
-A clone has no `node_modules` folder. Bun's auto-install then fetches any package a command imports and finds missing (https://bun.sh/docs/runtime/auto-install, fetched 2026-10-29). Three Aletheia commands import the optional vector package `@huggingface/transformers`: `aletheia compress`, `aletheia embed` and `aletheia search --semantic`. In a test on 2026-10-29, `aletheia compress` run from a clone with an empty Bun cache took 99 seconds and added about 502 MB to that cache. The npm-installed copy, run the same way, stayed keyword-only and downloaded nothing. Starting the server, installing a tool and running a hook did not download anything in either layout. To stop `compress` from loading the package, set `ALETHEIA_EMBED_FACTS=0`.
+A clone has no `node_modules` folder. Bun's auto-install then fetches any package a command imports and finds missing (https://bun.sh/docs/runtime/auto-install, fetched 2026-10-29). Two Aletheia commands import the optional vector package `@huggingface/transformers` because you ask for vectors: `aletheia embed` and `aletheia search --semantic`. `aletheia compress` does so only when you set `ALETHEIA_EMBED_FACTS=1`. In a test on 2026-10-29, `aletheia compress` run from a clone with an empty Bun cache (before this default changed) took 99 seconds and added about 502 MB to that cache. Starting the server, installing a tool and running a hook did not download anything in either layout.
 
 ## Run with Docker
 
@@ -662,7 +662,7 @@ aletheia search "staging" --project shop
 
 Redaction is pattern-based. It cannot catch a secret that looks like ordinary text.
 
-Redaction runs in the hooks, in `aletheia save` and `aletheia capture`, in the MCP `save_memory` tool and in the transcript back-fill. It does not run when you write a memory through the REST API (`POST /v1/memories`) or the dashboard (New note, Save note). In a test on 2026-10-29, both routes stored a fake `sk-` key and a `<private>` block exactly as sent. Do not paste secrets into those two paths. The fact-extraction prompt redacts each episode again before it goes to a model, and each fact is redacted again before it is stored.
+Redaction runs in the store itself, so every write path is covered: the hooks, `aletheia save` and `aletheia capture`, the MCP `save_memory` tool, the REST API (`POST /v1/memories` and `POST /v1/events`), the dashboard (New note, Save note), edits, the transcript back-fill and imports. Versions before this change did not redact REST and dashboard notes, edits and imports; run `aletheia scrub` once to redact rows an older version stored. The fact-extraction prompt redacts each episode again before it goes to a model, and each fact is redacted again before it is stored.
 
 ## Step 3: Store in SQLite
 
@@ -1609,7 +1609,7 @@ What to know about the runtime:
 - The default model is `Xenova/bge-small-en-v1.5`, quantised, 384 dimensions. It runs on your machine.
 - The first use downloads the model once. In a fresh home directory the model folder was 34 MB after the first `aletheia embed`.
 - When the package is missing, the code prints an error and stops `--semantic` and `aletheia embed`. Plain keyword search keeps working.
-- `aletheia embed` embeds memories that have no vector yet and skips events. `aletheia compress` embeds new facts as it extracts them when the runtime is present. Set `ALETHEIA_EMBED_FACTS=0` to stop that.
+- `aletheia embed` embeds memories that have no vector yet and skips events. `aletheia compress` embeds new facts only when `ALETHEIA_EMBED_FACTS=1` is set, because the first embedding downloads a model.
 - `POST /v1/search` and the MCP `search` tool answer from the keyword channels only, and the REST reply says so in its `channels.note`. Semantic search is a CLI feature.
 - The benchmark rows marked "+ rerank" use a cross-encoder in the benchmark script. `aletheia search` does not rerank.
 
@@ -1915,34 +1915,27 @@ The patterns are in [redact.mjs](https://github.com/mohamed-ashraf-elsaed/alethe
 
 ### Which paths redact
 
-These paths redact before they store: hooks (`aletheia hook`), `aletheia capture`, `POST /v1/events`, `aletheia save`, the MCP `save_memory` tool, transcript import and `aletheia watch`, and rule evidence quotes. Fact extraction redacts again, once before it builds a prompt for a provider and once more before it stores each fact. Sync redacts every payload before it leaves the device.
+Every write ends in the store's `add()` or `update()`, and both redact. That covers hooks (`aletheia hook`), `aletheia capture`, `aletheia save`, `POST /v1/events`, `POST /v1/memories`, the note box in the dashboard (`POST /api/hub/memories`), edits (`PATCH /api/hub/memories/<id>`), the MCP `save_memory` tool, transcript import, `aletheia watch`, `aletheia import bundle` and `aletheia import claude-mem`. Rule evidence quotes are redacted too. Fact extraction redacts again, once before it builds a prompt for a provider and once more before it stores each fact. Sync redacts every payload before it leaves the device.
 
-These paths store the text exactly as given:
-
-- `POST /v1/memories`, and the note box in the dashboard, which calls `POST /api/hub/memories`;
-- edits made with `PATCH /api/hub/memories/<id>`;
-- `aletheia import bundle` and `aletheia import claude-mem`;
-- the text of a rule. `aletheia rules lint` warns when a rule looks like it holds a secret.
-
-A test against a temporary store showed it. The same string sent to `/v1/events` was redacted, and sent to `/v1/memories` it was not:
+Two things are not redacted: the text of a rule (`aletheia rules lint` warns when a rule looks like it holds a secret) and rows stored by an earlier version. Before this change, notes written through REST or the dashboard, edits and imports were stored as given. Find and fix those rows:
 
 ```
-rest save     deploy key is token=abcdef1234567890 for prod
-events route  use token=[redacted] please
+aletheia scrub            # count the rows that redaction would change
+aletheia scrub --apply    # redact them in place (back up hub.db first)
 ```
 
 ## Limits of redaction
 
-Redaction is pattern based. It misses secrets that do not look like one of the patterns above. These gaps were observed with the shipped code:
+Redaction is pattern based. It misses secrets that do not look like one of the patterns above:
 
-- **JSON-quoted keys.** Tool input is stored as JSON text. A secret under a JSON key is not matched by the generic rule, because the quote sits between the key and the colon. This input was stored as typed: `{"password":"hunter2hunter2"}`. A secret that matches a vendor pattern, such as a GitHub token, is still caught inside JSON.
-- **Prefixed variable names.** `API_KEY=...`, `token: ...` and `password: ...` are redacted. `MY_API_KEY=...`, `AUTH_TOKEN=...` and `DB_PASSWORD='...'` are not, because the keyword has to start at a word boundary and `_` counts as part of a word.
-- **Short values.** A value shorter than 6 characters after a keyword is left alone.
-- **Personal data.** Nothing matches email addresses, card numbers, national ids, names, addresses or hostnames. `4111 1111 1111 1111` passed through unchanged.
-- **An unclosed `<private>` tag.** The block is dropped only when the closing tag is present. `Unclosed <private>this text has no closing tag` was stored whole.
+- **Names.** A value is redacted when it follows a name that contains `password`, `passwd`, `secret`, `secret_key`, `token`, `api_key`, `access_key` or `private_key`, with or without a prefix (`MY_API_KEY`, `DB_PASSWORD`, `AUTH_TOKEN`) and with or without quotes around the name. A JSON value keeps its quotes, so redacted JSON stays valid: `{"password":"[redacted]"}`. A name such as `max_tokens` is left alone.
+- **Short values.** An unquoted value shorter than 6 characters after a name is left alone, and a quoted value shorter than 3.
+- **Prose.** "The password is hunter2" is not matched: there is no `:` or `=` after the name.
+- **Personal data.** Nothing matches email addresses, card numbers, national ids, names, addresses or hostnames. `4111 1111 1111 1111` passes through unchanged.
+- **`<private>` tags.** A closed block is replaced with `[private]`. An opening tag with no closing tag drops everything after it.
 - **Secrets inside tool output.** A tool call's input and output are stored together, cut to 1,500 characters in total. They are checked against the same patterns and nothing more.
 
-Do not rely on redaction for material that must never be stored. Keep secrets in the environment, close every `<private>` tag, and exclude a project you do not want captured by setting `ALETHEIA_EXCLUDED_PROJECTS=name1,name2` in the environment the host runs in.
+Do not rely on redaction for material that must never be stored. Keep secrets in the environment, and exclude a project you do not want captured by setting `ALETHEIA_EXCLUDED_PROJECTS=name1,name2` in the environment the host runs in.
 
 The Settings screen lists "Redact before storing" and "Excluded projects". The capture code does not read either value. Redaction is always on in the paths listed above, and exclusion works through the environment variable.
 
@@ -4362,11 +4355,16 @@ Every imported memory keeps its original timestamp, the project name, the sessio
 
 The importer reads only those four tables. Every other table in the claude-mem database is ignored, and so are claude-mem's settings and its vector index. claude-mem's installation page lists `uv` as the provider of Python for Chroma's embedding service (https://docs.claude-mem.ai/installation, fetched 2026-10-29). Aletheia does not import vectors. Imported memories are found by keyword search unless you install the optional embedding package and run `aletheia embed`.
 
-### The import does not redact secrets
+### The import redacts secrets
 
-Capture hooks redact secrets before they store text. The importer does not. It copies the text exactly as claude-mem stored it. In a test I added an observation containing a fake AWS key id and a `password=` value to the test database. After the import, `aletheia export` showed both values in clear text.
+The store redacts every text it saves, imports included, so a fake AWS key id or a `password=` value in claude-mem's database is stored as `[redacted:...]`. Versions before this change copied the text exactly. If you imported with an older version, redact those rows in place:
 
-Check what you imported before you rely on it:
+```bash
+aletheia scrub            # count the rows that redaction would change
+aletheia scrub --apply    # redact them (back up hub.db first)
+```
+
+Redaction is pattern based, so check what you imported before you rely on it:
 
 ```bash
 aletheia search "password"
@@ -5307,7 +5305,7 @@ What the redaction does not cover:
 
 ### Embeddings are separate
 
-Semantic search and fact vectors use an optional package, `@huggingface/transformers`. They need no provider. They run only from `aletheia compress`, `aletheia embed` and `aletheia search --semantic`, and only when the package can be found. The first use downloads a model, about 35 MB according to the code comment. In a temporary home, my first `aletheia compress` with no provider set created a 34 MB model folder at `~/.aletheia/models`, because the package was available on this machine. That is a network download you did not configure a provider for. Set `ALETHEIA_EMBED_FACTS=0` to skip it in `aletheia compress`. Without the package installed, none of this runs.
+Semantic search and fact vectors use an optional package, `@huggingface/transformers`. They need no provider. They run from `aletheia embed` and `aletheia search --semantic` (which you start on purpose) and, only if you set `ALETHEIA_EMBED_FACTS=1`, from `aletheia compress`. The first use downloads a model, about 35 MB according to the code comment, into `~/.aletheia/models`. Without the package installed, none of this runs. `aletheia compress` creates no embeddings by default, so it makes no download.
 
 ## Output language
 
@@ -5552,7 +5550,11 @@ Fix: find and end the process that holds the lock. Common ones are a long import
 
 ## `/healthz` returns 503, or doctor shows `FAIL database`
 
-Cause: the database or search-index check failed. I reproduced this error by damaging a search-index block in a copy of a test database:
+Cause: the database or search-index check failed. There are two very different reasons.
+
+**A false alarm while something writes.** Before this change, `quick_check` could print `fts5: corruption found reading blob ...` for a healthy index while a hook or sync wrote at the same moment. On the author's service it appeared in about 1 of 40 `/healthz` calls; a snapshot copy of the same database passed `quick_check` and the FTS integrity check, and real search queries never failed (0 errors in 400,000 queries during the test). The health check now retries three times, and if only search-index rows still complain it runs a real search query. When that works it reports `quick_check ok (FTS integrity check skipped while writes were in progress; FTS query answered)`. If your version is older, upgrade.
+
+**A damaged index.** I reproduced this error by damaging a search-index block in a copy of a test database. It stays after the retries and a real search query fails too:
 
 ```text
 FAIL database             fts5: corruption found reading blob 687194767361 from table "memories_fts"
@@ -6452,12 +6454,13 @@ Dry run: nothing was written. Add --write to apply.
 
 ## Maintenance
 
-- `aletheia compress [--daemon] [--interval ms]` - drain the extraction queue once, or keep running with `--daemon`. It uses the provider in `ALETHEIA_PROVIDER`, or the rule-based extractor when none is set. `--project` is in --help but the code does not read it. Setting `ALETHEIA_EMBED_FACTS=0` skips embeddings.
+- `aletheia compress [--daemon] [--interval ms]` - drain the extraction queue once, or keep running with `--daemon`. It uses the provider in `ALETHEIA_PROVIDER`, or the rule-based extractor when none is set. `--project` is in --help but the code does not read it. It creates no embeddings unless `ALETHEIA_EMBED_FACTS=1` is set, so it downloads no model by default.
 - `aletheia summarize [--scope session|project|entity|list] [--project p] [--session s] [--entity id] [--days n] [--limit n]` - build a summary. `list` shows existing ones.
 - `aletheia prune [--apply]` - report cold facts and old episodes; `--apply` changes them. Dismissed items are deleted with `--apply`.
 - `aletheia facts clean [--apply] [--ineligible-sources]` - run the quality gate over stored facts; `--apply` dismisses failures (reversible).
 - `aletheia language [set <tag> | list] [--project p]` - set or list the output language for facts and summaries.
 - `aletheia optimize` - rebuild the full-text index after a large import.
+- `aletheia scrub [--apply]` - count the stored memories that redaction would change; with `--apply`, redact them in place. Use it once after upgrading from a version that stored some text unredacted (notes written through REST or the dashboard, edits, imports). Back up `hub.db` first.
 - `aletheia importance recompute [--project p]` - recompute the importance score.
 - `aletheia migrate [--db path] [--dry-run] [--backup path]` - upgrade the database schema after copying it. Not in --help.
 
@@ -6951,7 +6954,7 @@ With no provider, Aletheia extracts facts with a rule-based extractor and makes 
 | `ALETHEIA_FACT_MAX_EPISODES` | `20` | Most episodes in one extraction batch. |
 | `ALETHEIA_FACT_CHAR_BUDGET` | `12000` | Most characters in one extraction batch. |
 | `ALETHEIA_PRICE_IN_PER_1K`, `ALETHEIA_PRICE_OUT_PER_1K` | `0` | Your price per 1000 tokens, used for cost estimates. Aletheia sets no vendor price. |
-| `ALETHEIA_EMBED_FACTS` | unset | `0` stops `aletheia compress` from creating embeddings. |
+| `ALETHEIA_EMBED_FACTS` | unset | `1` lets `aletheia compress` create embeddings for new facts. Off by default, because the first use downloads a model. |
 
 ## Optional embeddings
 
@@ -7255,7 +7258,7 @@ Codex CLI (codex)
 Refused: a file changed after install. Review it, then rerun with --force to remove our entries anyway.
 ```
 
-Two behaviors of 0.1.10 to know. First, when one file has drifted, the command exits 1 and prints `Refused`, but it has already cleaned the other files: the MCP entry and the rules block were gone afterward, and only the hooks file kept its entries. Second, the hooks line of an uninstall dry run can carry the note `(no aletheia hooks)` even when the line says `remove`; the entries were removed.
+Two behaviors of 0.1.10 to know. First, when one file has drifted, the command exits 1 and prints `Refused`, but it has already cleaned the other files: the MCP entry and the rules block were gone afterward, and only the hooks file kept its entries. Second, before this fix the hooks line of an uninstall could carry the note `(no aletheia hooks)` even when the line said `remove`; the entries were removed. It now shows the note only when there is nothing to remove.
 
 ## Next steps
 

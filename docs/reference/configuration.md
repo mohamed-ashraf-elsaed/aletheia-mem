@@ -79,7 +79,7 @@ With no provider, Aletheia extracts facts with a rule-based extractor and makes 
 | `ALETHEIA_FACT_MAX_EPISODES` | `20` | Most episodes in one extraction batch. |
 | `ALETHEIA_FACT_CHAR_BUDGET` | `12000` | Most characters in one extraction batch. |
 | `ALETHEIA_PRICE_IN_PER_1K`, `ALETHEIA_PRICE_OUT_PER_1K` | `0` | Your price per 1000 tokens, used for cost estimates. Aletheia sets no vendor price. |
-| `ALETHEIA_EMBED_FACTS` | unset | `0` stops `aletheia compress` from creating embeddings. |
+| `ALETHEIA_EMBED_FACTS` | unset | `1` lets `aletheia compress` create embeddings for new facts. Off by default, because the first use downloads a model. |
 
 ## Optional embeddings
 

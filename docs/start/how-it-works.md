@@ -60,7 +60,7 @@ aletheia search "staging" --project shop
 
 Redaction is pattern-based. It cannot catch a secret that looks like ordinary text.
 
-Redaction runs in the hooks, in `aletheia save` and `aletheia capture`, in the MCP `save_memory` tool and in the transcript back-fill. It does not run when you write a memory through the REST API (`POST /v1/memories`) or the dashboard (New note, Save note). In a test on 2026-10-29, both routes stored a fake `sk-` key and a `<private>` block exactly as sent. Do not paste secrets into those two paths. The fact-extraction prompt redacts each episode again before it goes to a model, and each fact is redacted again before it is stored.
+Redaction runs in the store itself, so every write path is covered: the hooks, `aletheia save` and `aletheia capture`, the MCP `save_memory` tool, the REST API (`POST /v1/memories` and `POST /v1/events`), the dashboard (New note, Save note), edits, the transcript back-fill and imports. Versions before this change did not redact REST and dashboard notes, edits and imports; run `aletheia scrub` once to redact rows an older version stored. The fact-extraction prompt redacts each episode again before it goes to a model, and each fact is redacted again before it is stored.
 
 ## Step 3: Store in SQLite
 

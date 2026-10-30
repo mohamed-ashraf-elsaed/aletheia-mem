@@ -226,7 +226,7 @@ Codex CLI (codex)
 Refused: a file changed after install. Review it, then rerun with --force to remove our entries anyway.
 ```
 
-Two behaviors of 0.1.10 to know. First, when one file has drifted, the command exits 1 and prints `Refused`, but it has already cleaned the other files: the MCP entry and the rules block were gone afterward, and only the hooks file kept its entries. Second, the hooks line of an uninstall dry run can carry the note `(no aletheia hooks)` even when the line says `remove`; the entries were removed.
+Two behaviors of 0.1.10 to know. First, when one file has drifted, the command exits 1 and prints `Refused`, but it has already cleaned the other files: the MCP entry and the rules block were gone afterward, and only the hooks file kept its entries. Second, before this fix the hooks line of an uninstall could carry the note `(no aletheia hooks)` even when the line said `remove`; the entries were removed. It now shows the note only when there is nothing to remove.
 
 ## Next steps
 

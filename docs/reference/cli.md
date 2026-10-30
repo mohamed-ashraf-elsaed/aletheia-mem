@@ -139,12 +139,13 @@ Dry run: nothing was written. Add --write to apply.
 
 ## Maintenance
 
-- `aletheia compress [--daemon] [--interval ms]` - drain the extraction queue once, or keep running with `--daemon`. It uses the provider in `ALETHEIA_PROVIDER`, or the rule-based extractor when none is set. `--project` is in --help but the code does not read it. Setting `ALETHEIA_EMBED_FACTS=0` skips embeddings.
+- `aletheia compress [--daemon] [--interval ms]` - drain the extraction queue once, or keep running with `--daemon`. It uses the provider in `ALETHEIA_PROVIDER`, or the rule-based extractor when none is set. `--project` is in --help but the code does not read it. It creates no embeddings unless `ALETHEIA_EMBED_FACTS=1` is set, so it downloads no model by default.
 - `aletheia summarize [--scope session|project|entity|list] [--project p] [--session s] [--entity id] [--days n] [--limit n]` - build a summary. `list` shows existing ones.
 - `aletheia prune [--apply]` - report cold facts and old episodes; `--apply` changes them. Dismissed items are deleted with `--apply`.
 - `aletheia facts clean [--apply] [--ineligible-sources]` - run the quality gate over stored facts; `--apply` dismisses failures (reversible).
 - `aletheia language [set <tag> | list] [--project p]` - set or list the output language for facts and summaries.
 - `aletheia optimize` - rebuild the full-text index after a large import.
+- `aletheia scrub [--apply]` - count the stored memories that redaction would change; with `--apply`, redact them in place. Use it once after upgrading from a version that stored some text unredacted (notes written through REST or the dashboard, edits, imports). Back up `hub.db` first.
 - `aletheia importance recompute [--project p]` - recompute the importance score.
 - `aletheia migrate [--db path] [--dry-run] [--backup path]` - upgrade the database schema after copying it. Not in --help.
 

@@ -116,7 +116,7 @@ What to know about the runtime:
 - The default model is `Xenova/bge-small-en-v1.5`, quantised, 384 dimensions. It runs on your machine.
 - The first use downloads the model once. In a fresh home directory the model folder was 34 MB after the first `aletheia embed`.
 - When the package is missing, the code prints an error and stops `--semantic` and `aletheia embed`. Plain keyword search keeps working.
-- `aletheia embed` embeds memories that have no vector yet and skips events. `aletheia compress` embeds new facts as it extracts them when the runtime is present. Set `ALETHEIA_EMBED_FACTS=0` to stop that.
+- `aletheia embed` embeds memories that have no vector yet and skips events. `aletheia compress` embeds new facts only when `ALETHEIA_EMBED_FACTS=1` is set, because the first embedding downloads a model.
 - `POST /v1/search` and the MCP `search` tool answer from the keyword channels only, and the REST reply says so in its `channels.note`. Semantic search is a CLI feature.
 - The benchmark rows marked "+ rerank" use a cross-encoder in the benchmark script. `aletheia search` does not rerank.
 
