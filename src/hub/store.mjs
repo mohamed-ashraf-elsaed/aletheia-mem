@@ -56,6 +56,9 @@ const parse = (v) => {
     return [String(v)];
   }
 };
+// Every write path (REST, dashboard, MCP, hooks, imports, edits) ends in add() or update(), so redaction lives here.
+// It is idempotent: text that was already redacted passes through unchanged.
+const scrub = (v) => (typeof v === "string" ? redact(v) : Array.isArray(v) ? v.map(scrub) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).map(([k, item]) => [k, scrub(item)])) : v);
 const clean = (v, max) => (typeof v === "string" ? v.slice(0, max) : v == null ? null : String(v).slice(0, max));
 
 const SCHEMA = `
@@ -778,8 +781,8 @@ export class HubStore {
 
   /** Insert a memory. A memory with the same content (project, title, narrative) is not stored twice: returns the existing id. */
   add(input, { actor = "api", audit = true } = {}) {
-    const title = clean(input.title, 400) ?? "";
-    const narrative = clean(input.narrative ?? input.text, 20000);
+    const title = clean(scrub(input.title), 400) ?? "";
+    const narrative = clean(scrub(input.narrative ?? input.text), 20000);
     if (!title.trim() && !(narrative ?? "").trim()) throw new RangeError("A memory needs a title or text.");
     const project = clean(input.project, 200)?.trim() || "default";
     const kind = KINDS.includes(input.kind) ? input.kind : "observation";
@@ -790,7 +793,7 @@ export class HubStore {
     const info = this.db
       .prepare(`INSERT INTO memories (project, scope, kind, type, title, subtitle, narrative, facts, concepts, files, tool, session_id, pinned, origin, content_hash, created_at_epoch, updated_at_epoch)
                 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`)
-      .run(project, input.scope === "global" ? "global" : "project", kind, clean(input.type, 40) || (kind === "event" ? "event" : "note"), title, clean(input.subtitle, 400), narrative, json(input.facts), json(input.concepts), json(input.files),
+      .run(project, input.scope === "global" ? "global" : "project", kind, clean(input.type, 40) || (kind === "event" ? "event" : "note"), title, clean(scrub(input.subtitle), 400), narrative, json(scrub(input.facts)), json(scrub(input.concepts)), json(input.files),
         clean(input.tool, 60) || "unknown", clean(input.sessionId ?? input.session_id, 200), input.pinned ? 1 : 0, clean(input.origin, 200), hash, at, at);
     const memoryId = Number(info.lastInsertRowid);
     const files = Array.isArray(input.files) ? [...new Set(input.files.map(String).map((path) => path.trim()).filter(Boolean))] : [];
@@ -814,14 +817,14 @@ export class HubStore {
     const cur = this.db.prepare("SELECT * FROM memories WHERE id = ?").get(id);
     if (!cur) return null;
     const next = {
-      title: patch.title !== undefined ? clean(patch.title, 400) : cur.title,
-      subtitle: patch.subtitle !== undefined ? clean(patch.subtitle, 400) : cur.subtitle,
-      narrative: patch.narrative !== undefined ? clean(patch.narrative, 20000) : cur.narrative,
+      title: patch.title !== undefined ? clean(scrub(patch.title), 400) : cur.title,
+      subtitle: patch.subtitle !== undefined ? clean(scrub(patch.subtitle), 400) : cur.subtitle,
+      narrative: patch.narrative !== undefined ? clean(scrub(patch.narrative), 20000) : cur.narrative,
       type: patch.type !== undefined ? clean(patch.type, 40) : cur.type,
       project: patch.project !== undefined ? clean(patch.project, 200).trim() || cur.project : cur.project,
       pinned: patch.pinned !== undefined ? (patch.pinned ? 1 : 0) : cur.pinned,
-      facts: patch.facts !== undefined ? json(patch.facts) : cur.facts,
-      concepts: patch.concepts !== undefined ? json(patch.concepts) : cur.concepts,
+      facts: patch.facts !== undefined ? json(scrub(patch.facts)) : cur.facts,
+      concepts: patch.concepts !== undefined ? json(scrub(patch.concepts)) : cur.concepts,
       files: patch.files !== undefined ? json(patch.files) : cur.files,
     };
     this.db
@@ -1441,6 +1444,39 @@ export class HubStore {
   }
 
   /** Rebuild the FTS index segments after a bulk write. Search stays correct without it; this keeps p95 low. */
+  /**
+   * Redact rows stored before redaction covered every write path (notes written through REST or the dashboard, imports).
+   * Without apply it only counts. With apply it rewrites title, subtitle, narrative, facts and concepts in one transaction.
+   */
+  scrubStored({ apply = false } = {}) {
+    const rows = this.db.prepare("SELECT id, title, subtitle, narrative, facts, concepts FROM memories").all();
+    const changes = [];
+    for (const row of rows) {
+      const next = {
+        title: scrub(row.title),
+        subtitle: scrub(row.subtitle),
+        narrative: scrub(row.narrative),
+        facts: row.facts == null ? row.facts : json(scrub(parse(row.facts))),
+        concepts: row.concepts == null ? row.concepts : json(scrub(parse(row.concepts))),
+      };
+      if (next.title !== row.title || next.subtitle !== row.subtitle || next.narrative !== row.narrative || next.facts !== row.facts || next.concepts !== row.concepts) changes.push({ id: row.id, next });
+    }
+    if (apply && changes.length) {
+      const update = this.db.prepare("UPDATE memories SET title=?, subtitle=?, narrative=?, facts=?, concepts=? WHERE id=?");
+      this.db.exec("BEGIN");
+      try {
+        for (const change of changes) update.run(change.next.title, change.next.subtitle, change.next.narrative, change.next.facts, change.next.concepts, change.id);
+        this.audit("cli", "memory.scrub", { rows: changes.length });
+        this.db.exec("COMMIT");
+      } catch (error) {
+        this.db.exec("ROLLBACK");
+        throw error;
+      }
+      this.statsCache = null;
+    }
+    return { scanned: rows.length, changed: changes.length, applied: apply && changes.length > 0, sampleIds: changes.slice(0, 20).map((change) => change.id) };
+  }
+
   optimizeFts() {
     for (const table of ["memories_fts", "facts_fts", "memory_keys_fts"]) {
       this.db.exec(`INSERT INTO ${table}(${table}) VALUES('optimize')`);
