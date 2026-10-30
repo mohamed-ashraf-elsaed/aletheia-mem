@@ -298,3 +298,7 @@ you ran and what the tool did. See [CONTRIBUTING.md](CONTRIBUTING.md). Run `bun 
 
 Apache-2.0. See [NOTICE.md](NOTICE.md) for what comes from claude-mem. Not affiliated with or endorsed by the
 claude-mem authors or Anthropic.
+
+## Author
+
+Made by [Mohamed Ashraf Elsaed](https://mohamedashrafelsaed.com), technical lead and backend architect in Cairo. Project page and more tools: [mohamedashrafelsaed.com/projects/aletheia/](https://mohamedashrafelsaed.com/projects/aletheia/).
