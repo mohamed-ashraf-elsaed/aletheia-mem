@@ -24,7 +24,8 @@ export function translatable(text) {
     if (fence) continue;
     if (/^\s*<!--/.test(line)) continue;
     if (/img\.shields\.io|actions\/workflows\/.*\/badge\.svg/.test(line)) continue;
-    // A line that is only a linked badge image is structure, not prose.
+    // A line that is only a linked badge image is structure, not prose (Markdown or HTML).
+    if (/^\s*<a [^>]*><img [^>]*><\/a>\s*$/.test(line)) continue;
     if (/^\[!\[[^\]]*\]\([^)]*\)\]\([^)]*\)\s*$/.test(line)) continue;
     if (/^\[English\]|^Translations:/.test(line)) continue;
     if (/^>\s*Machine-translated/.test(line)) continue;
