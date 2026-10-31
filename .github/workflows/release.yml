@@ -61,6 +61,7 @@ jobs:
       - uses: actions/checkout@v7
         with:
           ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.10
@@ -82,7 +83,15 @@ jobs:
         if: ${{ inputs.dry_run != true }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --generate-notes --verify-tag
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then exit 0; fi
+          notes="$(mktemp)"
+          if bun scripts/release.mjs --notes "$TAG" "$notes"; then
+            gh release create "$TAG" --notes-file "$notes" --verify-tag
+          else
+            echo "::warning::No CHANGELOG.md section for $TAG; falling back to generated notes"
+            gh release create "$TAG" --generate-notes --verify-tag
+          fi
       - name: Rebuild the docs site
         run: |
           bun scripts/build-site.mjs
@@ -96,7 +105,7 @@ jobs:
         run: |
           set -euo pipefail
           release="$(gh release view "$TAG" --json name,body,tagName)"
-          previous="$(gh release list --exclude-drafts --exclude-pre-releases --limit 20 --json tagName --jq '.[].tagName' | grep -vxF "$TAG" | head -n 1 || true)"
+          previous="$(git describe --tags --abbrev=0 "${TAG}^" 2>/dev/null || true)"
           payload="$(jq -cn --argjson release "$release" --arg previous "$previous" \
             '{action: "published", release: {tag_name: $release.tagName, name: $release.name, body: $release.body}} + (if $previous == "" then {} else {previousTag: $previous} end)')"
           signature="sha256=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "$DISTRO_WEBHOOK_SECRET" | sed 's/^.* //')"

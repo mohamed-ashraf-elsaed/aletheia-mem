@@ -3,6 +3,7 @@
 //   bun scripts/release.mjs                      pack check only (required files are in the tarball)
 //   bun scripts/release.mjs --prepare <version>  bump package.json, server.json and CHANGELOG, move Unreleased into a dated section
 //   bun scripts/release.mjs --sync-server-json <version>  bump server.json to the version when it is older
+//   bun scripts/release.mjs --notes <tag> <file>  write the CHANGELOG section for the tag to the file; exit 1 when missing
 //   bun scripts/release.mjs --verify [--tag vX.Y.Z]  checks to run before publishing, and in CI on a tag
 // RELEASE_ROOT overrides the repository root (tests use a temp fixture).
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -26,6 +27,16 @@ export function topChangelogRelease(changelog) {
 export function unreleasedBody(changelog) {
   const match = /^## \[Unreleased\][^\n]*\n([\s\S]*?)(?=^## \[)/m.exec(changelog);
   return match ? match[1].trim() : "";
+}
+
+export function changelogSection(changelog, version) {
+  const v = String(version).replace(/^v/, "");
+  const lines = changelog.split("\n");
+  const start = lines.findIndex((line) => line.startsWith(`## [${v}]`));
+  if (start < 0) return null;
+  let end = lines.findIndex((line, i) => i > start && line.startsWith("## ["));
+  if (end < 0) end = lines.length;
+  return lines.slice(start + 1, end).join("\n").trim() || null;
 }
 
 export function moveUnreleased(changelog, version, date) {
@@ -206,6 +217,16 @@ async function main() {
     if (synced.text === text) fail([`server.json has no version field to bump to ${version}`]);
     writeFileSync(path, synced.text);
     console.log(`server.json bumped from ${synced.current} to ${version}`);
+    return;
+  }
+  if (args[0] === "--notes") {
+    const body = changelogSection(readFileSync(join(root, "CHANGELOG.md"), "utf8"), args[1] ?? "");
+    if (!body) {
+      console.error(`release: no CHANGELOG.md section for ${args[1]}`);
+      process.exit(1);
+    }
+    writeFileSync(args[2], `${body}\n`);
+    console.log(`wrote the ${args[1]} notes to ${args[2]}`);
     return;
   }
   if (args[0] === "--verify") {

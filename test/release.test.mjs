@@ -3,7 +3,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
-import { compareVersions, imageRefs, moveUnreleased, relativeLinks, REQUIRED, syncServerJson, topChangelogRelease, unpackedMb } from "../scripts/release.mjs";
+import { changelogSection, compareVersions, imageRefs, moveUnreleased, relativeLinks, REQUIRED, syncServerJson, topChangelogRelease, unpackedMb } from "../scripts/release.mjs";
 
 afterAll(cleanupTempDirs);
 
@@ -212,6 +212,18 @@ describe("release.mjs --verify", () => {
   });
 });
 
+describe("changelogSection", () => {
+  const log = "# Changelog\n\n## [Unreleased]\n\n## [0.2.0] - 2026-11-01\n\n- Two.\n\n## [0.1.0] - 2026-10-27\n\n- One.\n";
+  test("returns the body for a tag with or without the v", () => {
+    expect(changelogSection(log, "v0.2.0")).toBe("- Two.");
+    expect(changelogSection(log, "0.1.0")).toBe("- One.");
+  });
+  test("returns null for a missing section", () => {
+    expect(changelogSection(log, "v0.3.0")).toBeNull();
+    expect(changelogSection(log, "v0.2")).toBeNull();
+  });
+});
+
 describe("release workflow", () => {
   const yml = readFileSync(join(repo, ".github/workflows/release.yml"), "utf8");
   const code = yml.split("\n").filter((line) => !line.trim().startsWith("#")).join("\n");
@@ -231,6 +243,8 @@ describe("release workflow", () => {
     expect(code).toMatch(/if: \$\{\{ inputs\.dry_run != true && \(env\.NPM_TOKEN != '' \|\| vars\.NPM_TRUSTED_PUBLISHING == 'true'\) \}\}\n\s+run: \|\n\s+npm install -g npm@latest/);
     expect(code).toContain("gh release create");
     expect(code).toContain("--generate-notes");
+    expect(code).toContain("--notes-file");
+    expect(code).toContain('git describe --tags --abbrev=0 "${TAG}^"');
     expect(code.indexOf("--verify --tag")).toBeLessThan(code.indexOf("npm publish"));
     expect(code.indexOf("npm publish")).toBeLessThan(code.indexOf("gh release create"));
   });
