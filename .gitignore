@@ -58,8 +58,8 @@ bench/runtime/
 .roo/
 .kiro/
 
-# Plugin manifests for Claude Code, Codex and Qoder stay on our machines only.
-.claude-plugin/
+# Plugin manifests for Codex and Qoder stay on our machines only.
+# The Claude Code plugin (.claude-plugin/) is published so /plugin marketplace add works.
 .codex-plugin/
 .qoder-plugin/
 .playwright-mcp/

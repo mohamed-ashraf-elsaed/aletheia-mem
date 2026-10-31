@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "aletheia": {
+      "type": "stdio",
+      "command": "bun",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/bin/mcp.mjs"
+      ]
+    }
+  }
+}
