@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 5d4f5d85c65552d72ac0cba55fa5ab1c1ff162807597cdc7a507ed0ff52f2539
+> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -17,6 +17,8 @@
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
+
+已收录于 [官方 MCP 注册表](https://registry.modelcontextprotocol.io/v0/servers?search=aletheia-mem)、[Glama](https://glama.ai/mcp/servers/mohamed-ashraf-elsaed/aletheia-mem)、[mcpservers.org](https://mcpservers.org/servers/mohamed-ashraf-elsaed/aletheia-mem)、[TensorBlock awesome-mcp-servers](https://github.com/TensorBlock/awesome-mcp-servers/pull/4715) 和 [AlternativeTo](https://alternativeto.net/software/aletheia-mem/)。
 
 **状态：alpha。** 记忆引擎和安装器已通过测试。真正的 Claude Code、Command Code、Codex CLI 和 OpenCode 已列出生成的 MCP 配置。钩子已在作者机器上的真实会话中运行，包括 Claude Code（使用两天）、Command Code（一次简短会话）和 Codex CLI（一次交互式会话），均由同一名用户在同一台机器上完成，密钥已脱敏，检查器未发现泄漏。Cursor、Gemini CLI、Windsurf 或 OpenCode 中还没有运行过钩子，答案准确率尚未测量。CI 在 Linux、macOS 和 Windows 上运行测试套件。在 Windows 上跳过了两项钩子检查（Windsurf 和 Gemini CLI），也没有试用任何真实工具，因此 Windows 仅在 CI 中测试过。
 

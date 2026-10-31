@@ -19,6 +19,10 @@
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
 
 [![As seen on Open Source Alternatives](https://www.opensourcealternatives.to/badge-osa.svg)](https://www.opensourcealternatives.to)
+[![Aletheia Memory on AlternativeTo](https://alternativeto.net/static/badges/badge-compact-color.svg)](https://alternativeto.net/software/aletheia-mem/about/?utm_source=badge&utm_medium=referral)
+[![Aletheia on Glama](https://glama.ai/mcp/servers/mohamed-ashraf-elsaed/aletheia-mem/badges/card.svg)](https://glama.ai/mcp/servers/mohamed-ashraf-elsaed/aletheia-mem)
+
+Listed in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=aletheia-mem), [Glama](https://glama.ai/mcp/servers/mohamed-ashraf-elsaed/aletheia-mem), [mcpservers.org](https://mcpservers.org/servers/mohamed-ashraf-elsaed/aletheia-mem), [TensorBlock awesome-mcp-servers](https://github.com/TensorBlock/awesome-mcp-servers/pull/4715) and [AlternativeTo](https://alternativeto.net/software/aletheia-mem/).
 
 </div>
 

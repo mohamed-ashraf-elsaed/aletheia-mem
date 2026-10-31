@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 5d4f5d85c65552d72ac0cba55fa5ab1c1ff162807597cdc7a507ed0ff52f2539
+> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -17,6 +17,8 @@
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
+
+Включён в [официальный реестр MCP](https://registry.modelcontextprotocol.io/v0/servers?search=aletheia-mem), [Glama](https://glama.ai/mcp/servers/mohamed-ashraf-elsaed/aletheia-mem), [mcpservers.org](https://mcpservers.org/servers/mohamed-ashraf-elsaed/aletheia-mem), [TensorBlock awesome-mcp-servers](https://github.com/TensorBlock/awesome-mcp-servers/pull/4715) и [AlternativeTo](https://alternativeto.net/software/aletheia-mem/).
 
 **Статус: альфа.** Движок памяти и установщики работают в тестах. Реальные Claude Code, Command Code, Codex CLI и OpenCode перечислили сгенерированную MCP-конфигурацию. Хуки отработали в реальных сессиях Claude Code (два дня использования), Command Code (одна короткая сессия) и Codex CLI (одна интерактивная сессия) — всё на машине автора и одним пользователем, с отредактированными секретами и без утечек, найденных проверкой. В Cursor, Gemini CLI, Windsurf или OpenCode хуки ещё не запускались, а точность ответов не измерена. CI запускает набор тестов на Linux, macOS и Windows. В Windows пропускаются две проверки хуков (Windsurf и Gemini CLI), и ни один настоящий инструмент там не пробовали, поэтому Windows проверен только в CI.
 

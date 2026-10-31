@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 5d4f5d85c65552d72ac0cba55fa5ab1c1ff162807597cdc7a507ed0ff52f2539
+> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -17,6 +17,8 @@
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
+
+등재처: [공식 MCP 레지스트리](https://registry.modelcontextprotocol.io/v0/servers?search=aletheia-mem), [Glama](https://glama.ai/mcp/servers/mohamed-ashraf-elsaed/aletheia-mem), [mcpservers.org](https://mcpservers.org/servers/mohamed-ashraf-elsaed/aletheia-mem), [TensorBlock awesome-mcp-servers](https://github.com/TensorBlock/awesome-mcp-servers/pull/4715), [AlternativeTo](https://alternativeto.net/software/aletheia-mem/).
 
 **상태: 알파.** 메모리 엔진과 설치 프로그램은 테스트에서 동작합니다. 실제 Claude Code, Command Code, Codex CLI, OpenCode는 생성된 MCP 설정을 나열했습니다. 훅은 저자의 머신에서 실제 Claude Code(이틀 사용), Command Code(짧은 세션 하나), Codex CLI(인터랙티브 세션 하나) 세션에서 실행되었으며, 모두 한 명의 사용자에 의한 것으로, 비밀은 가려졌고 검사기는 누출을 찾지 못했습니다. Cursor, Gemini CLI, Windsurf 또는 OpenCode 내부에서는 아직 훅이 실행된 적이 없고, 답변 정확도는 측정되지 않았습니다. CI는 테스트 스위트를 Linux, macOS, Windows에서 실행합니다. Windows에서는 훅 검사 두 개(Windsurf와 Gemini CLI)를 건너뛰며 실제 도구는 사용해 보지 않았으므로, Windows는 CI에서만 테스트되었습니다.
 
