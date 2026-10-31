@@ -8,7 +8,15 @@ name: Release
 #     Trusted publishing needs a recent npm; the step below installs npm@latest.
 #   Option B, a token: create a granular access token on npmjs.com, limited to the package aletheia-mem,
 #     read and write, with the option that bypasses 2FA for writes. Store it as the repository secret NPM_TOKEN.
-# With neither, the publish step is skipped and the run only tests, verifies and makes the GitHub release.
+#   Option C, MCP registry OIDC (recommended, no stored secret): set the repository variable
+#     MCP_REGISTRY_PUBLISH to true. The step logs in with this workflow's OIDC token (id-token: write),
+#     which the registry maps to the personal namespace io.github.mohamed-ashraf-elsaed/.
+#   Option D, a token: store a GitHub PAT as the repository secret MCP_GITHUB_TOKEN. The registry only
+#     reads the namespace owner, so a bare classic PAT is enough for this personal namespace; give it
+#     read:org if the project ever moves under an organization.
+# With neither, the publish steps are skipped and the run only tests, verifies and makes the GitHub release.
+# The server.json bump and the docs changelog page are not optional: every tag run bumps server.json to the
+# tag (pushed to main) and rebuilds the site with the changelog page (pushed to main, which deploys pages).
 on:
   push:
     tags:
@@ -21,11 +29,14 @@ jobs:
     runs-on: ubuntu-latest
     env:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      MCP_GITHUB_TOKEN: ${{ secrets.MCP_GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.10
+      - name: Sync server.json to the release version
+        run: bun scripts/release.mjs --sync-server-json "$GITHUB_REF_NAME"
       - name: Test suite
         run: bun test --timeout 20000
       - name: Verify release files for this tag
@@ -42,3 +53,56 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag
+      - name: Rebuild the docs site
+        run: |
+          bun scripts/build-site.mjs
+          bun scripts/check-sitemap.mjs
+      - name: Push server.json and the changelog page to main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          dir="$(mktemp -d)"
+          git clone --depth=1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$dir"
+          cd "$dir"
+          bun scripts/release.mjs --sync-server-json "$GITHUB_REF_NAME"
+          rm -rf site/docs site/assets
+          cp -r "$GITHUB_WORKSPACE/site/docs" "$GITHUB_WORKSPACE/site/assets" site/
+          cp "$GITHUB_WORKSPACE/site/sitemap.xml" "$GITHUB_WORKSPACE/site/robots.txt" "$GITHUB_WORKSPACE/site/llms.txt" "$GITHUB_WORKSPACE/site/llms-full.txt" site/
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add server.json site
+          if git diff --cached --quiet; then
+            echo "main already has this release's server.json and changelog page"
+          else
+            git commit -m "Release $GITHUB_REF_NAME: sync server.json and the docs changelog page"
+            git push origin main
+          fi
+      - name: Install cosign
+        if: ${{ (env.NPM_TOKEN != '' || vars.NPM_TRUSTED_PUBLISHING == 'true') && (env.MCP_GITHUB_TOKEN != '' || vars.MCP_REGISTRY_PUBLISH == 'true') }}
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+      - name: Publish to the MCP registry
+        if: ${{ (env.NPM_TOKEN != '' || vars.NPM_TRUSTED_PUBLISHING == 'true') && (env.MCP_GITHUB_TOKEN != '' || vars.MCP_REGISTRY_PUBLISH == 'true') }}
+        env:
+          MCP_PUBLISHER_VERSION: v1.8.7
+        run: |
+          set -euo pipefail
+          os="$(uname -s | tr '[:upper:]' '[:lower:]')"
+          arch="$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/')"
+          archive="mcp-publisher_${os}_${arch}.tar.gz"
+          base_url="https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}"
+          curl --fail --location --silent --show-error --output "$archive" "$base_url/$archive"
+          curl --fail --location --silent --show-error --output "$archive.sigstore.json" "$base_url/$archive.sigstore.json"
+          cosign verify-blob \
+            --bundle "$archive.sigstore.json" \
+            --certificate-identity "https://github.com/modelcontextprotocol/registry/.github/workflows/release.yml@refs/tags/${MCP_PUBLISHER_VERSION}" \
+            --certificate-oidc-issuer "https://token.actions.githubusercontent.com" \
+            "$archive"
+          tar xzf "$archive" mcp-publisher
+          rm -f "$archive" "$archive.sigstore.json"
+          if [ -n "$MCP_GITHUB_TOKEN" ]; then
+            ./mcp-publisher login github --token "$MCP_GITHUB_TOKEN"
+          else
+            ./mcp-publisher login github-oidc
+          fi
+          ./mcp-publisher publish

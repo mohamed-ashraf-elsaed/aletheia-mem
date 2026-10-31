@@ -1,7 +1,8 @@
 #!/usr/bin/env bun
 // Release helper. Never publishes, tags or pushes; those are owner steps (docs/releasing.md).
 //   bun scripts/release.mjs                      pack check only (required files are in the tarball)
-//   bun scripts/release.mjs --prepare <version>  bump package.json, move CHANGELOG Unreleased into a dated section
+//   bun scripts/release.mjs --prepare <version>  bump package.json, server.json and CHANGELOG, move Unreleased into a dated section
+//   bun scripts/release.mjs --sync-server-json <version>  bump server.json to the version when it is older
 //   bun scripts/release.mjs --verify [--tag vX.Y.Z]  checks to run before publishing, and in CI on a tag
 // RELEASE_ROOT overrides the repository root (tests use a temp fixture).
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -32,6 +33,19 @@ export function moveUnreleased(changelog, version, date) {
   const pattern = /^## \[Unreleased\][^\n]*\n[\s\S]*?(?=^## \[)/m;
   // A function replacer keeps "$`", "$&" and "$'" in the notes literal; a replacement string would expand them.
   return changelog.replace(pattern, () => `## [Unreleased]\n\n## [${version}] - ${date}\n\n${body}\n\n`);
+}
+
+/**
+ * Bump every "version" field in a server.json manifest text to `version`, keeping the original formatting.
+ * Returns { text } when bumped, or { unchanged: true } when the manifest already has that version or a newer one.
+ * Throws when the text is not valid JSON.
+ */
+export function syncServerJson(manifestText, version) {
+  const manifest = JSON.parse(manifestText);
+  const current = manifest.version;
+  if (current && SEMVER.test(current) && compareVersions(current, version) >= 0) return { unchanged: true, current };
+  const text = manifestText.replace(/("version"\s*:\s*)"[^"]+"/g, `$1"${version}"`);
+  return { text, current };
 }
 
 /** Image URLs in README markdown and HTML, with their line numbers. */
@@ -88,6 +102,18 @@ export async function prepare(root, version, { date = new Date().toISOString().s
   if (branch.out.trim() !== "main") problems.push(`must run on main, not "${branch.out.trim()}"`);
   const pkgText = readFileSync(join(root, "package.json"), "utf8");
   const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
+  const serverJsonPath = join(root, "server.json");
+  let serverJsonText = null;
+  if (!existsSync(serverJsonPath)) problems.push("server.json is missing; create the registry manifest first");
+  else {
+    serverJsonText = readFileSync(serverJsonPath, "utf8");
+    try {
+      const serverVersion = JSON.parse(serverJsonText).version ?? "";
+      if (serverVersion && compareVersions(version, serverVersion) <= 0) problems.push(`version ${version} is not greater than ${serverVersion} in server.json`);
+    } catch {
+      problems.push("server.json is not valid JSON");
+    }
+  }
   const current = JSON.parse(pkgText).version;
   const top = topChangelogRelease(changelog);
   for (const [name, v] of [["package.json", current], ["CHANGELOG", top]]) {
@@ -97,6 +123,8 @@ export async function prepare(root, version, { date = new Date().toISOString().s
   if (problems.length) return problems;
   writeFileSync(join(root, "package.json"), pkgText.replace(/("version"\s*:\s*)"[^"]+"/, `$1"${version}"`));
   writeFileSync(join(root, "CHANGELOG.md"), moveUnreleased(changelog, version, date));
+  const server = syncServerJson(serverJsonText, version);
+  if (server.text) writeFileSync(serverJsonPath, server.text);
   return [];
 }
 
@@ -106,6 +134,19 @@ export async function verify(root, { tag = null } = {}) {
   const changelog = readFileSync(join(root, "CHANGELOG.md"), "utf8");
   const top = topChangelogRelease(changelog);
   if (top !== pkg.version) problems.push(`package.json version ${pkg.version} does not equal the top CHANGELOG release ${top}`);
+  const serverJsonPath = join(root, "server.json");
+  if (!existsSync(serverJsonPath)) problems.push("server.json is missing");
+  else {
+    try {
+      const manifest = JSON.parse(readFileSync(serverJsonPath, "utf8"));
+      if (manifest.version !== pkg.version) problems.push(`server.json version ${manifest.version} does not match package.json version ${pkg.version}`);
+      (manifest.packages ?? []).forEach((entry, i) => {
+        if (entry.version !== pkg.version) problems.push(`server.json package ${i} version ${entry.version} does not match package.json version ${pkg.version}`);
+      });
+    } catch {
+      problems.push("server.json is not valid JSON");
+    }
+  }
   if (tag) {
     if (tag !== `v${pkg.version}`) problems.push(`tag ${tag} does not match package.json version v${pkg.version}`);
   } else {
@@ -141,14 +182,37 @@ async function main() {
   if (args[0] === "--prepare") {
     const problems = await prepare(root, args[1] ?? "", args[2] === "--date" ? { date: args[3] } : {});
     if (problems.length) fail(problems);
-    console.log(`prepared ${args[1]}: package.json and CHANGELOG updated, nothing committed. Next: review the diff, run the checks, commit.`);
+    console.log(`prepared ${args[1]}: package.json, server.json and CHANGELOG updated, nothing committed. Next: review the diff, run the checks, commit.`);
+    return;
+  }
+  if (args[0] === "--sync-server-json") {
+    // The workflow passes GITHUB_REF_NAME, which carries the leading v of the tag.
+    const version = (args[1] ?? "").replace(/^v/, "");
+    if (!SEMVER.test(version)) fail([`version must look like 1.2.3, got "${args[1] ?? ""}"`]);
+    const path = join(root, "server.json");
+    if (!existsSync(path)) fail(["server.json is missing"]);
+    const text = readFileSync(path, "utf8");
+    let synced;
+    try {
+      synced = syncServerJson(text, version);
+    } catch {
+      fail(["server.json is not valid JSON"]);
+    }
+    if (synced.unchanged) {
+      if (synced.current && compareVersions(synced.current, version) > 0) console.log(`server.json ${synced.current} is already newer than ${version}; left as is`);
+      else console.log(`server.json already matches ${version}`);
+      return;
+    }
+    if (synced.text === text) fail([`server.json has no version field to bump to ${version}`]);
+    writeFileSync(path, synced.text);
+    console.log(`server.json bumped from ${synced.current} to ${version}`);
     return;
   }
   if (args[0] === "--verify") {
     const i = args.indexOf("--tag");
     const problems = await verify(root, { tag: i >= 0 ? args[i + 1] : null });
     if (problems.length) fail(problems);
-    console.log("verify ok: version, changelog, tag, pack contents, size and README links");
+    console.log("verify ok: version, changelog, server.json, tag, pack contents, size and README links");
     return;
   }
   const pack = await packCheck(root);

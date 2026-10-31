@@ -463,13 +463,13 @@ function buildLlms(site) {
     for (const page of section.pages) lines.push(`- [${page.title}](${url(page)}): ${page.description}`);
     lines.push("");
   }
-  lines.push("## Optional", "", `- [README](${REPO}/blob/main/README.md): install, status and limits`, `- [Changelog](${REPO}/blob/main/CHANGELOG.md): release notes`, `- [Full text of every page](${SITE_URL}llms-full.txt): all documentation in one file`, "");
+  lines.push("## Optional", "", `- [README](${REPO}/blob/main/README.md): install, status and limits`, `- [Changelog](${SITE_URL}docs/changelog.html): release notes, generated from CHANGELOG.md`, `- [Full text of every page](${SITE_URL}llms-full.txt): all documentation in one file`, "");
   return lines.join("\n");
 }
 
-function buildLlmsFull(site) {
+function buildLlmsFull(site, extra = []) {
   const parts = [`# ${SITE_NAME} documentation (full text)`, "", `> ${SITE_SUMMARY}`, ""];
-  for (const page of site.order) {
+  for (const page of [...site.order, ...extra]) {
     const body = page.markdown.split("\n").filter((line) => !/^<!--.*-->\s*$/.test(line)).join("\n").trim();
     parts.push("---", "", `Source: ${SITE_URL}${page.siteRel}`, "", body, "");
   }
@@ -495,6 +495,44 @@ function docsIndexBody(site) {
 <p>AI tools can read <a href="../llms.txt">llms.txt</a> or <a href="../llms-full.txt">llms-full.txt</a>. Every page also has a plain Markdown copy at the same address ending in <code>.md</code>.</p>
 ${sections}
 ${script}`;
+}
+
+// The changelog page is generated from CHANGELOG.md at the repository root. It is not a docs/ document,
+// so it is built here beside the index instead of living in _nav.json.
+function buildChangelogPage(site) {
+  const source = join(ROOT, "CHANGELOG.md");
+  const markdown = readFileSync(source, "utf8");
+  const siteFile = join(SITE, "docs/changelog.html");
+  const page = { rel: "changelog", section: "Changelog", title: "Changelog", siteRel: "docs/changelog.html" };
+  const ctx = { root: ROOT, siteDir: SITE, sourceFile: source, siteFile, pages: site.pages };
+  const description = "What each Aletheia (aletheia-mem) release added, changed and fixed, generated from CHANGELOG.md.";
+  const canonical = `${SITE_URL}docs/changelog.html`;
+  const modified = gitDate("CHANGELOG.md");
+  const crumbs = breadcrumbs(page, siteFile);
+  const jsonLd = [
+    {
+      "@context": "https://schema.org",
+      "@type": "TechArticle",
+      headline: page.title,
+      description,
+      url: canonical,
+      mainEntityOfPage: canonical,
+      inLanguage: "en",
+      dateModified: modified,
+      about: { "@type": "SoftwareApplication", name: SITE_NAME, alternateName: "aletheia-mem", url: SITE_URL },
+      isPartOf: { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
+      author: { "@type": "Person", name: "Mohamed Ashraf Elsaed" },
+      license: "https://www.apache.org/licenses/LICENSE-2.0",
+    },
+    crumbs.data,
+  ];
+  mkdirSync(dirname(siteFile), { recursive: true });
+  writeFileSync(
+    siteFile,
+    shell({ title: page.title, description, canonical, siteFile, body: `${crumbs.html}\n${renderMarkdown(markdown, ctx)}`, jsonLd, keywords: ["aletheia-mem changelog", "aletheia release notes"] }),
+  );
+  writeFileSync(join(SITE, "docs/changelog.md"), markdown);
+  return { markdown, modified };
 }
 
 function main() {
@@ -570,9 +608,12 @@ function main() {
     }),
   );
 
+  const changelog = buildChangelogPage(site);
+
   const urls = [
     { loc: SITE_URL, lastmod: gitDate("site/index.html") },
     { loc: `${SITE_URL}docs/`, lastmod: order.map((page) => gitDate(relative(ROOT, page.file))).sort().at(-1) ?? gitDate("docs") },
+    { loc: `${SITE_URL}docs/changelog.html`, lastmod: changelog.modified },
     ...order.map((page) => ({ loc: `${SITE_URL}${page.siteRel}`, lastmod: gitDate(relative(ROOT, page.file)) })),
   ];
   const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((url) => `  <url><loc>${url.loc}</loc><lastmod>${url.lastmod}</lastmod></url>`).join("\n")}\n</urlset>\n`;
@@ -588,8 +629,8 @@ function main() {
   ].join("\n");
   writeFileSync(join(SITE, "robots.txt"), robots);
   writeFileSync(join(SITE, "llms.txt"), buildLlms(site));
-  writeFileSync(join(SITE, "llms-full.txt"), buildLlmsFull(site));
-  console.log(`site built: ${pages.size} document pages + index; sitemap has ${urls.length} URLs`);
+  writeFileSync(join(SITE, "llms-full.txt"), buildLlmsFull(site, [{ siteRel: "docs/changelog.html", markdown: changelog.markdown }]));
+  console.log(`site built: ${pages.size} document pages + index + changelog; sitemap has ${urls.length} URLs`);
 }
 
 if (import.meta.main) main();

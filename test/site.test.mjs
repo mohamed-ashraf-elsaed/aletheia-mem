@@ -33,11 +33,26 @@ describe("docs site", () => {
     const tracked = Bun.spawnSync(["git", "ls-files", "docs"], { cwd: root, stdout: "pipe", stderr: "pipe" });
     const trackedNames = tracked.exitCode === 0 ? new Set(new TextDecoder().decode(tracked.stdout).split("\n").filter(Boolean)) : null;
     const docs = readdirSync(join(root, "docs")).filter((name) => name.endsWith(".md") && !name.startsWith("_") && (!trackedNames || trackedNames.has(`docs/${name}`)));
-    const pages = readdirSync(join(site, "docs")).filter((name) => name.endsWith(".html") && name !== "index.html");
+    // changelog.html is generated from CHANGELOG.md at the repository root, not from a docs/ document.
+    const pages = readdirSync(join(site, "docs")).filter((name) => name.endsWith(".html") && name !== "index.html" && name !== "changelog.html");
     expect(pages.length).toBe(docs.length);
     for (const name of ["01-architecture.html", "25-installers.html", "29-sync.html", "30-remote-mcp.html", "32-requests.html"]) {
       expect(existsSync(join(site, "docs", name))).toBe(true);
     }
+  });
+
+  test("the changelog page is generated from CHANGELOG.md", () => {
+    const html = read(join(site, "docs", "changelog.html"));
+    expect(html).toContain('<h1 id="changelog">Changelog</h1>');
+    expect(html).toContain('"@type":"TechArticle"');
+    expect(html).toContain('"@type":"BreadcrumbList"');
+    expect(html).toContain('<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/changelog.html">');
+    expect(html).toContain("<h2");
+    // The Markdown copy is the raw changelog, and the page is listed in the sitemap and llms.txt.
+    expect(read(join(site, "docs", "changelog.md"))).toBe(read(join(root, "CHANGELOG.md")));
+    expect(read(join(site, "sitemap.xml"))).toContain("<loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/changelog.html</loc>");
+    expect(read(join(site, "llms.txt"))).toContain("[Changelog](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/changelog.html)");
+    expect(read(join(site, "llms-full.txt"))).toContain("Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/changelog.html");
   });
 
   test("a page renders headings, tables, lists, code and TechArticle data", () => {
