@@ -80,5 +80,5 @@ Aletheia is a small server, a command line tool and an MCP server over one local
 ## Optional
 
 - [README](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/README.md): install, status and limits
-- [Changelog](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md): release notes
+- [Changelog](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/changelog.html): release notes, generated from CHANGELOG.md
 - [Full text of every page](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt): all documentation in one file

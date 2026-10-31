@@ -1,9 +1,9 @@
-// the release helper (--prepare, --verify) and the release workflow, tested on a temp git repository.
+// the release helper (--prepare, --verify, --sync-server-json) and the release workflow, tested on a temp git repository.
 import { afterAll, describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
-import { compareVersions, imageRefs, moveUnreleased, relativeLinks, REQUIRED, topChangelogRelease, unpackedMb } from "../scripts/release.mjs";
+import { compareVersions, imageRefs, moveUnreleased, relativeLinks, REQUIRED, syncServerJson, topChangelogRelease, unpackedMb } from "../scripts/release.mjs";
 
 afterAll(cleanupTempDirs);
 
@@ -24,6 +24,7 @@ function fixture({ unreleased = "\n### Fixed\n\n- A thing.\n", readme = GOOD_REA
     writeFileSync(join(dir, path), "x\n");
   }
   writeFileSync(join(dir, "package.json"), `${JSON.stringify({ name: "fx", version, files: ["bin", "src", "docs", "NOTICE.md", "README.md", "CHANGELOG.md"] }, null, 2)}\n`);
+  writeFileSync(join(dir, "server.json"), `${JSON.stringify({ name: "fx", version, packages: [{ registryType: "npm", identifier: "fx", version }] }, null, 2)}\n`);
   writeFileSync(join(dir, "CHANGELOG.md"), CHANGELOG(unreleased));
   writeFileSync(join(dir, "README.md"), readme);
   sh(dir, "git", "init", "-q", "-b", branch);
@@ -64,12 +65,15 @@ describe("release helpers", () => {
 });
 
 describe("release.mjs --prepare", () => {
-  test("bumps package.json and moves the notes on a clean main", () => {
+  test("bumps package.json, server.json and moves the notes on a clean main", () => {
     const dir = fixture();
     const result = release(dir, "--prepare", "0.1.1", "--date", "2026-11-01");
     expect(result.err).toBe("");
     expect(result.code).toBe(0);
     expect(JSON.parse(readFileSync(join(dir, "package.json"), "utf8")).version).toBe("0.1.1");
+    const manifest = JSON.parse(readFileSync(join(dir, "server.json"), "utf8"));
+    expect(manifest.version).toBe("0.1.1");
+    expect(manifest.packages[0].version).toBe("0.1.1");
     const changelog = readFileSync(join(dir, "CHANGELOG.md"), "utf8");
     expect(changelog).toContain("## [0.1.1] - 2026-11-01");
     expect(changelog.indexOf("## [Unreleased]")).toBeLessThan(changelog.indexOf("## [0.1.1]"));
@@ -100,11 +104,51 @@ describe("release.mjs --prepare", () => {
     }
   });
 
-  test("refuses empty release notes and a malformed version", () => {
-    const empty = release(fixture({ unreleased: "\n" }), "--prepare", "0.1.1");
-    expect(empty.code).toBe(1);
-    expect(empty.err).toContain("[Unreleased] is empty");
+  test("refuses a stale or missing server.json and empty release notes", () => {
+    const stale = fixture({ version: "0.2.0" });
+    expect(release(stale, "--prepare", "0.1.1").err).toContain("not greater than 0.2.0 in server.json");
+    const missing = fixture();
+    rmSync(join(missing, "server.json"));
+    expect(release(missing, "--prepare", "0.1.1").err).toContain("server.json is missing");
+    expect(release(fixture({ unreleased: "\n" }), "--prepare", "0.1.1").err).toContain("[Unreleased] is empty");
     expect(release(fixture(), "--prepare", "v0.1.1").code).toBe(1);
+  });
+});
+
+describe("release.mjs --sync-server-json", () => {
+  test("bumps server.json when the version is newer", () => {
+    const dir = fixture();
+    // The workflow passes GITHUB_REF_NAME, so the command must accept the leading v of the tag.
+    const result = release(dir, "--sync-server-json", "v0.1.1");
+    expect(result.err).toBe("");
+    expect(result.code).toBe(0);
+    expect(result.out).toContain("bumped from 0.1.0 to 0.1.1");
+    const manifest = JSON.parse(readFileSync(join(dir, "server.json"), "utf8"));
+    expect(manifest.version).toBe("0.1.1");
+    expect(manifest.packages[0].version).toBe("0.1.1");
+  });
+
+  test("keeps the original formatting and other fields", () => {
+    const text = '{\n  "name": "fx",\n  "description": "kept \\"as is\\"",\n  "version": "0.1.0",\n  "packages": [\n    {\n      "registryType": "npm",\n      "identifier": "fx",\n      "version": "0.1.0"\n    }\n  ]\n}';
+    expect(syncServerJson(text, "0.1.1").text).toBe(text.replaceAll("0.1.0", "0.1.1"));
+  });
+
+  test("leaves server.json alone when it matches or is newer", () => {
+    expect(release(fixture(), "--sync-server-json", "0.1.0").out).toContain("already matches 0.1.0");
+    const newer = fixture({ version: "0.1.5" });
+    const result = release(newer, "--sync-server-json", "0.1.0");
+    expect(result.code).toBe(0);
+    expect(result.out).toContain("already newer than 0.1.0");
+    expect(JSON.parse(readFileSync(join(newer, "server.json"), "utf8")).version).toBe("0.1.5");
+  });
+
+  test("fails when server.json is missing or not JSON", () => {
+    const missing = fixture();
+    rmSync(join(missing, "server.json"));
+    expect(release(missing, "--sync-server-json", "0.1.1").err).toContain("server.json is missing");
+    const bad = fixture();
+    writeFileSync(join(bad, "server.json"), "{nope");
+    expect(release(bad, "--sync-server-json", "0.1.1").err).toContain("not valid JSON");
   });
 });
 
@@ -120,6 +164,21 @@ describe("release.mjs --verify", () => {
     const result = release(fixture({ version: "0.2.0" }), "--verify");
     expect(result.code).toBe(1);
     expect(result.err).toContain("does not equal the top CHANGELOG release");
+  });
+
+  test("fails when server.json drifts from package.json or is missing", () => {
+    const drift = fixture();
+    writeFileSync(join(drift, "server.json"), JSON.stringify({ name: "fx", version: "9.9.9", packages: [{ version: "9.9.9" }] }));
+    expect(release(drift, "--verify").err).toContain("server.json version 9.9.9 does not match package.json version 0.1.0");
+    const packageDrift = fixture();
+    writeFileSync(join(packageDrift, "server.json"), JSON.stringify({ name: "fx", version: "0.1.0", packages: [{ version: "0.0.9" }] }));
+    expect(release(packageDrift, "--verify").err).toContain("server.json package 0 version 0.0.9 does not match package.json version 0.1.0");
+    const missing = fixture();
+    rmSync(join(missing, "server.json"));
+    expect(release(missing, "--verify").err).toContain("server.json is missing");
+    const bad = fixture();
+    writeFileSync(join(bad, "server.json"), "{nope");
+    expect(release(bad, "--verify").err).toContain("server.json is not valid JSON");
   });
 
   test("fails when the tag exists, and --tag mode expects it", () => {
@@ -175,9 +234,28 @@ describe("release workflow", () => {
     expect(code.indexOf("npm publish")).toBeLessThan(code.indexOf("gh release create"));
   });
 
+  test("syncs server.json, rebuilds the docs changelog page and publishes to the MCP registry", () => {
+    expect(code).toContain('bun scripts/release.mjs --sync-server-json "$GITHUB_REF_NAME"');
+    // The sync runs before the test suite, so a stale server.json cannot fail the server-json test.
+    expect(code.indexOf("--sync-server-json")).toBeLessThan(code.indexOf("run: bun test"));
+    expect(code).toContain("bun scripts/build-site.mjs");
+    expect(code).toContain("bun scripts/check-sitemap.mjs");
+    expect(code).toContain("git push origin main");
+    expect(code).toContain("sigstore/cosign-installer");
+    expect(code).toContain("cosign verify-blob");
+    expect(code).toContain("MCP_PUBLISHER_VERSION: v1.8.7");
+    expect(code).toContain("./mcp-publisher login github-oidc");
+    expect(code).toContain("./mcp-publisher publish");
+    expect(code.indexOf("mcp-publisher publish")).toBeGreaterThan(code.indexOf("gh release create"));
+    expect(code).toMatch(/MCP_REGISTRY_PUBLISH == 'true'/);
+    expect(code).not.toMatch(/echo .*MCP_GITHUB_TOKEN[^"]/);
+  });
+
   test("the owner setup is documented in comments and never prints the token", () => {
     expect(yml).toMatch(/# .*Trusted Publisher/);
     expect(yml).toMatch(/# .*granular access token/);
+    expect(yml).toMatch(/# .*MCP registry OIDC/);
+    expect(yml).toMatch(/# .*MCP_GITHUB_TOKEN/);
     expect(code).not.toMatch(/echo .*NPM_TOKEN[^"]/);
   });
 });

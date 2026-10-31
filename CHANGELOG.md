@@ -6,6 +6,11 @@ history.
 
 ## [Unreleased]
 
+### Added
+
+- The release workflow now publishes to the official MCP registry on every tag: it bumps `server.json` to the tag and publishes the manifest with the registry's pinned, signature-verified `mcp-publisher` CLI (v1.8.7) using OIDC authentication. `release.mjs --prepare` bumps `server.json` with `package.json`, `--sync-server-json` back-fills a hand-made release, and `--verify` fails when the manifest drifts. The mechanism follows the registry's GitHub Actions guide (https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/github-actions.mdx, fetched 2026-11-01); the registry accepts no server-listing pull requests.
+- `scripts/build-site.mjs` generates a docs changelog page (`site/docs/changelog.html`) from `CHANGELOG.md`, with a sitemap entry and a link from `llms.txt`; the release workflow rebuilds it and pushes it to main on every tag.
+
 ### Changed
 
 - The Settings page lists only the three settings that code reads: `facts.minConfidence`, `context.facts` and `rules.reviewDays`. The seven that nothing read (`provider`, `providers`, `factBudget.*`, `redaction`, `excludedProjects`, `apiKey`) are removed, along with the masked-secret handling. Use the environment variables for the provider, fact budgets and excluded projects; redaction is always on.
