@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 5d4f5d85c65552d72ac0cba55fa5ab1c1ff162807597cdc7a507ed0ff52f2539
+> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -17,6 +17,8 @@
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
+
+Incluido en el [registro oficial de MCP](https://registry.modelcontextprotocol.io/v0/servers?search=aletheia-mem), en [Glama](https://glama.ai/mcp/servers/mohamed-ashraf-elsaed/aletheia-mem), [mcpservers.org](https://mcpservers.org/servers/mohamed-ashraf-elsaed/aletheia-mem), [TensorBlock awesome-mcp-servers](https://github.com/TensorBlock/awesome-mcp-servers/pull/4715) y [AlternativeTo](https://alternativeto.net/software/aletheia-mem/).
 
 **Estado: alfa.** El motor de memoria y los instaladores funcionan en las pruebas. Los Claude Code, Command Code, Codex CLI y OpenCode reales listaron la configuración MCP generada. Los hooks se han ejecutado en sesiones reales de Claude Code (dos días de uso), Command Code (una sesión corta) y Codex CLI (una sesión interactiva), todo en la máquina del autor y con un solo usuario, con secretos redactados y sin fugas detectadas por el comprobador. Aún no se ha ejecutado ningún hook dentro de Cursor, Gemini CLI, Windsurf u OpenCode, y la precisión de las respuestas no está medida. La CI ejecuta el conjunto de pruebas en Linux, macOS y Windows. En Windows se omiten dos comprobaciones de hooks (Windsurf y Gemini CLI) y no se probó ninguna herramienta real, así que Windows solo está probado en la CI.
 

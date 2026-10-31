@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 5d4f5d85c65552d72ac0cba55fa5ab1c1ff162807597cdc7a507ed0ff52f2539
+> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -19,6 +19,8 @@
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
+
+مُدرج في [سجل MCP الرسمي](https://registry.modelcontextprotocol.io/v0/servers?search=aletheia-mem)، و[Glama](https://glama.ai/mcp/servers/mohamed-ashraf-elsaed/aletheia-mem)، و[mcpservers.org](https://mcpservers.org/servers/mohamed-ashraf-elsaed/aletheia-mem)، و[TensorBlock awesome-mcp-servers](https://github.com/TensorBlock/awesome-mcp-servers/pull/4715)، و[AlternativeTo](https://alternativeto.net/software/aletheia-mem/).
 
 **الحالة: ألفا.** محرك الذاكرة والمثبّتات تعمل في الاختبارات. قامت أدوات Claude Code وCommand Code وCodex CLI وOpenCode الحقيقية بإدراج إعداد MCP المُولّد. شُغِّلت الخطّافات في جلسات حقيقية لكل من Claude Code (يومان من الاستخدام) وCommand Code (جلسة قصيرة واحدة) وCodex CLI (جلسة تفاعلية واحدة)، كل ذلك على جهاز المؤلف وبمستخدم واحد، مع حجب الأسرار وعدم عثور الفاحص على تسريبات. لم يُشغَّل أي خطّاف داخل Cursor أو Gemini CLI أو Windsurf أو OpenCode بعد، ودقة الإجابات غير مقيسة. تشغّل CI مجموعة الاختبارات على Linux وmacOS وWindows. على Windows يتم تخطي فحصين للخطّافات (Windsurf وGemini CLI) ولم تُجرَّب أي أداة حقيقية هناك، لذا فإن Windows مُختبَر في CI فقط.
 
