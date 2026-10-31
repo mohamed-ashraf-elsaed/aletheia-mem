@@ -14,13 +14,38 @@ name: Release
 #   Option D, a token: store a GitHub PAT as the repository secret MCP_GITHUB_TOKEN. The registry only
 #     reads the namespace owner, so a bare classic PAT is enough for this personal namespace; give it
 #     read:org if the project ever moves under an organization.
+#   Option E, notify the distribution server (optional): set the repository variable DISTRO_URL (for example
+#     https://distro.example.com, no trailing slash) and the repository secret DISTRO_WEBHOOK_SECRET to the same value
+#     as GITHUB_WEBHOOK_SECRET on the server. (GitHub rejects repository secret names that start with GITHUB_, so the
+#     secret cannot be called GITHUB_WEBHOOK_SECRET_DISTRO.) A release made with the workflow token does not fire the
+#     release webhook, so the last-but-one step POSTs an HMAC-signed release payload to $DISTRO_URL/api/webhooks/github.
+#     Skipped cleanly when either is unset.
 # With neither, the publish steps are skipped and the run only tests, verifies and makes the GitHub release.
 # The server.json bump and the docs changelog page are not optional: every tag run bumps server.json to the
 # tag (pushed to main) and rebuilds the site with the changelog page (pushed to main, which deploys pages).
+#
+# Permissions the push to main needs: the workflow token has contents: write below, and main must allow it.
+# If main has branch protection or a ruleset, add "github-actions" (the GitHub Actions app) to the bypass list for
+# pushes, or the last push step fails. Settings, Actions, General must also give workflows read and write permission.
+# The distro notification runs before that push, so a refused push does not stop it.
+#
+# Manual run (workflow_dispatch): choose the branch, give an existing tag, and keep dry_run true to run only the tests
+# and the release verification. dry_run false runs every step for that tag, including publishing.
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to release, such as v0.1.12
+        required: true
+        type: string
+      dry_run:
+        description: Run only the tests and the release verification; publish nothing
+        required: true
+        type: boolean
+        default: true
 permissions:
   contents: write
   id-token: write
@@ -28,21 +53,25 @@ jobs:
   release:
     runs-on: ubuntu-latest
     env:
+      TAG: ${{ inputs.tag || github.ref_name }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       MCP_GITHUB_TOKEN: ${{ secrets.MCP_GITHUB_TOKEN }}
+      DISTRO_WEBHOOK_SECRET: ${{ secrets.DISTRO_WEBHOOK_SECRET }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.tag || github.ref }}
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.10
       - name: Sync server.json to the release version
-        run: bun scripts/release.mjs --sync-server-json "$GITHUB_REF_NAME"
+        run: bun scripts/release.mjs --sync-server-json "$TAG"
       - name: Test suite
         run: bun test --timeout 20000
       - name: Verify release files for this tag
-        run: bun scripts/release.mjs --verify --tag "$GITHUB_REF_NAME"
+        run: bun scripts/release.mjs --verify --tag "$TAG"
       - name: Publish to npm
-        if: ${{ env.NPM_TOKEN != '' || vars.NPM_TRUSTED_PUBLISHING == 'true' }}
+        if: ${{ inputs.dry_run != true && (env.NPM_TOKEN != '' || vars.NPM_TRUSTED_PUBLISHING == 'true') }}
         run: |
           npm install -g npm@latest
           if [ -n "$NODE_AUTH_TOKEN" ]; then echo "//registry.npmjs.org/:_authToken=$NODE_AUTH_TOKEN" > "$HOME/.npmrc"; fi
@@ -50,14 +79,34 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Create GitHub release
+        if: ${{ inputs.dry_run != true }}
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --generate-notes --verify-tag
+        run: gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --generate-notes --verify-tag
       - name: Rebuild the docs site
         run: |
           bun scripts/build-site.mjs
           bun scripts/check-sitemap.mjs
+      - name: Notify the distribution server
+        if: ${{ inputs.dry_run != true && vars.DISTRO_URL != '' && env.DISTRO_WEBHOOK_SECRET != '' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DISTRO_URL: ${{ vars.DISTRO_URL }}
+          DISTRO_WEBHOOK_SECRET: ${{ secrets.DISTRO_WEBHOOK_SECRET }}
+        run: |
+          set -euo pipefail
+          release="$(gh release view "$TAG" --json name,body,tagName)"
+          previous="$(gh release list --exclude-drafts --exclude-pre-releases --limit 20 --json tagName --jq '.[].tagName' | grep -vxF "$TAG" | head -n 1 || true)"
+          payload="$(jq -cn --argjson release "$release" --arg previous "$previous" \
+            '{action: "published", release: {tag_name: $release.tagName, name: $release.name, body: $release.body}} + (if $previous == "" then {} else {previousTag: $previous} end)')"
+          signature="sha256=$(printf '%s' "$payload" | openssl dgst -sha256 -hmac "$DISTRO_WEBHOOK_SECRET" | sed 's/^.* //')"
+          curl --fail --silent --show-error --max-time 30 -X POST "${DISTRO_URL%/}/api/webhooks/github" \
+            -H "Content-Type: application/json" \
+            -H "X-GitHub-Event: release" \
+            -H "X-Hub-Signature-256: $signature" \
+            --data-binary "$payload"
       - name: Push server.json and the changelog page to main
+        if: ${{ inputs.dry_run != true }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -65,7 +114,7 @@ jobs:
           dir="$(mktemp -d)"
           git clone --depth=1 --branch main "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "$dir"
           cd "$dir"
-          bun scripts/release.mjs --sync-server-json "$GITHUB_REF_NAME"
+          bun scripts/release.mjs --sync-server-json "$TAG"
           rm -rf site/docs site/assets
           cp -r "$GITHUB_WORKSPACE/site/docs" "$GITHUB_WORKSPACE/site/assets" site/
           cp "$GITHUB_WORKSPACE/site/sitemap.xml" "$GITHUB_WORKSPACE/site/robots.txt" "$GITHUB_WORKSPACE/site/llms.txt" "$GITHUB_WORKSPACE/site/llms-full.txt" site/
@@ -75,14 +124,14 @@ jobs:
           if git diff --cached --quiet; then
             echo "main already has this release's server.json and changelog page"
           else
-            git commit -m "Release $GITHUB_REF_NAME: sync server.json and the docs changelog page"
+            git commit -m "Release $TAG: sync server.json and the docs changelog page"
             git push origin main
           fi
       - name: Install cosign
-        if: ${{ (env.NPM_TOKEN != '' || vars.NPM_TRUSTED_PUBLISHING == 'true') && (env.MCP_GITHUB_TOKEN != '' || vars.MCP_REGISTRY_PUBLISH == 'true') }}
+        if: ${{ inputs.dry_run != true && (env.NPM_TOKEN != '' || vars.NPM_TRUSTED_PUBLISHING == 'true') && (env.MCP_GITHUB_TOKEN != '' || vars.MCP_REGISTRY_PUBLISH == 'true') }}
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
       - name: Publish to the MCP registry
-        if: ${{ (env.NPM_TOKEN != '' || vars.NPM_TRUSTED_PUBLISHING == 'true') && (env.MCP_GITHUB_TOKEN != '' || vars.MCP_REGISTRY_PUBLISH == 'true') }}
+        if: ${{ inputs.dry_run != true && (env.NPM_TOKEN != '' || vars.NPM_TRUSTED_PUBLISHING == 'true') && (env.MCP_GITHUB_TOKEN != '' || vars.MCP_REGISTRY_PUBLISH == 'true') }}
         env:
           MCP_PUBLISHER_VERSION: v1.8.7
         run: |
