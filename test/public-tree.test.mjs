@@ -38,8 +38,8 @@ describe("the public tree", () => {
     expect(offenders).toEqual([]);
   });
 
-  test.skipIf(!files)("the Claude Code, Codex and Qoder plugin folders are not tracked", () => {
-    expect(files.filter((name) => /^\.(claude|codex|qoder)-plugin\//.test(name))).toEqual([]);
+  test.skipIf(!files)("the Codex and Qoder plugin folders are not tracked", () => {
+    expect(files.filter((name) => /^\.(codex|qoder)-plugin\//.test(name))).toEqual([]);
   });
 
   test("every relative link in README.md resolves to a tracked file", () => {

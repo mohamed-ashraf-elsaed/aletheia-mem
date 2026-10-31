@@ -1,0 +1,91 @@
+{
+  "name": "aletheia-mem",
+  "displayName": "Aletheia",
+  "version": "0.1.11",
+  "description": "A free, local memory and rules hub for AI coding tools. One SQLite store read over MCP; hooks capture Claude Code sessions; rules sync to CLAUDE.md and AGENTS.md.",
+  "author": {
+    "name": "Mohamed Ashraf Elsaed",
+    "url": "https://github.com/mohamed-ashraf-elsaed"
+  },
+  "homepage": "https://mohamed-ashraf-elsaed.github.io/aletheia-mem/",
+  "repository": "https://github.com/mohamed-ashraf-elsaed/aletheia-mem",
+  "license": "Apache-2.0",
+  "keywords": [
+    "memory",
+    "mcp",
+    "rules",
+    "sqlite",
+    "hooks",
+    "claude-md",
+    "agents-md"
+  ],
+  "x-aletheia-verification": "from-docs-only",
+  "mcpServers": {
+    "aletheia": {
+      "type": "stdio",
+      "command": "bun",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/bin/mcp.mjs"
+      ]
+    }
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"${CLAUDE_PLUGIN_ROOT}/bin/aletheia.mjs\" hook claude-code SessionStart # aletheia-managed",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"${CLAUDE_PLUGIN_ROOT}/bin/aletheia.mjs\" hook claude-code UserPromptSubmit # aletheia-managed",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"${CLAUDE_PLUGIN_ROOT}/bin/aletheia.mjs\" hook claude-code PostToolUse # aletheia-managed",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"${CLAUDE_PLUGIN_ROOT}/bin/aletheia.mjs\" hook claude-code Stop # aletheia-managed",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"${CLAUDE_PLUGIN_ROOT}/bin/aletheia.mjs\" hook claude-code SessionEnd # aletheia-managed",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

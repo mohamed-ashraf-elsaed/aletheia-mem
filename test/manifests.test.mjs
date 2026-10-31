@@ -12,7 +12,8 @@ const SOURCES = {
   qoder: "https://docs.qoder.com/cli/plugins-reference",
   gemini: "https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/extensions/reference.md",
 };
-// The Claude Code, Codex and Qoder manifest folders are kept out of git on purpose; test whichever exist here.
+// The Claude Code plugin manifest is published; the Codex and Qoder manifest folders stay out of git.
+// Test whichever exist here.
 const ALL_MANIFESTS = [
   { host: "claude", path: join(root, ".claude-plugin", "plugin.json") },
   { host: "codex", path: join(root, ".codex-plugin", "plugin.json") },

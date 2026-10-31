@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/marketplace.schema.json",
+  "name": "aletheia-mem",
+  "description": "Aletheia: a free, local memory and rules hub for AI coding tools, packaged as a Claude Code plugin.",
+  "owner": {
+    "name": "Mohamed Ashraf Elsaed",
+    "url": "https://github.com/mohamed-ashraf-elsaed"
+  },
+  "plugins": [
+    {
+      "name": "aletheia-mem",
+      "source": "./",
+      "version": "0.1.11",
+      "description": "Free, local memory and rules hub for AI coding tools: the aletheia MCP server, the Claude Code hook set and rule sync to CLAUDE.md. Needs Bun 1.1 or newer.",
+      "author": {
+        "name": "Mohamed Ashraf Elsaed",
+        "url": "https://github.com/mohamed-ashraf-elsaed"
+      },
+      "homepage": "https://mohamed-ashraf-elsaed.github.io/aletheia-mem/",
+      "category": "development",
+      "license": "Apache-2.0"
+    }
+  ]
+}
