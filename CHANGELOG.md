@@ -6,6 +6,10 @@ history.
 
 ## [Unreleased]
 
+### Changed
+
+- The Settings page lists only the three settings that code reads: `facts.minConfidence`, `context.facts` and `rules.reviewDays`. The seven that nothing read (`provider`, `providers`, `factBudget.*`, `redaction`, `excludedProjects`, `apiKey`) are removed, along with the masked-secret handling. Use the environment variables for the provider, fact budgets and excluded projects; redaction is always on.
+
 ## [0.1.11] - 2026-10-30
 
 ### Added

@@ -114,7 +114,7 @@ The code runs `claude -p --output-format json --no-session-persistence --tools "
 
 For the server, set the same variables in the environment of the process. For a systemd service that means `Environment=` lines. See [Run as a service](run-as-a-service.md).
 
-The Settings page also has provider fields. I found no code that reads the saved values when the provider is built. Use environment variables.
+Version 0.1.10 showed provider fields on the Settings page, but no code read the saved values, so they were removed. Use environment variables.
 
 ## Fallback chain
 

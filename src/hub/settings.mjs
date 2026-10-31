@@ -1,20 +1,15 @@
 // Editable settings. Stored in the hub settings table under a namespace, so a saved value survives a
-// restart. Secrets are never returned: GET returns a mask and PUT replaces the value only when a non-empty one
-// is sent. Every other key is validated by kind and range before it is written.
+// restart. Every key is validated by kind and range before it is written.
+// Only settings that code reads belong here. The provider, its chain and key, the fact budgets and excluded projects
+// are environment variables (ALETHEIA_PROVIDER, ALETHEIA_PROVIDERS, ALETHEIA_FACT_MAX_EPISODES, ALETHEIA_FACT_CHAR_BUDGET,
+// ALETHEIA_EXCLUDED_PROJECTS), and redaction is always on, so none of them is an editable setting.
 
 const PREFIX = "ui.settings.";
 
 export const SETTINGS_SCHEMA = [
-  { key: "provider", kind: "string", label: "Provider", secret: false },
-  { key: "providers", kind: "list", label: "Provider chain", secret: false },
-  { key: "factBudget.maxEpisodes", kind: "int", label: "Fact episodes budget", min: 1, max: 1000, secret: false },
-  { key: "factBudget.maxChars", kind: "int", label: "Fact characters budget", min: 100, max: 200000, secret: false },
   { key: "facts.minConfidence", kind: "number", label: "Fact confidence floor", min: 0.3, max: 0.9, default: 0.4, secret: false },
   { key: "context.facts", kind: "enum", label: "Facts in context", options: ["auto", "on", "off"], default: "auto", secret: false },
   { key: "rules.reviewDays", kind: "int", label: "Rule review window (days)", min: 7, max: 730, default: 90, secret: false },
-  { key: "redaction", kind: "boolean", label: "Redact before storing", secret: false },
-  { key: "excludedProjects", kind: "list", label: "Excluded projects", secret: false },
-  { key: "apiKey", kind: "string", label: "API key", secret: true },
 ];
 
 const byKey = new Map(SETTINGS_SCHEMA.map((spec) => [spec.key, spec]));
@@ -53,11 +48,15 @@ export function validateSetting(key, value) {
 }
 
 export function readSettings(store) {
-  return SETTINGS_SCHEMA.map((spec) => {
-    const value = store.setting(keyOf(spec.key), defaultFor(spec));
-    const hasSecret = spec.secret && value != null && value !== "";
-    return { key: spec.key, label: spec.label, kind: spec.kind, secret: spec.secret, value: hasSecret ? "••••••••" : value, set: hasSecret, ...(spec.options ? { options: spec.options } : {}) };
-  });
+  return SETTINGS_SCHEMA.map((spec) => ({
+    key: spec.key,
+    label: spec.label,
+    kind: spec.kind,
+    secret: false,
+    value: store.setting(keyOf(spec.key), defaultFor(spec)),
+    set: false,
+    ...(spec.options ? { options: spec.options } : {}),
+  }));
 }
 
 export function writeSettings(store, patch) {
@@ -66,15 +65,7 @@ export function writeSettings(store, patch) {
   const errors = [];
   for (const spec of SETTINGS_SCHEMA) {
     if (!Object.hasOwn(patch, spec.key)) continue;
-    const raw = patch[spec.key];
-    if (spec.secret) {
-      if (raw == null || raw === "") continue;
-      if (typeof raw !== "string") { errors.push({ key: spec.key, error: `${spec.key} must be a string` }); continue; }
-      store.setSetting(keyOf(spec.key), raw);
-      saved.push(spec.key);
-      continue;
-    }
-    const result = validateSetting(spec.key, raw);
+    const result = validateSetting(spec.key, patch[spec.key]);
     if (!result.ok) { errors.push({ key: spec.key, error: result.error }); continue; }
     store.setSetting(keyOf(spec.key), result.value);
     saved.push(spec.key);

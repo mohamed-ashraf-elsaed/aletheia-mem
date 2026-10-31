@@ -105,7 +105,7 @@ Runtime settings live in the `settings` table of `hub.db`, under the key `ui.set
 | `context.facts` | enum | `auto` | `auto`, `on`, `off` | Facts in the session-start context. `off` lists none. `on` lists up to 10 active facts. `auto` lists a fact only if it came from a provider, has confidence 0.6 or more, or comes from a pinned observation. |
 | `rules.reviewDays` | integer | `90` | 7 to 730 | Days after which an unconfirmed rule gets a re-check flag. |
 
-The form lists seven more keys: `provider`, `providers`, `factBudget.maxEpisodes`, `factBudget.maxChars`, `redaction`, `excludedProjects` and `apiKey`. They are saved in the table, but in version 0.1.10 I found no code that reads the saved value. The active values come from the environment variables above, and redaction always runs. A fresh hub shows placeholder values for them in the form (`1`, `100`, `false`), which are not the active values.
+These three are the only runtime settings. Version 0.1.10 also showed `provider`, `providers`, `factBudget.maxEpisodes`, `factBudget.maxChars`, `redaction`, `excludedProjects` and `apiKey` in the form, but no code read them, so they were removed. The provider, its chain and key, the fact budgets and the excluded projects are environment variables (see above), and redaction always runs. A value saved under one of the removed keys stays in the table and does nothing.
 
 ```
 $ curl -s -X PUT http://127.0.0.1:37790/api/hub/settings -H "Content-Type: application/json" \

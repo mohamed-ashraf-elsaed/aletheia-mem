@@ -1655,7 +1655,7 @@ On LoCoMo, claude-mem 15.2.0 as shipped against this project, from `bench/result
 
 Recall@5 asks whether the gold evidence is in the top five results. The "Raw turns" row is the hybrid strategy: keyword plus embeddings. Re-run the table with `bun scripts/compare-bench.mjs`. In the same raw-turns result file, keyword-only BM25 scores 55.3% Recall@5 and MRR 0.482 at 2.00 ms per query, and embeddings alone score 49.6% (`bun scripts/compare-bench.mjs`, run 2026-10-29 on the committed result files).
 
-The `.log` file next to a result prints different recall values for the same strategy. `raw-turns.log` shows hybrid Recall@5 44.7 and MRR 0.384, where the result file gives 57.4% and 0.497. The cause is not resolved. This page uses the numbers the README publishes, which come from the result files.
+The `.log` file next to a result can disagree with it: `raw-turns.log` shows hybrid Recall@5 44.7 and MRR 0.384, where the result file gives 57.4% and 0.497. The log is older than the result file and comes from earlier search code. Re-runs on 2026-10-31 give 57.4% at the publishing commit and 57.7% on current code; details in [benchmarks](../project/benchmarks.md). This page uses the numbers the README publishes, which come from the result files.
 
 Keyword latency on a large store: at 50,000 synthetic rows, keyword search p95 is 32.7 ms project-scoped and 58.6 ms across all projects. Measured-by-us on 2026-10-27, Linux, 12 cores, synthetic data and SQLite FTS5 only, with `bun bench/scale.mjs 50000 20000 --index tuned --queries 200 --seed 1`. The p50 values in the same run were 25.1 ms and 40.7 ms, and synthetic Recall@5 was 59.0%. The method is in [benchmarks](../project/benchmarks.md).
 
@@ -1937,7 +1937,7 @@ Redaction is pattern based. It misses secrets that do not look like one of the p
 
 Do not rely on redaction for material that must never be stored. Keep secrets in the environment, and exclude a project you do not want captured by setting `ALETHEIA_EXCLUDED_PROJECTS=name1,name2` in the environment the host runs in.
 
-The Settings screen lists "Redact before storing" and "Excluded projects". The capture code does not read either value. Redaction is always on in the paths listed above, and exclusion works through the environment variable.
+Redaction is always on in the paths listed above, and exclusion works only through the environment variable. Version 0.1.10 showed "Redact before storing" and "Excluded projects" in the Settings screen, but no code read them; they were removed.
 
 ## What leaves your machine
 
@@ -3935,18 +3935,20 @@ reads, and what is verified on this machine. Five more hosts and Claude Desktop 
 
 | Tool | Level | Verification | Hooks | MCP | Rules |
 |---|---|---|---|---|---|
-| `claude-code` | full | from-docs-only (real config files checked) | 5 events | `~/.claude.json` | `CLAUDE.md` |
-| `command-code` | full | from-docs-only (bundled reference + real CLI) | 3 events | `~/.commandcode/mcp.json` | `AGENTS.md` |
+| `claude-code` | full | mcp-verified (real config files checked) | 5 events | `~/.claude.json` | `CLAUDE.md` |
+| `command-code` | full | mcp-verified (bundled reference + real CLI) | 3 events | `~/.commandcode/mcp.json` | `AGENTS.md` |
 | `cursor` | full | from-docs-only | 6 events | `~/.cursor/mcp.json` | `.cursor/rules/*.mdc` (sync) |
-| `codex` | full | from-docs-only | 5 events | `~/.codex/config.toml` | `AGENTS.md` |
+| `codex` | full | mcp-verified | 5 events | `~/.codex/config.toml` | `AGENTS.md` |
 | `gemini-cli` | full | from-docs-only | 5 events | `~/.gemini/settings.json` | `GEMINI.md` |
 | `windsurf` | full | from-docs-only | 4 events | `~/.config/devin/mcp_config.json` (or legacy) | global rules + `.windsurf/rules/*.md` |
-| `opencode` | mcp+rules | from-docs-only | none shipped | `~/.config/opencode/opencode.json` | `AGENTS.md` |
+| `opencode` | mcp+rules | mcp-verified | none shipped | `~/.config/opencode/opencode.json` | `AGENTS.md` |
 
 Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI
 (one interactive session), all on the author's machine and one user. Cursor, Gemini CLI, Windsurf and OpenCode
-hooks have not run. "from-docs-only" means the format came from the tool's official documentation (URL and date
-below) and the installer was tested against fixtures; it does **not** mean a real install was tested.
+hooks have not run. "mcp-verified" means the tool's own CLI listed the aletheia MCP server from the config the
+installer wrote (version and date in the generated table in the README). "from-docs-only" means the format came from
+the tool's official documentation (URL and date below) and the installer was tested against fixtures; it does **not**
+mean a real install was tested.
 
 ## One command
 
@@ -5241,7 +5243,7 @@ The code runs `claude -p --output-format json --no-session-persistence --tools "
 
 For the server, set the same variables in the environment of the process. For a systemd service that means `Environment=` lines. See [Run as a service](run-as-a-service.md).
 
-The Settings page also has provider fields. I found no code that reads the saved values when the provider is built. Use environment variables.
+Version 0.1.10 showed provider fields on the Settings page, but no code read the saved values, so they were removed. Use environment variables.
 
 ## Fallback chain
 
@@ -5474,7 +5476,7 @@ Work through these checks in order.
 
 4. Check that the host and your shell use the same data directory. A hook reads `ALETHEIA_DATA_DIR` from the environment of the tool that starts it. If you set it only in your shell, the hook and the dashboard use different databases.
 
-5. Check excluded projects. A project named in `ALETHEIA_EXCLUDED_PROJECTS` is skipped before any row is written, and the hook still exits 0. Only the environment variable is read. I found no code that reads the excluded-projects value saved on the Settings page.
+5. Check excluded projects. A project named in `ALETHEIA_EXCLUDED_PROJECTS` is skipped before any row is written, and the hook still exits 0. Only the environment variable is read; the Settings page no longer has an excluded-projects field.
 
 6. Check what the tool can send. Command Code has no prompt hook and no session-end hook, so prompts are not captured there. `SessionStart` only injects context and stores no row.
 
@@ -6980,7 +6982,7 @@ Runtime settings live in the `settings` table of `hub.db`, under the key `ui.set
 | `context.facts` | enum | `auto` | `auto`, `on`, `off` | Facts in the session-start context. `off` lists none. `on` lists up to 10 active facts. `auto` lists a fact only if it came from a provider, has confidence 0.6 or more, or comes from a pinned observation. |
 | `rules.reviewDays` | integer | `90` | 7 to 730 | Days after which an unconfirmed rule gets a re-check flag. |
 
-The form lists seven more keys: `provider`, `providers`, `factBudget.maxEpisodes`, `factBudget.maxChars`, `redaction`, `excludedProjects` and `apiKey`. They are saved in the table, but in version 0.1.10 I found no code that reads the saved value. The active values come from the environment variables above, and redaction always runs. A fresh hub shows placeholder values for them in the form (`1`, `100`, `false`), which are not the active values.
+These three are the only runtime settings. Version 0.1.10 also showed `provider`, `providers`, `factBudget.maxEpisodes`, `factBudget.maxChars`, `redaction`, `excludedProjects` and `apiKey` in the form, but no code read them, so they were removed. The provider, its chain and key, the fact budgets and the excluded projects are environment variables (see above), and redaction always runs. A value saved under one of the removed keys stays in the table and does nothing.
 
 ```
 $ curl -s -X PUT http://127.0.0.1:37790/api/hub/settings -H "Content-Type: application/json" \
@@ -8033,9 +8035,21 @@ Notes on the table:
 
 Compare the claude-mem row with the raw-turns rows only. They are the only rows where both systems store the same raw text. The speed columns are not like for like: one is an in-process call and the other is an HTTP request to a worker.
 
-### Known gap in the evidence
+### The raw-turns numbers were re-run on 2026-10-31
 
-The local `raw-turns.log` in the results folder, which git ignores, shows hybrid Recall@5 of 44.7%. The committed `raw-turns.json`, which the README and `compare-bench.mjs` use, shows 57.4%. The other four logs match their JSON files. The cause is unknown and the run has not been repeated. The 57.4% figure is the published one until it is.
+The published 57.4% (MRR 0.497) comes from `raw-turns.json`, written on 2026-10-26. A local `raw-turns.log` that git ignores showed hybrid Recall@5 of 44.7%. The log is older than the JSON (file times 16:58 and 18:13 on 2026-10-26), so it comes from an earlier version of the search code, not from the published run.
+
+Re-runs on 2026-10-31 with `bun bench/locomo-retrieval.mjs --facts none`, on a 12-core Linux machine:
+
+| Code | Hybrid Recall@5 | MRR |
+|---|---|---|
+| commit `e6145b3` (the published run's commit) | 57.4% | 0.497 |
+| commits `b2c5b3d`, `4bd5f54` | 57.4% | 0.497 |
+| commits `11ef293`, `b843eb4`, `1e326b6`, `ddf442c` (before and after the redaction change) | 57.7% | 0.502 |
+| current main, two runs | 57.7% | 0.502 |
+| current main, one earlier run | 54.2% | 0.473 |
+
+So the 57.4% reproduces exactly at the commit that produced it, and the current code scores 57.7%. Search changes since 2026-10-26 added 0.3 points; the redaction change did not affect the result. One run on 2026-10-31 scored 54.2% with keyword-only BM25 at 52.1% where the other runs give 55.2%. BM25 does not use the embedding model, so I could not explain that run and it did not repeat in three more runs. Treat it as an unexplained outlier. The README keeps the 2026-10-26 numbers, which `scripts/compare-bench.mjs` reproduces from the committed files.
 
 ## Scale: 50,000 rows
 

@@ -24,7 +24,7 @@ describe("README top block", () => {
 
   test("the logo and both screenshots have alt text, and the screenshots are small", () => {
     const refs = imageRefs(top).filter((r) => r.url.startsWith(RAW));
-    expect(refs.map((r) => r.url.slice(RAW.length))).toEqual(["docs/assets/logo.png", "docs/screenshots/memory-dark.webp", "docs/screenshots/work-dark.webp"]);
+    expect(refs.map((r) => r.url.slice(RAW.length))).toEqual(["docs/assets/logo.png", "docs/screenshots/home-projects-light.webp", "docs/screenshots/home-project-light.webp"]);
     expect(top).not.toMatch(/alt=""/);
     for (const { url } of refs.slice(1)) expect(statSync(join(root, url.slice(RAW.length))).size).toBeLessThan(100_000);
   });

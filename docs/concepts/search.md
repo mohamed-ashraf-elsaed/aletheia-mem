@@ -162,7 +162,7 @@ On LoCoMo, claude-mem 15.2.0 as shipped against this project, from `bench/result
 
 Recall@5 asks whether the gold evidence is in the top five results. The "Raw turns" row is the hybrid strategy: keyword plus embeddings. Re-run the table with `bun scripts/compare-bench.mjs`. In the same raw-turns result file, keyword-only BM25 scores 55.3% Recall@5 and MRR 0.482 at 2.00 ms per query, and embeddings alone score 49.6% (`bun scripts/compare-bench.mjs`, run 2026-10-29 on the committed result files).
 
-The `.log` file next to a result prints different recall values for the same strategy. `raw-turns.log` shows hybrid Recall@5 44.7 and MRR 0.384, where the result file gives 57.4% and 0.497. The cause is not resolved. This page uses the numbers the README publishes, which come from the result files.
+The `.log` file next to a result can disagree with it: `raw-turns.log` shows hybrid Recall@5 44.7 and MRR 0.384, where the result file gives 57.4% and 0.497. The log is older than the result file and comes from earlier search code. Re-runs on 2026-10-31 give 57.4% at the publishing commit and 57.7% on current code; details in [benchmarks](../project/benchmarks.md). This page uses the numbers the README publishes, which come from the result files.
 
 Keyword latency on a large store: at 50,000 synthetic rows, keyword search p95 is 32.7 ms project-scoped and 58.6 ms across all projects. Measured-by-us on 2026-10-27, Linux, 12 cores, synthetic data and SQLite FTS5 only, with `bun bench/scale.mjs 50000 20000 --index tuned --queries 200 --seed 1`. The p50 values in the same run were 25.1 ms and 40.7 ms, and synthetic Recall@5 was 59.0%. The method is in [benchmarks](../project/benchmarks.md).
 
