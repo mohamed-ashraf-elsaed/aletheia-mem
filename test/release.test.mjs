@@ -216,18 +216,19 @@ describe("release workflow", () => {
   const yml = readFileSync(join(repo, ".github/workflows/release.yml"), "utf8");
   const code = yml.split("\n").filter((line) => !line.trim().startsWith("#")).join("\n");
 
-  test("runs on v* tags only, with the pinned Bun and the checks", () => {
-    expect(code).toMatch(/on:\n  push:\n    tags:\n      - "v\*"/);
+  test("runs on v* tags and manual dispatch only, with the pinned Bun and the checks", () => {
+    expect(code).toMatch(/on:\n  push:\n    tags:\n      - "v\*"\n  workflow_dispatch:\n    inputs:\n      tag:/);
+    expect(code).toMatch(/dry_run:\n\s+description: .*\n\s+required: true\n\s+type: boolean\n\s+default: true/);
     expect(code).not.toMatch(/branches:/);
     expect(code).toContain("bun-version: 1.3.10");
     expect(code).toContain("run: bun test");
-    expect(code).toContain('bun scripts/release.mjs --verify --tag "$GITHUB_REF_NAME"');
+    expect(code).toContain('bun scripts/release.mjs --verify --tag "$TAG"');
   });
 
   test("publishes with provenance only when configured, and creates the GitHub release", () => {
     expect(code).toContain("id-token: write");
     expect(code).toContain("npm publish --provenance --access public");
-    expect(code).toMatch(/if: \$\{\{ env\.NPM_TOKEN != '' \|\| vars\.NPM_TRUSTED_PUBLISHING == 'true' \}\}\n\s+run: \|\n\s+npm install -g npm@latest/);
+    expect(code).toMatch(/if: \$\{\{ inputs\.dry_run != true && \(env\.NPM_TOKEN != '' \|\| vars\.NPM_TRUSTED_PUBLISHING == 'true'\) \}\}\n\s+run: \|\n\s+npm install -g npm@latest/);
     expect(code).toContain("gh release create");
     expect(code).toContain("--generate-notes");
     expect(code.indexOf("--verify --tag")).toBeLessThan(code.indexOf("npm publish"));
@@ -235,7 +236,7 @@ describe("release workflow", () => {
   });
 
   test("syncs server.json, rebuilds the docs changelog page and publishes to the MCP registry", () => {
-    expect(code).toContain('bun scripts/release.mjs --sync-server-json "$GITHUB_REF_NAME"');
+    expect(code).toContain('bun scripts/release.mjs --sync-server-json "$TAG"');
     // The sync runs before the test suite, so a stale server.json cannot fail the server-json test.
     expect(code.indexOf("--sync-server-json")).toBeLessThan(code.indexOf("run: bun test"));
     expect(code).toContain("bun scripts/build-site.mjs");
@@ -249,6 +250,21 @@ describe("release workflow", () => {
     expect(code.indexOf("mcp-publisher publish")).toBeGreaterThan(code.indexOf("gh release create"));
     expect(code).toMatch(/MCP_REGISTRY_PUBLISH == 'true'/);
     expect(code).not.toMatch(/echo .*MCP_GITHUB_TOKEN[^"]/);
+  });
+
+  test("a dry run publishes nothing, and the distro notification is signed, optional and runs before the push to main", () => {
+    for (const name of ["Create GitHub release", "Push server.json and the changelog page to main", "Notify the distribution server"]) {
+      const at = code.indexOf(`- name: ${name}`);
+      expect(at).toBeGreaterThan(-1);
+      expect(code.slice(at, at + 200)).toContain("inputs.dry_run != true");
+    }
+    expect(code).toContain("vars.DISTRO_URL != ''");
+    expect(code).toContain("secrets.DISTRO_WEBHOOK_SECRET");
+    expect(code).toContain("openssl dgst -sha256 -hmac");
+    expect(code).toContain("X-Hub-Signature-256");
+    expect(code).toContain("/api/webhooks/github");
+    expect(code.indexOf("Notify the distribution server")).toBeLessThan(code.indexOf("git push origin main"));
+    expect(code.indexOf("Notify the distribution server")).toBeGreaterThan(code.indexOf("gh release create"));
   });
 
   test("the owner setup is documented in comments and never prints the token", () => {
