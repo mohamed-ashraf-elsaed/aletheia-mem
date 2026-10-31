@@ -17,8 +17,8 @@
 ![Status](https://img.shields.io/badge/status-alpha-orange)
 ![Bun](https://img.shields.io/badge/bun-%3E%3D1.1-black)
 ![Platform](https://img.shields.io/badge/platform-linux%20%7C%20macOS%20%7C%20Windows%20%28CI%20tested%29-lightgrey)
+[![As seen on Open Source Alternatives](https://www.opensourcealternatives.to/badge-osa.svg)](https://www.opensourcealternatives.to)
 
-<a href="https://www.opensourcealternatives.to"><img src="https://www.opensourcealternatives.to/badge-osa.svg" alt="As seen on Open Source Alternatives" height="44"></a>
 <a href="https://alternativeto.net/software/aletheia-mem/about/?utm_source=badge&utm_medium=referral"><img src="https://alternativeto.net/static/badges/badge-compact-color.svg" alt="Aletheia Memory on AlternativeTo" height="44"></a>
 
 Listed in the [official MCP Registry](https://registry.modelcontextprotocol.io/v0/servers?search=aletheia-mem), [Glama](https://glama.ai/mcp/servers/mohamed-ashraf-elsaed/aletheia-mem), [mcpservers.org](https://mcpservers.org/servers/mohamed-ashraf-elsaed/aletheia-mem), [TensorBlock awesome-mcp-servers](https://github.com/TensorBlock/awesome-mcp-servers/pull/4715) and [AlternativeTo](https://alternativeto.net/software/aletheia-mem/).
