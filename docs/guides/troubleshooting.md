@@ -132,7 +132,7 @@ Work through these checks in order.
 
 4. Check that the host and your shell use the same data directory. A hook reads `ALETHEIA_DATA_DIR` from the environment of the tool that starts it. If you set it only in your shell, the hook and the dashboard use different databases.
 
-5. Check excluded projects. A project named in `ALETHEIA_EXCLUDED_PROJECTS` is skipped before any row is written, and the hook still exits 0. Only the environment variable is read. I found no code that reads the excluded-projects value saved on the Settings page.
+5. Check excluded projects. A project named in `ALETHEIA_EXCLUDED_PROJECTS` is skipped before any row is written, and the hook still exits 0. Only the environment variable is read; the Settings page no longer has an excluded-projects field.
 
 6. Check what the tool can send. Command Code has no prompt hook and no session-end hook, so prompts are not captured there. `SessionStart` only injects context and stores no row.
 

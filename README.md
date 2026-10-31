@@ -30,7 +30,7 @@ aletheia-server
 # open http://127.0.0.1:37790
 ~~~
 
-<p align="center"><img src="https://raw.githubusercontent.com/mohamed-ashraf-elsaed/aletheia-mem/main/docs/screenshots/memory-dark.webp" alt="The Memory tab: search, edit, pin and export what Aletheia stored" width="48%"> <img src="https://raw.githubusercontent.com/mohamed-ashraf-elsaed/aletheia-mem/main/docs/screenshots/work-dark.webp" alt="The Work tab: captured sessions, facts and goals" width="48%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/mohamed-ashraf-elsaed/aletheia-mem/main/docs/screenshots/home-projects-light.webp" alt="The Home page: your projects, your rules and how to start, in plain words (demo data)" width="48%"> <img src="https://raw.githubusercontent.com/mohamed-ashraf-elsaed/aletheia-mem/main/docs/screenshots/home-project-light.webp" alt="One project on the Home page: what Aletheia knows, with a Hide button, and the rules for it (demo data)" width="48%"></p>
 
 <p align="center"><a href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/">Docs site</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/06-frontend.md">Frontend guide</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues">Issues</a></p>
 
@@ -104,7 +104,7 @@ the instruction file each tool already reads. What has and has not been checked:
 | claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
 | command-code | full | MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine | SessionStart, PostToolUse, Stop |
 | cursor | full | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
-| codex | full | MCP connection 0.130.0 on 2026-10-27; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| codex | full | MCP connection 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
 | gemini-cli | full | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
 | windsurf | full | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
 | opencode | mcp+rules | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |

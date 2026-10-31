@@ -40,7 +40,7 @@ describe("gen-tables", () => {
     }
     expect(markdown).toContain("MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine");
     expect(markdown).toContain("MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine");
-    expect(markdown).toContain("MCP connection 0.130.0 on 2026-10-27; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine");
+    expect(markdown).toContain("MCP connection 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine");
     expect(markdown).toContain("MCP connection 1.18.33 on 2026-10-27; hooks not run");
     expect(markdown).toContain("config written from docs, not tested on a real install");
     expect(markdown).not.toContain("| tested on a real install |");

@@ -115,9 +115,21 @@ Notes on the table:
 
 Compare the claude-mem row with the raw-turns rows only. They are the only rows where both systems store the same raw text. The speed columns are not like for like: one is an in-process call and the other is an HTTP request to a worker.
 
-### Known gap in the evidence
+### The raw-turns numbers were re-run on 2026-10-31
 
-The local `raw-turns.log` in the results folder, which git ignores, shows hybrid Recall@5 of 44.7%. The committed `raw-turns.json`, which the README and `compare-bench.mjs` use, shows 57.4%. The other four logs match their JSON files. The cause is unknown and the run has not been repeated. The 57.4% figure is the published one until it is.
+The published 57.4% (MRR 0.497) comes from `raw-turns.json`, written on 2026-10-26. A local `raw-turns.log` that git ignores showed hybrid Recall@5 of 44.7%. The log is older than the JSON (file times 16:58 and 18:13 on 2026-10-26), so it comes from an earlier version of the search code, not from the published run.
+
+Re-runs on 2026-10-31 with `bun bench/locomo-retrieval.mjs --facts none`, on a 12-core Linux machine:
+
+| Code | Hybrid Recall@5 | MRR |
+|---|---|---|
+| commit `e6145b3` (the published run's commit) | 57.4% | 0.497 |
+| commits `b2c5b3d`, `4bd5f54` | 57.4% | 0.497 |
+| commits `11ef293`, `b843eb4`, `1e326b6`, `ddf442c` (before and after the redaction change) | 57.7% | 0.502 |
+| current main, two runs | 57.7% | 0.502 |
+| current main, one earlier run | 54.2% | 0.473 |
+
+So the 57.4% reproduces exactly at the commit that produced it, and the current code scores 57.7%. Search changes since 2026-10-26 added 0.3 points; the redaction change did not affect the result. One run on 2026-10-31 scored 54.2% with keyword-only BM25 at 52.1% where the other runs give 55.2%. BM25 does not use the embedding model, so I could not explain that run and it did not repeat in three more runs. Treat it as an unexplained outlier. The README keeps the 2026-10-26 numbers, which `scripts/compare-bench.mjs` reproduces from the committed files.
 
 ## Scale: 50,000 rows
 

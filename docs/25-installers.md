@@ -7,18 +7,20 @@ reads, and what is verified on this machine. Five more hosts and Claude Desktop 
 
 | Tool | Level | Verification | Hooks | MCP | Rules |
 |---|---|---|---|---|---|
-| `claude-code` | full | from-docs-only (real config files checked) | 5 events | `~/.claude.json` | `CLAUDE.md` |
-| `command-code` | full | from-docs-only (bundled reference + real CLI) | 3 events | `~/.commandcode/mcp.json` | `AGENTS.md` |
+| `claude-code` | full | mcp-verified (real config files checked) | 5 events | `~/.claude.json` | `CLAUDE.md` |
+| `command-code` | full | mcp-verified (bundled reference + real CLI) | 3 events | `~/.commandcode/mcp.json` | `AGENTS.md` |
 | `cursor` | full | from-docs-only | 6 events | `~/.cursor/mcp.json` | `.cursor/rules/*.mdc` (sync) |
-| `codex` | full | from-docs-only | 5 events | `~/.codex/config.toml` | `AGENTS.md` |
+| `codex` | full | mcp-verified | 5 events | `~/.codex/config.toml` | `AGENTS.md` |
 | `gemini-cli` | full | from-docs-only | 5 events | `~/.gemini/settings.json` | `GEMINI.md` |
 | `windsurf` | full | from-docs-only | 4 events | `~/.config/devin/mcp_config.json` (or legacy) | global rules + `.windsurf/rules/*.md` |
-| `opencode` | mcp+rules | from-docs-only | none shipped | `~/.config/opencode/opencode.json` | `AGENTS.md` |
+| `opencode` | mcp+rules | mcp-verified | none shipped | `~/.config/opencode/opencode.json` | `AGENTS.md` |
 
 Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI
 (one interactive session), all on the author's machine and one user. Cursor, Gemini CLI, Windsurf and OpenCode
-hooks have not run. "from-docs-only" means the format came from the tool's official documentation (URL and date
-below) and the installer was tested against fixtures; it does **not** mean a real install was tested.
+hooks have not run. "mcp-verified" means the tool's own CLI listed the aletheia MCP server from the config the
+installer wrote (version and date in the generated table in the README). "from-docs-only" means the format came from
+the tool's official documentation (URL and date below) and the installer was tested against fixtures; it does **not**
+mean a real install was tested.
 
 ## One command
 

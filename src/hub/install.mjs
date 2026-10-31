@@ -335,10 +335,10 @@ export const INSTALLERS = [
     name: "Codex CLI",
     capabilities: "full",
     verification: "mcp-verified",
-    toolVersion: "0.130.0",
-    verifiedOn: "2026-10-27",
+    toolVersion: "0.165.0",
+    verifiedOn: "2026-10-29",
     hookNote: "hooks ran in one interactive session (reviewed once with /hooks); one user on one machine",
-    evidence: "https://developers.openai.com/codex/hooks, /codex/config-reference and /codex/agent-configuration/agents-md fetched 2026-10-26; MCP server listed by Codex 0.130.0 on 2026-10-27; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine",
+    evidence: "https://developers.openai.com/codex/hooks, /codex/config-reference and /codex/agent-configuration/agents-md fetched 2026-10-26; MCP server listed by Codex 0.130.0 on 2026-10-27 and again by Codex 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine",
     detection: [".codex"],
     notes: [
       "Codex requires non-managed hooks to be reviewed once with /hooks before they run.",

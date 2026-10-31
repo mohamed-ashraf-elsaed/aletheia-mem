@@ -1,6 +1,6 @@
 // Settings: a read/write form over GET/PUT /api/hub/settings. Values live in the hub settings table and
-// survive a restart. The API key is a password field: masked on read, replaced only when a non-empty value is sent.
-import { badge, button, emptyState, skeleton, toast } from "../ui-components.js";
+// survive a restart. Only settings that backend code reads are listed (see src/hub/settings.mjs).
+import { button, emptyState, skeleton, toast } from "../ui-components.js";
 import { api, h } from "../ui-dom.js";
 import { region } from "../ui-region.js";
 
@@ -11,12 +11,10 @@ function settingField(spec) {
   else if (spec.kind === "enum") control = h("select", { id, "aria-label": spec.label }, ...(spec.options ?? []).map((opt) => h("option", { value: opt, selected: opt === spec.value }, opt)));
   else if (spec.kind === "int") control = h("input", { type: "number", id, "aria-label": spec.label, value: String(spec.value ?? "") });
   else if (spec.kind === "list") control = h("input", { type: "text", id, "aria-label": spec.label, value: (spec.value ?? []).join(", ") });
-  else if (spec.secret) control = h("input", { type: "password", id, "aria-label": spec.label, placeholder: spec.set ? "unchanged" : "set a value" });
   else control = h("input", { type: "text", id, "aria-label": spec.label, value: String(spec.value ?? "") });
   const row = h("div", { class: "ui-setting-row" },
     h("label", { for: id, class: "ui-setting-label" }, spec.label),
-    control,
-    spec.secret ? h("span", { class: "ui-meta" }, spec.set ? badge("set", "success") : badge("not set")) : null);
+    control);
   return { row, control };
 }
 
@@ -38,7 +36,6 @@ export function settingsView() {
           if (spec.kind === "boolean") patch[spec.key] = control.checked;
           else if (spec.kind === "int") { if (control.value !== "") patch[spec.key] = Number(control.value); }
           else if (spec.kind === "list") patch[spec.key] = control.value.split(",").map((item) => item.trim()).filter(Boolean);
-          else if (spec.secret) { if (control.value !== "") patch[spec.key] = control.value; }
           else patch[spec.key] = control.value;
         }
         try {
@@ -55,7 +52,7 @@ export function settingsView() {
         return field.row;
       });
       return h("div", {},
-        h("p", { class: "ui-meta" }, "Values are saved in the hub and survive a restart. Leave the API key blank to keep the current value."),
+        h("p", { class: "ui-meta" }, "Values are saved in the hub and survive a restart. The provider, fact budgets and excluded projects are set with environment variables, and redaction is always on."),
         h("div", { class: "ui-settings-form" }, ...rows),
         h("div", { class: "ui-acts" }, save));
     },

@@ -83,7 +83,7 @@ Redaction is pattern based. It misses secrets that do not look like one of the p
 
 Do not rely on redaction for material that must never be stored. Keep secrets in the environment, and exclude a project you do not want captured by setting `ALETHEIA_EXCLUDED_PROJECTS=name1,name2` in the environment the host runs in.
 
-The Settings screen lists "Redact before storing" and "Excluded projects". The capture code does not read either value. Redaction is always on in the paths listed above, and exclusion works through the environment variable.
+Redaction is always on in the paths listed above, and exclusion works only through the environment variable. Version 0.1.10 showed "Redact before storing" and "Excluded projects" in the Settings screen, but no code read them; they were removed.
 
 ## What leaves your machine
 
