@@ -35,13 +35,13 @@ aletheia-server
 
 <p align="center"><img src="https://raw.githubusercontent.com/mohamed-ashraf-elsaed/aletheia-mem/main/docs/screenshots/home-projects-light.webp" alt="The Home page: your projects, your rules and how to start, in plain words (demo data)" width="48%"> <img src="https://raw.githubusercontent.com/mohamed-ashraf-elsaed/aletheia-mem/main/docs/screenshots/home-project-light.webp" alt="One project on the Home page: what Aletheia knows, with a Hide button, and the rules for it (demo data)" width="48%"></p>
 
-<p align="center"><a href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/">Docs site</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/06-frontend.md">Frontend guide</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues">Issues</a></p>
+<p align="center"><a href="https://aletheia.mohamedashrafelsaed.com/">Docs site</a> · <a href="https://mohamedashrafelsaed.com/projects/aletheia/">Project page</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/06-frontend.md">Frontend guide</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md">Changelog</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues">Issues</a></p>
 
 **Status: alpha.** The memory engine and the installers work in tests. The real Claude Code, Command Code, Codex CLI and
 OpenCode listed the generated MCP config. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), all on the author's machine and one user, with secrets redacted and no leaks found by the checker. No hook has run inside Cursor, Gemini CLI, Windsurf or OpenCode yet, and answer accuracy is not measured. CI runs the test suite on Linux, macOS and Windows. On Windows, two hook checks (Windsurf and Gemini CLI) are skipped and no real tool was tried there, so Windows is tested in CI only.
 
 <!-- claims:begin -->
-**1,505 tests** — 0 failures (run `bun test`).
+**1,515 tests** — 0 failures (run `bun test`).
 <!-- claims:end -->
 
 [English](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/README.md) · [中文](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.zh.md) · [Español](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.es.md) · [Português (Brasil)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.pt-br.md) · [日本語](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ja.md) · [Deutsch](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.de.md) · [Français](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.fr.md) · [한국어](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ko.md) · [हिन्दी](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.hi.md) · [العربية](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ar.md) · [Русский](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ru.md).
@@ -262,7 +262,7 @@ docs/           the documents
 
 ## Documentation
 
-The full documentation is at <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>. The Markdown in `docs/` is
+The full documentation is at <https://aletheia.mohamedashrafelsaed.com/docs/>. The Markdown in `docs/` is
 canonical.
 
 1. **Get started:** [Introduction](docs/start/introduction.md) · [Installation](docs/start/installation.md)
@@ -290,8 +290,8 @@ canonical.
 8. **Internals:** [Architecture](docs/01-architecture.md) · [Data model](docs/02-data-model.md)
    · [Frontend](docs/06-frontend.md) · [Operations](docs/07-operations.md)
 
-AI tools can read [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt), or
-[llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt) for every page in one file.
+AI tools can read [llms.txt](https://aletheia.mohamedashrafelsaed.com/llms.txt), or
+[llms-full.txt](https://aletheia.mohamedashrafelsaed.com/llms-full.txt) for every page in one file.
 
 ## Contributing
 

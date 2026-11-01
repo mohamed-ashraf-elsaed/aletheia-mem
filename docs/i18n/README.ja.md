@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
+> Source: [README.md](../../README.md) · source-sha256: bff8b03a19b2ad92b16e4a0ce7f10891cabb0f0fa72211a376c4f48ea49cb033
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -216,7 +216,7 @@ docs/           the documents
 
 ## ドキュメント
 
-完全なドキュメントは <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/> にあります。`docs/` の Markdown が正典です。
+完全なドキュメントは <https://aletheia.mohamedashrafelsaed.com/docs/> にあります。`docs/` の Markdown が正典です。
 
 1. **はじめに:** [イントロダクション](../../docs/start/introduction.md) · [インストール](../../docs/start/installation.md)
    · [クイックスタート](../../docs/start/quickstart.md) · [仕組み](../../docs/start/how-it-works.md)
@@ -243,7 +243,7 @@ docs/           the documents
 8. **内部構造:** [アーキテクチャ](../../docs/01-architecture.md) · [データモデル](../../docs/02-data-model.md)
    · [フロントエンド](../../docs/06-frontend.md) · [運用](../../docs/07-operations.md)
 
-AI ツールは [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt) を読めます。すべてのページを 1 つにまとめた [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt) もあります。
+AI ツールは [llms.txt](https://aletheia.mohamedashrafelsaed.com/llms.txt) を読めます。すべてのページを 1 つにまとめた [llms-full.txt](https://aletheia.mohamedashrafelsaed.com/llms-full.txt) もあります。
 
 ## 貢献
 

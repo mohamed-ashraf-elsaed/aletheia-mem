@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
+> Source: [README.md](../../README.md) · source-sha256: bff8b03a19b2ad92b16e4a0ce7f10891cabb0f0fa72211a376c4f48ea49cb033
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -216,7 +216,7 @@ docs/           the documents
 
 ## 문서
 
-전체 문서는 <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>에 있습니다. `docs/`의 Markdown이 기준입니다.
+전체 문서는 <https://aletheia.mohamedashrafelsaed.com/docs/>에 있습니다. `docs/`의 Markdown이 기준입니다.
 
 1. **시작하기:** [소개](../../docs/start/introduction.md) · [설치](../../docs/start/installation.md)
    · [빠른 시작](../../docs/start/quickstart.md) · [작동 방식](../../docs/start/how-it-works.md)
@@ -243,7 +243,7 @@ docs/           the documents
 8. **내부 구조:** [아키텍처](../../docs/01-architecture.md) · [데이터 모델](../../docs/02-data-model.md)
    · [프런트엔드](../../docs/06-frontend.md) · [운영](../../docs/07-operations.md)
 
-AI 도구는 [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt)를 읽을 수 있고, 모든 페이지가 한 파일에 담긴 [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt)도 읽을 수 있습니다.
+AI 도구는 [llms.txt](https://aletheia.mohamedashrafelsaed.com/llms.txt)를 읽을 수 있고, 모든 페이지가 한 파일에 담긴 [llms-full.txt](https://aletheia.mohamedashrafelsaed.com/llms-full.txt)도 읽을 수 있습니다.
 
 ## 기여
 

@@ -9,8 +9,8 @@
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
 <meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
 <meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
-<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/search.html">
-<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="canonical" href="https://aletheia.mohamedashrafelsaed.com/docs/concepts/search.html">
+<link rel="alternate" type="text/plain" href="https://aletheia.mohamedashrafelsaed.com/llms.txt" title="llms.txt">
 <link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
 <link rel="apple-touch-icon" href="../../apple-touch-icon.png">
@@ -18,15 +18,15 @@
 <meta property="og:site_name" content="Aletheia">
 <meta property="og:title" content="Search: keyword, project scope and optional semantic search">
 <meta property="og:description" content="How Aletheia search works: FTS5 keyword search, project scope and --scope all, --explain, optional semantic search, ranking and the agent search pattern.">
-<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/search.html">
-<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta property="og:url" content="https://aletheia.mohamedashrafelsaed.com/docs/concepts/search.html">
+<meta property="og:image" content="https://aletheia.mohamedashrafelsaed.com/assets/social.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Search: keyword, project scope and optional semantic search">
 <meta name="twitter:description" content="How Aletheia search works: FTS5 keyword search, project scope and --scope all, --explain, optional semantic search, ranking and the agent search pattern.">
-<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:image" content="https://aletheia.mohamedashrafelsaed.com/assets/social.png">
 <link rel="stylesheet" href="../../style.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Search: keyword, project scope and optional semantic search","description":"How Aletheia search works: FTS5 keyword search, project scope and --scope all, --explain, optional semantic search, ranking and the agent search pattern.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/search.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/search.html","inLanguage":"en","dateModified":"2026-10-31","keywords":"aletheia search, fts5 keyword search, semantic search embeddings, hybrid search, search ai coding memory, mcp search timeline get_observations, aletheia embed","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"Search: keyword, project scope and optional semantic search","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/search.html"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Search: keyword, project scope and optional semantic search","description":"How Aletheia search works: FTS5 keyword search, project scope and --scope all, --explain, optional semantic search, ranking and the agent search pattern.","url":"https://aletheia.mohamedashrafelsaed.com/docs/concepts/search.html","mainEntityOfPage":"https://aletheia.mohamedashrafelsaed.com/docs/concepts/search.html","inLanguage":"en","dateModified":"2026-10-31","keywords":"aletheia search, fts5 keyword search, semantic search embeddings, hybrid search, search ai coding memory, mcp search timeline get_observations, aletheia embed","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://aletheia.mohamedashrafelsaed.com/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://aletheia.mohamedashrafelsaed.com/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed","url":"https://mohamedashrafelsaed.com","@id":"https://mohamedashrafelsaed.com/#person"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://aletheia.mohamedashrafelsaed.com/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://aletheia.mohamedashrafelsaed.com/docs/"},{"@type":"ListItem","position":3,"name":"Search: keyword, project scope and optional semantic search","item":"https://aletheia.mohamedashrafelsaed.com/docs/concepts/search.html"}]}</script>
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -111,7 +111,7 @@ Webhook retries use exponential backoff up to 5 attempts</code></pre>
 <ul><li><a href="session-context.html">Session-start context</a> - the index a new session receives, and its fetch hint.</li><li><a href="memory-model.html">Memory model</a> - kinds, types, scope and facts.</li><li><a href="../reference/mcp-tools.html">MCP tools reference</a> - every argument of <code>search</code>, <code>timeline</code> and <code>get_observations</code>.</li><li><a href="../project/benchmarks.html">Benchmarks</a> - method, raw files and the negative results.</li></ul>
 <nav class="pager" aria-label="Previous and next"><a class="previous" href="rules.html"><small>Previous</small><span>Rules: write standing instructions once and sync them to every tool</span></a><a class="next" href="session-context.html"><small>Next</small><span>Session-start context: what a new AI session receives</span></a></nav>
 </article>
-<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+<footer>By <a rel="author" href="https://mohamedashrafelsaed.com">Mohamed Ashraf Elsaed</a> · Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
 </main>
 </body>
 </html>

@@ -11,7 +11,7 @@ import { trackedFiles } from "./tracked.mjs";
 
 const ROOT = join(import.meta.dir, "..");
 const REPO = "https://github.com/mohamed-ashraf-elsaed/aletheia-mem";
-const SITE_URL = "https://mohamed-ashraf-elsaed.github.io/aletheia-mem/";
+const SITE_URL = "https://aletheia.mohamedashrafelsaed.com/";
 
 const argOut = process.argv.indexOf("--out");
 const OUT = resolve(argOut > 0 ? process.argv[argOut + 1] : join(ROOT, "wiki-out"));

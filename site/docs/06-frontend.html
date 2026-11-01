@@ -8,8 +8,8 @@
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
 <meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
 <meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
-<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/06-frontend.html">
-<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="canonical" href="https://aletheia.mohamedashrafelsaed.com/docs/06-frontend.html">
+<link rel="alternate" type="text/plain" href="https://aletheia.mohamedashrafelsaed.com/llms.txt" title="llms.txt">
 <link rel="icon" type="image/png" sizes="64x64" href="../favicon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
@@ -17,15 +17,15 @@
 <meta property="og:site_name" content="Aletheia">
 <meta property="og:title" content="6. Frontend">
 <meta property="og:description" content="Aletheia has one app page at /. It is plain HTML, CSS and JavaScript: no framework, no build step, no font file, no CDN and no dependency. It works offline. The older claude-mem...">
-<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/06-frontend.html">
-<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta property="og:url" content="https://aletheia.mohamedashrafelsaed.com/docs/06-frontend.html">
+<meta property="og:image" content="https://aletheia.mohamedashrafelsaed.com/assets/social.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="6. Frontend">
 <meta name="twitter:description" content="Aletheia has one app page at /. It is plain HTML, CSS and JavaScript: no framework, no build step, no font file, no CDN and no dependency. It works offline. The older claude-mem...">
-<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:image" content="https://aletheia.mohamedashrafelsaed.com/assets/social.png">
 <link rel="stylesheet" href="../style.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"6. Frontend","description":"Aletheia has one app page at /. It is plain HTML, CSS and JavaScript: no framework, no build step, no font file, no CDN and no dependency. It works offline. The older claude-mem...","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/06-frontend.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/06-frontend.html","inLanguage":"en","dateModified":"2026-10-29","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"6. Frontend","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/06-frontend.html"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"6. Frontend","description":"Aletheia has one app page at /. It is plain HTML, CSS and JavaScript: no framework, no build step, no font file, no CDN and no dependency. It works offline. The older claude-mem...","url":"https://aletheia.mohamedashrafelsaed.com/docs/06-frontend.html","mainEntityOfPage":"https://aletheia.mohamedashrafelsaed.com/docs/06-frontend.html","inLanguage":"en","dateModified":"2026-10-29","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://aletheia.mohamedashrafelsaed.com/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://aletheia.mohamedashrafelsaed.com/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed","url":"https://mohamedashrafelsaed.com","@id":"https://mohamedashrafelsaed.com/#person"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://aletheia.mohamedashrafelsaed.com/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://aletheia.mohamedashrafelsaed.com/docs/"},{"@type":"ListItem","position":3,"name":"6. Frontend","item":"https://aletheia.mohamedashrafelsaed.com/docs/06-frontend.html"}]}</script>
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -85,7 +85,7 @@ ALETHEIA_DATA_DIR=/tmp/aletheia-demo/data HOME=/tmp/aletheia-demo/home ALETHEIA_
 <p>To write your own front end, you need only: one JSON snapshot, one event stream, four POSTs. Use <code>GET /api/work-view</code> as a typed contract (the key list is asserted in <code>test/server.test.mjs</code>) and keep the fingerprint round trip: send the fingerprint you rendered when reviewing, and re-render from the returned snapshot after any <code>409</code>.</p>
 <nav class="pager" aria-label="Previous and next"><a class="previous" href="02-data-model.html"><small>Previous</small><span>2. Data model</span></a><a class="next" href="07-operations.html"><small>Next</small><span>7. Operations</span></a></nav>
 </article>
-<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../llms.txt">llms.txt</a> · <a href="../sitemap.xml">Sitemap</a></footer>
+<footer>By <a rel="author" href="https://mohamedashrafelsaed.com">Mohamed Ashraf Elsaed</a> · Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../llms.txt">llms.txt</a> · <a href="../sitemap.xml">Sitemap</a></footer>
 </main>
 </body>
 </html>

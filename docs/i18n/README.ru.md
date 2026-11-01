@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
+> Source: [README.md](../../README.md) · source-sha256: bff8b03a19b2ad92b16e4a0ce7f10891cabb0f0fa72211a376c4f48ea49cb033
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -216,7 +216,7 @@ docs/           the documents
 
 ## Документация
 
-Полная документация находится по адресу <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>. Основным источником является Markdown в `docs/`.
+Полная документация находится по адресу <https://aletheia.mohamedashrafelsaed.com/docs/>. Основным источником является Markdown в `docs/`.
 
 1. **Начало работы:** [Введение](../../docs/start/introduction.md) · [Установка](../../docs/start/installation.md)
    · [Быстрый старт](../../docs/start/quickstart.md) · [Как это работает](../../docs/start/how-it-works.md)
@@ -243,7 +243,7 @@ docs/           the documents
 8. **Внутреннее устройство:** [Архитектура](../../docs/01-architecture.md) · [Модель данных](../../docs/02-data-model.md)
    · [Фронтенд](../../docs/06-frontend.md) · [Эксплуатация](../../docs/07-operations.md)
 
-Инструменты ИИ могут читать [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt) или [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt), где все страницы собраны в одном файле.
+Инструменты ИИ могут читать [llms.txt](https://aletheia.mohamedashrafelsaed.com/llms.txt) или [llms-full.txt](https://aletheia.mohamedashrafelsaed.com/llms-full.txt), где все страницы собраны в одном файле.
 
 ## Участие
 

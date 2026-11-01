@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
+> Source: [README.md](../../README.md) · source-sha256: bff8b03a19b2ad92b16e4a0ce7f10891cabb0f0fa72211a376c4f48ea49cb033
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -216,7 +216,7 @@ docs/           the documents
 
 ## Dokumentation
 
-Die vollständige Dokumentation liegt unter <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>. Maßgeblich ist das Markdown in `docs/`.
+Die vollständige Dokumentation liegt unter <https://aletheia.mohamedashrafelsaed.com/docs/>. Maßgeblich ist das Markdown in `docs/`.
 
 1. **Erste Schritte:** [Einführung](../../docs/start/introduction.md) · [Installation](../../docs/start/installation.md)
    · [Schnellstart](../../docs/start/quickstart.md) · [Wie es funktioniert](../../docs/start/how-it-works.md)
@@ -243,7 +243,7 @@ Die vollständige Dokumentation liegt unter <https://mohamed-ashraf-elsaed.githu
 8. **Interna:** [Architektur](../../docs/01-architecture.md) · [Datenmodell](../../docs/02-data-model.md)
    · [Frontend](../../docs/06-frontend.md) · [Betrieb](../../docs/07-operations.md)
 
-KI-Werkzeuge können [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt) lesen, oder [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt) für alle Seiten in einer einzigen Datei.
+KI-Werkzeuge können [llms.txt](https://aletheia.mohamedashrafelsaed.com/llms.txt) lesen, oder [llms-full.txt](https://aletheia.mohamedashrafelsaed.com/llms-full.txt) für alle Seiten in einer einzigen Datei.
 
 ## Mitwirken
 

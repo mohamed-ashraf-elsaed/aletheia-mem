@@ -11,8 +11,9 @@ import { isTracked, trackedFiles } from "./tracked.mjs";
 const ROOT = process.env.SITE_ROOT ? resolve(process.env.SITE_ROOT) : join(import.meta.dir, "..");
 const SITE = join(ROOT, "site");
 const DOCS = join(ROOT, "docs");
-const SITE_URL = "https://mohamed-ashraf-elsaed.github.io/aletheia-mem/";
+const SITE_URL = "https://aletheia.mohamedashrafelsaed.com/";
 const REPO = "https://github.com/mohamed-ashraf-elsaed/aletheia-mem";
+const AUTHOR = { "@type": "Person", name: "Mohamed Ashraf Elsaed", url: "https://mohamedashrafelsaed.com", "@id": "https://mohamedashrafelsaed.com/#person" };
 
 const esc = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
@@ -400,7 +401,7 @@ ${(Array.isArray(jsonLd) ? jsonLd : [jsonLd]).map((data) => `<script type="appli
 ${sidebar}<article>
 ${body}
 </article>
-<footer>Apache-2.0 · <a href="${REPO}/blob/main/NOTICE.md">NOTICE</a> · <a href="${REPO}">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="${asset("llms.txt")}">llms.txt</a> · <a href="${asset("sitemap.xml")}">Sitemap</a></footer>
+<footer>By <a rel="author" href="${AUTHOR.url}">${AUTHOR.name}</a> · Apache-2.0 · <a href="${REPO}/blob/main/NOTICE.md">NOTICE</a> · <a href="${REPO}">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="${asset("llms.txt")}">llms.txt</a> · <a href="${asset("sitemap.xml")}">Sitemap</a></footer>
 </main>
 </body>
 </html>
@@ -521,7 +522,7 @@ function buildChangelogPage(site) {
       dateModified: modified,
       about: { "@type": "SoftwareApplication", name: SITE_NAME, alternateName: "aletheia-mem", url: SITE_URL },
       isPartOf: { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
-      author: { "@type": "Person", name: "Mohamed Ashraf Elsaed" },
+      author: AUTHOR,
       license: "https://www.apache.org/licenses/LICENSE-2.0",
     },
     crumbs.data,
@@ -571,7 +572,7 @@ function main() {
         ...(page.keywords.length ? { keywords: page.keywords.join(", ") } : {}),
         about: { "@type": "SoftwareApplication", name: SITE_NAME, alternateName: "aletheia-mem", url: SITE_URL },
         isPartOf: { "@type": "WebSite", name: SITE_NAME, url: SITE_URL },
-        author: { "@type": "Person", name: "Mohamed Ashraf Elsaed" },
+        author: AUTHOR,
         license: "https://www.apache.org/licenses/LICENSE-2.0",
       },
       crumbs.data,

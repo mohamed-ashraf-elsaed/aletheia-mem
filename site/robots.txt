@@ -32,4 +32,4 @@ Allow: /
 User-agent: Applebot-Extended
 Allow: /
 
-Sitemap: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/sitemap.xml
+Sitemap: https://aletheia.mohamedashrafelsaed.com/sitemap.xml
