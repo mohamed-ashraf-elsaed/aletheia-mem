@@ -35,7 +35,7 @@
     "fts5",
     "bun"
   ],
-  "homepage": "https://mohamed-ashraf-elsaed.github.io/aletheia-mem/",
+  "homepage": "https://mohamedashrafelsaed.com/projects/aletheia/",
   "bugs": {
     "url": "https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues"
   },
@@ -43,7 +43,11 @@
     "type": "git",
     "url": "git+https://github.com/mohamed-ashraf-elsaed/aletheia-mem.git"
   },
-  "author": "Mohamed Ashraf Elsaed",
+  "author": {
+    "name": "Mohamed Ashraf Elsaed",
+    "email": "hello@mohamedashrafelsaed.com",
+    "url": "https://mohamedashrafelsaed.com"
+  },
   "license": "Apache-2.0",
   "type": "module",
   "files": [

@@ -9,8 +9,8 @@
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
 <meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
 <meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
-<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/session-context.html">
-<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="canonical" href="https://aletheia.mohamedashrafelsaed.com/docs/concepts/session-context.html">
+<link rel="alternate" type="text/plain" href="https://aletheia.mohamedashrafelsaed.com/llms.txt" title="llms.txt">
 <link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
 <link rel="apple-touch-icon" href="../../apple-touch-icon.png">
@@ -18,15 +18,15 @@
 <meta property="og:site_name" content="Aletheia">
 <meta property="og:title" content="Session-start context: what a new AI session receives">
 <meta property="og:description" content="What the Aletheia session-start block holds: the day-grouped index, legend, fetch hint, token estimate, the context.facts setting and how to shrink it.">
-<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/session-context.html">
-<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta property="og:url" content="https://aletheia.mohamedashrafelsaed.com/docs/concepts/session-context.html">
+<meta property="og:image" content="https://aletheia.mohamedashrafelsaed.com/assets/social.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Session-start context: what a new AI session receives">
 <meta name="twitter:description" content="What the Aletheia session-start block holds: the day-grouped index, legend, fetch hint, token estimate, the context.facts setting and how to shrink it.">
-<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:image" content="https://aletheia.mohamedashrafelsaed.com/assets/social.png">
 <link rel="stylesheet" href="../../style.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Session-start context: what a new AI session receives","description":"What the Aletheia session-start block holds: the day-grouped index, legend, fetch hint, token estimate, the context.facts setting and how to shrink it.","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/session-context.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/session-context.html","inLanguage":"en","dateModified":"2026-10-29","keywords":"session start context, aletheia context command, context.facts setting, token economics estimate, ai coding session memory, claude code sessionstart hook, shrink context","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"Session-start context: what a new AI session receives","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/session-context.html"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Session-start context: what a new AI session receives","description":"What the Aletheia session-start block holds: the day-grouped index, legend, fetch hint, token estimate, the context.facts setting and how to shrink it.","url":"https://aletheia.mohamedashrafelsaed.com/docs/concepts/session-context.html","mainEntityOfPage":"https://aletheia.mohamedashrafelsaed.com/docs/concepts/session-context.html","inLanguage":"en","dateModified":"2026-10-29","keywords":"session start context, aletheia context command, context.facts setting, token economics estimate, ai coding session memory, claude code sessionstart hook, shrink context","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://aletheia.mohamedashrafelsaed.com/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://aletheia.mohamedashrafelsaed.com/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed","url":"https://mohamedashrafelsaed.com","@id":"https://mohamedashrafelsaed.com/#person"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://aletheia.mohamedashrafelsaed.com/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://aletheia.mohamedashrafelsaed.com/docs/"},{"@type":"ListItem","position":3,"name":"Session-start context: what a new AI session receives","item":"https://aletheia.mohamedashrafelsaed.com/docs/concepts/session-context.html"}]}</script>
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -147,7 +147,7 @@ context.facts=off    Context economics: 2 items listed; ~156 tokens for this blo
 <ul><li><a href="search.html">Search</a> - the search, timeline and get_observations pattern the hint points to.</li><li><a href="rules.html">Rules</a> - the rules that fill the last section of the block.</li><li><a href="memory-model.html">Memory model</a> - pin, dismiss, scope and the kinds of memory.</li><li><a href="../reference/hooks.html">Hooks reference</a> - which hook events inject context for each host.</li></ul>
 <nav class="pager" aria-label="Previous and next"><a class="previous" href="search.html"><small>Previous</small><span>Search: keyword, project scope and optional semantic search</span></a><a class="next" href="privacy.html"><small>Next</small><span>Privacy and redaction in Aletheia</span></a></nav>
 </article>
-<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+<footer>By <a rel="author" href="https://mohamedashrafelsaed.com">Mohamed Ashraf Elsaed</a> · Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
 </main>
 </body>
 </html>

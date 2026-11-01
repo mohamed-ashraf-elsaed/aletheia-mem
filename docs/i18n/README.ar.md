@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
+> Source: [README.md](../../README.md) · source-sha256: bff8b03a19b2ad92b16e4a0ce7f10891cabb0f0fa72211a376c4f48ea49cb033
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -218,7 +218,7 @@ docs/           the documents
 
 ## التوثيق
 
-التوثيق الكامل موجود في <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>. ملفات Markdown في `docs/` هي المرجع.
+التوثيق الكامل موجود في <https://aletheia.mohamedashrafelsaed.com/docs/>. ملفات Markdown في `docs/` هي المرجع.
 
 1. **البدء:** [مقدمة](../../docs/start/introduction.md) · [التثبيت](../../docs/start/installation.md)
    · [البدء السريع](../../docs/start/quickstart.md) · [كيف يعمل](../../docs/start/how-it-works.md)
@@ -245,7 +245,7 @@ docs/           the documents
 8. **التفاصيل الداخلية:** [البنية](../../docs/01-architecture.md) · [نموذج البيانات](../../docs/02-data-model.md)
    · [الواجهة الأمامية](../../docs/06-frontend.md) · [التشغيل](../../docs/07-operations.md)
 
-يمكن لأدوات الذكاء الاصطناعي قراءة [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt)، أو [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt) لقراءة كل الصفحات في ملف واحد.
+يمكن لأدوات الذكاء الاصطناعي قراءة [llms.txt](https://aletheia.mohamedashrafelsaed.com/llms.txt)، أو [llms-full.txt](https://aletheia.mohamedashrafelsaed.com/llms-full.txt) لقراءة كل الصفحات في ملف واحد.
 
 ## المساهمة
 

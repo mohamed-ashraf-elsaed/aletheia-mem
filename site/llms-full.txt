@@ -4,7 +4,7 @@
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/introduction.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/start/introduction.html
 
 # Introduction to Aletheia, a local memory hub for AI coding tools
 
@@ -101,7 +101,7 @@ The landing page of the project writes the name as `ἀλήθεια · a-lethe �
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/installation.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/start/installation.html
 
 # Install Aletheia with npm, git or Docker
 
@@ -389,7 +389,7 @@ These files can appear there:
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/quickstart.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/start/quickstart.html
 
 # Quickstart: save, search and recall a memory with Aletheia
 
@@ -600,7 +600,7 @@ Press Ctrl-C in the server terminal. If you used throwaway folders, delete them,
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/how-it-works.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/start/how-it-works.html
 
 # How Aletheia works: capture, redact, store, compress, recall
 
@@ -759,7 +759,7 @@ After the first block, a model can ask for more through the MCP tools `search`, 
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/dashboard.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/start/dashboard.html
 
 # The Aletheia dashboard: five tabs for memory, rules and tools
 
@@ -878,7 +878,7 @@ Open http://127.0.0.1:37997/?demo=1. The `?demo=1` part shows a banner that says
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/start/faq.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/start/faq.html
 
 # Aletheia FAQ: memory, privacy, tools and limits
 
@@ -1063,7 +1063,7 @@ Run `aletheia doctor`. It checks the server, the hooks for each tool, the spool,
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/memory-model.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/concepts/memory-model.html
 
 # Aletheia memory model: memories, facts, episodes and rules
 
@@ -1241,7 +1241,7 @@ The schema is in [store.mjs](https://github.com/mohamed-ashraf-elsaed/aletheia-m
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/rules.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/concepts/rules.html
 
 # Rules: write standing instructions once and sync them to every tool
 
@@ -1491,7 +1491,7 @@ aletheia rules suggestions
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/search.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/concepts/search.html
 
 # Search: keyword, project scope and optional semantic search
 
@@ -1668,7 +1668,7 @@ Keyword latency on a large store: at 50,000 synthetic rows, keyword search p95 i
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/session-context.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/concepts/session-context.html
 
 # Session-start context: what a new AI session receives
 
@@ -1852,7 +1852,7 @@ The hook uses fixed values: 20 recent memories and 6,000 characters. To change w
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/privacy.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/concepts/privacy.html
 
 # Privacy and redaction in Aletheia
 
@@ -2020,7 +2020,7 @@ Use GitHub's private vulnerability reporting on the repository, as described in 
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/33-facts.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/33-facts.html
 
 # 33. Facts
 
@@ -2104,7 +2104,7 @@ measured context-economics line counts only what is actually listed.
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/concepts/glossary.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/concepts/glossary.html
 
 # Aletheia glossary: terms used in the documentation
 
@@ -2260,7 +2260,7 @@ The estimated token counts in the session-start block and in `aletheia context e
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/overview.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/tools/overview.html
 
 # Connect AI coding tools to Aletheia: overview and verification status
 
@@ -2371,7 +2371,7 @@ The README adds that CI runs on Linux, macOS and Windows, that two hook checks (
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/claude-code.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/tools/claude-code.html
 
 # Claude Code memory with Aletheia
 
@@ -2594,7 +2594,7 @@ The `(no aletheia hooks)` label on the hooks line is the installer's own wording
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/command-code.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/tools/command-code.html
 
 # Command Code memory with Aletheia
 
@@ -2778,7 +2778,7 @@ The `(no aletheia hooks)` label is the installer's own wording for the hooks lin
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/codex.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/tools/codex.html
 
 # Codex CLI memory with Aletheia
 
@@ -2957,7 +2957,7 @@ The `(no aletheia hooks)` label is the installer's own wording for the hooks lin
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/cursor.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/tools/cursor.html
 
 # Cursor memory with Aletheia
 
@@ -3146,7 +3146,7 @@ The `(no aletheia hooks)` label is the installer's own wording for the hooks lin
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/gemini-cli.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/tools/gemini-cli.html
 
 # Gemini CLI memory with Aletheia
 
@@ -3306,7 +3306,7 @@ Uninstall removes the `aletheia` MCP entry only if it is Aletheia's, the managed
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/windsurf.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/tools/windsurf.html
 
 # Windsurf memory with Aletheia
 
@@ -3474,7 +3474,7 @@ The `(no aletheia hooks)` label is the installer's own wording for the hooks lin
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/opencode.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/tools/opencode.html
 
 # OpenCode memory with Aletheia
 
@@ -3636,7 +3636,7 @@ Uninstall removes the `aletheia` MCP entry only if it is Aletheia's, and the rul
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/claude-desktop.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/claude-desktop.html
 
 # Claude Desktop and the aletheia MCP server
 
@@ -3690,7 +3690,7 @@ run the command from the entry by hand and read its stderr.
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/tools/other-tools.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/tools/other-tools.html
 
 # GitHub Copilot, Aider and any MCP client with Aletheia
 
@@ -3924,7 +3924,7 @@ See [CLI reference](../reference/cli.md) and [Backup, export and import](../guid
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/25-installers.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/25-installers.html
 
 # 25. Installers and automatic capture
 
@@ -4284,7 +4284,7 @@ signal and falls back to the session-end table when that has rows and there is n
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/migrate-from-claude-mem.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/guides/migrate-from-claude-mem.html
 
 # Migrate from claude-mem to Aletheia
 
@@ -4485,7 +4485,7 @@ Nothing in these steps changes the claude-mem database.
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/write-rules-once.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/guides/write-rules-once.html
 
 # Write your AI coding rules once and sync them to every tool
 
@@ -4715,7 +4715,7 @@ A rule is flagged when its evidence changed after the last confirmation, or when
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/backup-export-import.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/guides/backup-export-import.html
 
 # Back up, export and move Aletheia memory between machines
 
@@ -4921,7 +4921,7 @@ Limits:
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/run-as-a-service.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/guides/run-as-a-service.html
 
 # Run Aletheia as a background service (systemd, launchd, Docker)
 
@@ -5127,7 +5127,7 @@ One limit follows from how the hooks work. A hook or CLI command on your host op
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/model-providers.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/guides/model-providers.html
 
 # Model providers: none, Claude CLI, OpenAI-compatible and Ollama
 
@@ -5342,7 +5342,7 @@ The order of precedence is: the project's saved language, then the saved `defaul
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/guides/troubleshooting.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/guides/troubleshooting.html
 
 # Troubleshooting Aletheia: port in use, MCP closed, no memories and more
 
@@ -5635,7 +5635,7 @@ aletheia install --list
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/29-sync.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/29-sync.html
 
 # 29. Aletheia Sync
 
@@ -5880,7 +5880,7 @@ keeps payloads off the audit table, and offers the optional E2EE mode in §29.6 
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/30-remote-mcp.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/30-remote-mcp.html
 
 # 30. The private remote MCP endpoint
 
@@ -5980,7 +5980,7 @@ browser-based client passes the Origin check.
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/31-team.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/31-team.html
 
 # 31. Team mode
 
@@ -6073,7 +6073,7 @@ behaviour. The task file carries the real command output. Nothing here was measu
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/32-requests.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/32-requests.html
 
 # 32. Requests, goals, story and economics
 
@@ -6315,7 +6315,7 @@ Progress, ETA, request grouping, goal progress, rule strength and read tokens ca
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/reference/cli.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/reference/cli.html
 
 # Aletheia CLI reference: every aletheia command and flag
 
@@ -6589,7 +6589,7 @@ There is no `aletheia settings` command. Runtime settings such as `facts.minConf
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/reference/mcp-tools.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/reference/mcp-tools.html
 
 # MCP tools reference: the 13 Aletheia MCP tools and their inputs
 
@@ -6875,7 +6875,7 @@ An unknown list returns `No list named "<name>".`
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/reference/configuration.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/reference/configuration.html
 
 # Aletheia configuration reference: environment variables, settings and data directory
 
@@ -7032,7 +7032,7 @@ See [Operations](../07-operations.md) for backup and growth, and [Data model](..
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/reference/hooks.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/reference/hooks.html
 
 # Aletheia hooks reference: events, payloads, redaction and fail-open behavior
 
@@ -7271,7 +7271,7 @@ Two behaviors of 0.1.10 to know. First, when one file has drifted, the command e
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/03-http-api.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/03-http-api.html
 
 # 3. HTTP API
 
@@ -7565,7 +7565,7 @@ in the `search` MCP tool), so pruning old memories is a query. Memory rows alrea
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/compare/aletheia-vs-claude-mem.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/compare/aletheia-vs-claude-mem.html
 
 # claude-mem alternative: Aletheia compared with claude-mem
 
@@ -7667,7 +7667,7 @@ Aletheia is Apache-2.0. A few files come from claude-mem 15.2.0, also Apache-2.0
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/compare/memory-tools.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/compare/memory-tools.html
 
 # Memory tools compared: Aletheia, Mem0, Zep and Graphiti, Supermemory, Basic Memory
 
@@ -7754,7 +7754,7 @@ None of these numbers can be set beside Aletheia's Recall@5. The pages above do 
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/compare/claude-code-memory.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/compare/claude-code-memory.html
 
 # Claude Code memory options: CLAUDE.md, auto memory, MCP servers and Aletheia
 
@@ -7918,7 +7918,7 @@ Things to know:
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/project/benchmarks.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/project/benchmarks.html
 
 # Aletheia benchmarks: how to reproduce every published number
 
@@ -8109,7 +8109,7 @@ These are the experiments that did not give the hoped-for result.
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/project/status-and-limits.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/project/status-and-limits.html
 
 # Aletheia status and limits: alpha, what is verified and what is not
 
@@ -8230,7 +8230,7 @@ Every release is recorded in the [CHANGELOG](https://github.com/mohamed-ashraf-e
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/dependencies.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/dependencies.html
 
 # Dependencies
 
@@ -8264,7 +8264,7 @@ This project's own code is also Apache-2.0, per [LICENSE](../LICENSE).
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/01-architecture.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/01-architecture.html
 
 # 1. Architecture
 
@@ -8362,7 +8362,7 @@ records `state: running` and the pid, and another process refuses to start while
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/02-data-model.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/02-data-model.html
 
 # 2. Data model
 
@@ -8499,7 +8499,7 @@ goal that no longer exists, or when the goal set changed.
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/06-frontend.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/06-frontend.html
 
 # 6. Frontend
 
@@ -8715,7 +8715,7 @@ snapshot after any `409`.
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/07-operations.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/07-operations.html
 
 # 7. Operations
 
@@ -8831,7 +8831,7 @@ bun bench/accuracy.mjs --provider openai --model gpt-4o-mini --data /path/to/que
 
 ---
 
-Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/changelog.html
+Source: https://aletheia.mohamedashrafelsaed.com/docs/changelog.html
 
 # Changelog
 
@@ -8848,6 +8848,8 @@ history.
 
 ### Changed
 
+- The documentation site moves from `https://mohamed-ashraf-elsaed.github.io/aletheia-mem/` to `https://aletheia.mohamedashrafelsaed.com/`. Canonical URLs, Open Graph tags, structured data, the sitemap, `robots.txt`, `llms.txt`, `llms-full.txt`, the README links and the plugin manifests use the new address. Paths are unchanged, and GitHub Pages redirects the old address. Every docs page has a footer credit that links to the author's site, and the `author` in the structured data carries his URL.
+- Package metadata: the npm `homepage` is the project page at `https://mohamedashrafelsaed.com/projects/aletheia/`, and `author` is an object with name, email and URL. The README link row adds the project page. No code changed.
 - The Settings page lists only the three settings that code reads: `facts.minConfidence`, `context.facts` and `rules.reviewDays`. The seven that nothing read (`provider`, `providers`, `factBudget.*`, `redaction`, `excludedProjects`, `apiKey`) are removed, along with the masked-secret handling. Use the environment variables for the provider, fact budgets and excluded projects; redaction is always on.
 
 ## [0.1.11] - 2026-10-30

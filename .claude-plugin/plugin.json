@@ -5,9 +5,9 @@
   "description": "A free, local memory and rules hub for AI coding tools. One SQLite store read over MCP; hooks capture Claude Code sessions; rules sync to CLAUDE.md and AGENTS.md.",
   "author": {
     "name": "Mohamed Ashraf Elsaed",
-    "url": "https://github.com/mohamed-ashraf-elsaed"
+    "url": "https://mohamedashrafelsaed.com"
   },
-  "homepage": "https://mohamed-ashraf-elsaed.github.io/aletheia-mem/",
+  "homepage": "https://aletheia.mohamedashrafelsaed.com/",
   "repository": "https://github.com/mohamed-ashraf-elsaed/aletheia-mem",
   "license": "Apache-2.0",
   "keywords": [

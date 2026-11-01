@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
+> Source: [README.md](../../README.md) · source-sha256: bff8b03a19b2ad92b16e4a0ce7f10891cabb0f0fa72211a376c4f48ea49cb033
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -216,7 +216,7 @@ docs/           the documents
 
 ## Documentation
 
-La documentation complète se trouve à l'adresse <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>. Le Markdown de `docs/` fait référence.
+La documentation complète se trouve à l'adresse <https://aletheia.mohamedashrafelsaed.com/docs/>. Le Markdown de `docs/` fait référence.
 
 1. **Prise en main :** [Introduction](../../docs/start/introduction.md) · [Installation](../../docs/start/installation.md)
    · [Démarrage rapide](../../docs/start/quickstart.md) · [Comment ça marche](../../docs/start/how-it-works.md)
@@ -243,7 +243,7 @@ La documentation complète se trouve à l'adresse <https://mohamed-ashraf-elsaed
 8. **Fonctionnement interne :** [Architecture](../../docs/01-architecture.md) · [Modèle de données](../../docs/02-data-model.md)
    · [Frontend](../../docs/06-frontend.md) · [Exploitation](../../docs/07-operations.md)
 
-Les outils d'IA peuvent lire [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt), ou [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt) pour toutes les pages dans un seul fichier.
+Les outils d'IA peuvent lire [llms.txt](https://aletheia.mohamedashrafelsaed.com/llms.txt), ou [llms-full.txt](https://aletheia.mohamedashrafelsaed.com/llms-full.txt) pour toutes les pages dans un seul fichier.
 
 ## Contribuer
 

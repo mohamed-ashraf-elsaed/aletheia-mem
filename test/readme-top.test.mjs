@@ -52,7 +52,8 @@ describe("README top block", () => {
     expect(top).toMatch(/Bun 1\.1 or newer is required/);
   });
 
-  test("the link row points at the docs site from package.json, the frontend guide, the changelog and issues", () => {
+  test("the link row points at the docs site, the project page from package.json, the frontend guide, the changelog and issues", () => {
+    expect(top).toContain('href="https://aletheia.mohamedashrafelsaed.com/"');
     expect(top).toContain(`href="${pkg.homepage}"`);
     expect(top).toContain("blob/main/docs/06-frontend.md");
     expect(top).toContain("blob/main/CHANGELOG.md");

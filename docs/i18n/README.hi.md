@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
+> Source: [README.md](../../README.md) · source-sha256: bff8b03a19b2ad92b16e4a0ce7f10891cabb0f0fa72211a376c4f48ea49cb033
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -216,7 +216,7 @@ docs/           the documents
 
 ## दस्तावेज़ीकरण
 
-पूरा दस्तावेज़ीकरण <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/> पर है। `docs/` का Markdown मानक है।
+पूरा दस्तावेज़ीकरण <https://aletheia.mohamedashrafelsaed.com/docs/> पर है। `docs/` का Markdown मानक है।
 
 1. **शुरू करें:** [परिचय](../../docs/start/introduction.md) · [इंस्टॉलेशन](../../docs/start/installation.md)
    · [क्विकस्टार्ट](../../docs/start/quickstart.md) · [यह कैसे काम करता है](../../docs/start/how-it-works.md)
@@ -243,7 +243,7 @@ docs/           the documents
 8. **आंतरिक संरचना:** [आर्किटेक्चर](../../docs/01-architecture.md) · [डेटा मॉडल](../../docs/02-data-model.md)
    · [फ़्रंटएंड](../../docs/06-frontend.md) · [संचालन](../../docs/07-operations.md)
 
-AI टूल [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt) पढ़ सकते हैं, या सभी पेज एक फ़ाइल में पाने के लिए [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt) पढ़ सकते हैं।
+AI टूल [llms.txt](https://aletheia.mohamedashrafelsaed.com/llms.txt) पढ़ सकते हैं, या सभी पेज एक फ़ाइल में पाने के लिए [llms-full.txt](https://aletheia.mohamedashrafelsaed.com/llms-full.txt) पढ़ सकते हैं।
 
 ## योगदान
 

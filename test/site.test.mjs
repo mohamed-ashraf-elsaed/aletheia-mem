@@ -46,13 +46,13 @@ describe("docs site", () => {
     expect(html).toContain('<h1 id="changelog">Changelog</h1>');
     expect(html).toContain('"@type":"TechArticle"');
     expect(html).toContain('"@type":"BreadcrumbList"');
-    expect(html).toContain('<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/changelog.html">');
+    expect(html).toContain('<link rel="canonical" href="https://aletheia.mohamedashrafelsaed.com/docs/changelog.html">');
     expect(html).toContain("<h2");
     // The Markdown copy is the raw changelog, and the page is listed in the sitemap and llms.txt.
     expect(read(join(site, "docs", "changelog.md"))).toBe(read(join(root, "CHANGELOG.md")));
-    expect(read(join(site, "sitemap.xml"))).toContain("<loc>https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/changelog.html</loc>");
-    expect(read(join(site, "llms.txt"))).toContain("[Changelog](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/changelog.html)");
-    expect(read(join(site, "llms-full.txt"))).toContain("Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/changelog.html");
+    expect(read(join(site, "sitemap.xml"))).toContain("<loc>https://aletheia.mohamedashrafelsaed.com/docs/changelog.html</loc>");
+    expect(read(join(site, "llms.txt"))).toContain("[Changelog](https://aletheia.mohamedashrafelsaed.com/docs/changelog.html)");
+    expect(read(join(site, "llms-full.txt"))).toContain("Source: https://aletheia.mohamedashrafelsaed.com/docs/changelog.html");
   });
 
   test("a page renders headings, tables, lists, code and TechArticle data", () => {
@@ -64,7 +64,9 @@ describe("docs site", () => {
     expect(text).toContain("<ul>");
     expect(text).toContain("<pre><code");
     expect(text).toContain('"@type":"TechArticle"');
-    expect(text).toContain('<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/29-sync.html">');
+    expect(text).toContain('<link rel="canonical" href="https://aletheia.mohamedashrafelsaed.com/docs/29-sync.html">');
+    expect(text).toContain('"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed","url":"https://mohamedashrafelsaed.com","@id":"https://mohamedashrafelsaed.com/#person"}');
+    expect(text).toContain('<footer>By <a rel="author" href="https://mohamedashrafelsaed.com">Mohamed Ashraf Elsaed</a>');
     expect(text).not.toContain("<private>");
     const installers = read(join(site, "docs", "25-installers.html"));
     expect(installers).toContain("&lt;private&gt;");
@@ -103,7 +105,7 @@ describe("docs site", () => {
   });
 
   test("robots.txt points at the generated sitemap", () => {
-    expect(read(join(site, "robots.txt"))).toContain("https://mohamed-ashraf-elsaed.github.io/aletheia-mem/sitemap.xml");
+    expect(read(join(site, "robots.txt"))).toContain("https://aletheia.mohamedashrafelsaed.com/sitemap.xml");
   });
 });
 
@@ -157,7 +159,7 @@ describe("docs site structure and search metadata", () => {
     expect(llms).toContain("\n> Aletheia (npm package aletheia-mem)");
     for (const { page } of entries) {
       expect(llms).toContain(`/docs/${page})`);
-      expect(full).toContain(`Source: https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/${page.replace(/\.md$/, ".html")}`);
+      expect(full).toContain(`Source: https://aletheia.mohamedashrafelsaed.com/docs/${page.replace(/\.md$/, ".html")}`);
     }
     expect(full).not.toContain("<!-- keywords:");
   });

@@ -13,6 +13,8 @@ history.
 
 ### Changed
 
+- The documentation site moves from `https://mohamed-ashraf-elsaed.github.io/aletheia-mem/` to `https://aletheia.mohamedashrafelsaed.com/`. Canonical URLs, Open Graph tags, structured data, the sitemap, `robots.txt`, `llms.txt`, `llms-full.txt`, the README links and the plugin manifests use the new address. Paths are unchanged, and GitHub Pages redirects the old address. Every docs page has a footer credit that links to the author's site, and the `author` in the structured data carries his URL.
+- Package metadata: the npm `homepage` is the project page at `https://mohamedashrafelsaed.com/projects/aletheia/`, and `author` is an object with name, email and URL. The README link row adds the project page. No code changed.
 - The Settings page lists only the three settings that code reads: `facts.minConfidence`, `context.facts` and `rules.reviewDays`. The seven that nothing read (`provider`, `providers`, `factBudget.*`, `redaction`, `excludedProjects`, `apiKey`) are removed, along with the masked-secret handling. Use the environment variables for the provider, fact budgets and excluded projects; redaction is always on.
 
 ## [0.1.11] - 2026-10-30

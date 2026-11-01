@@ -6,7 +6,7 @@ import { join, relative } from "node:path";
 
 const ROOT = process.env.SITE_ROOT ? process.env.SITE_ROOT : join(import.meta.dir, "..");
 const SITE = join(ROOT, "site");
-const BASE = "https://mohamed-ashraf-elsaed.github.io/aletheia-mem/";
+const BASE = "https://aletheia.mohamedashrafelsaed.com/";
 
 const locs = [...readFileSync(join(SITE, "sitemap.xml"), "utf8").matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
 const pagesUnder = (dir) =>
@@ -43,7 +43,7 @@ for (const name of ["llms.txt", "llms-full.txt"]) {
   if (!existsSync(join(SITE, name))) problems.push(`missing ${name}`);
 }
 const llms = existsSync(join(SITE, "llms.txt")) ? readFileSync(join(SITE, "llms.txt"), "utf8") : "";
-for (const match of llms.matchAll(/\((https:\/\/mohamed-ashraf-elsaed\.github\.io\/aletheia-mem\/[^)\s]+)\)/g)) {
+for (const match of llms.matchAll(/\((https:\/\/aletheia\.mohamedashrafelsaed\.com\/[^)\s]+)\)/g)) {
   const target = match[1].slice(BASE.length);
   if (target && !existsSync(join(SITE, target))) problems.push(`llms.txt links to a missing file: ${target}`);
 }

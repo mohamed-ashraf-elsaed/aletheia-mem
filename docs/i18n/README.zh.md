@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: fc8ba0b007961ce592029c236a6e38ff5d849c7b36009c77a21b17d99ebda93b
+> Source: [README.md](../../README.md) · source-sha256: bff8b03a19b2ad92b16e4a0ce7f10891cabb0f0fa72211a376c4f48ea49cb033
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -216,7 +216,7 @@ docs/           the documents
 
 ## 文档
 
-完整文档位于 <https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/>。以 `docs/` 中的 Markdown 为准。
+完整文档位于 <https://aletheia.mohamedashrafelsaed.com/docs/>。以 `docs/` 中的 Markdown 为准。
 
 1. **入门：** [简介](../../docs/start/introduction.md) · [安装](../../docs/start/installation.md)
    · [快速开始](../../docs/start/quickstart.md) · [工作原理](../../docs/start/how-it-works.md)
@@ -243,7 +243,7 @@ docs/           the documents
 8. **内部实现：** [架构](../../docs/01-architecture.md) · [数据模型](../../docs/02-data-model.md)
    · [前端](../../docs/06-frontend.md) · [运维](../../docs/07-operations.md)
 
-AI 工具可以读取 [llms.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt)，也可以读取 [llms-full.txt](https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms-full.txt)，后者把所有页面合并在一个文件中。
+AI 工具可以读取 [llms.txt](https://aletheia.mohamedashrafelsaed.com/llms.txt)，也可以读取 [llms-full.txt](https://aletheia.mohamedashrafelsaed.com/llms-full.txt)，后者把所有页面合并在一个文件中。
 
 ## 贡献
 

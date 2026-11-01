@@ -8,8 +8,8 @@
 <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
 <meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
 <meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
-<link rel="canonical" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/02-data-model.html">
-<link rel="alternate" type="text/plain" href="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/llms.txt" title="llms.txt">
+<link rel="canonical" href="https://aletheia.mohamedashrafelsaed.com/docs/02-data-model.html">
+<link rel="alternate" type="text/plain" href="https://aletheia.mohamedashrafelsaed.com/llms.txt" title="llms.txt">
 <link rel="icon" type="image/png" sizes="64x64" href="../favicon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
@@ -17,15 +17,15 @@
 <meta property="og:site_name" content="Aletheia">
 <meta property="og:title" content="2. Data model">
 <meta property="og:description" content="Opened with readonly: true, PRAGMA queryonly = ON, busytimeout = 1500. Every SELECT goes through a helper that turns &quot;no such table&quot; and &quot;no such column&quot; into an empty result, s...">
-<meta property="og:url" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/02-data-model.html">
-<meta property="og:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta property="og:url" content="https://aletheia.mohamedashrafelsaed.com/docs/02-data-model.html">
+<meta property="og:image" content="https://aletheia.mohamedashrafelsaed.com/assets/social.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="2. Data model">
 <meta name="twitter:description" content="Opened with readonly: true, PRAGMA queryonly = ON, busytimeout = 1500. Every SELECT goes through a helper that turns &quot;no such table&quot; and &quot;no such column&quot; into an empty result, s...">
-<meta name="twitter:image" content="https://mohamed-ashraf-elsaed.github.io/aletheia-mem/assets/social.png">
+<meta name="twitter:image" content="https://aletheia.mohamedashrafelsaed.com/assets/social.png">
 <link rel="stylesheet" href="../style.css">
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"2. Data model","description":"Opened with readonly: true, PRAGMA queryonly = ON, busytimeout = 1500. Every SELECT goes through a helper that turns \"no such table\" and \"no such column\" into an empty result, s...","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/02-data-model.html","mainEntityOfPage":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/02-data-model.html","inLanguage":"en","dateModified":"2026-10-26","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/"},{"@type":"ListItem","position":3,"name":"2. Data model","item":"https://mohamed-ashraf-elsaed.github.io/aletheia-mem/docs/02-data-model.html"}]}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"2. Data model","description":"Opened with readonly: true, PRAGMA queryonly = ON, busytimeout = 1500. Every SELECT goes through a helper that turns \"no such table\" and \"no such column\" into an empty result, s...","url":"https://aletheia.mohamedashrafelsaed.com/docs/02-data-model.html","mainEntityOfPage":"https://aletheia.mohamedashrafelsaed.com/docs/02-data-model.html","inLanguage":"en","dateModified":"2026-10-26","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://aletheia.mohamedashrafelsaed.com/"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://aletheia.mohamedashrafelsaed.com/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed","url":"https://mohamedashrafelsaed.com","@id":"https://mohamedashrafelsaed.com/#person"},"license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://aletheia.mohamedashrafelsaed.com/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://aletheia.mohamedashrafelsaed.com/docs/"},{"@type":"ListItem","position":3,"name":"2. Data model","item":"https://aletheia.mohamedashrafelsaed.com/docs/02-data-model.html"}]}</script>
 </head>
 <body>
 <header class="top"><div class="wrap">
@@ -79,7 +79,7 @@ failed-answers/                raw model answers that failed validation twice</c
 <div class="tablewrap"><table><thead><tr><th>File</th><th>Content</th></tr></thead><tbody><tr><td><code>&lt;dataDir&gt;/MY-RULES.md</code></td><td>The approved rules as markdown, rewritten after every rule action.</td></tr><tr><td><code>&lt;dataDir&gt;/human-copy.json</code></td><td><code>{version:1, entries:{&lt;requestId&gt;:{fingerprint, copy, generatedAt, model, usage}}}</code>.</td></tr><tr><td><code>&lt;dataDir&gt;/human-copy-usage.jsonl</code></td><td>One line per model call.</td></tr></tbody></table></div>
 <nav class="pager" aria-label="Previous and next"><a class="previous" href="01-architecture.html"><small>Previous</small><span>1. Architecture</span></a><a class="next" href="06-frontend.html"><small>Next</small><span>6. Frontend</span></a></nav>
 </article>
-<footer>Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../llms.txt">llms.txt</a> · <a href="../sitemap.xml">Sitemap</a></footer>
+<footer>By <a rel="author" href="https://mohamedashrafelsaed.com">Mohamed Ashraf Elsaed</a> · Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../llms.txt">llms.txt</a> · <a href="../sitemap.xml">Sitemap</a></footer>
 </main>
 </body>
 </html>
