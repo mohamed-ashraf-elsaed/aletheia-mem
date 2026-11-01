@@ -39,6 +39,7 @@
 <h1 id="changelog">Changelog</h1>
 <p>All notable changes to this project are recorded here. The format follows <a href="https://keepachangelog.com/en/1.1.0/">Keep a Changelog</a>, and the project uses <a href="https://semver.org/spec/v2.0.0.html">Semantic Versioning</a>. This file is built from the git history.</p>
 <h2 id="unreleased">[Unreleased]</h2>
+<h2 id="0112---2026-11-01">[0.1.12] - 2026-11-01</h2>
 <h3 id="added">Added</h3>
 <ul><li>The release workflow now publishes to the official MCP registry on every tag: it bumps <code>server.json</code> to the tag and publishes the manifest with the registry's pinned, signature-verified <code>mcp-publisher</code> CLI (v1.8.7) using OIDC authentication. <code>release.mjs --prepare</code> bumps <code>server.json</code> with <code>package.json</code>, <code>--sync-server-json</code> back-fills a hand-made release, and <code>--verify</code> fails when the manifest drifts. The mechanism follows the registry's GitHub Actions guide (https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/github-actions.mdx, fetched 2026-11-01); the registry accepts no server-listing pull requests.</li><li><code>scripts/build-site.mjs</code> generates a docs changelog page (<code>site/docs/changelog.html</code>) from <code>CHANGELOG.md</code>, with a sitemap entry and a link from <code>llms.txt</code>; the release workflow rebuilds it and pushes it to main on every tag.</li></ul>
 <h3 id="changed">Changed</h3>

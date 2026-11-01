@@ -6,6 +6,8 @@ history.
 
 ## [Unreleased]
 
+## [0.1.12] - 2026-11-01
+
 ### Added
 
 - The release workflow now publishes to the official MCP registry on every tag: it bumps `server.json` to the tag and publishes the manifest with the registry's pinned, signature-verified `mcp-publisher` CLI (v1.8.7) using OIDC authentication. `release.mjs --prepare` bumps `server.json` with `package.json`, `--sync-server-json` back-fills a hand-made release, and `--verify` fails when the manifest drifts. The mechanism follows the registry's GitHub Actions guide (https://github.com/modelcontextprotocol/registry/blob/main/docs/modelcontextprotocol-io/github-actions.mdx, fetched 2026-11-01); the registry accepts no server-listing pull requests.
