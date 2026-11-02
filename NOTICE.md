@@ -21,3 +21,11 @@ of the original's HTTP API and its minified server code.
 
 Licensed under the Apache License 2.0, https://www.apache.org/licenses/LICENSE-2.0. Not affiliated with or
 endorsed by the claude-mem authors.
+
+## Fonts on the documentation site
+
+The docs pages under `site/` serve two fonts from `site/assets/fonts/`, unmodified Latin subsets downloaded from Google
+Fonts on 2026-11-02. Both are under the SIL Open Font License 1.1, and each licence text sits beside its font file.
+
+- Instrument Sans, copyright 2022 The Instrument Sans Project Authors (`OFL-InstrumentSans.txt`).
+- IBM Plex Mono, weight 500, copyright 2017 IBM Corp., Reserved Font Name "Plex" (`OFL-IBMPlexMono.txt`).

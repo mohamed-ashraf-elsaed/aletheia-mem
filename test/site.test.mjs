@@ -2,7 +2,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { faqOf, parseChangelog } from "../scripts/build-site.mjs";
+import { faqOf, highlight, parseChangelog } from "../scripts/build-site.mjs";
 
 const root = join(import.meta.dir, "..");
 const site = join(root, "site");
@@ -145,10 +145,10 @@ describe("release notes", () => {
       expect(overview).toContain(`id="v${release.version}"`);
       if (release.yanked) {
         expect(html).toContain("<strong>Yanked.</strong>");
-        expect(html).not.toContain(`npm install -g aletheia-mem@${release.version}`);
+        expect(html.replace(/<[^>]+>/g, "")).not.toContain(`npm install -g aletheia-mem@${release.version}`);
         expect(html).not.toContain(`/releases/tag/v${release.version}"`);
       } else {
-        expect(html).toContain(`npm install -g aletheia-mem@${release.version}`);
+        expect(html.replace(/<[^>]+>/g, "")).toContain(`npm install -g aletheia-mem@${release.version}`);
         expect(html).toContain(`https://github.com/mohamed-ashraf-elsaed/aletheia-mem/releases/tag/v${release.version}`);
       }
     }
@@ -171,14 +171,16 @@ describe("release notes", () => {
     }
   });
 
-  test("the sidebar and header name the latest release", () => {
+  test("the sidebar links the release notes and the header menu names the latest release", () => {
     const latest = log.releases[0];
     for (const page of ["docs/index.html", "docs/29-sync.html", "docs/releases/v0.1.0.html"]) {
       const html = read(join(site, page));
-      expect(html).toContain('<details open class="side-releases"><summary>Release notes</summary>');
-      expect(html).toContain(`class="ver"`);
-      expect(html).toContain(`>v${latest.version}</a>`);
+      expect(html).toContain('<summary>Prologue</summary>');
+      expect(html).toMatch(/<a href="[^"]*changelog\.html"[^>]*>Release notes<\/a>/);
+      expect(html).toContain(`<summary class="ver" aria-label="Releases, latest v${latest.version}">v${latest.version}`);
     }
+    expect(read(join(site, "docs/releases/v0.1.0.html"))).toContain('<details class="grp side-releases" open><summary>Prologue</summary>');
+    expect(read(join(site, "docs/29-sync.html"))).not.toContain('<details class="grp side-releases" open>');
   });
 
   test("the landing page shows the latest release and its JSON-LD carries the version", () => {
@@ -263,7 +265,7 @@ describe("docs site structure and search metadata", () => {
   test("the docs index has the sidebar, a search box and a card for every section", () => {
     const html = read(join(site, "docs", "index.html"));
     expect(html).toContain('<aside class="side" id="side"');
-    expect(html).toContain('<div class="doc-grid no-toc">');
+    expect(html).toContain('<div class="frame">');
     expect(html).toContain('id="q"');
     for (const section of nav.sections) expect(html).toContain(`<h2>${section.title}</h2>`);
   });
@@ -290,6 +292,39 @@ describe("docs site structure and search metadata", () => {
       expect(html).toContain('docs/search.json');
       expect((html.match(/<h1[ >]/g) ?? []).length).toBe(1);
     }
+  });
+
+  test("docs pages use the docs stylesheet and self-hosted fonts, with their licences", () => {
+    for (const name of ["instrument-sans-latin.woff2", "ibm-plex-mono-500-latin.woff2", "OFL-InstrumentSans.txt", "OFL-IBMPlexMono.txt"]) {
+      expect(existsSync(join(site, "assets", "fonts", name))).toBe(true);
+    }
+    const css = read(join(site, "assets", "docs.css"));
+    expect(css).toContain("url(fonts/instrument-sans-latin.woff2)");
+    expect(css).not.toMatch(/url\((?:"|')?https?:/);
+    const html = read(join(site, "docs", "start", "quickstart.html"));
+    expect(html).toContain('<link rel="stylesheet" href="../../assets/docs.css">');
+    expect(html).toContain('<link rel="preload" href="../../assets/fonts/instrument-sans-latin.woff2" as="font" type="font/woff2" crossorigin>');
+    expect(html).toContain('<dialog class="search-dialog" id="ds-dialog"');
+    expect(html).toContain('class="page-meta"><a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/edit/main/docs/start/quickstart.md">');
+    expect(html).toContain('<nav class="toc" aria-label="On this page">');
+    expect(html).toContain('<nav class="toc-inline" aria-label="Sections">');
+    expect(html).toContain('<button class="copy-md" type="button" data-md="quickstart.md">');
+  });
+
+  test("no page repeats an element id, so the search dialog and anchors always resolve", () => {
+    const problems = [];
+    for (const file of htmlFiles(site)) {
+      const ids = [...read(file).matchAll(/ id="([^"]+)"/g)].map((match) => match[1]);
+      const repeated = ids.filter((id, index) => ids.indexOf(id) !== index);
+      if (repeated.length) problems.push(`${file}: ${[...new Set(repeated)].join(", ")}`);
+    }
+    expect(problems).toEqual([]);
+  });
+
+  test("highlight numbers every line, colours shell and JSON tokens and escapes HTML", () => {
+    expect(highlight("$ ALETHEIA_PORT=1 aletheia-server --port 2 # note", "bash")).toBe('<span class="line"><span class="c">$ </span><span class="v">ALETHEIA_PORT=1 </span><span class="k">aletheia-server</span> <span class="f">--port</span> <span class="n">2</span> <span class="c"># note</span></span>');
+    expect(highlight('{"a": "<b>", "n": 1}', "json")).toBe('<span class="line">{<span class="f">&quot;a&quot;</span>: <span class="s">&quot;&lt;b&gt;&quot;</span>, <span class="f">&quot;n&quot;</span>: <span class="n">1</span>}</span>');
+    expect(highlight("a\n<b>", "text")).toBe('<span class="line">a</span>\n<span class="line">&lt;b&gt;</span>');
   });
 
   test("faqOf turns question headings into question and answer pairs and ignores code", () => {
