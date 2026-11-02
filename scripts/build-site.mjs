@@ -114,6 +114,95 @@ function renderList(lines, start, ctx) {
   return { html: render(entries, entries[0].indent), end: index };
 }
 
+// A small syntax colourer for the languages the docs use. Each line becomes <span class="line">, so CSS can number it;
+// tokens get short classes (c comment, s string, n number, k keyword or command, f flag or key, v variable, p tag).
+const TOKEN_RULES = {
+  bash: [
+    ["c", /(?<![^\s])#.*/y],
+    ["s", /"(?:[^"\\\n]|\\.)*"|'[^'\n]*'/y],
+    ["v", /\$\{?[A-Za-z_][A-Za-z0-9_]*\}?/y],
+    ["f", /(?<=\s)--?[A-Za-z][\w-]*(?:=[^\s]*)?/y],
+    ["n", /\b\d+(?:\.\d+)*\b/y],
+  ],
+  json: [
+    ["f", /"(?:[^"\\\n]|\\.)*"(?=\s*:)/y],
+    ["s", /"(?:[^"\\\n]|\\.)*"/y],
+    ["n", /-?\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/y],
+    ["k", /\b(?:true|false|null)\b/y],
+  ],
+  ini: [
+    ["c", /[#;].*/y],
+    ["p", /\[[^\]\n]*\]/y],
+    ["f", /[A-Za-z_][\w.-]*(?=\s*=)/y],
+    ["s", /"(?:[^"\\\n]|\\.)*"|'[^'\n]*'/y],
+    ["n", /\b\d+(?:\.\d+)?\b/y],
+    ["k", /\b(?:true|false)\b/y],
+  ],
+  sql: [
+    ["c", /--.*/y],
+    ["s", /'(?:[^'\n]|'')*'/y],
+    ["k", /\b(?:SELECT|FROM|WHERE|AND|OR|NOT|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|TABLE|INDEX|ON|JOIN|LEFT|INNER|GROUP|BY|ORDER|LIMIT|AS|IS|NULL|PRAGMA|VIRTUAL|USING|MATCH|DESC|ASC|COUNT|DISTINCT|PRIMARY|KEY|INTEGER|TEXT|REAL)\b/iy],
+    ["n", /\b\d+(?:\.\d+)?\b/y],
+  ],
+  xml: [
+    ["c", /<!--[\s\S]*?-->/y],
+    ["p", /<\/?[A-Za-z][\w:.-]*|\/?>/y],
+    ["f", /\b[A-Za-z_:][\w:.-]*(?==)/y],
+    ["s", /"[^"\n]*"|'[^'\n]*'/y],
+  ],
+};
+TOKEN_RULES.sh = TOKEN_RULES.shell = TOKEN_RULES.bash;
+TOKEN_RULES.toml = TOKEN_RULES.ini;
+TOKEN_RULES.jsonl = TOKEN_RULES.json;
+
+function colourLine(line, rules, firstWord) {
+  let out = "";
+  let index = 0;
+  let plain = "";
+  const flush = () => {
+    if (plain) out += esc(plain);
+    plain = "";
+  };
+  if (firstWord) {
+    const command = /^(\s*)(\$\s+)?((?:[A-Za-z_][A-Za-z0-9_]*=\S*\s+)*)((?:sudo\s+)?[A-Za-z][\w./-]*)(?=\s|$)/.exec(line);
+    if (command && !line.trimStart().startsWith("#")) {
+      out += `${esc(command[1])}${command[2] ? `<span class="c">${esc(command[2])}</span>` : ""}${command[3] ? `<span class="v">${esc(command[3])}</span>` : ""}<span class="k">${esc(command[4])}</span>`;
+      index = command[0].length;
+    }
+  }
+  while (index < line.length) {
+    let matched = false;
+    for (const [kind, rule] of rules) {
+      rule.lastIndex = index;
+      const match = rule.exec(line);
+      if (match && match[0].length) {
+        flush();
+        out += `<span class="${kind}">${esc(match[0])}</span>`;
+        index += match[0].length;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) plain += line[index++];
+  }
+  flush();
+  return out;
+}
+
+export function highlight(code, language) {
+  const rules = TOKEN_RULES[String(language).toLowerCase()];
+  const isShell = rules === TOKEN_RULES.bash;
+  let continued = false;
+  return code
+    .split("\n")
+    .map((line) => {
+      const html = rules ? colourLine(line, rules, isShell && !continued && !/^\s*$/.test(line)) : esc(line);
+      continued = isShell && /\\\s*$/.test(line);
+      return `<span class="line">${html}</span>`;
+    })
+    .join("\n");
+}
+
 export function renderMarkdown(markdown, ctx) {
   const lines = String(markdown).split("\n");
   const out = [];
@@ -135,7 +224,7 @@ export function renderMarkdown(markdown, ctx) {
       index += 1;
       while (index < lines.length && !/^\s*```/.test(lines[index])) code.push(lines[index++]);
       index += 1;
-      out.push(`<pre><code${language ? ` class="language-${esc(language)}"` : ""}>${esc(code.join("\n"))}</code></pre>`);
+      out.push(`<pre><code${language ? ` class="language-${esc(language)}"` : ""}>${highlight(code.join("\n"), language)}</code></pre>`);
       continue;
     }
     if (!line.trim()) {
@@ -151,7 +240,7 @@ export function renderMarkdown(markdown, ctx) {
       const text = heading[2].replace(/\s*\{#[^}]+\}\s*$/, "");
       const id = `${ctx.idPrefix ?? ""}${explicit ? explicit[1] : slug(text)}`;
       const anchor = level >= 2 && level <= 4 ? `<a class="anchor" href="#${esc(id)}" aria-hidden="true" tabindex="-1"></a>` : "";
-      out.push(`<h${level} id="${esc(id)}">${inline(text, ctx)}${anchor}</h${level}>`);
+      out.push(`<h${level} id="${esc(id)}">${anchor}${inline(text, ctx)}</h${level}>`);
       index += 1;
       continue;
     }
@@ -245,14 +334,14 @@ const plainText = (text) =>
 function headingsOf(markdown, level) {
   const out = [];
   let fenced = false;
-  for (const line of markdown.split("\n")) {
+  for (const [index, line] of markdown.split("\n").entries()) {
     if (/^\s*```/.test(line)) fenced = !fenced;
     if (fenced) continue;
     const match = /^(#{1,6})\s+(.+?)\s*#*\s*$/.exec(line);
     if (!match || match[1].length !== level) continue;
     const explicit = /\s*\{#([^}]+)\}\s*$/.exec(match[2]);
     const text = match[2].replace(/\s*\{#[^}]+\}\s*$/, "");
-    out.push({ text: plainText(text), id: explicit ? explicit[1] : slug(text) });
+    out.push({ text: plainText(text), id: explicit ? explicit[1] : slug(text), line: index });
   }
   return out;
 }
@@ -412,25 +501,60 @@ export function loadPages(tracked) {
 const NPM = "https://www.npmjs.com/package/aletheia-mem";
 const FEED_REL = "docs/releases/feed.xml";
 const SOCIAL = { url: `${SITE_URL}assets/social.png`, width: 1280, height: 640, alt: "Aletheia: one memory for every AI coding tool" };
-const COLLAPSED = new Set(["Internals", "More"]);
-const SIDEBAR_RELEASES = 8;
+const MENU_RELEASES = 6;
+const FONT_FILE = "assets/fonts/instrument-sans-latin.woff2";
 
-// The page script: the mobile menu, a copy button on code blocks and the header search over docs/search.json.
-// Inline, so the site loads no script file; String.raw keeps the regular expression escapes.
-const SCRIPT = String.raw`(function(){var b=document.body,root=b.getAttribute("data-root")||"";
-var m=document.querySelector(".menu"),sd=document.getElementById("side");function nav(o){b.classList.toggle("nav-open",o);if(m)m.setAttribute("aria-expanded",String(o))}
+// Small inline icons (24 x 24 strokes), drawn for this site.
+const svg = (body, size = 16) => `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+const ICON = {
+  search: svg('<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
+  chevron: svg('<path d="m6 9 6 6 6-6"/>', 14),
+  menu: svg('<path d="M4 7h16M4 12h16M4 17h16"/>', 20),
+  close: svg('<path d="M6 6l12 12M18 6 6 18"/>', 20),
+  sun: svg('<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>', 18),
+  moon: svg('<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>', 18),
+  system: svg('<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/>', 18),
+  copy: svg('<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>'),
+  check: svg('<path d="m5 12 5 5 9-10"/>'),
+  list: svg('<path d="M4 6h16M4 12h12M4 18h8"/>'),
+  edit: svg('<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/>', 14),
+  arrow: svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 14),
+};
+
+// The page script: theme switch, drawer menu, copy buttons, "On this page" tracking and the search dialog over
+// docs/search.json. Inline, so the site loads no script file; String.raw keeps the regular expression escapes.
+const SCRIPT = String.raw`(function(){var d=document,b=d.body,h=d.documentElement,root=b.getAttribute("data-root")||"";
+var COPY=${JSON.stringify(ICON.copy)},DONE=${JSON.stringify(ICON.check)};
+function store(k,v){try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}}
+var tb=d.querySelector(".theme");function mode(){return store("theme")||"system"}
+function apply(t){if(t==="system")h.removeAttribute("data-theme");else h.setAttribute("data-theme",t);if(tb){tb.setAttribute("data-mode",t);tb.setAttribute("aria-label","Colour theme: "+t)}}
+apply(mode());if(tb)tb.addEventListener("click",function(){var o=["system","light","dark"],t=o[(o.indexOf(mode())+1)%3];store("theme",t);apply(t)});
+var m=d.querySelector(".menu"),sd=d.getElementById("side");function nav(o){b.classList.toggle("nav-open",o);if(m)m.setAttribute("aria-expanded",String(o))}
 if(m)m.addEventListener("click",function(e){e.stopPropagation();nav(!b.classList.contains("nav-open"))});
-document.addEventListener("click",function(e){if(b.classList.contains("nav-open")&&sd&&!sd.contains(e.target))nav(false)});
-document.addEventListener("keydown",function(e){if(e.key==="Escape"&&b.classList.contains("nav-open"))nav(false)});
-[].forEach.call(document.querySelectorAll(".doc pre"),function(p){if(!navigator.clipboard)return;var c=document.createElement("button");c.type="button";c.className="copy";c.textContent="Copy";c.addEventListener("click",function(){var t=p.querySelector("code")||p;navigator.clipboard.writeText(t.innerText).then(function(){c.textContent="Copied";setTimeout(function(){c.textContent="Copy"},1500)})});p.appendChild(c)});
-var i=document.getElementById("ds"),r=document.getElementById("dsr");if(!i||!r)return;var idx=null,hits=[],sel=0;
-function load(){return idx?Promise.resolve(idx):fetch(root+"docs/search.json").then(function(x){return x.json()}).then(function(d){idx=d;return d})}
-function paint(){[].forEach.call(r.querySelectorAll("a"),function(a,n){a.className=n===sel?"on":""})}
-function show(){var q=i.value.trim().toLowerCase();if(!q){r.hidden=true;hits=[];return}load().then(function(d){var w=q.split(/\s+/);hits=d.map(function(e){var t=e.t.toLowerCase(),h=e.h.toLowerCase(),o=(e.d+" "+e.k+" "+e.s).toLowerCase(),s=0;for(var k=0;k<w.length;k++){if(t.indexOf(w[k])>=0)s+=5;else if(h.indexOf(w[k])>=0)s+=2;else if(o.indexOf(w[k])>=0)s+=1;else return null}return{e:e,s:s}}).filter(Boolean).sort(function(a,c){return c.s-a.s}).slice(0,8);sel=0;r.textContent="";hits.forEach(function(x){var a=document.createElement("a"),s=document.createElement("small");a.href=root+x.e.u;a.textContent=x.e.t;s.textContent=x.e.s;a.appendChild(s);r.appendChild(a)});if(!hits.length){var p=document.createElement("p");p.className="none";p.textContent="No page matches.";r.appendChild(p)}paint();r.hidden=false})}
-i.addEventListener("input",show);i.addEventListener("focus",function(){load();if(i.value)show()});
-i.addEventListener("keydown",function(e){if(e.key==="Escape"){r.hidden=true;i.blur()}else if(e.key==="Enter"&&hits[sel]){e.preventDefault();location.href=root+hits[sel].e.u}else if((e.key==="ArrowDown"||e.key==="ArrowUp")&&hits.length){e.preventDefault();sel=(sel+(e.key==="ArrowDown"?1:hits.length-1))%hits.length;paint()}});
-document.addEventListener("keydown",function(e){var a=document.activeElement;if(e.key==="/"&&a&&!/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)){e.preventDefault();i.focus()}});
-document.addEventListener("click",function(e){if(e.target!==i&&!r.contains(e.target))r.hidden=true})})();`;
+var sc=d.querySelector(".side-close");if(sc)sc.addEventListener("click",function(){nav(false)});
+d.addEventListener("click",function(e){if(b.classList.contains("nav-open")&&sd&&!sd.contains(e.target))nav(false)});
+function cp(t,c){if(!navigator.clipboard)return;navigator.clipboard.writeText(t).then(function(){c.classList.add("done");var i=c.querySelector("svg");if(i)i.outerHTML=DONE;setTimeout(function(){c.classList.remove("done");var j=c.querySelector("svg");if(j)j.outerHTML=COPY},1600)})}
+[].forEach.call(d.querySelectorAll(".prose pre"),function(p){var c=d.createElement("button");c.type="button";c.className="copy";c.setAttribute("aria-label","Copy code");c.innerHTML=COPY;c.addEventListener("click",function(){cp((p.querySelector("code")||p).textContent,c)});p.appendChild(c)});
+var cm=d.querySelector(".copy-md");if(cm)cm.addEventListener("click",function(){fetch(cm.getAttribute("data-md")).then(function(r){return r.text()}).then(function(t){cp(t,cm)})});
+var links={};[].forEach.call(d.querySelectorAll(".toc a"),function(a){links[a.getAttribute("href").slice(1)]=a});
+if("IntersectionObserver" in window){var on=null,io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting&&links[e.target.id]){if(on)on.classList.remove("on");on=links[e.target.id];on.classList.add("on")}})},{rootMargin:"-90px 0px -65% 0px"});[].forEach.call(d.querySelectorAll(".prose h2[id],.prose h3[id]"),function(x){if(links[x.id])io.observe(x)})}
+var dlg=d.getElementById("ds-dialog"),i=d.getElementById("ds"),r=d.getElementById("dsr");if(!dlg||!i||!r)return;
+if(/Mac|iPhone|iPad/.test(navigator.platform||""))[].forEach.call(d.querySelectorAll(".kbd-mod"),function(k){k.textContent="⌘"});
+var idx=null,hits=[],sel=0,SUGGEST=["docs/start/quickstart.html","docs/start/installation.html","docs/tools/overview.html","docs/reference/mcp-tools.html","docs/changelog.html"];
+function load(){return idx?Promise.resolve(idx):fetch(root+"docs/search.json").then(function(x){return x.json()}).then(function(v){idx=v;return v})}
+function paint(){[].forEach.call(r.querySelectorAll(".hit"),function(a,n){a.classList.toggle("on",n===sel);if(n===sel)a.scrollIntoView({block:"nearest"})})}
+function render(label){r.textContent="";var l=d.createElement("p");l.className="results-label";l.textContent=hits.length?label:"No page matches.";r.appendChild(l);hits.forEach(function(e){var a=d.createElement("a");a.className="hit";a.href=root+e.u;[["hit-s",e.s],["hit-t",e.t],["hit-d",e.d]].forEach(function(p){var s=d.createElement("span");s.className=p[0];s.textContent=p[1];a.appendChild(s)});r.appendChild(a)});sel=0;paint()}
+function show(){var q=i.value.trim().toLowerCase();load().then(function(v){if(!q){hits=SUGGEST.map(function(u){return v.filter(function(e){return e.u===u})[0]}).filter(Boolean);render("Suggested");return}var w=q.split(/\s+/);hits=v.map(function(e){var t=e.t.toLowerCase(),hd=e.h.toLowerCase(),o=(e.d+" "+e.k+" "+e.s).toLowerCase(),s=0;for(var k=0;k<w.length;k++){if(t.indexOf(w[k])>=0)s+=5;else if(hd.indexOf(w[k])>=0)s+=2;else if(o.indexOf(w[k])>=0)s+=1;else return null}return{e:e,s:s}}).filter(Boolean).sort(function(a,c){return c.s-a.s}).slice(0,10).map(function(x){return x.e});render("Pages")})}
+function open(){if(dlg.open)return;if(dlg.showModal)dlg.showModal();else dlg.setAttribute("open","");i.select();show()}
+function close(){if(dlg.close)dlg.close();else dlg.removeAttribute("open")}
+[].forEach.call(d.querySelectorAll("[data-open-search]"),function(t){t.addEventListener("click",function(e){e.preventDefault();open()})});
+dlg.addEventListener("click",function(e){if(e.target===dlg)close()});
+i.addEventListener("input",show);
+i.addEventListener("keydown",function(e){if(e.key==="Enter"){e.preventDefault();if(hits[sel])location.href=root+hits[sel].u}else if((e.key==="ArrowDown"||e.key==="ArrowUp")&&hits.length){e.preventDefault();sel=(sel+(e.key==="ArrowDown"?1:hits.length-1))%hits.length;paint()}});
+d.addEventListener("keydown",function(e){var a=d.activeElement,typing=a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);if((e.key==="k"||e.key==="K")&&(e.metaKey||e.ctrlKey)){e.preventDefault();open()}else if(e.key==="/"&&!typing){e.preventDefault();open()}else if(e.key==="Escape"&&b.classList.contains("nav-open"))nav(false)})})();`;
+
+// Runs in <head> before the page paints, so a saved dark or light choice never flashes.
+const THEME_BOOT = `try{var t=localStorage.getItem("theme");if(t==="dark"||t==="light")document.documentElement.setAttribute("data-theme",t)}catch(e){}`;
 
 // A relative link from one generated file to a site path. A path that ends in "/" (or is empty) is a folder.
 function linkTo(siteFile, rel) {
@@ -520,21 +644,23 @@ const YANKED_NOTE = "<strong>Yanked.</strong> This version was withdrawn from np
 
 function releasePageBody(site, release, siteFile) {
   const ctx = { root: ROOT, siteDir: SITE, sourceFile: join(ROOT, "CHANGELOG.md"), siteFile, pages: site.pages };
-  const links = releaseLinks(release).map((link) => `<a href="${link.url}">${esc(link.label)}</a>`).join(" · ");
+  const links = releaseLinks(release).map((link) => `<a href="${link.url}">${esc(link.label)}</a>`).join("");
   const install = release.yanked
     ? `<blockquote class="callout callout-warning"><p>${YANKED_NOTE}</p></blockquote>`
-    : `<pre><code class="language-bash">npm install -g aletheia-mem@${release.version}</code></pre>`;
-  const pager = (target, label) => `<a class="${label === "Older" ? "prev" : "next"}" href="${linkTo(siteFile, releaseRel(target))}"><small>${label}</small><span>${esc(releaseTitle(target))}</span></a>`;
-  const nav = release.older || release.newer ? `<nav class="pager" aria-label="Older and newer releases">${release.older ? pager(release.older, "Older") : "<span></span>"}${release.newer ? pager(release.newer, "Newer") : "<span></span>"}</nav>` : "";
+    : `<pre><code class="language-bash">${highlight(`npm install -g aletheia-mem@${release.version}`, "bash")}</code></pre>`;
   return [
     `<h1 id="release-${release.version.replace(/\./g, "-")}">${esc(releaseTitle(release))}</h1>`,
     `<p class="relmeta"><span>Released <time datetime="${release.date}">${release.date}</time></span>${releaseBadges(release, site.latest)}${countsText(release.counts) ? `<span>${esc(countsText(release.counts))}</span>` : ""}</p>`,
     links ? `<p class="rellinks">${links}</p>` : "",
     install,
     renderMarkdown(release.markdown, ctx),
-    `<p class="rellinks"><a href="${linkTo(siteFile, "docs/changelog.html")}#v${release.version}">All release notes</a> · <a href="${linkTo(siteFile, FEED_REL)}">Atom feed</a></p>`,
-    nav,
   ].filter(Boolean).join("\n");
+}
+
+function releasePager(release, siteFile) {
+  const card = (target, label) => `<a class="${label === "Older" ? "prev" : "next"}" href="${linkTo(siteFile, releaseRel(target))}"><small>${label}</small><span>${esc(releaseTitle(target))}</span></a>`;
+  if (!release.older && !release.newer) return "";
+  return `<nav class="pager" aria-label="Older and newer releases">${release.older ? card(release.older, "Older") : "<span></span>"}${release.newer ? card(release.newer, "Newer") : "<span></span>"}</nav>`;
 }
 
 function releaseMarkdown(release) {
@@ -553,7 +679,7 @@ function changelogBody(site, siteFile) {
     `<section class="release" id="${esc(id)}"><div class="release-meta">${meta}</div><div class="release-body">${renderMarkdown(markdown, ctx(prefix))}${footer}</div></section>`;
   const parts = [
     `<h1 id="release-notes">Release notes</h1>`,
-    `<p>What each release of Aletheia (npm package aletheia-mem) added, changed and fixed, newest first. Every version has its own page, and the text comes from <a href="${REPO}/blob/main/CHANGELOG.md">CHANGELOG.md</a> in the repository. Follow new releases with the <a href="${linkTo(siteFile, FEED_REL)}">Atom feed</a> or on <a href="${REPO}/releases">GitHub</a>.</p>`,
+    `<p class="lead">What each release of Aletheia (npm package aletheia-mem) added, changed and fixed, newest first. Every version has its own page, and the text comes from <a href="${REPO}/blob/main/CHANGELOG.md">CHANGELOG.md</a> in the repository. Follow new releases with the <a href="${linkTo(siteFile, FEED_REL)}">Atom feed</a> or on <a href="${REPO}/releases">GitHub</a>.</p>`,
   ];
   if (latest) {
     parts.push(
@@ -565,7 +691,7 @@ function changelogBody(site, siteFile) {
     const meta = `<h2 class="vtag"><a href="${linkTo(siteFile, releaseRel(release))}">${release.version}</a></h2><time datetime="${release.date}">${release.date}</time>${releaseBadges(release, latest)}`;
     const links = [`<a href="${linkTo(siteFile, releaseRel(release))}">Release page</a>`, ...releaseLinks(release).map((link) => `<a href="${link.url}">${esc(link.label)}</a>`)];
     const yanked = release.yanked ? `<blockquote class="callout callout-warning"><p>${YANKED_NOTE}</p></blockquote>` : "";
-    parts.push(block(`v${release.version}`, meta, release.markdown, `v${release.version.replace(/\./g, "-")}-`, `${yanked}<p class="rellinks">${links.join(" · ")}</p>`));
+    parts.push(block(`v${release.version}`, meta, release.markdown, `v${release.version.replace(/\./g, "-")}-`, `${yanked}<p class="rellinks">${links.join("")}</p>`));
   }
   for (const note of notes) parts.push(block(slug(note.title), `<h2 class="vtag">${esc(note.title)}</h2>`, note.markdown, `${slug(note.title)}-`));
   return parts.join("\n");
@@ -603,12 +729,51 @@ ${entries.join("\n")}
 `;
 }
 
-// ---- Page chrome.
+// ---- Page chrome: header, sidebar, article, right rail, footer.
 
-function shell({ site, title, description, canonical, siteFile, body, jsonLd, keywords = [], ogType = "article", sidebar = "", toc = "", modified = null, markdownUrl = null }) {
+function headerHtml(site, siteFile) {
+  const asset = (path) => linkTo(siteFile, path);
+  const latest = site.latest;
+  const releases = site.log.releases.slice(0, MENU_RELEASES);
+  const versionMenu = latest
+    ? `<details class="ver-menu"><summary class="ver" aria-label="Releases, latest v${latest.version}">v${latest.version}${ICON.chevron}</summary><div class="pop"><p class="pop-h">Release notes</p>${releases
+        .map((release) => `<a href="${asset(releaseRel(release))}"><span>v${release.version}</span><small>${release.date}${release === latest ? " · latest" : release.yanked ? " · yanked" : ""}</small></a>`)
+        .join("")}<a class="pop-all" href="${asset("docs/changelog.html")}">All release notes${ICON.arrow}</a></div></details>`
+    : "";
+  return `<header class="hdr"><div class="hdr-in">
+  <a class="brand" href="${asset("")}"><img src="${asset("assets/mark.png")}" alt="" width="28" height="28"><span class="brand-name">Aletheia</span><span class="brand-docs">Docs</span></a>
+  <div class="hdr-mid"><button class="search-trigger" type="button" data-open-search aria-label="Search the documentation">${ICON.search}<span class="st-label">Search the docs</span><kbd><span class="kbd-mod">Ctrl</span> K</kbd></button></div>
+  <div class="hdr-end">
+    <button class="icon-btn search-icon" type="button" data-open-search aria-label="Search the documentation">${ICON.search}</button>
+    ${versionMenu}
+    <nav class="hdr-links" aria-label="Main"><a href="${asset("docs/")}">Docs</a><a href="${asset("docs/changelog.html")}">Release notes</a><a href="${REPO}">GitHub</a></nav>
+    <button class="icon-btn theme" type="button" data-mode="system" aria-label="Colour theme: system" title="Switch the colour theme"><span class="i-system">${ICON.system}</span><span class="i-light">${ICON.sun}</span><span class="i-dark">${ICON.moon}</span></button>
+    <button class="icon-btn menu" type="button" aria-controls="side" aria-expanded="false" aria-label="Open the documentation menu">${ICON.menu}</button>
+  </div>
+</div></header>`;
+}
+
+function searchDialog() {
+  return `<dialog class="search-dialog" id="ds-dialog" aria-label="Search the documentation">
+<div class="sbox">${ICON.search}<input id="ds" type="search" placeholder="Search the docs" aria-label="Search the documentation" autocomplete="off" spellcheck="false"><kbd class="esc">Esc</kbd></div>
+<div id="dsr" class="results" role="listbox" aria-label="Search results"></div>
+<div class="sfoot"><span><kbd>Enter</kbd> open</span><span><kbd>↑</kbd><kbd>↓</kbd> move</span><span><kbd>Esc</kbd> close</span></div>
+</dialog>`;
+}
+
+// rail: { toc, markdownRel } for the right column. The latest-release card is always there.
+function railHtml(site, siteFile, { toc = "", markdownRel = null } = {}) {
+  const latest = site.latest;
+  const copy = markdownRel ? `<button class="copy-md" type="button" data-md="${linkTo(siteFile, markdownRel)}">${ICON.copy}<span>Copy as Markdown</span></button>` : "";
+  const card = latest
+    ? `<div class="rail-card"><small>Latest release</small><strong>Aletheia ${latest.version}</strong><span>${latest.date}</span><a href="${linkTo(siteFile, releaseRel(latest))}">Read the release notes${ICON.arrow}</a></div>`
+    : "";
+  return `<aside class="rail" aria-label="Page tools">${copy}${toc}${card}</aside>`;
+}
+
+function shell({ site, title, description, canonical, siteFile, body, jsonLd, keywords = [], ogType = "article", sidebar = "", rail = "", modified = null, markdownUrl = null, after = "" }) {
   const asset = (path) => linkTo(siteFile, path);
   const root = relative(dirname(siteFile), SITE).split(sep).join("/");
-  const latest = site.latest;
   // The site suffix only when it still fits a search result title; a long title stands alone.
   const fullTitle = title.length + 16 <= 70 ? `${title} · Aletheia docs` : title;
   return `<!doctype html>
@@ -622,14 +787,15 @@ ${keywords.length ? `<meta name="keywords" content="${esc(keywords.join(", "))}"
 <meta name="author" content="${AUTHOR.name}">
 <meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
 <meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
-<meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0f1117" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0c0c0e" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="${canonical}">
 <link rel="alternate" type="text/plain" href="${SITE_URL}llms.txt" title="llms.txt">
 <link rel="alternate" type="application/atom+xml" href="${SITE_URL}${FEED_REL}" title="Aletheia release notes">
 ${markdownUrl ? `<link rel="alternate" type="text/markdown" href="${markdownUrl}" title="Markdown">\n` : ""}<link rel="icon" type="image/png" sizes="64x64" href="${asset("favicon.png")}">
 <link rel="icon" type="image/png" sizes="32x32" href="${asset("favicon-32.png")}">
 <link rel="apple-touch-icon" href="${asset("apple-touch-icon.png")}">
+<link rel="preload" href="${asset(FONT_FILE)}" as="font" type="font/woff2" crossorigin>
 <meta property="og:type" content="${ogType}">
 <meta property="og:site_name" content="${SITE_NAME}">
 <meta property="og:locale" content="en_US">
@@ -644,56 +810,52 @@ ${ogType === "article" && modified ? `<meta property="article:modified_time" con
 <meta name="twitter:title" content="${esc(title)}">
 <meta name="twitter:description" content="${esc(description)}">
 <meta name="twitter:image" content="${SOCIAL.url}">
-<link rel="stylesheet" href="${asset("style.css")}">
-<noscript><style>.side{position:static;transform:none;width:auto;height:auto;box-shadow:none}.menu,.search{display:none}</style></noscript>
+<link rel="stylesheet" href="${asset("assets/docs.css")}">
+<script>${THEME_BOOT}</script>
+<noscript><style>.search-trigger,.search-icon,.theme,.menu,.copy-md{display:none!important}@media (max-width:1023px){.side{position:static!important;transform:none!important;width:auto!important;height:auto!important;box-shadow:none!important}}</style></noscript>
 ${(Array.isArray(jsonLd) ? jsonLd : [jsonLd]).map((data) => `<script type="application/ld+json">${JSON.stringify(data)}</script>`).join("\n")}
 </head>
 <body class="docs" data-root="${root ? `${root}/` : ""}">
 <a class="skip" href="#content">Skip to content</a>
-<header class="top"><div class="bar">
-  <a class="brand" href="${asset("")}"><img src="${asset("assets/mark.png")}" alt="" width="26" height="26">Aletheia</a>
-  ${latest ? `<a class="ver" href="${asset(releaseRel(latest))}" title="Latest release, ${latest.date}">v${latest.version}</a>` : ""}
-  <div class="search" role="search"><input id="ds" type="search" placeholder="Search the docs" aria-label="Search the documentation" autocomplete="off"><kbd>/</kbd><div id="dsr" class="results" hidden></div></div>
-  <nav aria-label="Main"><a href="${asset("docs/")}">Docs</a><a href="${asset("docs/changelog.html")}">Release notes</a><a href="${asset("docs/start/quickstart.html")}">Quickstart</a><a class="gh" href="${REPO}">GitHub</a></nav>
-  <button class="menu" type="button" aria-controls="side" aria-expanded="false">Menu</button>
-</div></header>
-<div class="docs-shell">
+<div class="page">
+${headerHtml(site, siteFile)}
+<div class="frame">
 ${sidebar}<main id="content" class="doc">
-<div class="doc-grid${toc ? "" : " no-toc"}">
-<article>
+<article class="prose">
 ${body}
 </article>
-${toc}</div>
-<footer>By <a rel="author" href="${AUTHOR.url}">${AUTHOR.name}</a> · Apache-2.0 · <a href="${REPO}/blob/main/NOTICE.md">NOTICE</a> · <a href="${REPO}">GitHub</a> · <a href="${NPM}">npm</a> · <a href="${asset("docs/changelog.html")}">Release notes</a> · <a href="${asset(FEED_REL)}">Atom feed</a> · <a href="${asset("llms.txt")}">llms.txt</a> · <a href="${asset("sitemap.xml")}">Sitemap</a></footer>
+${after}<footer>By <a rel="author" href="${AUTHOR.url}">${AUTHOR.name}</a> · Apache-2.0 · <a href="${REPO}/blob/main/NOTICE.md">NOTICE</a> · <a href="${REPO}">GitHub</a> · <a href="${NPM}">npm</a> · <a href="${asset("docs/changelog.html")}">Release notes</a> · <a href="${asset(FEED_REL)}">Atom feed</a> · <a href="${asset("llms.txt")}">llms.txt</a> · <a href="${asset("sitemap.xml")}">Sitemap</a></footer>
 </main>
+${rail}
 </div>
+</div>
+${searchDialog()}
 <script>${SCRIPT}</script>
 </body>
 </html>
 `;
 }
 
+// current: a docs page, a release, the string "changelog", or null for the docs index.
 function sidebarHtml(site, current, siteFile) {
   const item = (rel, label, isCurrent, extra = "") => `<li><a href="${linkTo(siteFile, rel)}"${isCurrent ? ' aria-current="page"' : ""}>${esc(label)}${extra}</a></li>`;
-  const groups = site.sections.map((section) => {
-    const open = section.pages.includes(current) || !COLLAPSED.has(section.title) ? " open" : "";
-    const items = section.pages.map((page) => item(page.siteRel, page.label, page === current)).join("");
-    return `<details${open}><summary>${esc(section.title)}</summary><ul>${items}</ul></details>`;
+  const onRelease = site.log.releases.includes(current);
+  const prologue = [
+    item("docs/", "Overview", current === null),
+    item("docs/changelog.html", "Release notes", current === "changelog"),
+    ...(onRelease ? [item(releaseRel(current), `v${current.version}`, true, current === site.latest ? ' <span class="tag">latest</span>' : current.yanked ? ' <span class="tag">yanked</span>' : "")] : []),
+  ].join("");
+  const groups = [`<details class="grp side-releases"${current === null || current === "changelog" || onRelease ? " open" : ""}><summary>Prologue</summary><ul>${prologue}</ul></details>`];
+  site.sections.forEach((section, index) => {
+    const open = section.pages.includes(current) || (current === null && index === 0) ? " open" : "";
+    groups.push(`<details class="grp"${open}><summary>${esc(section.title)}</summary><ul>${section.pages.map((page) => item(page.siteRel, page.label, page === current)).join("")}</ul></details>`);
   });
-  const releases = site.log.releases;
-  if (releases.length) {
-    const shown = releases.filter((release, index) => index < SIDEBAR_RELEASES || release === current);
-    const tag = (release) => (release === site.latest ? ' <span class="tag">latest</span>' : release.yanked ? ' <span class="tag">yanked</span>' : "");
-    const items = [item("docs/changelog.html", "All release notes", current === "changelog"), ...shown.map((release) => item(releaseRel(release), `v${release.version}`, release === current, tag(release)))];
-    groups.push(`<details open class="side-releases"><summary>Release notes</summary><ul>${items.join("")}</ul></details>`);
-  }
-  const top = `<a class="side-home" href="${linkTo(siteFile, "docs/")}">Documentation home</a>${site.latest ? `<a class="side-home" href="${linkTo(siteFile, "docs/changelog.html")}">Release notes <span class="tag">v${site.latest.version}</span></a>` : ""}`;
-  return `<aside class="side" id="side" aria-label="Documentation">${top}${groups.join("")}</aside>\n`;
+  return `<aside class="side" id="side" aria-label="Documentation"><div class="side-head"><a class="brand" href="${linkTo(siteFile, "")}"><img src="${linkTo(siteFile, "assets/mark.png")}" alt="" width="26" height="26"><span class="brand-name">Aletheia</span></a><button class="icon-btn side-close" type="button" aria-label="Close the menu">${ICON.close}</button></div><nav class="side-nav" aria-label="Documentation sections">${groups.join("")}</nav></aside>\n`;
 }
 
 // trail: [{ name, rel?, url? }]. rel makes a visible link; url goes into the BreadcrumbList data.
 function breadcrumbs(trail, siteFile) {
-  const html = `<nav class="crumbs" aria-label="Breadcrumb">${trail.map((item) => (item.rel !== undefined ? `<a href="${linkTo(siteFile, item.rel)}">${esc(item.name)}</a>` : `<span>${esc(item.name)}</span>`)).join(" › ")}</nav>`;
+  const html = `<nav class="crumbs" aria-label="Breadcrumb">${trail.map((item) => (item.rel !== undefined ? `<a href="${linkTo(siteFile, item.rel)}">${esc(item.name)}</a>` : `<span>${esc(item.name)}</span>`)).join('<span class="sep">/</span>')}</nav>`;
   const data = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
@@ -707,18 +869,45 @@ const HOME_CRUMBS = [
   { name: "Docs", rel: "docs/", url: `${SITE_URL}docs/` },
 ];
 
+// items: [{ text, id, level }]. The rail list ("On this page") and the inline list shown when the rail is hidden.
+function tocItems(markdown, levels = [2, 3], prefix = "") {
+  const items = [];
+  for (const level of levels) for (const item of headingsOf(markdown, level)) items.push({ ...item, id: `${prefix}${item.id}`, level });
+  return items.sort((a, b) => a.line - b.line).filter((item) => !/^next steps$/i.test(item.text));
+}
+
 function tocHtml(items, minimum = 3) {
   if (items.length < minimum) return "";
-  return `<nav class="toc" aria-label="On this page"><strong>On this page</strong><ul>${items.map((item) => `<li><a href="#${esc(item.id)}">${esc(item.text)}</a></li>`).join("")}</ul></nav>\n`;
+  return `<nav class="toc" aria-label="On this page"><p class="toc-h">${ICON.list}On this page</p><ul>${items.map((item) => `<li class="l${item.level}"><a href="#${esc(item.id)}">${esc(item.text)}</a></li>`).join("")}</ul></nav>`;
+}
+
+function tocInline(items, minimum = 3) {
+  if (items.length < minimum) return "";
+  return `<nav class="toc-inline" aria-label="Sections"><ul>${items.map((item) => `<li class="l${item.level}"><a href="#${esc(item.id)}">${esc(item.text)}</a></li>`).join("")}</ul></nav>`;
+}
+
+// Put the inline section list right after the H1 and the paragraph under it.
+function withInlineToc(html, inlineToc) {
+  if (!inlineToc) return html;
+  const head = html.indexOf("</h1>");
+  if (head < 0) return html;
+  const para = html.indexOf("</p>", head);
+  const next = html.indexOf("<h2", head);
+  const at = para >= 0 && (next < 0 || para < next) ? para + 4 : head + 5;
+  return `${html.slice(0, at)}\n${inlineToc}${html.slice(at)}`;
 }
 
 function prevNext(site, page, siteFile) {
   const index = site.order.indexOf(page);
-  const link = (target, label) => `<a class="${label.toLowerCase()}" href="${linkTo(siteFile, target.siteRel)}"><small>${label}</small><span>${esc(target.title)}</span></a>`;
+  const link = (target, label) => `<a class="${label.toLowerCase()}" href="${linkTo(siteFile, target.siteRel)}"><small>${label}</small><span>${esc(target.label)}</span></a>`;
   const before = site.order[index - 1];
   const after = site.order[index + 1];
   if (!before && !after) return "";
   return `<nav class="pager" aria-label="Previous and next">${before ? link(before, "Previous") : "<span></span>"}${after ? link(after, "Next") : "<span></span>"}</nav>`;
+}
+
+function pageMeta(sourcePath, modified) {
+  return `<div class="page-meta"><a href="${REPO}/edit/main/${sourcePath}">${ICON.edit}Edit this page on GitHub</a><span>Last updated <time datetime="${modified}">${modified}</time></span></div>`;
 }
 
 // A "Next steps" list whose items are all "[Label](link) - text" becomes a grid of cards.
@@ -764,28 +953,28 @@ function docsIndexBody(site, siteFile) {
   const card = (href, title, text) => `<a class="card-link" href="${href}"><strong>${esc(title)}</strong><span>${esc(text)}</span></a>`;
   const cards = START_CARDS.map((rel) => site.order.find((page) => page.rel === rel))
     .filter(Boolean)
-    .map((page) => card(linkTo(siteFile, page.siteRel), page.label, page.description));
+    .map((page) => card(linkTo(siteFile, page.siteRel), page.rel === "tools/overview" ? "Connect your tools" : page.label, page.description));
   if (latest) cards.push(card(linkTo(siteFile, releaseRel(latest)), `Release notes: ${latest.version}`, `${latest.date}. ${countsText(latest.counts)}. Every release, newest first.`));
   const sections = site.sections
     .map((section) => {
       const items = section.pages
         .map((page) => {
           const search = [page.title, page.description, page.keywords.join(" "), headingsOf(page.markdown, 2).map((item) => item.text).join(" ")].join(" ").toLowerCase();
-          return `<li data-search="${esc(search)}"><a href="${linkTo(siteFile, page.siteRel)}">${esc(page.title)}</a><span>${esc(page.description)}</span></li>`;
+          return `<li data-search="${esc(search)}"><a href="${linkTo(siteFile, page.siteRel)}">${esc(page.label)}</a><span>${esc(page.description)}</span></li>`;
         })
         .join("");
       return `<section class="docsec"><h2>${esc(section.title)}</h2><ul class="doclist">${items}</ul></section>`;
     })
     .join("\n");
   const script = `<script>(function(){var q=document.getElementById("q");if(!q)return;var items=[].slice.call(document.querySelectorAll("[data-search]"));var secs=[].slice.call(document.querySelectorAll(".docsec"));q.addEventListener("input",function(){var terms=q.value.trim().toLowerCase().split(/\\s+/).filter(Boolean);items.forEach(function(li){var t=li.getAttribute("data-search");li.hidden=!terms.every(function(w){return t.indexOf(w)>=0})});secs.forEach(function(s){s.hidden=!s.querySelector("[data-search]:not([hidden])")})})})();</script>`;
-  return `<h1>Aletheia documentation</h1>
+  return `<p class="eyebrow">Documentation</p>
+<h1>Aletheia documentation</h1>
 <p class="lead">Aletheia (aletheia-mem) is a free, local memory and rules hub for AI coding tools. These ${site.order.length} pages cover installing it, connecting Claude Code, Codex CLI, Cursor, Gemini CLI, Windsurf and OpenCode, how memory and rules work, the CLI, MCP and REST reference, and how it compares with claude-mem and other memory tools.</p>
-<pre><code class="language-bash">npm install -g aletheia-mem
-aletheia-server</code></pre>
+<pre><code class="language-bash">${highlight("npm install -g aletheia-mem\naletheia-server", "bash")}</code></pre>
 <p>Then open <code>http://127.0.0.1:37790</code>. It needs <a href="https://bun.sh">Bun</a> 1.1 or newer and has no runtime dependencies.</p>
-<h2 id="start-here">Start here<a class="anchor" href="#start-here" aria-hidden="true" tabindex="-1"></a></h2>
+<h2 id="start-here"><a class="anchor" href="#start-here" aria-hidden="true" tabindex="-1"></a>Start here</h2>
 <div class="cards">${cards.join("")}</div>
-<h2 id="all-pages">All pages<a class="anchor" href="#all-pages" aria-hidden="true" tabindex="-1"></a></h2>
+<h2 id="all-pages"><a class="anchor" href="#all-pages" aria-hidden="true" tabindex="-1"></a>All pages</h2>
 <p class="docsearch"><label for="q">Filter the pages</label><input id="q" type="search" placeholder="for example: claude code memory, rules sync, mcp tools" autocomplete="off"></p>
 ${sections}
 <p>AI tools can read <a href="${linkTo(siteFile, "llms.txt")}">llms.txt</a> or <a href="${linkTo(siteFile, "llms-full.txt")}">llms-full.txt</a>. Every page also has a plain Markdown copy at the same address ending in <code>.md</code>. The Markdown in <code>docs/</code> is canonical.</p>
@@ -831,7 +1020,7 @@ function searchIndex(site) {
     k: page.keywords.join(" "),
     h: headingsOf(page.markdown, 2).map((item) => item.text).join(" · "),
   }));
-  entries.push({ t: "Release notes", u: "docs/changelog.html", s: "Release notes", d: "Every Aletheia release, newest first.", k: "changelog releases versions what is new", h: site.log.releases.map((release) => release.version).join(" ") });
+  entries.push({ t: "Release notes", u: "docs/changelog.html", s: "Prologue", d: "Every Aletheia release, newest first.", k: "changelog releases versions what is new", h: site.log.releases.map((release) => release.version).join(" ") });
   for (const release of site.log.releases) {
     entries.push({ t: releaseTitle(release), u: releaseRel(release), s: "Release notes", d: releaseDescription(release), k: `${release.version} v${release.version} ${release.date} release changelog`, h: Object.keys(release.counts).join(" · ") });
   }
@@ -880,8 +1069,8 @@ function main() {
     const canonical = `${SITE_URL}${page.siteRel}`;
     const ctx = { root: ROOT, siteDir: SITE, sourceFile: page.file, siteFile, pages };
     const crumbs = breadcrumbs([...HOME_CRUMBS, { name: page.section }, { name: page.label, url: canonical }], siteFile);
-    const body = `${crumbs.html}\n${nextStepCards(renderMarkdown(page.markdown, ctx))}\n${prevNext(site, page, siteFile)}`;
-    const toc = tocHtml(headingsOf(page.markdown, 2).filter((item) => !/^next steps$/i.test(item.text)));
+    const items = tocItems(page.markdown);
+    const body = `${crumbs.html}\n${withInlineToc(nextStepCards(renderMarkdown(page.markdown, ctx)), tocInline(items))}`;
     const modified = gitDate(relative(ROOT, page.file));
     const jsonLd = [articleData({ headline: page.title, description: page.description, url: canonical, modified, keywords: page.keywords }), crumbs.data];
     const questions = /^(faq|.*\/faq)$/.test(page.rel) ? faqOf(page.markdown) : [];
@@ -891,7 +1080,21 @@ function main() {
     mkdirSync(dirname(siteFile), { recursive: true });
     writeFileSync(
       siteFile,
-      shell({ site, title: page.title, description: page.description, canonical, siteFile, body, jsonLd, keywords: page.keywords, sidebar: sidebarHtml(site, page, siteFile), toc, modified, markdownUrl: `${SITE_URL}${page.mdRel}` }),
+      shell({
+        site,
+        title: page.title,
+        description: page.description,
+        canonical,
+        siteFile,
+        body,
+        jsonLd,
+        keywords: page.keywords,
+        sidebar: sidebarHtml(site, page, siteFile),
+        rail: railHtml(site, siteFile, { toc: tocHtml(items), markdownRel: page.mdRel }),
+        modified,
+        markdownUrl: `${SITE_URL}${page.mdRel}`,
+        after: `${pageMeta(relative(ROOT, page.file).split(sep).join("/"), modified)}\n${prevNext(site, page, siteFile)}\n`,
+      }),
     );
     // A plain Markdown copy beside each page, for people and AI tools that want text without markup.
     writeFileSync(join(SITE, page.mdRel), page.markdown);
@@ -910,6 +1113,7 @@ function main() {
       body: docsIndexBody(site, indexFile),
       keywords: ["claude code memory", "ai agent memory", "mcp memory server", "aletheia-mem documentation"],
       sidebar: sidebarHtml(site, null, indexFile),
+      rail: railHtml(site, indexFile),
       jsonLd: [
         {
           "@context": "https://schema.org",
@@ -931,6 +1135,7 @@ function main() {
   const changelogModified = gitDate("CHANGELOG.md");
   const changelogDescription = "Aletheia (aletheia-mem) release notes: what each version added, changed and fixed, newest first, with a page and an Atom feed entry per release.";
   const changelogCrumbs = breadcrumbs([...HOME_CRUMBS, { name: "Release notes", url: changelogUrl }], changelogFile);
+  const versionItems = site.log.releases.slice(0, 20).map((release) => ({ id: `v${release.version}`, text: `${release.version} · ${release.date}`, level: 2 }));
   writeFileSync(
     changelogFile,
     shell({
@@ -939,12 +1144,13 @@ function main() {
       description: changelogDescription,
       canonical: changelogUrl,
       siteFile: changelogFile,
-      body: `${changelogCrumbs.html}\n${changelogBody(site, changelogFile)}`,
+      body: `${changelogCrumbs.html}\n${withInlineToc(changelogBody(site, changelogFile), "")}`,
       keywords: ["aletheia-mem changelog", "aletheia release notes", "aletheia-mem releases"],
       sidebar: sidebarHtml(site, "changelog", changelogFile),
-      toc: tocHtml(site.log.releases.slice(0, 15).map((release) => ({ id: `v${release.version}`, text: `${release.version} · ${release.date}` })), 1),
+      rail: railHtml(site, changelogFile, { toc: tocHtml(versionItems, 1), markdownRel: "docs/changelog.md" }),
       modified: changelogModified,
       markdownUrl: `${SITE_URL}docs/changelog.md`,
+      after: `${pageMeta("CHANGELOG.md", changelogModified)}\n`,
       jsonLd: [
         { ...articleData({ headline: "Aletheia release notes", description: changelogDescription, url: changelogUrl, modified: changelogModified, keywords: ["changelog", "release notes"] }), about: softwareData(site) },
         changelogCrumbs.data,
@@ -959,6 +1165,7 @@ function main() {
     const description = releaseDescription(release);
     const crumbs = breadcrumbs([...HOME_CRUMBS, { name: "Release notes", rel: "docs/changelog.html", url: changelogUrl }, { name: release.version, url: canonical }], siteFile);
     const about = { "@type": "SoftwareApplication", name: SITE_NAME, alternateName: "aletheia-mem", url: SITE_URL, softwareVersion: release.version, releaseNotes: canonical };
+    const items = tocItems(release.markdown, [3]).map((item) => ({ ...item, level: 2 }));
     writeFileSync(
       siteFile,
       shell({
@@ -970,9 +1177,10 @@ function main() {
         body: `${crumbs.html}\n${releasePageBody(site, release, siteFile)}`,
         keywords: [`aletheia-mem ${release.version}`, `aletheia ${release.version} release notes`, "aletheia-mem changelog"],
         sidebar: sidebarHtml(site, release, siteFile),
-        toc: tocHtml(headingsOf(release.markdown, 3), 2),
+        rail: railHtml(site, siteFile, { toc: tocHtml(items, 2), markdownRel: releaseMdRel(release) }),
         modified: release.date,
         markdownUrl: `${SITE_URL}${releaseMdRel(release)}`,
+        after: `<p class="rellinks rellinks-foot"><a href="${linkTo(siteFile, "docs/changelog.html")}#v${release.version}">All release notes</a><a href="${linkTo(siteFile, FEED_REL)}">Atom feed</a></p>\n${pageMeta("CHANGELOG.md", release.date)}\n${releasePager(release, siteFile)}\n`,
         jsonLd: [{ ...articleData({ headline: releaseTitle(release), description, url: canonical, modified: release.date, published: release.date }), about }, crumbs.data],
       }),
     );
