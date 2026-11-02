@@ -126,14 +126,14 @@ jobs:
           bun scripts/release.mjs --sync-server-json "$TAG"
           rm -rf site/docs site/assets
           cp -r "$GITHUB_WORKSPACE/site/docs" "$GITHUB_WORKSPACE/site/assets" site/
-          cp "$GITHUB_WORKSPACE/site/sitemap.xml" "$GITHUB_WORKSPACE/site/robots.txt" "$GITHUB_WORKSPACE/site/llms.txt" "$GITHUB_WORKSPACE/site/llms-full.txt" site/
+          cp "$GITHUB_WORKSPACE/site/index.html" "$GITHUB_WORKSPACE/site/sitemap.xml" "$GITHUB_WORKSPACE/site/robots.txt" "$GITHUB_WORKSPACE/site/llms.txt" "$GITHUB_WORKSPACE/site/llms-full.txt" site/
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add server.json site
           if git diff --cached --quiet; then
             echo "main already has this release's server.json and changelog page"
           else
-            git commit -m "Release $TAG: sync server.json and the docs changelog page"
+            git commit -m "Release $TAG: sync server.json and the docs release notes"
             git push origin main
           fi
       - name: Install cosign

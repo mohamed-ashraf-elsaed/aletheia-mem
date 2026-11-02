@@ -6,6 +6,21 @@ history.
 
 ## [Unreleased]
 
+### Added
+
+- Release notes on the docs site: one page per version under `docs/releases/`, a release notes overview at the old `docs/changelog.html` address with an anchor per version, an Atom feed (`docs/releases/feed.xml`), a "Release notes" sidebar section, the latest version in the header and the latest release on the landing page. All of it is generated from this file.
+- A search box in the docs header, over a generated `docs/search.json`, with `/` to focus it.
+
+### Changed
+
+- The docs pages use a three-part layout: the section sidebar, the page, and an "On this page" list on wide screens. Headings have anchor links, code blocks have a copy button, "Next steps" lists show as cards, and on phones the sidebar opens from a Menu button. The script is inline; the site still loads no script file and no CDN.
+- Each page head adds the Atom feed, the Markdown copy as an alternate, `og:image` size and alt text, `og:locale`, `article:modified_time` and a light and dark `theme-color`. The structured data adds `datePublished` on release pages and `softwareVersion` and `releaseNotes` on the landing page, the docs index and the release notes page.
+- Version 0.1.1 is marked `[YANKED]` in this file.
+
+### Fixed
+
+- The docs index page put its content into the 250 px sidebar column, because it had no sidebar. It now has the sidebar and uses the main column.
+
 ## [0.1.12] - 2026-11-01
 
 ### Added
@@ -176,7 +191,9 @@ history.
 - The npm package now ships code and licence files only. Version 0.1.1 also shipped the whole `docs/` tree by mistake.
 - Search filters, OpenAPI document, MCP registry `server.json`, and a crash-safety test.
 
-## [0.1.1] - 2026-10-27
+## [0.1.1] - 2026-10-27 [YANKED]
+
+Withdrawn from npm and never tagged: the package also shipped the whole `docs/` tree by mistake. Version 0.1.2 replaced it.
 
 ### Added
 

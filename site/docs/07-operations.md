@@ -1,5 +1,7 @@
 # 7. Operations
 
+<!-- description: Running the Aletheia (aletheia-mem) server: requirements, a systemd user service, the security model, file growth and troubleshooting. -->
+
 ## Requirements
 
 - Bun >= 1.1 (tested on 1.3.10). Nothing to install: no dependencies.

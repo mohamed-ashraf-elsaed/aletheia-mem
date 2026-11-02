@@ -2,7 +2,7 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
-import { faqOf } from "../scripts/build-site.mjs";
+import { faqOf, parseChangelog } from "../scripts/build-site.mjs";
 
 const root = join(import.meta.dir, "..");
 const site = join(root, "site");
@@ -43,7 +43,7 @@ describe("docs site", () => {
 
   test("the changelog page is generated from CHANGELOG.md", () => {
     const html = read(join(site, "docs", "changelog.html"));
-    expect(html).toContain('<h1 id="changelog">Changelog</h1>');
+    expect(html).toContain('<h1 id="release-notes">Release notes</h1>');
     expect(html).toContain('"@type":"TechArticle"');
     expect(html).toContain('"@type":"BreadcrumbList"');
     expect(html).toContain('<link rel="canonical" href="https://aletheia.mohamedashrafelsaed.com/docs/changelog.html">');
@@ -106,6 +106,87 @@ describe("docs site", () => {
 
   test("robots.txt points at the generated sitemap", () => {
     expect(read(join(site, "robots.txt"))).toContain("https://aletheia.mohamedashrafelsaed.com/sitemap.xml");
+  });
+});
+
+describe("release notes", () => {
+  const log = parseChangelog(read(join(root, "CHANGELOG.md")));
+  const base = "https://aletheia.mohamedashrafelsaed.com/";
+
+  test("parseChangelog reads dated versions, a yanked mark, Unreleased and undated notes", () => {
+    const parsed = parseChangelog("# Changelog\n\n## [Unreleased]\n\n### Added\n\n- next\n\n## [1.1.0] - 2026-02-01\n\n### Added\n\n- a\n- b\n\n### Fixed\n\n- c\n\n## [1.0.1] - 2026-01-02 [YANKED]\n\n- bad\n\n## [1.0.0] - 2026-01-01\n\nFirst.\n\n## [0.9.0] — not released\n\nOld.\n\n[Unreleased]: https://example.com\n");
+    expect(parsed.unreleased).toBe("### Added\n\n- next");
+    expect(parsed.releases.map((release) => [release.version, release.date, release.yanked])).toEqual([["1.1.0", "2026-02-01", false], ["1.0.1", "2026-01-02", true], ["1.0.0", "2026-01-01", false]]);
+    expect(parsed.releases[0].counts).toEqual({ Added: 2, Fixed: 1 });
+    expect(parsed.releases[1].newer.version).toBe("1.1.0");
+    expect(parsed.releases[1].older.version).toBe("1.0.0");
+    expect(parsed.notes).toEqual([{ title: "0.9.0 — not released", markdown: "Old." }]);
+  });
+
+  test("every dated version has a page, a Markdown copy, a sitemap entry, an llms.txt line and an anchor", () => {
+    expect(log.releases.length).toBeGreaterThan(10);
+    const sitemap = read(join(site, "sitemap.xml"));
+    const llms = read(join(site, "llms.txt"));
+    const overview = read(join(site, "docs", "changelog.html"));
+    for (const release of log.releases) {
+      const html = read(join(site, "docs", "releases", `v${release.version}.html`));
+      expect(html).toContain(`<h1 id="release-${release.version.replace(/\./g, "-")}">Aletheia ${release.version} release notes</h1>`);
+      expect(html).toContain(`<link rel="canonical" href="${base}docs/releases/v${release.version}.html">`);
+      expect(html).toContain(`"datePublished":"${release.date}"`);
+      expect(html).toContain(`"softwareVersion":"${release.version}"`);
+      expect(html).toContain('class="side"');
+      expect(html).toContain('aria-current="page"');
+      const description = /<meta name="description" content="([^"]+)">/.exec(html)[1].replace(/&quot;/g, '"').replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&");
+      expect(description.length).toBeGreaterThanOrEqual(70);
+      expect(description.length).toBeLessThanOrEqual(175);
+      expect(existsSync(join(site, "docs", "releases", `v${release.version}.md`))).toBe(true);
+      expect(sitemap).toContain(`<loc>${base}docs/releases/v${release.version}.html</loc><lastmod>${release.date}</lastmod>`);
+      expect(llms).toContain(`(${base}docs/releases/v${release.version}.md)`);
+      expect(overview).toContain(`id="v${release.version}"`);
+      if (release.yanked) {
+        expect(html).toContain("<strong>Yanked.</strong>");
+        expect(html).not.toContain(`npm install -g aletheia-mem@${release.version}`);
+        expect(html).not.toContain(`/releases/tag/v${release.version}"`);
+      } else {
+        expect(html).toContain(`npm install -g aletheia-mem@${release.version}`);
+        expect(html).toContain(`https://github.com/mohamed-ashraf-elsaed/aletheia-mem/releases/tag/v${release.version}`);
+      }
+    }
+  });
+
+  test("no heading id repeats on the overview, though every version has Added or Changed", () => {
+    const html = read(join(site, "docs", "changelog.html"));
+    const ids = [...html.matchAll(/ id="([^"]+)"/g)].map((match) => match[1]);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  test("the Atom feed has one entry per version and every page links it", () => {
+    const feed = read(join(site, "docs", "releases", "feed.xml"));
+    expect(feed.startsWith('<?xml version="1.0" encoding="utf-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">')).toBe(true);
+    expect((feed.match(/<entry /g) ?? []).length).toBe(log.releases.length);
+    expect(feed).toContain(`<updated>${log.releases[0].date}T00:00:00Z</updated>`);
+    expect(feed).not.toMatch(/<content type="html">[^<]*<(?!\/content)/);
+    for (const page of ["docs/index.html", "docs/start/introduction.html", "docs/changelog.html"]) {
+      expect(read(join(site, page))).toContain(`<link rel="alternate" type="application/atom+xml" href="${base}docs/releases/feed.xml"`);
+    }
+  });
+
+  test("the sidebar and header name the latest release", () => {
+    const latest = log.releases[0];
+    for (const page of ["docs/index.html", "docs/29-sync.html", "docs/releases/v0.1.0.html"]) {
+      const html = read(join(site, page));
+      expect(html).toContain('<details open class="side-releases"><summary>Release notes</summary>');
+      expect(html).toContain(`class="ver"`);
+      expect(html).toContain(`>v${latest.version}</a>`);
+    }
+  });
+
+  test("the landing page shows the latest release and its JSON-LD carries the version", () => {
+    const latest = log.releases[0];
+    const html = read(join(site, "index.html"));
+    expect(html).toContain(`<!-- release:begin --><p class="release-line">Latest release: <a href="docs/releases/v${latest.version}.html">Aletheia ${latest.version}</a>, ${latest.date}`);
+    expect(html).toContain(`"softwareVersion":"${latest.version}","releaseNotes":"${base}docs/releases/v${latest.version}.html"`);
+    expect((html.match(/"softwareVersion"/g) ?? []).length).toBe(1);
   });
 });
 
@@ -179,10 +260,36 @@ describe("docs site structure and search metadata", () => {
     expect((html.match(/"@type":"Question"/g) ?? []).length).toBe(questions);
   });
 
-  test("the docs index has a search box and a card for every section", () => {
+  test("the docs index has the sidebar, a search box and a card for every section", () => {
     const html = read(join(site, "docs", "index.html"));
+    expect(html).toContain('<aside class="side" id="side"');
+    expect(html).toContain('<div class="doc-grid no-toc">');
     expect(html).toContain('id="q"');
     for (const section of nav.sections) expect(html).toContain(`<h2>${section.title}</h2>`);
+  });
+
+  test("search.json lists every page and every release with a site-relative address", () => {
+    const index = JSON.parse(read(join(site, "docs", "search.json")));
+    const urls = new Set(index.map((entry) => entry.u));
+    for (const { page } of entries) expect(urls.has(`docs/${page.replace(/\.md$/, ".html")}`)).toBe(true);
+    expect(urls.has("docs/changelog.html")).toBe(true);
+    for (const entry of index) {
+      expect(existsSync(join(site, entry.u))).toBe(true);
+      expect(typeof entry.t).toBe("string");
+    }
+  });
+
+  test("every page head carries the social image size, locale, author and the page script inline", () => {
+    for (const page of ["docs/index.html", "docs/start/faq.html", "docs/releases/v0.1.12.html"]) {
+      const html = read(join(site, page));
+      expect(html).toContain('<meta property="og:image:width" content="1280">');
+      expect(html).toContain('<meta property="og:locale" content="en_US">');
+      expect(html).toContain('<meta name="author" content="Mohamed Ashraf Elsaed">');
+      expect(html).toContain('<a class="skip" href="#content">');
+      expect(html).toContain('<main id="content" class="doc">');
+      expect(html).toContain('docs/search.json');
+      expect((html.match(/<h1[ >]/g) ?? []).length).toBe(1);
+    }
   });
 
   test("faqOf turns question headings into question and answer pairs and ignores code", () => {

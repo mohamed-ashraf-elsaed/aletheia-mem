@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Aletheia 0.1.8 release notes · Aletheia docs</title>
+<meta name="description" content="Aletheia (aletheia-mem) 0.1.8, released 2026-10-28: 2 added, 1 fixed, 5 changed. aletheia facts clean --dry-run (the default) and aletheia facts clean --apply. The command...">
+<meta name="keywords" content="aletheia-mem 0.1.8, aletheia 0.1.8 release notes, aletheia-mem changelog">
+<meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large">
+<meta name="author" content="Mohamed Ashraf Elsaed">
+<meta name="google-site-verification" content="rZF-Cs7rUbS1FtbUSXFUQLM0TUQzqfHodsSL-sMImTM">
+<meta name="msvalidate.01" content="E411C74C3FFB0D6D84EB24CA7C7E7101">
+<meta name="theme-color" content="#fbfaf7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0f1117" media="(prefers-color-scheme: dark)">
+<link rel="canonical" href="https://aletheia.mohamedashrafelsaed.com/docs/releases/v0.1.8.html">
+<link rel="alternate" type="text/plain" href="https://aletheia.mohamedashrafelsaed.com/llms.txt" title="llms.txt">
+<link rel="alternate" type="application/atom+xml" href="https://aletheia.mohamedashrafelsaed.com/docs/releases/feed.xml" title="Aletheia release notes">
+<link rel="alternate" type="text/markdown" href="https://aletheia.mohamedashrafelsaed.com/docs/releases/v0.1.8.md" title="Markdown">
+<link rel="icon" type="image/png" sizes="64x64" href="../../favicon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../../favicon-32.png">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Aletheia">
+<meta property="og:locale" content="en_US">
+<meta property="og:title" content="Aletheia 0.1.8 release notes">
+<meta property="og:description" content="Aletheia (aletheia-mem) 0.1.8, released 2026-10-28: 2 added, 1 fixed, 5 changed. aletheia facts clean --dry-run (the default) and aletheia facts clean --apply. The command...">
+<meta property="og:url" content="https://aletheia.mohamedashrafelsaed.com/docs/releases/v0.1.8.html">
+<meta property="og:image" content="https://aletheia.mohamedashrafelsaed.com/assets/social.png">
+<meta property="og:image:width" content="1280">
+<meta property="og:image:height" content="640">
+<meta property="og:image:alt" content="Aletheia: one memory for every AI coding tool">
+<meta property="article:modified_time" content="2026-10-28">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Aletheia 0.1.8 release notes">
+<meta name="twitter:description" content="Aletheia (aletheia-mem) 0.1.8, released 2026-10-28: 2 added, 1 fixed, 5 changed. aletheia facts clean --dry-run (the default) and aletheia facts clean --apply. The command...">
+<meta name="twitter:image" content="https://aletheia.mohamedashrafelsaed.com/assets/social.png">
+<link rel="stylesheet" href="../../style.css">
+<noscript><style>.side{position:static;transform:none;width:auto;height:auto;box-shadow:none}.menu,.search{display:none}</style></noscript>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"Aletheia 0.1.8 release notes","description":"Aletheia (aletheia-mem) 0.1.8, released 2026-10-28: 2 added, 1 fixed, 5 changed. aletheia facts clean --dry-run (the default) and aletheia facts clean --apply. The command...","url":"https://aletheia.mohamedashrafelsaed.com/docs/releases/v0.1.8.html","mainEntityOfPage":"https://aletheia.mohamedashrafelsaed.com/docs/releases/v0.1.8.html","inLanguage":"en","datePublished":"2026-10-28","dateModified":"2026-10-28","about":{"@type":"SoftwareApplication","name":"Aletheia","alternateName":"aletheia-mem","url":"https://aletheia.mohamedashrafelsaed.com/","softwareVersion":"0.1.8","releaseNotes":"https://aletheia.mohamedashrafelsaed.com/docs/releases/v0.1.8.html"},"isPartOf":{"@type":"WebSite","name":"Aletheia","url":"https://aletheia.mohamedashrafelsaed.com/"},"author":{"@type":"Person","name":"Mohamed Ashraf Elsaed","url":"https://mohamedashrafelsaed.com","@id":"https://mohamedashrafelsaed.com/#person"},"publisher":{"@type":"Person","name":"Mohamed Ashraf Elsaed","url":"https://mohamedashrafelsaed.com","@id":"https://mohamedashrafelsaed.com/#person"},"image":"https://aletheia.mohamedashrafelsaed.com/assets/social.png","license":"https://www.apache.org/licenses/LICENSE-2.0"}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"name":"Aletheia","item":"https://aletheia.mohamedashrafelsaed.com/"},{"@type":"ListItem","position":2,"name":"Docs","item":"https://aletheia.mohamedashrafelsaed.com/docs/"},{"@type":"ListItem","position":3,"name":"Release notes","item":"https://aletheia.mohamedashrafelsaed.com/docs/changelog.html"},{"@type":"ListItem","position":4,"name":"0.1.8","item":"https://aletheia.mohamedashrafelsaed.com/docs/releases/v0.1.8.html"}]}</script>
+</head>
+<body class="docs" data-root="../../">
+<a class="skip" href="#content">Skip to content</a>
+<header class="top"><div class="bar">
+  <a class="brand" href="../../"><img src="../../assets/mark.png" alt="" width="26" height="26">Aletheia</a>
+  <a class="ver" href="v0.1.12.html" title="Latest release, 2026-11-01">v0.1.12</a>
+  <div class="search" role="search"><input id="ds" type="search" placeholder="Search the docs" aria-label="Search the documentation" autocomplete="off"><kbd>/</kbd><div id="dsr" class="results" hidden></div></div>
+  <nav aria-label="Main"><a href="../">Docs</a><a href="../changelog.html">Release notes</a><a href="../start/quickstart.html">Quickstart</a><a class="gh" href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a></nav>
+  <button class="menu" type="button" aria-controls="side" aria-expanded="false">Menu</button>
+</div></header>
+<div class="docs-shell">
+<aside class="side" id="side" aria-label="Documentation"><a class="side-home" href="../">Documentation home</a><a class="side-home" href="../changelog.html">Release notes <span class="tag">v0.1.12</span></a><details open><summary>Get started</summary><ul><li><a href="../start/introduction.html">Introduction</a></li><li><a href="../start/installation.html">Installation</a></li><li><a href="../start/quickstart.html">Quickstart</a></li><li><a href="../start/how-it-works.html">How it works</a></li><li><a href="../start/dashboard.html">Dashboard</a></li><li><a href="../start/faq.html">FAQ</a></li></ul></details><details open><summary>Concepts</summary><ul><li><a href="../concepts/memory-model.html">Memory model</a></li><li><a href="../concepts/rules.html">Rules</a></li><li><a href="../concepts/search.html">Search</a></li><li><a href="../concepts/session-context.html">Session-start context</a></li><li><a href="../concepts/privacy.html">Privacy and redaction</a></li><li><a href="../33-facts.html">Facts</a></li><li><a href="../concepts/glossary.html">Glossary</a></li></ul></details><details open><summary>Connect your tools</summary><ul><li><a href="../tools/overview.html">Overview</a></li><li><a href="../tools/claude-code.html">Claude Code</a></li><li><a href="../tools/command-code.html">Command Code</a></li><li><a href="../tools/codex.html">Codex CLI</a></li><li><a href="../tools/cursor.html">Cursor</a></li><li><a href="../tools/gemini-cli.html">Gemini CLI</a></li><li><a href="../tools/windsurf.html">Windsurf</a></li><li><a href="../tools/opencode.html">OpenCode</a></li><li><a href="../claude-desktop.html">Claude Desktop</a></li><li><a href="../tools/other-tools.html">Copilot, Aider and others</a></li><li><a href="../25-installers.html">Installers and capture</a></li></ul></details><details open><summary>Guides</summary><ul><li><a href="../guides/migrate-from-claude-mem.html">Migrate from claude-mem</a></li><li><a href="../guides/write-rules-once.html">Write rules once</a></li><li><a href="../guides/backup-export-import.html">Backup, export and import</a></li><li><a href="../guides/run-as-a-service.html">Run as a service</a></li><li><a href="../guides/model-providers.html">Model providers</a></li><li><a href="../guides/troubleshooting.html">Troubleshooting</a></li><li><a href="../29-sync.html">Sync</a></li><li><a href="../30-remote-mcp.html">Remote MCP</a></li><li><a href="../31-team.html">Team mode</a></li><li><a href="../32-requests.html">Requests and goals</a></li></ul></details><details open><summary>Reference</summary><ul><li><a href="../reference/cli.html">CLI</a></li><li><a href="../reference/mcp-tools.html">MCP tools</a></li><li><a href="../reference/configuration.html">Configuration</a></li><li><a href="../reference/hooks.html">Hooks</a></li><li><a href="../03-http-api.html">HTTP API</a></li></ul></details><details open><summary>Compare</summary><ul><li><a href="../compare/aletheia-vs-claude-mem.html">Aletheia vs claude-mem</a></li><li><a href="../compare/memory-tools.html">Memory tools compared</a></li><li><a href="../compare/claude-code-memory.html">Claude Code memory options</a></li></ul></details><details open><summary>Project</summary><ul><li><a href="../project/benchmarks.html">Benchmarks</a></li><li><a href="../project/status-and-limits.html">Status and limits</a></li><li><a href="../dependencies.html">Dependencies</a></li></ul></details><details><summary>Internals</summary><ul><li><a href="../01-architecture.html">Architecture</a></li><li><a href="../02-data-model.html">Data model</a></li><li><a href="../06-frontend.html">Frontend</a></li><li><a href="../07-operations.html">Operations</a></li></ul></details><details open class="side-releases"><summary>Release notes</summary><ul><li><a href="../changelog.html">All release notes</a></li><li><a href="v0.1.12.html">v0.1.12 <span class="tag">latest</span></a></li><li><a href="v0.1.11.html">v0.1.11</a></li><li><a href="v0.1.10.html">v0.1.10</a></li><li><a href="v0.1.9.html">v0.1.9</a></li><li><a href="v0.1.8.html" aria-current="page">v0.1.8</a></li><li><a href="v0.1.7.html">v0.1.7</a></li><li><a href="v0.1.6.html">v0.1.6</a></li><li><a href="v0.1.5.html">v0.1.5</a></li></ul></details></aside>
+<main id="content" class="doc">
+<div class="doc-grid">
+<article>
+<nav class="crumbs" aria-label="Breadcrumb"><a href="../../">Aletheia</a> › <a href="../">Docs</a> › <a href="../changelog.html">Release notes</a> › <span>0.1.8</span></nav>
+<h1 id="release-0-1-8">Aletheia 0.1.8 release notes</h1>
+<p class="relmeta"><span>Released <time datetime="2026-10-28">2026-10-28</time></span><span>2 added, 1 fixed, 5 changed</span></p>
+<p class="rellinks"><a href="https://www.npmjs.com/package/aletheia-mem/v/0.1.8">npm 0.1.8</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/releases/tag/v0.1.8">GitHub release</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/compare/v0.1.7...v0.1.8">Changes since 0.1.7</a></p>
+<pre><code class="language-bash">npm install -g aletheia-mem@0.1.8</code></pre>
+<h3 id="added">Added<a class="anchor" href="#added" aria-hidden="true" tabindex="-1"></a></h3>
+<ul><li><code>aletheia facts clean --dry-run</code> (the default) and <code>aletheia facts clean --apply</code>. The command applies the fact quality gate to already-stored facts, reports counts and the first ten examples per rejection reason, and <code>--apply</code> dismisses the failures with <code>quality:&lt;reason&gt;</code> through the normal reversible dismissal path.</li><li>A <code>facts.minConfidence</code> setting (0.3–0.9, default 0.4). The existing confidence calculation is unchanged; the floor only stops weaker facts from being stored.</li></ul>
+<h3 id="fixed">Fixed<a class="anchor" href="#fixed" aria-hidden="true" tabindex="-1"></a></h3>
+<ul><li><code>scripts/release.mjs --prepare</code> corrupted the changelog when a release note contained the text <code>$</code> followed by a backtick: it expanded as a replacement pattern and copied the header into the note. Notes are now copied literally.</li></ul>
+<h3 id="changed">Changed<a class="anchor" href="#changed" aria-hidden="true" tabindex="-1"></a></h3>
+<ul><li>Fact extraction now keeps only assistant summaries and notes as eligible sources. User prompts and tool output/file contents (including raw back-filled transcripts) are no longer extracted into facts.</li><li>Every candidate fact passes a quality gate before it is stored: balanced quotes and brackets, no escaped newlines/tabs, no code-like tokens (<code>$</code>, <code>-&gt;</code>, <code>::</code>, <code>=&gt;</code>, braces, backticks, SQL or HTML tags), 3–40 words and at most 200 characters, a 1–8 word subject that is not a bare pronoun/demonstrative and does not start with a continuation word, and an object that does not end mid-clause. Each rejection returns a stable reason code and is counted.</li><li>The session-start Facts section caps each fact line at 140 characters (dismissed facts were already skipped).</li><li>The CI regression gate now uses a harder seeded corpus (near-duplicate distractors, answers ranked 3rd and 6th, 50,000 rows). Its baseline is Recall@5 0.90 and p95 latency about 7.8 ms, above the 5 ms floor, so a latency regression of more than 20% now fails the build too.</li><li>The default test timeout is 20 s instead of 5 s, because three installer tests timed out on a slow Windows runner.</li></ul>
+<p class="rellinks"><a href="../changelog.html#v0.1.8">All release notes</a> · <a href="feed.xml">Atom feed</a></p>
+<nav class="pager" aria-label="Older and newer releases"><a class="prev" href="v0.1.7.html"><small>Older</small><span>Aletheia 0.1.7 release notes</span></a><a class="next" href="v0.1.9.html"><small>Newer</small><span>Aletheia 0.1.9 release notes</span></a></nav>
+</article>
+<nav class="toc" aria-label="On this page"><strong>On this page</strong><ul><li><a href="#added">Added</a></li><li><a href="#fixed">Fixed</a></li><li><a href="#changed">Changed</a></li></ul></nav>
+</div>
+<footer>By <a rel="author" href="https://mohamedashrafelsaed.com">Mohamed Ashraf Elsaed</a> · Apache-2.0 · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/NOTICE.md">NOTICE</a> · <a href="https://github.com/mohamed-ashraf-elsaed/aletheia-mem">GitHub</a> · <a href="https://www.npmjs.com/package/aletheia-mem">npm</a> · <a href="../changelog.html">Release notes</a> · <a href="feed.xml">Atom feed</a> · <a href="../../llms.txt">llms.txt</a> · <a href="../../sitemap.xml">Sitemap</a></footer>
+</main>
+</div>
+<script>(function(){var b=document.body,root=b.getAttribute("data-root")||"";
+var m=document.querySelector(".menu"),sd=document.getElementById("side");function nav(o){b.classList.toggle("nav-open",o);if(m)m.setAttribute("aria-expanded",String(o))}
+if(m)m.addEventListener("click",function(e){e.stopPropagation();nav(!b.classList.contains("nav-open"))});
+document.addEventListener("click",function(e){if(b.classList.contains("nav-open")&&sd&&!sd.contains(e.target))nav(false)});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&b.classList.contains("nav-open"))nav(false)});
+[].forEach.call(document.querySelectorAll(".doc pre"),function(p){if(!navigator.clipboard)return;var c=document.createElement("button");c.type="button";c.className="copy";c.textContent="Copy";c.addEventListener("click",function(){var t=p.querySelector("code")||p;navigator.clipboard.writeText(t.innerText).then(function(){c.textContent="Copied";setTimeout(function(){c.textContent="Copy"},1500)})});p.appendChild(c)});
+var i=document.getElementById("ds"),r=document.getElementById("dsr");if(!i||!r)return;var idx=null,hits=[],sel=0;
+function load(){return idx?Promise.resolve(idx):fetch(root+"docs/search.json").then(function(x){return x.json()}).then(function(d){idx=d;return d})}
+function paint(){[].forEach.call(r.querySelectorAll("a"),function(a,n){a.className=n===sel?"on":""})}
+function show(){var q=i.value.trim().toLowerCase();if(!q){r.hidden=true;hits=[];return}load().then(function(d){var w=q.split(/\s+/);hits=d.map(function(e){var t=e.t.toLowerCase(),h=e.h.toLowerCase(),o=(e.d+" "+e.k+" "+e.s).toLowerCase(),s=0;for(var k=0;k<w.length;k++){if(t.indexOf(w[k])>=0)s+=5;else if(h.indexOf(w[k])>=0)s+=2;else if(o.indexOf(w[k])>=0)s+=1;else return null}return{e:e,s:s}}).filter(Boolean).sort(function(a,c){return c.s-a.s}).slice(0,8);sel=0;r.textContent="";hits.forEach(function(x){var a=document.createElement("a"),s=document.createElement("small");a.href=root+x.e.u;a.textContent=x.e.t;s.textContent=x.e.s;a.appendChild(s);r.appendChild(a)});if(!hits.length){var p=document.createElement("p");p.className="none";p.textContent="No page matches.";r.appendChild(p)}paint();r.hidden=false})}
+i.addEventListener("input",show);i.addEventListener("focus",function(){load();if(i.value)show()});
+i.addEventListener("keydown",function(e){if(e.key==="Escape"){r.hidden=true;i.blur()}else if(e.key==="Enter"&&hits[sel]){e.preventDefault();location.href=root+hits[sel].e.u}else if((e.key==="ArrowDown"||e.key==="ArrowUp")&&hits.length){e.preventDefault();sel=(sel+(e.key==="ArrowDown"?1:hits.length-1))%hits.length;paint()}});
+document.addEventListener("keydown",function(e){var a=document.activeElement;if(e.key==="/"&&a&&!/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)){e.preventDefault();i.focus()}});
+document.addEventListener("click",function(e){if(e.target!==i&&!r.contains(e.target))r.hidden=true})})();</script>
+</body>
+</html>
