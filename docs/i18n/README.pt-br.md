@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: bff8b03a19b2ad92b16e4a0ce7f10891cabb0f0fa72211a376c4f48ea49cb033
+> Source: [README.md](../../README.md) · source-sha256: 7848b4a8e95c9ac13e13d97cb5ceaee3940f74ed28d3caff0f564b37b7cd62f5
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -140,7 +140,7 @@ Ambos são auto-hospedados e gratuitos; nenhum foi testado entre duas máquinas 
 
 | Interface | Where | Use |
 |---|---|---|
-| MCP (stdio) | `bun bin/mcp.mjs` | the 13 MCP tools below (read and write) |
+| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | the 13 MCP tools below (read and write) |
 | MCP (HTTP) | sync hub `/mcp` | the same tools with a bearer token and per-token scope |
 | REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, any language; optional `ALETHEIA_API_KEY` bearer key |
 | CLI | `bin/aletheia.mjs` | hooks, shell, cron, sync |

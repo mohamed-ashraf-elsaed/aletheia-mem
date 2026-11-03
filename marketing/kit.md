@@ -17,11 +17,11 @@ A free, local memory and rules hub for AI coding tools. One store on your machin
 
 | Pillar | Proof point to reuse (as stated in the README) |
 | --- | --- |
-| One memory for every tool | 13 MCP tools, REST under /v1, CLI; MCP server passes against the official SDK client, protocol versions 2024-11-05 to 2025-11-25 |
+| One memory for every tool | 13 MCP tools, REST under /v1, CLI; MCP server passes against the official SDK client, protocol versions 2024-11-05 to 2025-11-25; starts from npm with `npx aletheia-mem mcp` (0.1.13), listed in the official MCP Registry |
 | Rules written once | synced into CLAUDE.md, AGENTS.md, GEMINI.md, .cursor/rules, .windsurf/rules, Copilot and Aider files: 9 targets |
 | Local, free, no account | Apache-2.0, loopback only, no telemetry, no network call unless a model provider is configured |
 | Safe by default | secrets and private blocks redacted on every write path (0.1.11); memory returned to the model as marked untrusted data; hooks always exit 0 |
-| Honest numbers | LoCoMo Recall@5 57.4% raw turns vs 36.0% for claude-mem 15.2.0 as shipped, 3.72 ms/query vs p50 1,699 ms; 1,505 tests, 0 failures; CI on Linux, macOS, Windows |
+| Honest numbers | LoCoMo Recall@5 57.4% raw turns vs 36.0% for claude-mem 15.2.0 as shipped, 3.72 ms/query vs p50 1,699 ms; 1,533 tests, 0 failures; CI on Linux, macOS, Windows |
 
 The benchmark measures retrieval, not answer accuracy. The README says this next to the numbers; every post that quotes them must too.
 
