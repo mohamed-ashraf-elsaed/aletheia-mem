@@ -12,9 +12,26 @@ Line keys match what the distro server's `src/log-export.ts` writes: timestamp, 
 | Glama listing | 2026-10-27T17:43:48Z | UNVERIFIED: this is the commit time of the README Glama score badge (20:43:48 +03:00), the earliest repo evidence the listing existed. The real listing date was not fetched. |
 | mcpservers.org listing | 2026-10-31T20:25:18Z | UNVERIFIED: this is the commit time (22:25:18 +02:00) of the first README "Listed in" mention. The real listing date was not fetched. |
 
+## Release posts for 0.1.12 and 0.1.13 (added 2026-11-03)
+
+Both releases were posted one channel at a time with the distro server's own clients, not through its approval
+queue, so `source` is `manual` and `approvedBy` is null. Each timestamp was read from the platform:
+
+| Channel | How the timestamp was checked |
+|---|---|
+| mcp-registry | registry API `publishedAt` for the version |
+| discord | the message ID (a Discord snowflake) |
+| bluesky | public AppView `app.bsky.feed.getPosts`, `record.createdAt` (seconds kept) |
+| devto | Dev.to API `published_timestamp` |
+| github-discussions | GraphQL `discussion.createdAt` |
+
+The Buttondown emails for both releases are drafts that were not sent, so they have no line.
+
 ## Not yet logged (UNVERIFIED, no links supplied)
 
 - Reddit post(s): the owner has not supplied a link. Add a line when one exists.
 - X thread: the owner has not supplied a link. Add a line when one exists.
+- X and LinkedIn posts for 0.1.12 and 0.1.13: posted or to be posted by the owner by hand (the X API has no
+  credits; there is no LinkedIn token). Add a line for each when its link exists.
 
 Do not add lines for these without a real URL and date.
