@@ -8845,6 +8845,14 @@ history.
 
 ## [Unreleased]
 
+### Fixed
+
+- `gemini-extension.json` still said version 0.1.0. It now carries the package version, and `scripts/release.mjs --prepare` bumps `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` and `gemini-extension.json` with the package. `--verify` fails when one of them differs.
+
+### Changed
+
+- The README interfaces table lists `aletheia mcp` and `npx aletheia-mem mcp` as ways to start the stdio MCP server, in all eleven languages.
+
 ## [0.1.13] - 2026-11-03
 
 ### Added
