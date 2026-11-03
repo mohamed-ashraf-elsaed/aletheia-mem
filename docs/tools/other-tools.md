@@ -92,6 +92,8 @@ Would write to /tmp/tmp.i368foFEJ8/.cursor/mcp.json:
 Add --write to apply (a backup is kept).
 ```
 
+From npm, with no checkout, the same server starts with `npx aletheia-mem mcp` (or `bunx aletheia-mem mcp`); Bun must be on the PATH. As a config entry that is `"command": "npx", "args": ["-y", "aletheia-mem", "mcp"]`.
+
 For a client that is not in the registry, copy the `command` and `args` values into that client's MCP config. Use absolute paths. The MCP quickstart (https://modelcontextprotocol.io/quickstart/user, fetched 2026-10-29) shows the same `mcpServers` object with `command` and `args` for stdio servers in Claude Desktop's config.
 
 Two optional environment variables, set in the client's `env` field if it has one: `ALETHEIA_DATA_DIR` or `ALETHEIA_HUB_DB` choose the store, and `ALETHEIA_TOOL` names the caller in saved memories.

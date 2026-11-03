@@ -34,6 +34,12 @@ describe("server.json agrees with package.json", () => {
     expect(existsSync(join(root, mcpBin[1]))).toBe(true);
   });
 
+  test("a registry client runs the package bin with the mcp argument", () => {
+    // `npx aletheia-mem` runs the bin named after the package, which is the CLI; without `mcp` it prints usage and exits.
+    expect(pkg.bin[pkg.name]).toBe("bin/aletheia.mjs");
+    expect(manifest.packages[0].packageArguments).toEqual([{ type: "positional", value: "mcp" }]);
+  });
+
   test("the repository url matches the package repository", () => {
     expect(repoUrl(manifest.repository.url)).toBe(repoUrl(pkg.repository.url));
     expect(manifest.repository.source).toBe("github");

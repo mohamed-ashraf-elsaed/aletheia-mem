@@ -8,6 +8,7 @@ history.
 
 ### Added
 
+- `aletheia mcp` runs the MCP server over stdio, the same server as `aletheia-mcp`. From npm it starts with `npx aletheia-mem mcp` or `bunx aletheia-mem mcp`.
 - Release notes on the docs site: one page per version under `docs/releases/`, a release notes overview at the old `docs/changelog.html` address with an anchor per version, an Atom feed (`docs/releases/feed.xml`), a "Release notes" sidebar section, the latest version in the header and the latest release on the landing page. All of it is generated from this file.
 - A search dialog on every docs page, over a generated `docs/search.json`. Open it with Ctrl K (Cmd K on a Mac), `/` or the header search box; arrow keys move and Enter opens.
 - A colour theme switch (system, light, dark) that remembers the choice, a releases menu in the header, "Copy as Markdown", "Edit this page on GitHub" and a "Last updated" date on each page.
@@ -20,6 +21,7 @@ history.
 
 ### Fixed
 
+- The MCP Registry entry did not start the server. A registry client runs `npx aletheia-mem`, which is the CLI and only prints its usage. `server.json` now passes the package argument `mcp`, so the client runs `npx aletheia-mem mcp`.
 - The docs index page put its content into the 250 px sidebar column, because it had no sidebar. It now has the sidebar and uses the main column.
 
 ## [0.1.12] - 2026-11-01

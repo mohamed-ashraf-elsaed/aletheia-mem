@@ -14,6 +14,7 @@
 //                                                          poll the verified transcript folders incrementally (read-only, nice 10)
 //   aletheia export [--format jsonl|markdown] [--project p] [--events] [--out file]
 //   aletheia rules list [--stale] [--older-than N] | add <text> [--when w] | confirm <id> | retire <id> | diff [--dir path] [--tools a,b] [--json] | lint [--dir path] [--tools a,b] [--json] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
+//   aletheia mcp                                          run the MCP server over stdio (same as aletheia-mcp)
 //   aletheia tools                                        detected tools and how to connect each
 //   aletheia connect <tool> [--write]                     preview (default) or write the MCP config for a tool
 //   aletheia install <tool> [--write] [--dry-run]         preview (default) or write MCP, hooks and rules in one go
@@ -365,6 +366,12 @@ async function main() {
     for (const check of checks) out(`${check.ok ? "ok  " : "FAIL"} ${check.name.padEnd(20)} ${check.detail}`);
     if (checks.some((check) => !check.ok)) process.exitCode = 1;
     return;
+  }
+
+  // `npx aletheia-mem mcp` reaches this bin, so it must serve exactly what bin/mcp.mjs serves. stdout carries only JSON-RPC.
+  if (cmd === "mcp") {
+    const { serveStdio } = await import("../src/hub/mcp.mjs");
+    return serveStdio({ store: new HubStore(config.hubDb) });
   }
 
   const hub = new HubStore(config.hubDb);

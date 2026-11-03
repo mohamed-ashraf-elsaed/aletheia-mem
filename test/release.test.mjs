@@ -133,6 +133,14 @@ describe("release.mjs --sync-server-json", () => {
     expect(syncServerJson(text, "0.1.1").text).toBe(text.replaceAll("0.1.0", "0.1.1"));
   });
 
+  test("keeps packageArguments when it bumps the versions", () => {
+    const manifest = { name: "fx", version: "0.1.0", packages: [{ registryType: "npm", identifier: "fx", version: "0.1.0", transport: { type: "stdio" }, packageArguments: [{ type: "positional", value: "mcp" }] }] };
+    const bumped = JSON.parse(syncServerJson(JSON.stringify(manifest, null, 2), "0.1.1").text);
+    expect(bumped.version).toBe("0.1.1");
+    expect(bumped.packages[0].version).toBe("0.1.1");
+    expect(bumped.packages[0].packageArguments).toEqual([{ type: "positional", value: "mcp" }]);
+  });
+
   test("leaves server.json alone when it matches or is newer", () => {
     expect(release(fixture(), "--sync-server-json", "0.1.0").out).toContain("already matches 0.1.0");
     const newer = fixture({ version: "0.1.5" });
