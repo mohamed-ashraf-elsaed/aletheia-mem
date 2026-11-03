@@ -11,6 +11,7 @@ Line keys match what the distro server's `src/log-export.ts` writes: timestamp, 
 | TensorBlock/awesome-mcp-servers PR 4715 | 2026-10-28T09:10:45Z | verified: `gh api` merged_at (created 2026-10-27T17:29:55Z) |
 | Glama listing | 2026-10-27T17:43:48Z | UNVERIFIED: this is the commit time of the README Glama score badge (20:43:48 +03:00), the earliest repo evidence the listing existed. The real listing date was not fetched. |
 | mcpservers.org listing | 2026-10-31T20:25:18Z | UNVERIFIED: this is the commit time (22:25:18 +02:00) of the first README "Listed in" mention. The real listing date was not fetched. |
+| HOL Guard MCP catalog (PR 7036) | 2026-11-03T03:34:45Z | verified: `gh pr view 7036 -R hashgraph-online/hol-guard` mergedAt |
 
 ## Release posts for 0.1.12 and 0.1.13 (added 2026-11-03)
 
