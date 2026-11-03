@@ -114,6 +114,7 @@ All compared tools are in sync.
 
 ## Tools, install and doctor
 
+- `aletheia mcp` - run the MCP server over stdio, the same server as `aletheia-mcp`. It takes no flags and writes only JSON-RPC to stdout. This is the command an MCP Registry client runs: `npx aletheia-mem mcp` (Bun must be on the PATH).
 - `aletheia tools` - list known tools, whether each is detected in your home folder, and where its rules file lives.
 - `aletheia connect <tool> [--write]` - preview, or with `--write` apply, only the MCP entry for a tool. A backup is kept.
 - `aletheia install <tool> [--write] [--dry-run]` - preview or apply the MCP entry, hooks and rules block in one step. Tools: `claude-code`, `command-code`, `cursor`, `codex`, `gemini-cli`, `windsurf`, `opencode`.
@@ -259,7 +260,7 @@ There is no `aletheia settings` command. Runtime settings such as `facts.minConf
 ## Other executables
 
 - `aletheia-server [--host addr] [--behind-tls]` starts the dashboard and API on `ALETHEIA_PORT` (default 37790) and the extraction worker. It reads only those two flags. **Known limitation:** `aletheia-server --help` is not a help command. It ignores `--help` and starts the server; on 2026-10-29 it printed `aletheia-mem listening on ...` and kept running until it was stopped.
-- `aletheia-mcp` runs the MCP server over stdio. It takes no flags. See [MCP tools reference](mcp-tools.md).
+- `aletheia-mcp` runs the MCP server over stdio, the same as `aletheia mcp`. It takes no flags. See [MCP tools reference](mcp-tools.md).
 - `bun bin/aletheia-sync.mjs [--host h] [--port p] [--db path] [--hub-db path] [--name n] [--behind-tls] [--mcp-origins a,b]` runs the sync hub. It has no npm command name.
 - `bun bin/ledger.mjs <candidates|apply|pending|show|...>` runs the ledger commands the refresh uses.
 

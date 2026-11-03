@@ -108,6 +108,7 @@
 <span class="line">  }</span>
 <span class="line">}</span>
 <span class="line">Add --write to apply (a backup is kept).</span></code></pre>
+<p>From npm, with no checkout, the same server starts with <code>npx aletheia-mem mcp</code> (or <code>bunx aletheia-mem mcp</code>); Bun must be on the PATH. As a config entry that is <code>&quot;command&quot;: &quot;npx&quot;, &quot;args&quot;: [&quot;-y&quot;, &quot;aletheia-mem&quot;, &quot;mcp&quot;]</code>.</p>
 <p>For a client that is not in the registry, copy the <code>command</code> and <code>args</code> values into that client's MCP config. Use absolute paths. The MCP quickstart (https://modelcontextprotocol.io/quickstart/user, fetched 2026-10-29) shows the same <code>mcpServers</code> object with <code>command</code> and <code>args</code> for stdio servers in Claude Desktop's config.</p>
 <p>Two optional environment variables, set in the client's <code>env</code> field if it has one: <code>ALETHEIA_DATA_DIR</code> or <code>ALETHEIA_HUB_DB</code> choose the store, and <code>ALETHEIA_TOOL</code> names the caller in saved memories.</p>
 <p>To check the server without a client, send it the MCP handshake. Real output, first line only:</p>
