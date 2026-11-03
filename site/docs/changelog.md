@@ -6,6 +6,8 @@ history.
 
 ## [Unreleased]
 
+## [0.1.13] - 2026-11-03
+
 ### Added
 
 - `aletheia mcp` runs the MCP server over stdio, the same server as `aletheia-mcp`. From npm it starts with `npx aletheia-mem mcp` or `bunx aletheia-mem mcp`.
