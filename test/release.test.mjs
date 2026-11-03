@@ -81,6 +81,20 @@ describe("release.mjs --prepare", () => {
     expect(sh(dir, "git", "tag").out).toBe("");
   });
 
+  test("bumps every version field in the plugin and extension manifests that exist", () => {
+    const dir = fixture();
+    mkdirSync(join(dir, ".claude-plugin"), { recursive: true });
+    writeFileSync(join(dir, ".claude-plugin", "marketplace.json"), `${JSON.stringify({ name: "fx", plugins: [{ name: "fx", version: "0.1.0" }] }, null, 2)}\n`);
+    writeFileSync(join(dir, "gemini-extension.json"), `${JSON.stringify({ name: "fx", version: "0.0.1" }, null, 2)}\n`);
+    sh(dir, "git", "add", "-A");
+    sh(dir, "git", "commit", "-q", "-m", "manifests");
+    const result = release(dir, "--prepare", "0.1.1", "--date", "2026-11-03");
+    expect(result.err).toBe("");
+    expect(JSON.parse(readFileSync(join(dir, ".claude-plugin", "marketplace.json"), "utf8")).plugins[0].version).toBe("0.1.1");
+    expect(JSON.parse(readFileSync(join(dir, "gemini-extension.json"), "utf8")).version).toBe("0.1.1");
+    expect(existsSync(join(dir, ".claude-plugin", "plugin.json"))).toBe(false);
+  });
+
   test("refuses a dirty tree", () => {
     const dir = fixture();
     writeFileSync(join(dir, "README.md"), "changed\n");
@@ -161,6 +175,14 @@ describe("release.mjs --sync-server-json", () => {
 });
 
 describe("release.mjs --verify", () => {
+  test("fails when a plugin or extension manifest version differs from package.json", () => {
+    const dir = fixture();
+    writeFileSync(join(dir, "gemini-extension.json"), JSON.stringify({ name: "fx", version: "0.0.1" }));
+    const result = release(dir, "--verify");
+    expect(result.code).toBe(1);
+    expect(result.err).toContain("gemini-extension.json version 0.0.1 does not match package.json version 0.1.0");
+  });
+
   test("passes on a consistent fixture", () => {
     const result = release(fixture(), "--verify");
     expect(result.err).toBe("");

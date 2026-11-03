@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 // Release helper. Never publishes, tags or pushes; those are owner steps (docs/releasing.md).
 //   bun scripts/release.mjs                      pack check only (required files are in the tarball)
-//   bun scripts/release.mjs --prepare <version>  bump package.json, server.json and CHANGELOG, move Unreleased into a dated section
+//   bun scripts/release.mjs --prepare <version>  bump package.json, server.json, the plugin manifests and CHANGELOG, move Unreleased into a dated section
 //   bun scripts/release.mjs --sync-server-json <version>  bump server.json to the version when it is older
 //   bun scripts/release.mjs --notes <tag> <file>  write the CHANGELOG section for the tag to the file; exit 1 when missing
 //   bun scripts/release.mjs --verify [--tag vX.Y.Z]  checks to run before publishing, and in CI on a tag
@@ -10,6 +10,8 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 export const REQUIRED = ["bin/aletheia.mjs", "src/hub/store.mjs", "docs/dependencies.md", "NOTICE.md"];
+// Published manifests that carry the package version. Each one that exists is bumped by --prepare and checked by --verify.
+export const VERSIONED_MANIFESTS = [".claude-plugin/plugin.json", ".claude-plugin/marketplace.json", "gemini-extension.json"];
 export const MAX_UNPACKED_MB = 12;
 export const README_TOP_LINES = 60;
 const SEMVER = /^(\d+)\.(\d+)\.(\d+)$/;
@@ -136,6 +138,10 @@ export async function prepare(root, version, { date = new Date().toISOString().s
   writeFileSync(join(root, "CHANGELOG.md"), moveUnreleased(changelog, version, date));
   const server = syncServerJson(serverJsonText, version);
   if (server.text) writeFileSync(serverJsonPath, server.text);
+  for (const file of VERSIONED_MANIFESTS) {
+    const path = join(root, file);
+    if (existsSync(path)) writeFileSync(path, readFileSync(path, "utf8").replace(/("version"\s*:\s*)"[^"]+"/g, `$1"${version}"`));
+  }
   return [];
 }
 
@@ -157,6 +163,12 @@ export async function verify(root, { tag = null } = {}) {
     } catch {
       problems.push("server.json is not valid JSON");
     }
+  }
+  for (const file of VERSIONED_MANIFESTS) {
+    const path = join(root, file);
+    if (!existsSync(path)) continue;
+    const versions = [...readFileSync(path, "utf8").matchAll(/"version"\s*:\s*"([^"]+)"/g)].map((m) => m[1]);
+    for (const v of versions) if (v !== pkg.version) problems.push(`${file} version ${v} does not match package.json version ${pkg.version}`);
   }
   if (tag) {
     if (tag !== `v${pkg.version}`) problems.push(`tag ${tag} does not match package.json version v${pkg.version}`);
