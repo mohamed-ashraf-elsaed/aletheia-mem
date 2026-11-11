@@ -179,6 +179,29 @@ describe("restoreBackup", () => {
     expect(count(dbPath)).toBe(4);
   });
 
+  test("refuses while another connection holds a read transaction or a write lock", async () => {
+    const { dataDir, dbPath, store } = makeHub(3);
+    const { path } = runBackup(store, { dataDir });
+    store.add({ project: "shop", kind: "note", type: "note", title: "Later", narrative: "Added after the snapshot." });
+    store.close();
+    for (const begin of ["BEGIN", "BEGIN IMMEDIATE"]) {
+      const other = new Database(dbPath);
+      other.exec("PRAGMA busy_timeout = 0");
+      other.exec(begin);
+      if (begin === "BEGIN") other.prepare("SELECT COUNT(*) FROM memories").get();
+      try {
+        await expect(restoreBackup(path, { dataDir, dbPath, port: 1 })).rejects.toThrow(/in use by another process.*MCP/s);
+      } finally {
+        other.exec("ROLLBACK");
+        other.close();
+      }
+      expect(count(dbPath)).toBe(4);
+      expect(readdirSync(dataDir).some((name) => name.includes(".restoring"))).toBe(false);
+    }
+    await restoreBackup(path, { dataDir, dbPath, port: 1 });
+    expect(count(dbPath)).toBe(3);
+  });
+
   test("keeps a copy of the current file, swaps in the snapshot, and the result opens cleanly", async () => {
     const { dataDir, dbPath, store } = makeHub(3);
     const { path } = runBackup(store, { dataDir });

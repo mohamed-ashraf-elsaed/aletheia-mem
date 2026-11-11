@@ -140,7 +140,8 @@ function inspectSnapshot(path) {
 
 /**
  * Replace hub.db with a snapshot. Refuses while the server answers on `port`. The current file is copied to
- * hub.db.pre-restore-<time> first (taken with VACUUM INTO, so it is complete without its WAL).
+ * hub.db.pre-restore-<time> first. Processes that open hub.db directly (stdio MCP servers, hooks) never answer /healthz,
+ * so the live file is also checkpointed and locked exclusively; any holder makes restore refuse.
  */
 export async function restoreBackup(file, { dataDir, dbPath, port, now = new Date() } = {}) {
   if (await serverRunning(port)) throw new Error(`The server is running on port ${port}. Stop it before restoring (it holds hub.db open).`);
@@ -149,29 +150,41 @@ export async function restoreBackup(file, { dataDir, dbPath, port, now = new Dat
   if (!existsSync(source)) throw new Error(`Snapshot not found: ${source}`);
   inspectSnapshot(source);
 
+  const HOLDERS = "Close the AI tools that use Aletheia (Claude Code, Codex, Cursor and other hosts run its MCP server) and stop aletheia-server, then try again.";
+  const busy = (error) => /locked|busy/i.test(String(error?.message ?? error));
   let safetyCopy = null;
+  let live = null;
   if (existsSync(dbPath)) {
-    safetyCopy = `${dbPath}.pre-restore-${now.toISOString().replace(/[:.]/g, "-")}`;
-    let live;
     try {
       live = new Database(dbPath);
-      live.exec("PRAGMA busy_timeout = 3000");
-      live.prepare("VACUUM INTO ?").run(safetyCopy);
-    } catch {
-      rmSync(safetyCopy, { force: true });
-      // A store too damaged to snapshot is still worth keeping as it is.
-      try { live?.exec("PRAGMA wal_checkpoint(TRUNCATE)"); } catch { /* copied as-is */ }
-      copyFileSync(dbPath, safetyCopy);
-    } finally {
-      live?.close();
+      live.exec("PRAGMA busy_timeout = 0");
+      // Fold the WAL into hub.db and empty it. A reader or writer in another process makes this report busy.
+      const checkpoint = live.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get();
+      if (checkpoint && checkpoint.busy) throw new Error("database is busy");
+      live.exec("BEGIN EXCLUSIVE");
+    } catch (error) {
+      try { live?.close(); } catch { /* already closed */ }
+      live = null;
+      // A store that cannot be opened at all (damaged) is what restore is for; only a lock stops it.
+      if (busy(error)) throw new Error(`hub.db is in use by another process. ${HOLDERS}`);
     }
+    safetyCopy = `${dbPath}.pre-restore-${now.toISOString().replace(/[:.]/g, "-")}`;
+    copyFileSync(dbPath, safetyCopy);
     secure(safetyCopy, 0o600);
   }
 
   mkdirSync(dirname(dbPath), { recursive: true });
   const staged = `${dbPath}.restoring`;
-  copyFileSync(source, staged);
-  secure(staged, 0o600);
+  try {
+    copyFileSync(source, staged);
+    secure(staged, 0o600);
+  } catch (error) {
+    try { live?.close(); } catch { /* already closed */ }
+    rmSync(staged, { force: true });
+    throw error;
+  }
+  // Hold the lock until here, then release it and swap at once.
+  try { live?.close(); } catch { /* already closed */ }
   for (const suffix of ["-wal", "-shm"]) rmSync(`${dbPath}${suffix}`, { force: true });
   renameSync(staged, dbPath);
   secure(dbPath, 0o600);

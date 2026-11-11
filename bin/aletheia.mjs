@@ -23,7 +23,7 @@
 //   aletheia uninstall <tool> [--write] [--force]         remove only the entries the install manifest lists
 //   aletheia hook <tool> <event>                          hook entry point: read one JSON payload on stdin
 //   aletheia backup run | list | status [--json]        local snapshots of hub.db in <data dir>/backups (settings: backup.enabled, backup.intervalHours, backup.keep)
-//   aletheia restore <snapshot file>                      replace hub.db with a snapshot (server stopped; the current file is kept first)
+//   aletheia restore <snapshot file>                      replace hub.db with a snapshot (close AI tools and stop aletheia-server first; the current file is kept)
 //   aletheia doctor                                       check the server, hooks, spool and last capture
 //   aletheia compress [--project p] [--daemon]         drain the extraction queue (provider or rule-based)
 //   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
@@ -406,7 +406,7 @@ async function main() {
     const { restoreBackup } = await import("../src/hub/backup.mjs");
     try {
       const result = await restoreBackup(pos[0], { dataDir: config.dataDir, dbPath: config.hubDb, port: config.port });
-      return out(`Restored ${result.restoredFrom}\n${result.safetyCopy ? `Previous hub.db kept at ${result.safetyCopy}\n` : ""}Run aletheia doctor to check the store.`);
+      return out(`Restored ${result.restoredFrom}\n${result.safetyCopy ? `Previous hub.db kept at ${result.safetyCopy}\n` : ""}Run aletheia doctor to check the store.\nBefore a restore, close the AI tools that use Aletheia (they run its MCP server) and stop aletheia-server.`);
     } catch (error) {
       return die(error.message);
     }

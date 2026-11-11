@@ -164,14 +164,14 @@ While enabled, the server checks once a minute and writes a snapshot when the ne
 
 ### Restore a snapshot
 
-Stop the server, then:
+Before a restore, close the AI tools that use Aletheia (Claude Code, Codex, Cursor and others run its MCP server, and hooks open the database too) and stop `aletheia-server`. Then:
 
 ```bash
 aletheia restore ~/.aletheia/backups/hub-20261111T151135967Z.db
 aletheia doctor
 ```
 
-`restore` refuses while the server answers on the configured port. It checks that the snapshot opens, passes `integrity_check` and is not from a newer schema than this build. It then copies the current `hub.db` to `hub.db.pre-restore-<time>` (mode 0600), removes the old `-wal` and `-shm` files, and puts the snapshot in place. Delete the `pre-restore` file yourself when you no longer need it. Restore replaces everything in the database, including memories saved after the snapshot. Only `hub.db` is restored: `sync.db`, `team.db` and the other files in the data directory are not touched.
+`restore` refuses while the server answers on the configured port. MCP servers and hooks do not answer there, so it also checkpoints the live `hub.db` and takes an exclusive lock; if another process holds the database it refuses and names the likely holders. A process that has `hub.db` open but is idle cannot be detected, so closing the tools first is still your job. It checks that the snapshot opens, passes `integrity_check` and is not from a newer schema than this build. It then copies the current `hub.db` to `hub.db.pre-restore-<time>` (mode 0600), removes the old `-wal` and `-shm` files, and puts the snapshot in place. Delete the `pre-restore` file yourself when you no longer need it. Restore replaces everything in the database, including memories saved after the snapshot. Only `hub.db` is restored: `sync.db`, `team.db` and the other files in the data directory are not touched.
 
 ## Move to another machine
 
