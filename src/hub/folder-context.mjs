@@ -76,11 +76,12 @@ export function generateFolderContexts(store, { project }) {
 }
 
 /**
- * Write/update one folder-context file per folder with memories, for an opted-in project. A folder with no
- * memories is never written (an existing user file in such a folder is also left alone).
+ * Write/update one folder-context file per folder with memories. A folder with no memories is never written (an
+ * existing user file in such a folder is also left alone). The project opt-in setting gates the write unless the
+ * caller is an explicit command (`requireOptIn: false`), where running the command is the opt-in.
  */
-export function writeFolderContexts(store, { project, baseDir = process.cwd(), fileName = "CLAUDE.md", dryRun = false } = {}) {
-  if (!folderContextEnabled(store, project)) return { skipped: true, reason: "project has not opted in", files: [] };
+export function writeFolderContexts(store, { project, baseDir = process.cwd(), fileName = "CLAUDE.md", dryRun = false, requireOptIn = true } = {}) {
+  if (requireOptIn && !folderContextEnabled(store, project)) return { skipped: true, reason: "project has not opted in", files: [] };
   const files = [];
   for (const context of generateFolderContexts(store, { project })) {
     const path = join(baseDir, context.folder, fileName);
@@ -91,7 +92,7 @@ export function writeFolderContexts(store, { project, baseDir = process.cwd(), f
       mkdirSync(dirname(path), { recursive: true });
       writeFileSync(path, after);
     }
-    files.push({ folder: context.folder, path, changed, written: !dryRun && changed, count: context.count });
+    files.push({ folder: context.folder, path, changed, written: !dryRun && changed, count: context.count, block: applyFolderBlock("", context.markdown).trimEnd() });
   }
   return { skipped: false, files };
 }

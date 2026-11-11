@@ -14,6 +14,7 @@
 //   aletheia watch [--once] [--interval ms] [--batch n] [--tool a,b]
 //                                                          poll the verified transcript folders incrementally (read-only, nice 10)
 //   aletheia export [--format jsonl|markdown] [--project p] [--events] [--out file]
+//   aletheia folder-context <dir> [--project p] [--write]  preview (default) or write a managed CLAUDE.md block per folder with memories; never run from a hook
 //   aletheia rules list [--stale] [--older-than N] | add <text> [--when w] | confirm <id> | retire <id> | diff [--dir path] [--tools a,b] [--json] | lint [--dir path] [--tools a,b] [--json] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
 //   aletheia mcp                                          run the MCP server over stdio (same as aletheia-mcp)
 //   aletheia tools                                        detected tools and how to connect each
@@ -63,7 +64,7 @@
 //                                                          alert rules and delivery
 import { Database } from "bun:sqlite";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { normalizeHook, redact } from "../src/hub/capture.mjs";
 import { importClaudeMem } from "../src/hub/importers.mjs";
@@ -659,6 +660,20 @@ async function main() {
         if (pos[0] === "claude-mem") return out(importClaudeMem(hub, flags.path ?? config.sourceDb, { includePrompts: !flags["no-prompts"], project: flags.project || null }));
         if (pos[0] === "bundle") return out(hub.importBundle(readFileSync(pos[1] ?? die("Usage: aletheia import bundle <file>"), "utf8")));
         return die("Usage: aletheia import claude-mem | claude-memory [--path p] [--project key] [--dry-run] | bundle <file> | transcripts <claude-code|command-code|codex> [--since DATE] [--dry-run]");
+      }
+      case "folder-context": {
+        const { writeFolderContexts } = await import("../src/hub/folder-context.mjs");
+        const dir = resolve(pos[0] ?? ".");
+        const project = flags.project ?? projectKeyForPath(dir);
+        const result = writeFolderContexts(hub, { project, baseDir: dir, dryRun: !flags.write, requireOptIn: false });
+        if (!result.files.length) return out(`No memories for project ${project}; nothing to write.`);
+        const lines = result.files.map((file) => {
+          const rel = relative(dir, file.path);
+          if (!flags.write) return `${rel} (${file.changed ? "would change" : "already up to date"}, ${file.count} memories)\n${file.block}`;
+          return `${file.written ? "Wrote" : "Unchanged"} ${rel} (${file.count} memories)`;
+        });
+        if (!flags.write) lines.push("Dry run: nothing was written. Add --write to update these files; text outside the managed block is kept.");
+        return out(lines.join("\n\n"));
       }
       case "export": {
         const body = flags.format === "markdown" ? hub.exportMarkdown({ project: flags.project }) : hub.exportBundle({ project: flags.project, includeEvents: !!flags.events });
