@@ -108,8 +108,8 @@ const RUNS = [
   { file: "raw-turns.json", strategy: "hybrid", label: "Raw turns, all 10 conversations" },
   { file: "dataset-facts.json", strategy: "hybrid+facts", label: "Dataset facts, all 10" },
   { file: "dataset-facts-3-rerank.json", strategy: "hybrid+facts", label: "Dataset facts, 3 conversations" },
-  { file: "dataset-facts-3-rerank.json", strategy: "hybrid+facts+rerank", label: "Dataset facts, 3 conversations, + rerank" },
-  { file: "dataset-facts-rerank.json", strategy: "hybrid+facts+rerank", label: "Dataset facts, all 10, + rerank" },
+  { file: "dataset-facts-3-rerank.json", strategy: "hybrid+facts+rerank", label: "Dataset facts, 3 conversations, + rerank (bench only)" },
+  { file: "dataset-facts-rerank.json", strategy: "hybrid+facts+rerank", label: "Dataset facts, all 10, + rerank (bench only)" },
   { file: "our-facts-rules.json", strategy: "hybrid+facts", label: "Our rule-extracted facts, all 10" },
 ];
 

@@ -148,7 +148,18 @@ What to know about the runtime:
 - When the package is missing, the code prints an error and stops `--semantic` and `aletheia embed`. Plain keyword search keeps working.
 - `aletheia embed` embeds memories that have no vector yet and skips events. `aletheia compress` embeds new facts only when `ALETHEIA_EMBED_FACTS=1` is set, because the first embedding downloads a model.
 - `POST /v1/search` and the MCP `search` tool answer from the keyword channels only, and the REST reply says so in its `channels.note`. Semantic search is a CLI feature.
-- The benchmark rows marked "+ rerank" use a cross-encoder in the benchmark script. `aletheia search` does not rerank.
+- The benchmark rows marked "+ rerank (bench only)" use a cross-encoder in the benchmark script. `aletheia search` does not rerank unless you turn it on (next section).
+
+## Optional rerank
+
+A cross-encoder reads the question and one candidate together and scores how well it answers. Search can use one to reorder the top 30 fused hits. It is off by default.
+
+- Turn it on with the `search.rerank` setting (dashboard Settings, "Rerank search results"), or per call with `aletheia search --rerank` (`--no-rerank` forces it off).
+- It needs the optional `@huggingface/transformers` package, the same one as semantic search, and the model `Xenova/ms-marco-MiniLM-L-6-v2`. Nothing loads until the first reranked search. Without the package, search keeps the fused order.
+- Time budget: 3 seconds for model load plus scoring. If that passes, or the scorer fails, search returns the fused order. A load that is still running is kept for later calls in the same process.
+- Cost, measured on 2026-11-11 on a busy machine with 40 short rows: the first call in a process took about 0.55 s (model load), later calls about 0.1 s. A run on one LoCoMo conversation took 273 ms per question with the cross-encoder. `aletheia search` starts a new process each time, so every CLI call pays the load.
+- Only `aletheia search` uses it. `POST /v1/search`, the MCP `search` tool and the context hooks answer from the keyword channels and never rerank.
+- `--explain` shows what happened, for example `rerank=on (Xenova/ms-marco-MiniLM-L-6-v2, top 30, 154 ms)`, or `rerank=fallback (needs the optional package @huggingface/transformers, kept the fused order)`. With rerank off, the line has no rerank part.
 
 ## Search from an agent: search, timeline, get_observations
 
@@ -186,8 +197,8 @@ On LoCoMo, claude-mem 15.2.0 as shipped against this project, from `bench/result
 | Raw turns, all 10 conversations | 1,536 | 57.4% | 0.497 | 3.72 |
 | Dataset facts, all 10 | 1,536 | 64.8% | 0.591 | 5.53 |
 | Dataset facts, 3 conversations | 383 | 67.4% | 0.620 | 5.80 |
-| Dataset facts, 3 conversations, + rerank | 383 | 73.9% | 0.686 | 251.16 |
-| Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
+| Dataset facts, 3 conversations, + rerank (bench only) | 383 | 73.9% | 0.686 | 251.16 |
+| Dataset facts, all 10, + rerank (bench only) | 1,536 | 72.3% | 0.680 | 646.19 |
 | Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
 Recall@5 asks whether the gold evidence is in the top five results. The "Raw turns" row is the hybrid strategy: keyword plus embeddings. Re-run the table with `bun scripts/compare-bench.mjs`. In the same raw-turns result file, keyword-only BM25 scores 55.3% Recall@5 and MRR 0.482 at 2.00 ms per query, and embeddings alone score 49.6% (`bun scripts/compare-bench.mjs`, run 2026-10-29 on the committed result files).
