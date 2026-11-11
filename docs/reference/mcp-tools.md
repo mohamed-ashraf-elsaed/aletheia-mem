@@ -27,6 +27,8 @@ Examples on this page were run on 2026-10-29 against version 0.1.10 in a tempora
 
 The intended order is `session_start_context`, then `search`, `timeline` and `get_observations`. Every write tool declares `idempotentHint: true` and `destructiveHint: false`, except `work_state_write`, which declares `destructiveHint: true`. Recalled text is wrapped in an `<aletheia-memory>` block that tells the model to treat it as data.
 
+Two more read-only tools, `team_brief` and `team_search`, are listed only when the caller belongs to a team. Without a team `tools/list` returns exactly the 13 tools above. See [Team tools](#team-tools).
+
 ## Connect over stdio
 
 The stdio server is `bin/mcp.mjs` (npm command `aletheia-mcp`). It speaks newline-delimited JSON-RPC 2.0 and accepts batches. It takes no flags.
@@ -274,6 +276,34 @@ Read a list written by `work_state_write`. Read-only.
 ```
 
 An unknown list returns `No list named "<name>".`
+
+## Team tools
+
+`team_brief` and `team_search` read the shared team memory from [team mode](../31-team.md). They are not part of the 13 core tools. `tools/list` adds them only when the caller belongs to a team; with no team the list is unchanged and a call returns `This device does not belong to a team.`
+
+- **stdio.** The local device counts as the team operator, the same as `aletheia team ...` without `--token-id`. The tools appear when `team.db` and `sync.db` exist in the data directory and hold at least one team. The server reads that at startup, so restart it after the first `aletheia team create`.
+- **HTTP.** `createMcpHttpHandler` takes a `team(token)` option that returns the token's team context. A token that is a team member sees the tools; any other token sees 13. The sync hub does not pass that option yet, so the remote hub lists 13 tools until it does. Token scope works as for `search`: both tools are read tools, so `mcp`, `read`, `sync` and `admin` tokens may call them, and a token limited to projects is refused other projects and never sees their rows.
+
+Both tools call the same store methods as the REST routes `GET /v1/team/brief` and `POST /v1/team/search`, so the same access check runs: a member reads only the projects shared with them, and asking for any other project is an error with no rows. Both declare `readOnlyHint: true`, `idempotentHint: true` and `openWorldHint: false`. Recalled text is wrapped in an `<aletheia-memory>` block like the other read tools.
+
+### team_brief
+
+The rule-built brief for one project: decisions first, then shared facts from the last 14 days, each with its team entry id and author. No model is called.
+
+- `project` (string, required): a project shared with you.
+- `team` (string): team name or id. Optional when you belong to one team; required for several.
+- `days` (number, default 14) and `max_chars` (number, default 2000).
+
+### team_search
+
+Full-text search over the team's shared entries, limited to the projects you may read.
+
+- `query` (string, required).
+- `project` (string): limit to one project. A project you cannot read is an error.
+- `team` (string): as above.
+- `limit` (number, default 20, at most 200).
+
+Each hit is one line: `team-entry#<id> <date> [<kind>] <text>  (<project>, <author>)`. No hit returns `No matches.`
 
 ## Next steps
 
