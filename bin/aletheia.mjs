@@ -22,6 +22,8 @@
 //   aletheia install [<tool>] --verify                    report whether the recorded install still matches (no writes)
 //   aletheia uninstall <tool> [--write] [--force]         remove only the entries the install manifest lists
 //   aletheia hook <tool> <event>                          hook entry point: read one JSON payload on stdin
+//   aletheia backup run | list | status [--json]        local snapshots of hub.db in <data dir>/backups (settings: backup.enabled, backup.intervalHours, backup.keep)
+//   aletheia restore <snapshot file>                      replace hub.db with a snapshot (close AI tools and stop aletheia-server first; the current file is kept)
 //   aletheia doctor                                       check the server, hooks, spool and last capture
 //   aletheia compress [--project p] [--daemon]         drain the extraction queue (provider or rule-based)
 //   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
@@ -368,6 +370,48 @@ async function main() {
     return;
   }
 
+  if (cmd === "backup") {
+    const { backupStatus, listBackups, runBackup } = await import("../src/hub/backup.mjs");
+    const sub = rest.find((arg) => !arg.startsWith("--")) ?? "status";
+    if (!["run", "list", "status"].includes(sub)) return die("Usage: aletheia backup run | list | status [--json]");
+    if (sub === "list") {
+      const items = listBackups(config.dataDir);
+      if (flags.json) return out(items);
+      return out(items.length ? items.map((item) => `${item.at}  ${String(item.bytes).padStart(10)} B  ${item.path}`).join("\n") : `No backups in ${join(config.dataDir, "backups")}.`);
+    }
+    const store = new HubStore(config.hubDb);
+    try {
+      if (sub === "run") {
+        const keep = store.setting("ui.settings.backup.keep", 7);
+        const result = runBackup(store, { dataDir: config.dataDir, keep });
+        if (flags.json) return out(result);
+        return out(`Backup written to ${result.path} (${result.bytes} bytes)${result.pruned.length ? `; removed ${result.pruned.length} older` : ""}.`);
+      }
+      const status = backupStatus(store, { dataDir: config.dataDir });
+      if (flags.json) return out(status);
+      return out([
+        `Scheduled backups: ${status.enabled ? "on" : "off"} (every ${status.intervalHours} h, keep ${status.keep})`,
+        `Folder: ${status.dir}`,
+        `Snapshots: ${status.count}${status.newest ? `, newest ${status.newest.at}` : ""}`,
+        ...(status.nextDue ? [`Next due: ${status.nextDue}`] : []),
+        ...(status.enabled ? [] : ["Turn on with the settings page, or: aletheia backup run (one snapshot now)."]),
+      ].join("\n"));
+    } finally {
+      store.close();
+    }
+  }
+
+  // `aletheia restore <file>` swaps hub.db, so it must run before the store opens. A bare dismissal target stays the old command.
+  if (cmd === "restore" && pos[0] && !dismissTarget(pos[0])) {
+    const { restoreBackup } = await import("../src/hub/backup.mjs");
+    try {
+      const result = await restoreBackup(pos[0], { dataDir: config.dataDir, dbPath: config.hubDb, port: config.port });
+      return out(`Restored ${result.restoredFrom}\n${result.safetyCopy ? `Previous hub.db kept at ${result.safetyCopy}\n` : ""}Run aletheia doctor to check the store.\nBefore a restore, close the AI tools that use Aletheia (they run its MCP server) and stop aletheia-server.`);
+    } catch (error) {
+      return die(error.message);
+    }
+  }
+
   // `npx aletheia-mem mcp` reaches this bin, so it must serve exactly what bin/mcp.mjs serves. stdout carries only JSON-RPC.
   if (cmd === "mcp") {
     const { serveStdio } = await import("../src/hub/mcp.mjs");
@@ -538,7 +582,7 @@ async function main() {
         return out(result.changed ? `Dismissed ${result.type} #${result.id}. Restore with: aletheia restore ${result.type}:${result.id}` : `${result.type} #${result.id} was already dismissed.`);
       }
       case "restore": {
-        const target = dismissTarget(pos[0]) ?? die("Usage: aletheia restore <id | memory:id | fact:id | observation:id | episode:id>");
+        const target = dismissTarget(pos[0]) ?? die("Usage: aletheia restore <snapshot file> | <id | memory:id | fact:id | observation:id | episode:id>");
         const result = hub.restore(target.type, target.id, { actor: "cli" });
         return out(result.restored ? `Restored ${result.type} #${result.id}.` : `${result.type} #${result.id} was not dismissed.`);
       }

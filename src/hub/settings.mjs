@@ -9,6 +9,9 @@ const PREFIX = "ui.settings.";
 export const SETTINGS_SCHEMA = [
   { key: "facts.minConfidence", kind: "number", label: "Fact confidence floor", min: 0.3, max: 0.9, default: 0.4, secret: false },
   { key: "context.facts", kind: "enum", label: "Facts in context", options: ["auto", "on", "off"], default: "auto", secret: false },
+  { key: "backup.enabled", kind: "boolean", label: "Scheduled local backups", default: false, secret: false },
+  { key: "backup.intervalHours", kind: "int", label: "Backup interval (hours)", min: 1, max: 720, default: 24, secret: false },
+  { key: "backup.keep", kind: "int", label: "Backups kept", min: 1, max: 365, default: 7, secret: false },
   { key: "rules.reviewDays", kind: "int", label: "Rule review window (days)", min: 7, max: 730, default: 90, secret: false },
 ];
 
