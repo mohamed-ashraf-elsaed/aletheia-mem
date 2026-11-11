@@ -1682,8 +1682,9 @@ export class HubStore {
     const pinned = this.list({ project, pinned: true, limit: 50, scope }).items;
     const scopeClause = scope === "all" ? "" : project ? this.hasGlobal("memories") ? "AND (project = ? OR scope = 'global')" : "AND project = ?" : "";
     const dismissClause = this.hasDismissals("memory") ? "AND NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = memories.id)" : "";
+    const subagentClause = this.setting("context.includeSubagents", false) === true ? "" : "AND (origin IS NULL OR origin NOT LIKE 'subagent:%')";
     const recent = this.db
-      .prepare(`SELECT * FROM memories WHERE kind IN ('observation','summary','note') AND pinned = 0 ${scopeClause} ${dismissClause} ORDER BY created_at_epoch DESC LIMIT ?`)
+      .prepare(`SELECT * FROM memories WHERE kind IN ('observation','summary','note') AND pinned = 0 ${scopeClause} ${dismissClause} ${subagentClause} ORDER BY created_at_epoch DESC LIMIT ?`)
       .all(...(scopeClause ? [project] : []), Math.min(limit, 100))
       .map((r) => this.row(r));
     const line = (m) => `- #${m.id} ${new Date(m.created_at_epoch).toISOString().slice(0, 10)} [${m.type}] ${m.title}${m.narrative ? ` — ${m.narrative.replace(/\s+/g, " ").slice(0, 160)}` : ""}`;
@@ -1704,8 +1705,9 @@ export class HubStore {
     const pinned = this.list({ project, pinned: true, limit: 50, scope }).items;
     const scopeClause = scope === "all" ? "" : project ? this.hasGlobal("memories") ? "AND (project = ? OR scope = 'global')" : "AND project = ?" : "";
     const dismissClause = this.hasDismissals("memory") ? "AND NOT EXISTS (SELECT 1 FROM dismissals d WHERE d.item_type = 'memory' AND d.item_id = memories.id)" : "";
+    const subagentClause = this.setting("context.includeSubagents", false) === true ? "" : "AND (origin IS NULL OR origin NOT LIKE 'subagent:%')";
     const recent = this.db
-      .prepare(`SELECT * FROM memories WHERE kind IN ('observation','summary','note') AND pinned = 0 ${scopeClause} ${dismissClause} ORDER BY created_at_epoch DESC LIMIT ?`)
+      .prepare(`SELECT * FROM memories WHERE kind IN ('observation','summary','note') AND pinned = 0 ${scopeClause} ${dismissClause} ${subagentClause} ORDER BY created_at_epoch DESC LIMIT ?`)
       .all(...(scopeClause ? [project] : []), Math.min(limit, 100))
       .map((r) => this.row(r));
 

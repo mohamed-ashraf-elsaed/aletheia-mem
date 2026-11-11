@@ -1,9 +1,11 @@
 // Claude Code hook adapter. Field names are those Claude Code sends on stdin and the settings shape is the one
 // Claude Code documents; both were checked against a real installed plugin hook file on 2026-10-26:
 // ~/.claude/plugins/marketplaces/thedotmack/plugin/hooks/hooks.json and the Claude Code adapter in claude-mem.
-import { projectOf, promptMemory, sessionContext, sessionStartOutput, summaryMemory, toolMemory } from "./shared.mjs";
+// PostToolUseFailure (`error`, `is_interrupt`) and SubagentStop (`agent_type`, `agent_id`, `last_assistant_message`)
+// fields were read from https://code.claude.com/docs/en/hooks on 2026-11-11.
+import { projectOf, promptMemory, sessionContext, sessionStartOutput, subagentMemory, summaryMemory, toolFailureMemory, toolMemory } from "./shared.mjs";
 
-export const EVENTS = ["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop", "SessionEnd"];
+export const EVENTS = ["SessionStart", "UserPromptSubmit", "PostToolUse", "PostToolUseFailure", "Stop", "SubagentStop", "SessionEnd"];
 export const MISSING_EVENTS = [];
 
 const CANONICAL = new Map(EVENTS.map((event) => [event.toLowerCase(), event]));
@@ -25,6 +27,8 @@ export const claudeCode = {
     const base = { project: projectOf(payload), tool: "claude-code", sessionId: payload.session_id ?? payload.sessionId ?? null };
     if (name === "UserPromptSubmit") return { memory: promptMemory(payload.prompt, base), compress: null };
     if (name === "PostToolUse") return { memory: toolMemory({ name: payload.tool_name, input: payload.tool_input, response: payload.tool_response }, base), compress: null };
+    if (name === "PostToolUseFailure") return { memory: toolFailureMemory({ name: payload.tool_name, input: payload.tool_input, error: payload.error, interrupted: payload.is_interrupt }, base), compress: null };
+    if (name === "SubagentStop") return { memory: subagentMemory({ agentType: payload.agent_type, agentId: payload.agent_id, text: payload.last_assistant_message }, base), compress: null };
     if (name === "Stop" || name === "SessionEnd") return { memory: summaryMemory(payload.last_assistant_message, base), compress: { project: base.project, sessionId: base.sessionId }, sessionEnd: { project: base.project, sessionId: base.sessionId } };
     return { memory: null, compress: null };
   },
