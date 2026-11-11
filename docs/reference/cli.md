@@ -58,7 +58,7 @@ Context economics: 2 items listed; ~94 tokens for this block (estimate, chars/4)
 - `aletheia embed [--limit n]` - write vectors for facts and memories. Needs `@huggingface/transformers`; the first run downloads the model.
 - `aletheia promote <memory|episode|observation|fact> <id>` - make one item global so every project sees it.
 - `aletheia dismiss <id | type:id> [--reason r]` - hide an item from search and context. `12` means memory 12; `fact:3` names another type.
-- `aletheia restore <id | type:id>` and `aletheia dismissed [--limit n]` - undo a dismissal, list dismissed items.
+- `aletheia restore <id | type:id>` and `aletheia dismissed [--limit n]` - undo a dismissal, list dismissed items. A path or file name instead of an id restores a backup; see below.
 
 ```
 $ aletheia save "Use pnpm, not npm, in the shop repo" --type decision --pin
@@ -252,6 +252,15 @@ $ aletheia alerts add --event extraction.failed --target file --path alerts.log 
 $ aletheia alerts test 1
 { "queued": 1, "delivered": 1, "retried": 0, "failed": 0, "blocked": 0, "skipped": 0 }
 ```
+
+## Backups
+
+- `aletheia backup run [--json]` - write one snapshot of `hub.db` to `<data dir>/backups/` now, then prune to the number kept.
+- `aletheia backup list [--json]` - snapshots, newest first.
+- `aletheia backup status [--json]` - whether scheduled backups are on, the interval, the number kept, the snapshot count and when the next one is due.
+- `aletheia restore <snapshot file>` - replace `hub.db` with a snapshot. A bare file name is looked up in `backups/`. It refuses while the server answers on the configured port, checks the snapshot first, and keeps the current file as `hub.db.pre-restore-<time>`. An id such as `12` or `fact:3` still means a dismissal.
+
+Scheduled backups are off by default. The settings `backup.enabled`, `backup.intervalHours` (default 24) and `backup.keep` (default 7) are in the dashboard Settings. See [Backup, export and import](../guides/backup-export-import.md).
 
 ## Settings
 
