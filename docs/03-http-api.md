@@ -287,6 +287,22 @@ a rule (`POST /api/hub/rules/:id/confirm`, `aletheia rules confirm <id>`, or the
 `last_confirmed_epoch` to now, so a change that happened before it no longer counts. To stop following a rule, use
 the existing turn-off route (`aletheia rules retire <id>` does the same): the rule is kept, not deleted.
 
+### `POST /v1/search` and dense results
+
+Body: `query` (required), `project`, `kind`, `type`, `tool`, `limit`, `scope`, `includeHistory`, `asOf`, and for paging
+`offset`, `paged`, `since`, `until`, `order`, `mix`, `older_than_days`. The route reads no query-vector field: it embeds
+`query` itself. When `@huggingface/transformers` is installed and at least one vector is stored, facts and memories are
+ranked by keywords and embeddings together (RRF). The reply's `channels` object says what ran:
+
+- `channels.dense`: `{status: "on", model, ms}`, or `{status: "off"|"fallback", reason, ms}`. Reasons: `missing_package`,
+  `no_vectors`, `loading`, `slow`, `load_failed`, `embed_failed`, `disabled`.
+- `channels.notice`: present only when the dense channel did not run; one sentence that names the cause, for example
+  the missing package. The results are then the keyword results.
+- `channels.fused` is `rrf` when dense ran and `none` otherwise.
+
+Each query has a 1500 ms budget for loading the model and embedding the text (`ALETHEIA_DENSE_BUDGET_MS`); past it the
+route answers from keywords.
+
 `?older_than_days=N` also works on `GET /api/hub/memories` and in the `POST /v1/search` body (and as `older_than_days`
 in the `search` MCP tool), so pruning old memories is a query. Memory rows already carry their date, `tool`,
 `session_id`, `origin` and `files`.

@@ -234,3 +234,18 @@ describe("replies describe only what the route reads", () => {
     expect(MISSING_PACKAGE_NOTE).not.toMatch(/query vector/i);
   });
 });
+
+describe("the shared loader never triggers a package install", () => {
+  test("without node_modules/@huggingface/transformers on disk the default embedder is reported missing", async () => {
+    const { packageInstalled } = await import("../src/hub/dense.mjs");
+    const installed = packageInstalled();
+    const s = new HubStore(":memory:");
+    try {
+      const out = await denseQuery({ store: s, query: "gamma" });
+      if (!installed) expect(out.dense).toMatchObject({ status: "off", reason: "missing_package" });
+      else expect(["on", "off", "fallback"]).toContain(out.dense.status);
+    } finally {
+      s.close();
+    }
+  });
+});

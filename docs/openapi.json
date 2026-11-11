@@ -1655,6 +1655,7 @@
     "/v1/search": {
       "post": {
         "summary": "POST /v1/search",
+        "description": "Keyword search, fused with embedding search when the optional @huggingface/transformers package is installed and vectors are stored. The body has no vector field: the server embeds `query`. `channels.dense` reports on, off or fallback, and `channels.notice` names the cause when dense did not run (for example the missing package).",
         "responses": {
           "200": {
             "description": "POST /v1/search",

@@ -2,6 +2,8 @@
 // runtime is the optional package @huggingface/transformers. It is loaded lazily, once per process, and every query
 // runs under a time budget: when the package is missing, the model is still loading, or the embed call is slow, the
 // surface answers from the keyword channels and says why in a note.
+import { existsSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { createEmbedder } from "./embed.mjs";
 
 export const DENSE_BUDGET_MS = 1500;
@@ -13,11 +15,35 @@ const NO_VECTORS_NOTE = "Dense search is available but no vectors are stored yet
 let loading = null;
 let missingAt = 0;
 
+const MISSING_ERROR = "Semantic search needs the optional package: bun add @huggingface/transformers";
+
+/**
+ * True when the package is on disk in a node_modules above this project or above ALETHEIA_TRANSFORMERS_FROM. Bun
+ * installs a missing package from npm on import when no node_modules exists, which would be a network call nobody asked
+ * for, so the server surfaces check the disk first and never trigger that install.
+ */
+export function packageInstalled() {
+  const starts = [import.meta.dir, process.env.ALETHEIA_TRANSFORMERS_FROM].filter(Boolean);
+  for (let dir of starts) {
+    for (;;) {
+      if (existsSync(join(dir, "node_modules", "@huggingface", "transformers", "package.json"))) return true;
+      const up = dirname(dir);
+      if (up === dir) break;
+      dir = up;
+    }
+  }
+  return false;
+}
+
 /** The default embedder, loaded on first use only. A load that fails is retried after a minute, not on every query. */
 export function sharedEmbedder() {
   if (process.env.ALETHEIA_DENSE === "0") return Promise.reject(new Error("Dense search is turned off by ALETHEIA_DENSE=0."));
   if (!loading) {
-    if (missingAt && Date.now() - missingAt < RETRY_MISSING_MS) return Promise.reject(new Error("Semantic search needs the optional package: bun add @huggingface/transformers"));
+    if (missingAt && Date.now() - missingAt < RETRY_MISSING_MS) return Promise.reject(new Error(MISSING_ERROR));
+    if (!packageInstalled()) {
+      missingAt = Date.now();
+      return Promise.reject(new Error(MISSING_ERROR));
+    }
     loading = createEmbedder().catch((error) => {
       loading = null;
       missingAt = Date.now();
