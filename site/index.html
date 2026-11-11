@@ -101,7 +101,7 @@
 <table>
 <thead><tr><th>Tool</th><th>Level</th><th>Verification</th><th>Hook events installed</th></tr></thead>
 <tbody>
-<tr><td>claude-code</td><td>full</td><td>MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine</td><td>SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd</td></tr>
+<tr><td>claude-code</td><td>full</td><td>MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine</td><td>SessionStart, UserPromptSubmit, PostToolUse, PostToolUseFailure, Stop, SubagentStop, SessionEnd</td></tr>
 <tr><td>command-code</td><td>full</td><td>MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine</td><td>SessionStart, PostToolUse, Stop</td></tr>
 <tr><td>cursor</td><td>full</td><td>config written from docs, not tested on a real install</td><td>sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd</td></tr>
 <tr><td>codex</td><td>full</td><td>MCP connection 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine</td><td>SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd</td></tr>

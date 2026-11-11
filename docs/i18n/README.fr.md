@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 7848b4a8e95c9ac13e13d97cb5ceaee3940f74ed28d3caff0f564b37b7cd62f5
+> Source: [README.md](../../README.md) · source-sha256: 6e1216648313946a6f6dfad5b4529e1831c4cbf9ba2ca2c197018b001b106a74
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -68,7 +68,7 @@ Aletheia ne dépend d'aucun outil en particulier. Il parle MCP (stdio et HTTP), 
 <!-- gen:tools -->
 | Tool | Level | Verification | Hook events installed |
 |---|---|---|---|
-| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, PostToolUseFailure, Stop, SubagentStop, SessionEnd |
 | command-code | full | MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine | SessionStart, PostToolUse, Stop |
 | cursor | full | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
 | codex | full | MCP connection 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
