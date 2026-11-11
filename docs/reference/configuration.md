@@ -39,7 +39,9 @@ With `ALETHEIA_API_KEY` set:
 - The classic viewer (`/work-view/work.html`) cannot send the key. The Tools tab does not offer it while a key is set.
 - Hooks and the stdio MCP server write to the database file directly. They do not use HTTP and do not need the key.
 
-On a non-loopback bind, Hub login and the key are two separate checks. The login check runs first. On `/` and `/api/*` a keyed remote server needs both: log in with the admin token, then enter the key. `/v1/*` and `/mcp` need only the key, as before, so tools do not log in.
+On a non-loopback bind (remote mode), Hub login and the key are two separate checks. The login check runs first. On `/` and `/api/*` a keyed remote server needs both: log in with the admin token, then enter the key. `/v1/*` and `/mcp` accept the key alone, so tools do not log in.
+
+In remote mode, `/v1/*` (the live socket included) answers only a login session or the key, and `/mcp` answers only the key. A write through a login session also needs the CSRF header that the dashboard sends. Without `ALETHEIA_API_KEY`, tools cannot use `/v1` or `/mcp` in remote mode, and `aletheia-server` prints a warning at startup. Releases before this change served `/v1/*` and `/mcp` to the network in remote mode when no key was set; see `SECURITY.md`.
 
 ## Paths and files
 

@@ -82,7 +82,8 @@ aletheia mcp-link create --projects shop --url https://<assigned-host>.trycloudf
 ```
 
 A non-loopback bind without `--behind-tls` prints a warning: the bearer token would otherwise travel in clear
-text. With `--behind-tls`, add the client origins you expect with `--mcp-origins https://claude.ai,...` so a
+text. The main server's own `/mcp` route is a separate endpoint: on a non-loopback bind it
+answers only `ALETHEIA_API_KEY` as a bearer token, and with no key it refuses every request. With `--behind-tls`, add the client origins you expect with `--mcp-origins https://claude.ai,...` so a
 browser-based client passes the Origin check.
 
 ## 30.4 What is not covered

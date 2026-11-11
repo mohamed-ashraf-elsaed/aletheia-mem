@@ -16,3 +16,12 @@ There is no formal response-time promise. A fix is committed with a test when on
 In scope: the local server, CLI, MCP server, hooks, installers, rules sync, sync hub, remote MCP endpoint, and the
 Docker files. Out of scope: a host application's own handling of the payloads it sends, and a reverse proxy or tunnel
 that you place in front of the sync hub.
+
+## Known issues fixed
+
+- **Remote mode served the tool API without a login (fixed after 0.1.13).** When `aletheia-server` was bound to a
+  non-loopback address with no `ALETHEIA_API_KEY`, the Hub login covered only `/` and `/api/*`. The routes `/v1/*`,
+  the `/v1/live` socket and `/mcp` answered anyone who could reach the port. Loopback-only installs (the default)
+  were not affected. Fix: upgrade. Until then, bind to `127.0.0.1`, or set `ALETHEIA_API_KEY`, or put an
+  authenticating proxy in front. The same release also fixes the remote login page, whose Content-Security-Policy
+  blocked its own login request.
