@@ -61,6 +61,7 @@ The `channels` line says which search channels ran:
 - `facts keys`: keyword search over the extra keys stored for facts, such as entity names.
 - `facts vectors`: embedding search over facts. It is `on` only when a query vector exists and at least one fact has a stored vector.
 - `episodes lexical` and `episodes vectors`: the same two channels over memories.
+- `cjk=on`: the Chinese, Japanese and Korean channel ran for facts or memories. It appears only when the query holds CJK text. See [Chinese, Japanese and Korean text](#chinese-japanese-and-korean-text).
 - `fusion=rrf`: how the fact list and the memory list are merged. See [How results are ranked](#how-results-are-ranked).
 
 When a search returns nothing, `--explain` adds a reason in parentheses: `no_terms` (the query had no searchable words), `no_rows` (the store has no rows at all) or `filtered` (rows exist, but your project, kind, type or tool filter, or the words in the query, excluded every one).
@@ -71,7 +72,7 @@ Keyword search over memories works like this:
 
 1. The query becomes content words. Stop words and one-letter words are dropped and duplicates are collapsed.
 2. A word found in more than 20% of all memories adds little signal, so it is dropped when a rarer word remains. At most 12 of the rarest words are kept. A query of one word is left as it is.
-3. Any remaining word may match. SQLite FTS5 ranks matches with BM25 over the title, subtitle, narrative, facts and concepts fields. The tokenizer is `porter unicode61 remove_diacritics 2`, so "retries" matches "retry" and accents are ignored.
+3. Any remaining word may match. SQLite FTS5 ranks matches with BM25 over the title, subtitle, narrative, facts and concepts fields. The tokenizer is `porter unicode61 remove_diacritics 2`, so "retries" matches "retry" and accents are ignored. Chinese, Japanese and Korean text takes an extra channel; see [Chinese, Japanese and Korean text](#chinese-japanese-and-korean-text).
 4. The CLI keeps the best 100 candidates and returns up to `--limit` of them.
 
 Filters apply before ranking: project and scope, kind, type, tool, file path, date range, and dismissed rows are excluded. A generated summary is hidden from default results once none of the facts it cites is active any more. `--history` brings it back.
@@ -79,6 +80,35 @@ Filters apply before ranking: project and scope, kind, type, tool, file path, da
 For memories, the ranking inputs are text relevance and, when you turn it on, embedding similarity. Recency, pins and importance scores do not change the order.
 
 Facts come from their own full-text index and the fact keys. By default only current facts qualify: active, already valid and not expired. They come back newest first rather than by relevance. The CLI then merges the fact list and the memory list with reciprocal rank fusion (RRF), with weight 1 for facts and 0.9 for memories. The REST and MCP routes do not fuse the two lists: they return facts first, then memories.
+
+## Chinese, Japanese and Korean text
+
+Chinese and Japanese put no space between words, and Korean attaches particles to words. The tokenizer above keeps a whole run of these characters as one token, so on its own it finds a CJK sentence only when you type the whole sentence. A query that holds CJK text therefore also runs a CJK channel:
+
+1. Each run of Chinese, Japanese or Korean characters is stored as overlapping two-character pieces (bigrams), plus the run's last character, in a separate index. Text is NFKC-normalised first, so half-width katakana match full-width katakana.
+2. A two-character word such as 迁移, 移行 or 서버 is one piece, so it is found inside any sentence. A longer word must appear with its pieces in order. A single character matches wherever it appears.
+3. Rows that contain the query text as written come first. When the query has a run of three or more characters, rows that share only some of its pieces follow, so a question typed without spaces still finds the rows that hold its words.
+4. The CJK list is fused with the keyword list by RRF, the same way semantic search is fused. The project, kind, type, tool and date filters apply to it.
+
+```bash
+aletheia save "我们在项目里使用数据库迁移工具" --project shop
+aletheia search 数据库 --project shop --explain
+```
+
+```
+#1 2026-11-11 [note] 我们在项目里使用数据库迁移工具 (shop, cli)
+channels: facts lexical=on keys=on vectors=off cjk=on; episodes lexical=on vectors=off cjk=on; fusion=rrf
+```
+
+Before this channel, the same two commands printed `No matches. (filtered)`.
+
+What to know:
+
+- A query without CJK text does not run the channel, so English ranking and the `--explain` line are unchanged.
+- The CJK index holds only rows that contain CJK text. Saving English text does no extra work.
+- A CJK query first indexes the rows saved or edited since the previous CJK query. After an upgrade, the first CJK query indexes every row stored before the channel existed. The upgrade adds tables and does not rewrite any row.
+- A Latin word written directly against CJK characters, as in 使用Postgres数据库, is one token for the keyword channel, so `postgres` does not find that row. 数据库 does. Put a space around the Latin word to make both work.
+- `aletheia search`, `POST /v1/search` and the MCP `search` tool use the CJK channel. The dashboard's memory list filter (`GET /api/hub/memories?q=`) and the `timeline` query lookup do not yet.
 
 ## Semantic and hybrid search
 
@@ -115,10 +145,23 @@ What to know about the runtime:
 
 - The default model is `Xenova/bge-small-en-v1.5`, quantised, 384 dimensions. It runs on your machine.
 - The first use downloads the model once. In a fresh home directory the model folder was 34 MB after the first `aletheia embed`.
-- When the package is missing, the code prints an error and stops `--semantic` and `aletheia embed`. Plain keyword search keeps working.
+- When the package is missing, the code prints an error and stops `--semantic` and `aletheia embed`. Plain keyword search keeps working, and so do the REST and MCP surfaces, with a note.
 - `aletheia embed` embeds memories that have no vector yet and skips events. `aletheia compress` embeds new facts only when `ALETHEIA_EMBED_FACTS=1` is set, because the first embedding downloads a model.
-- `POST /v1/search` and the MCP `search` tool answer from the keyword channels only, and the REST reply says so in its `channels.note`. Semantic search is a CLI feature.
-- The benchmark rows marked "+ rerank" use a cross-encoder in the benchmark script. `aletheia search` does not rerank.
+- `POST /v1/search` (also the dashboard search, which sends `paged: true`) and the MCP `search` tool use the same hybrid ranking when the package is installed and at least one stored vector exists. The embedding runtime loads on the first search, once per process, and each query has a 1500 ms budget (`ALETHEIA_DENSE_BUDGET_MS`). `ALETHEIA_DENSE=0` turns the dense channel off.
+- When the dense channel does not run, the reply is keyword results plus a sentence saying why: the package is missing (the sentence names `@huggingface/transformers`), the model is still loading, the query went over budget, or no vectors are stored yet. REST puts it in `channels.notice` and the machine-readable state in `channels.dense` (`status` `on`, `off` or `fallback`, with a `reason`). MCP adds it as a second text part that starts with `Note:`. The dashboard shows it under the result count. `POST /v1/search` reads no query-vector field: the server embeds the query text itself.
+- The server's extraction worker embeds new facts after each job when the package is installed, so `ALETHEIA_EMBED_FACTS=1` is only needed for `aletheia compress`. Memories (not facts) still get vectors from `aletheia embed`.
+- The benchmark rows marked "+ rerank (bench only)" use a cross-encoder in the benchmark script. `aletheia search` does not rerank unless you turn it on (next section).
+
+## Optional rerank
+
+A cross-encoder reads the question and one candidate together and scores how well it answers. Search can use one to reorder the top 30 fused hits. It is off by default.
+
+- Turn it on with the `search.rerank` setting (dashboard Settings, "Rerank search results"), or per call with `aletheia search --rerank` (`--no-rerank` forces it off).
+- It needs the optional `@huggingface/transformers` package, the same one as semantic search, and the model `Xenova/ms-marco-MiniLM-L-6-v2`. Nothing loads until the first reranked search. Without the package, search keeps the fused order.
+- Time budget: 3 seconds for model load plus scoring. If that passes, or the scorer fails, search returns the fused order. A load that is still running is kept for later calls in the same process.
+- Cost, measured on 2026-11-11 on a busy machine with 40 short rows: the first call in a process took about 0.55 s (model load), later calls about 0.1 s. A run on one LoCoMo conversation took 273 ms per question with the cross-encoder. `aletheia search` starts a new process each time, so every CLI call pays the load.
+- Only `aletheia search` uses it. `POST /v1/search`, the MCP `search` tool and the context hooks never rerank.
+- `--explain` shows what happened, for example `rerank=on (Xenova/ms-marco-MiniLM-L-6-v2, top 30, 154 ms)`, or `rerank=fallback (needs the optional package @huggingface/transformers, kept the fused order)`. With rerank off, the line has no rerank part.
 
 ## Search from an agent: search, timeline, get_observations
 
@@ -156,8 +199,8 @@ On LoCoMo, claude-mem 15.2.0 as shipped against this project, from `bench/result
 | Raw turns, all 10 conversations | 1,536 | 57.4% | 0.497 | 3.72 |
 | Dataset facts, all 10 | 1,536 | 64.8% | 0.591 | 5.53 |
 | Dataset facts, 3 conversations | 383 | 67.4% | 0.620 | 5.80 |
-| Dataset facts, 3 conversations, + rerank | 383 | 73.9% | 0.686 | 251.16 |
-| Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
+| Dataset facts, 3 conversations, + rerank (bench only) | 383 | 73.9% | 0.686 | 251.16 |
+| Dataset facts, all 10, + rerank (bench only) | 1,536 | 72.3% | 0.680 | 646.19 |
 | Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
 Recall@5 asks whether the gold evidence is in the top five results. The "Raw turns" row is the hybrid strategy: keyword plus embeddings. Re-run the table with `bun scripts/compare-bench.mjs`. In the same raw-turns result file, keyword-only BM25 scores 55.3% Recall@5 and MRR 0.482 at 2.00 ms per query, and embeddings alone score 49.6% (`bun scripts/compare-bench.mjs`, run 2026-10-29 on the committed result files).

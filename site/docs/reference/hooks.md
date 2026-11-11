@@ -22,9 +22,18 @@ The examples on this page were run on 2026-10-29 against version 0.1.10 in a tem
 
 A hook makes no network call and no model call. Compression only queues a job. A worker started by `aletheia-server` or `aletheia compress` runs it later.
 
+## Compression queue
+
+Each finished session becomes one row in the `jobs` table (type `extract_session`). The hook does one `UPDATE` and one `INSERT`, with no model call and no extraction code loaded.
+
+- No cap. Rows stay until a worker completes them, so a machine with no worker running for any number of sessions loses none. Older versions kept the last 200 in the `compress.queue` setting and dropped the rest; that setting is now only read to migrate entries those versions left behind.
+- A second Stop or SessionEnd for a session whose job is still pending refreshes that job and keeps its place. If the job already ran, the session gets a new job.
+- The worker claims jobs oldest first by row id. After a restart it recovers jobs whose lease expired, then drains the rest in the same order. Entries migrated from the old setting are added after jobs already queued.
+- `aletheia doctor` and `/v1/health` report `queue.pending`, `running`, `failed`, `dropped` and `oldestPendingEpoch`. `dropped` is always 0 because nothing is discarded.
+
 ## Verification status
 
-- MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0, OpenCode 1.18.33.
+- MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0 (listed again by Codex 0.165.0 on 2026-10-29), OpenCode 1.18.33.
 - Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine.
 - Cursor, Gemini CLI and Windsurf: "config written from docs, not tested on a real install". No hook ran in Cursor, Gemini CLI, Windsurf or OpenCode.
 
@@ -36,7 +45,7 @@ Payload field names are the ones the adapter source cites, from host documentati
 
 ```
 tool          capability   verification     detected  events
-claude-code   full         mcp-verified      no        SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd
+claude-code   full         mcp-verified      no        SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, Stop, SubagentStop, SessionEnd
 command-code  full         mcp-verified      no        SessionStart, PostToolUse, Stop
 cursor        full         from-docs-only    no        sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd
 codex         full         mcp-verified      no        SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd
@@ -57,7 +66,10 @@ Every row is from the adapter in `src/hub/hooks/`. "Summary" is a memory of kind
 |---|---|---|---|
 | claude-code | SessionStart | Prints context. Prints nothing when `source` is `resume`. | `source` |
 | claude-code | UserPromptSubmit | Stores the prompt. | `prompt` |
+| claude-code | PreToolUse (matcher `Read`) | The file-read gate. Stores nothing. With the `readGate.enabled` setting on, a whole-file `Read` of a file of at least 32 KB that already has memories is denied; the reason carries the file outline, earlier memory titles (wrapped as untrusted) and a request to read a line range. A `Read` with `offset` or `limit` is always allowed. Allows on any error, with the setting off, or when the database is missing. | `tool_name`, `tool_input.file_path`, `tool_input.offset`, `tool_input.limit` |
 | claude-code | PostToolUse | Stores a tool event. | `tool_name`, `tool_input`, `tool_response` |
+| claude-code | PostToolUseFailure | Stores a failed tool call with its error text. | `tool_name`, `tool_input`, `error`, `is_interrupt` |
+| claude-code | SubagentStop | Stores the subagent's last message, tagged `subagent:<agent_type>`. Skipped when `agent_type` is empty. Not shown in session-start context unless `context.includeSubagents` is true. | `agent_type`, `agent_id`, `last_assistant_message` |
 | claude-code | Stop, SessionEnd | Stores a summary, queues compression, ends the session. | `last_assistant_message` |
 | command-code | SessionStart | Prints context. Nothing on `resume`. | `source` |
 | command-code | PostToolUse | Stores a tool event. | `tool_name`, `tool_display_name`, `tool_input`, `tool_response` |
@@ -102,7 +114,7 @@ The installer builds `aletheia.bundle.mjs` in the data directory so a hook loads
 
 | Host | `timeout` written | Matcher written |
 |---|---|---|
-| claude-code | 10 | SessionStart `startup\|clear\|compact`; PostToolUse `*` |
+| claude-code | 10 | SessionStart `startup\|clear\|compact`; PreToolUse `Read`; PostToolUse `*`; PostToolUseFailure `*` |
 | command-code | 10 | none |
 | codex | 10, SessionEnd 3 | SessionStart `startup\|clear\|compact\|fork` |
 | cursor | 10 | none |
@@ -193,12 +205,12 @@ ok   verify cursor        verified: verified 2026-10-26 — Cursor docs fetched 
 ok   spool                empty
 ok   permissions          data dir 0700, db 0600
 ok   last capture         no capture yet
-ok   queue                0 pending, 0 running, 0 failed
+ok   queue                0 pending, 0 running, 0 failed, 0 dropped
 ```
 
 - `server` calls `/healthz` on `ALETHEIA_PORT`. It fails when the server is not running, which does not stop hooks from working.
 - `verify <tool>` says `verified` when a verification date is recorded and is under 180 days old. It is not proof that a real tool ran a hook. Read the text after the dash for what was checked.
-- `spool` fails when items wait. `permissions`, `database`, `fts`, `queue` and `last capture` report the store. `--json` prints the checks as JSON.
+- `spool` fails when items wait. `permissions`, `database`, `fts`, `queue` and `last capture` report the store. `queue` includes a `dropped` count, which stays 0. `--json` prints the checks as JSON.
 - The exit status is 1 when any line is `FAIL`.
 
 ## Verify, uninstall and the manifest
@@ -234,3 +246,11 @@ Two behaviors of 0.1.10 to know. First, when one file has drifted, the command e
 - [Configuration](configuration.md) - the data directory, the spool path and `ALETHEIA_EXCLUDED_PROJECTS`.
 - [Installer reference](../25-installers.md) - what each installer writes and the sources it used.
 - [Troubleshooting](../guides/troubleshooting.md) - when a hook does not seem to run.
+
+## The file-read gate (Claude Code)
+
+The gate is off by default. Turn it on in the dashboard under Connections, Settings, "Gate whole-file reads of large files with history (Claude Code)". Run `aletheia install claude-code --write` once so the `PreToolUse` entry exists; the entry is installed either way and does nothing while the setting is off.
+
+The hook answers with the documented deny shape: `hookSpecificOutput` with `hookEventName` `PreToolUse`, `permissionDecision` `deny` and `permissionDecisionReason`. Claude sees the reason. Source: https://code.claude.com/docs/en/hooks, fetched 2026-11-11. The `offset` and `limit` input fields of the `Read` tool come from a summary of that page, not its exact text: UNVERIFIED against a real Claude Code session.
+
+Cost: with the setting off, each `Read` starts the hook process, which reads one setting from the hub file and exits with empty output. The gate itself opens the store only for a whole-file read of a file over 32 KB. The hook uses the same 10 second `timeout` as the other events. A timeout or any error lets the read through. The MCP tool `file_outline` returns the same outline on request.

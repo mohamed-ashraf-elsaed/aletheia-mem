@@ -30,25 +30,25 @@ A fixture test proves the file is well formed. It does not prove the real tool a
 
 These sentences are the only claims made about real tools:
 
-- MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0, OpenCode 1.18.33.
-- Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine.
+- MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0 (listed again by Codex 0.165.0 on 2026-10-29), OpenCode 1.18.33.
+- Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine. Claude Code's `PreToolUse` (read gate, off by default), `PostToolUseFailure` and `SubagentStop` hooks have run in tests only.
 - Cursor, Gemini CLI and Windsurf: config written from docs, not tested on a real install. No hook ran in Cursor, Gemini CLI, Windsurf or OpenCode.
 
 In those sessions prompts and tool events were captured, secrets were redacted and the checker found no leaks. "Works with" is not claimed for any tool.
 
-`aletheia install --list` prints the same status for every host. On 2026-10-29 it printed:
+`aletheia install --list` prints the same status for every host. Capture means a hook event records activity. Context means a session-start hook injects memory. Events marked (tests only) have run only in tests. On 2026-11-11 it printed:
 
-| Host | Level | Verification | Hook events installed |
-|---|---|---|---|
-| claude-code | full | mcp-verified | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| command-code | full | mcp-verified | SessionStart, PostToolUse, Stop |
-| cursor | full | from-docs-only | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
-| codex | full | mcp-verified | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| gemini-cli | full | from-docs-only | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
-| windsurf | full | from-docs-only | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
-| opencode | mcp+rules | mcp-verified | none (MCP and rules only) |
+| Host | Capture | Context | Verification | Hook events installed |
+|---|---|---|---|---|
+| claude-code | yes | yes | mcp-verified | SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure (tests only), Stop, SubagentStop (tests only), SessionEnd |
+| command-code | yes | yes | mcp-verified | SessionStart, PostToolUse, Stop |
+| cursor | yes | yes | from-docs-only | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
+| codex | yes | yes | mcp-verified | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| gemini-cli | yes | yes | from-docs-only | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
+| windsurf | yes | no | from-docs-only | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
+| opencode | no | no | mcp-verified | none (MCP and rules only) |
 
-`mcp-verified` means the real CLI listed the server. `from-docs-only` means the format came from the host's documentation and was tested against fixtures. See [Tools overview](../tools/overview.md) for each host.
+`mcp-verified` means the real CLI listed the server. It is a check of the MCP entry, not of hooks. `from-docs-only` means the format came from the host's documentation and was tested against fixtures. `aletheia doctor` names both kinds of evidence on each `verify` line: the rules format date and what the hooks rest on. See [Tools overview](../tools/overview.md) for each host.
 
 ## What is not verified
 
@@ -58,7 +58,7 @@ In those sessions prompts and tool events were captured, secrets were redacted a
 - Sync and end-to-end encryption are tested with temporary data directories and a loopback hub. No real tunnel and no second host were used. See [Sync](../29-sync.md).
 - End-to-end encryption covers payloads, not metadata such as device id, operation kind, entity id, timing or ciphertext size.
 - Remote MCP delegates TLS to a reverse proxy or tunnel. OAuth is not built. See [Remote MCP](../30-remote-mcp.md).
-- The graph retrieval channel is off by default. It was tested on a synthetic set and not on real data.
+- The graph retrieval channel is off by default. Turn it on with the `graph.enabled` setting (dashboard Settings). When on, `ranked()` adds a list of memories that share an entity with the top keyword hits. Edges are written when facts are stored, from the memory the fact's episode came from. On a synthetic set of 200 seed/answer pairs, Recall@5 went from 0.0% to 100.0% (`bun bench/graph-recall.mjs`). The synthetic gate (`bun bench/gate.mjs`) has no entity edges, so its Recall@5 stays at 0.9000 with the setting on or off, and p95 rose by a few ms with it on on a busy machine. It has not been measured on real data, so it stays off by default. Find entity ids with `aletheia entities`.
 - The ten README translations are machine-translated. No native speaker has reviewed them.
 - At 50,000 synthetic rows, keyword search p95 is 32.7 ms for one project and 58.6 ms across all projects. These numbers are synthetic and come from one Linux machine.
 
@@ -88,7 +88,7 @@ The README gives a shorter summary of these skips. This page follows the test fi
 
 ## Roadmap
 
-No roadmap is published in the repository. The `[Unreleased]` section of the [CHANGELOG](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md) was empty on 2026-10-29. Open work is in the [issue tracker](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues). The gaps listed above are known gaps, not promises.
+No roadmap is published in the repository. The `[Unreleased]` section of the [CHANGELOG](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md) was empty on 2026-10-29; it now lists changes. Open work is in the [issue tracker](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues). The gaps listed above are known gaps, not promises.
 
 ## Report from a real install
 

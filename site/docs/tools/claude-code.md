@@ -41,7 +41,7 @@ Real dry-run output from a temporary HOME. Paths start with `/tmp/tmp.Ez6NqCkeLC
 $ aletheia install claude-code
 Claude Code (claude-code) — full, mcp-verified
   write  mcp      /tmp/tmp.Ez6NqCkeLC/.claude.json  (mcpServers.aletheia)
-  write  hooks    /tmp/tmp.Ez6NqCkeLC/.claude/settings.json  (SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd)
+  write  hooks    /tmp/tmp.Ez6NqCkeLC/.claude/settings.json  (SessionStart, UserPromptSubmit, PostToolUse, PostToolUseFailure, Stop, SubagentStop, SessionEnd)
   write  rules    /tmp/tmp.Ez6NqCkeLC/.claude/CLAUDE.md  (1 rule)
   note  The hook shape was checked against a real installed plugin; ...
   note  apply builds /tmp/tmp.eHRtbNMs5s/aletheia.bundle.mjs so a hook loads one module, not a dozen
@@ -97,7 +97,9 @@ The trailing `# aletheia-managed` comment marks the entry as Aletheia's. Uninsta
 | `SessionStart` | `startup\|clear\|compact` | Stores nothing. Prints recalled memory as `hookSpecificOutput.additionalContext`. A `resume` start prints nothing. |
 | `UserPromptSubmit` | none | Stores the prompt as a note, redacted. Prompts under 3 characters are skipped. |
 | `PostToolUse` | `*` | Stores an event: tool name, a one-line input summary, and input plus output cut to 1,500 characters. Task and todo tools are skipped. |
+| `PostToolUseFailure` | `*` | Stores a failed tool call as an event titled `<tool> failed: <input>`, with the input and the `error` text cut to 1,500 characters, redacted. The event does not fire for calls rejected before they run, such as a permission denial. |
 | `Stop` | none | Stores `last_assistant_message` as a summary when it is present. Queues the session for compression and marks it ended. |
+| `SubagentStop` | none | Stores the subagent's `last_assistant_message` as a note, tagged `subagent:<agent_type>` (origin and concepts), redacted. Claude Code's internal agents send an empty `agent_type` and are skipped. Session-start context leaves these notes out unless the setting `context.includeSubagents` is true. |
 | `SessionEnd` | none | Does the same as `Stop`. |
 
 Every hook has a 10 second timeout in the file, exits 0 whatever happens, makes no network call and no model call, and redacts before it stores. If the database cannot be opened, the item goes to `<data dir>/spool/hook-spool.jsonl` and the next successful hook flushes it.
@@ -202,6 +204,7 @@ The `(no aletheia hooks)` label on the hooks line is the installer's own wording
 - Hooks ran in real sessions of Claude Code (two days of use), one user on one machine. Prompts and tool events were captured, secrets were redacted, and the checker found no leaks.
 - The hook shape was checked against a real installed Claude Code plugin hook file on 2026-10-26.
 - Fetched 2026-10-29: https://code.claude.com/docs/en/hooks lists `SessionStart` (matchers `startup`, `resume`, `clear`, `compact`, `fork`), the `hookSpecificOutput.additionalContext` form, `UserPromptSubmit` with `prompt`, and `Stop` with `last_assistant_message`. https://code.claude.com/docs/en/mcp says user-scope servers live in `~/.claude.json`.
+- Fetched 2026-11-11: https://code.claude.com/docs/en/hooks documents `PostToolUseFailure` with `tool_name`, `tool_input`, `tool_use_id`, `error`, optional `is_interrupt` and optional `duration_ms`, and `SubagentStop` with `agent_id`, `agent_type`, `agent_transcript_path`, `last_assistant_message` and `stop_hook_active`. No real session has run the two new hooks yet: they are tested with recorded payloads only. The adapter reads only fields from that page.
 - UNVERIFIED: that `SessionEnd` carries `last_assistant_message`. The fetched part of the hooks page did not reach the `SessionEnd` fields. The adapter stores a summary only when the field is present. Reading the `SessionEnd` section of the page would settle it.
 - Session-start context is injected and stores no row, so the database cannot confirm that a real session showed it.
 - Answer accuracy is not measured. Benchmarks are retrieval only.

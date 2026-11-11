@@ -162,10 +162,17 @@ The sources are session summaries (the last assistant message that the Stop hook
 
 The text is redacted again right before the call. In the test, a summary imported from claude-mem held a fake AWS key id, and the request carried `[redacted:aws-key-id]`. The `Authorization` header was absent because no key was set. Facts that come back are redacted again before storing.
 
+Every other path that sends text to a model is covered the same way. Each provider Aletheia builds (`local`, `openai`, `openrouter`, `claude-cli`, `fake` and a fallback chain) redacts the whole prompt before it leaves, and any provider a caller passes in is wrapped by `guardProvider` in `src/refresh/providers.mjs`. The paths are:
+
+- fact extraction (as above);
+- the Compress now route, which sends the title and the first 400 characters of the text of event rows, and only the title of prompt rows;
+- the Work view refresh, whose prompts carry text read from the claude-mem database, which Aletheia never redacted when it was written;
+- the plain-language card text, whose structured input is redacted string by string before it is sent.
+
+A `<private>` block is dropped by the same step, and a `<private>` tag with no closing tag drops the rest of the text. The test `test/redact-before-model.test.mjs` gives each path a provider that records every prompt, seeds secrets and a `<private>` block, and checks that none of them arrive.
+
 What the redaction does not cover:
 
-- The Compress now route sends the title and the first 400 characters of the text of event rows, and only the title of prompt rows. They were redacted when captured, and that route does not redact again.
-- I found no call to the redaction function in the Work view refresh code or in the human copy code.
 - Redaction is pattern-based and cannot be complete. See [Privacy and redaction](../concepts/privacy.md).
 
 ## Cost and privacy notes

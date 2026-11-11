@@ -13,6 +13,7 @@ Each method keeps different things, so pick by what you need to move.
 |---|---|---|
 | Export bundle (`.jsonl`) | Memories and rules | You move to another machine or tool and want a small, readable file. |
 | Export Markdown | Rules and notes, as text | You want to paste your memory into a chat tool or read it. |
+| Scheduled snapshots (`aletheia backup`) | Everything in the database, as a consistent single file | You want automatic local backups and a one-command restore. |
 | Copy `hub.db` | Everything in the database: memories, facts, episodes, settings, dismissals | You want an exact backup or a full move. |
 | Sync | Live changes between devices | You use two machines every day. See [Sync](../29-sync.md). |
 
@@ -48,6 +49,18 @@ aletheia export --format markdown --out memory.md
 ```
 
 The file starts with your enabled rules, then one section per project, newest first. It skips events and prompts and lists at most 500 items per project. It is for reading and pasting. It is not an import format.
+
+## Import Claude Code auto memory
+
+Claude Code writes notes about your corrections and preferences by itself. Its docs ([memory](https://code.claude.com/docs/en/memory), read 2026-11-11) say they live in `~/.claude/projects/<project>/memory/`: a `MEMORY.md` index plus one markdown file per memory, with a `type` field (user, feedback, project or reference) and a `modified` timestamp in the frontmatter. A different folder is possible through the `autoMemoryDirectory` setting; pass it with `--path`.
+
+```bash
+aletheia import claude-memory --dry-run     # list what would be added
+aletheia import claude-memory               # import
+aletheia import claude-memory --path ~/my-custom-memory-dir --project shop
+```
+
+The importer opens the files read-only and never changes them. It skips `MEMORY.md`, splits a file at `## ` headings, redacts secrets and drops `<private>` blocks before storing. A second run adds 0 rows. The folder name under `projects/` is the project path with separators replaced by `-`. The Claude Code docs do not state that encoding, so the importer decodes it by looking for the folder on disk and applies the same worktree rule as the hooks. A folder it cannot find is skipped and named in the output; rerun with `--project <key>`.
 
 ## Import a bundle
 
@@ -136,6 +149,41 @@ In the test the command printed `0|0|0` and the copy held every row. A write tha
 ### Related files
 
 The data directory also holds `sync.db`, `team.db`, `alerts.db`, `watcher.db`, `erasure.key` and folders for spool, erasure receipts and models. Copy them only if you use those features. Keep `erasure.key` private: it signs erasure receipts.
+
+## Scheduled local snapshots
+
+`aletheia backup run` writes a snapshot of the database to `backups/` inside the data directory. It uses SQLite `VACUUM INTO`, which reads one consistent view of the database while the server keeps writing, and the result needs no `-wal` file. The folder is mode 0700 and each snapshot is mode 0600 on Linux and macOS. Each snapshot is checked with `PRAGMA integrity_check` before it is moved into place.
+
+```bash
+aletheia backup run
+aletheia backup list
+aletheia backup status
+```
+
+```text
+Backup written to ~/.aletheia/backups/hub-20261111T151135967Z.db (364544 bytes).
+```
+
+Scheduled backups are off by default. Turn them on in the dashboard Settings:
+
+| Setting | Default | Range |
+|---|---|---|
+| `backup.enabled` | off | on or off |
+| `backup.intervalHours` | 24 | 1 to 720 |
+| `backup.keep` | 7 | 1 to 365 |
+
+While enabled, the server checks once a minute and writes a snapshot when the newest one is older than the interval. The first check runs a few seconds after start. A failed run is logged and does not stop the server. Pruning keeps the newest `backup.keep` snapshots, ordered by the time in the file name, and never removes the newest one. Other files in `backups/` are left alone. Snapshots stay on the same disk as `hub.db`: they guard against a bad write or a mistaken change, not against losing the disk. Copy the folder elsewhere for that.
+
+### Restore a snapshot
+
+Before a restore, close the AI tools that use Aletheia (Claude Code, Codex, Cursor and others run its MCP server, and hooks open the database too) and stop `aletheia-server`. Then:
+
+```bash
+aletheia restore ~/.aletheia/backups/hub-20261111T151135967Z.db
+aletheia doctor
+```
+
+`restore` refuses while the server answers on the configured port. MCP servers and hooks do not answer there, so it also checkpoints the live `hub.db` and takes an exclusive lock; if another process holds the database it refuses and names the likely holders. A process that has `hub.db` open but is idle cannot be detected, so closing the tools first is still your job. It checks that the snapshot opens, passes `integrity_check` and is not from a newer schema than this build. It then copies the current `hub.db` to `hub.db.pre-restore-<time>` (mode 0600), removes the old `-wal` and `-shm` files, and puts the snapshot in place. Delete the `pre-restore` file yourself when you no longer need it. Restore replaces everything in the database, including memories saved after the snapshot. Only `hub.db` is restored: `sync.db`, `team.db` and the other files in the data directory are not touched.
 
 ## Move to another machine
 
