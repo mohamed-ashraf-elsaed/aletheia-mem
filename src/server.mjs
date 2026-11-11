@@ -8,7 +8,7 @@ import { ValidationError, validateMarkFinished, validateReview, validateRuleActi
 import { EVIDENCE_KINDS } from "./readmodel/evidence.mjs";
 import { MIME_TYPES } from "./readmodel/work-product.mjs";
 import { BadRequest, createHubRoutes } from "./hub/routes.mjs";
-import { KEY_CHALLENGE, KEY_REQUIRED, REMOTE_AUTH_REQUIRED, bearerMatches, createLiveTickets, keyGuards, liveUpgradeHeaders } from "./hub/api-key.mjs";
+import { KEY_CHALLENGE, KEY_REQUIRED, REMOTE_AUTH_REQUIRED, assertKeyLength, bearerMatches, createAuthThrottle, createLiveTickets, keyGuards, liveUpgradeHeaders } from "./hub/api-key.mjs";
 import { AlertStore } from "./hub/alerts.mjs";
 import { createLiveHub } from "./hub/live.mjs";
 import { createMcpHttpHandler } from "./hub/mcp-http.mjs";
@@ -57,14 +57,26 @@ export function startServer(config, {
   sessionTtlMs = 24 * 60 * 60 * 1000,
   loginLockMs = 60_000,
   loginMaxFailures = 5,
+  authMaxFailures = 10,
+  authWindowMs = 60_000,
 } = {}) {
+  const remoteMode = requireLogin ?? !["127.0.0.1", "localhost", "::1"].includes(config.host);
+  if (remoteMode) assertKeyLength(config.apiKey);
   const service = new WorkViewService(config, { autoRefresh });
   const hub = new HubStore(config.hubDb);
   // Project keys computed in this process follow the hub's `project.worktrees` setting; a saved change applies at once.
   const previousWorktreeSetting = useWorktreeSetting(() => hub.setting(WORKTREE_SETTING_KEY, null));
   // Remote login: on by default exactly when the bind is not loopback-only. The sync account's
   // admin token is the password. Loopback-only keeps today's behaviour (no login, no sessions).
-  const remoteMode = requireLogin ?? !["127.0.0.1", "localhost", "::1"].includes(config.host);
+  // The client a lockout or throttle counts. Behind a TLS proxy every socket peer is the proxy, so the proxy's own
+  // X-Forwarded-For entry (the last one) is used; without --behind-tls the header is client-controlled and ignored.
+  const clientKey = (request, server) => {
+    const peer = server?.requestIP(request)?.address ?? "unknown";
+    if (!behindTls) return peer;
+    const forwarded = (request.headers.get("x-forwarded-for") ?? "").split(",").map((part) => part.trim()).filter(Boolean);
+    return forwarded.at(-1) ?? peer;
+  };
+  const sessionStreams = new Map(); // session token -> Set<AbortController> of open SSE streams
   let loginStore = null;
   const getLoginStore = () => loginStore ?? (loginStore = new SyncStore(config.syncDb));
   const login = createLoginGuard({
@@ -74,8 +86,14 @@ export function startServer(config, {
     sessionTtlMs,
     lockMs: loginLockMs,
     maxFailures: loginMaxFailures,
-    getPeer: (request, server) => server?.requestIP(request)?.address ?? "unknown",
+    getPeer: (request, server) => clientKey(request, server),
+    onSessionEnd: (token) => {
+      for (const controller of sessionStreams.get(token) ?? []) controller.abort();
+      sessionStreams.delete(token);
+      liveHub.closeSession(token);
+    },
   });
+  const authThrottle = createAuthThrottle({ max: authMaxFailures, windowMs: authWindowMs });
   // The extraction worker is a background task of the server, not part of any hook. A misconfigured provider
   // must not stop the server from booting: extraction falls back to the rule extractor and doctor reports it.
   let ask = null;
@@ -135,7 +153,13 @@ export function startServer(config, {
   }
 
   function staticFile(pathname) {
-    const rel = normalize(decodeURIComponent(pathname.replace(/^\/work-view\//, "").replace(/^\//, "")));
+    let decoded;
+    try {
+      decoded = decodeURIComponent(pathname.replace(/^\/work-view\//, "").replace(/^\//, ""));
+    } catch {
+      return null;
+    }
+    const rel = normalize(decoded);
     if (rel.startsWith("..") || rel.includes(`${sep}..${sep}`)) return null;
     const full = join(config.publicDir, rel);
     if (!existsSync(full) || !statSync(full).isFile()) return null;
@@ -179,7 +203,7 @@ export function startServer(config, {
       if (remoteMode ? !sameHostOrigin(request) : isCrossOrigin(request)) return json({ error: "This origin is not allowed." }, 403);
       if (config.apiKey && !bearerMatches(request, config.apiKey) && !liveTickets.redeem(request)) return json({ error: KEY_REQUIRED }, 401, KEY_CHALLENGE);
       const project = new URL(request.url).searchParams.get("project") || null;
-      if (server.upgrade(request, { data: { project }, headers: liveUpgradeHeaders(request) })) return undefined;
+      if (server.upgrade(request, { data: { project, session: remoteMode ? login.sessionIdOf(request) : null }, headers: liveUpgradeHeaders(request) })) return undefined;
       return json({ error: "WebSocket upgrade failed." }, 400);
     }
 
@@ -204,7 +228,17 @@ export function startServer(config, {
     }
     if (method === "GET" && pathname === "/api/work-view/events") {
       const denied = guarded(request, server);
-      return denied ?? service.eventStream(request.signal);
+      if (denied) return denied;
+      const sessionToken = remoteMode ? login.sessionIdOf(request) : null;
+      if (!sessionToken) return service.eventStream(request.signal);
+      // Tie the stream to the login session: logout or expiry aborts it.
+      const controller = new AbortController();
+      const streams = sessionStreams.get(sessionToken) ?? new Set();
+      streams.add(controller);
+      sessionStreams.set(sessionToken, streams);
+      controller.signal.addEventListener("abort", () => streams.delete(controller));
+      request.signal?.addEventListener("abort", () => controller.abort());
+      return service.eventStream(controller.signal);
     }
     let m = /^\/api\/work-view\/evidence\/([^/]+)\/([^/]+)$/.exec(pathname);
     if (method === "GET" && m) {
@@ -275,8 +309,18 @@ export function startServer(config, {
     idleTimeout: 0,
     maxRequestBodySize: 9 * 1024 * 1024, // refuse larger uploads at the socket (the hub caps bodies at 8 MB)
     async fetch(request, srv) {
+      // Bun builds request.url from Host, so a Host with a path, query, fragment or userinfo changes the routed path.
+      if (/[\/?#@\\\s]/.test(request.headers.get("host") ?? "")) return json({ error: "Invalid Host header." }, 400);
+      const guardedPath = /^\/(?:v1\/|mcp$)/.test(new URL(request.url).pathname);
+      const peer = guardedPath ? clientKey(request, srv) : null;
+      if (guardedPath) {
+        const wait = authThrottle.retryAfter(peer);
+        if (wait) return json({ error: "Too many failed attempts; wait." }, 429, { "Retry-After": String(wait) });
+      }
       try {
-        return await route(request, srv);
+        const response = await route(request, srv);
+        if (guardedPath && response?.status === 401) authThrottle.fail(peer);
+        return response;
       } catch (error) {
         if (error instanceof ValidationError) return json({ error: "Invalid request body.", details: error.issues }, 400);
         if (error instanceof BadRequest) return json({ error: error.message }, error.status);
@@ -306,6 +350,7 @@ export function startServer(config, {
       useWorktreeSetting(previousWorktreeSetting);
       hub.close();
       alerts.close();
+      login.close();
       loginStore?.close();
     },
   };

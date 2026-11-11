@@ -106,8 +106,12 @@ export async function api(path, { method = "GET", body } = {}) {
   if (body !== undefined) headers["Content-Type"] = "application/json";
   // Remote mode: state-changing calls echo the CSRF cookie in a header.
   if (method !== "GET") {
-    const pair = (document.cookie ?? "").split(";").map((part) => part.trim()).find((part) => part.startsWith("aletheia_csrf="));
-    if (pair) headers["X-CSRF-Token"] = decodeURIComponent(pair.slice("aletheia_csrf=".length));
+    const pair = (document.cookie ?? "").split(";").map((part) => part.trim()).find((part) => part.startsWith("__Host-aletheia_csrf=") || part.startsWith("aletheia_csrf="));
+    if (pair) {
+      try {
+        headers["X-CSRF-Token"] = decodeURIComponent(pair.slice(pair.indexOf("=") + 1));
+      } catch { /* a bad cookie value is no token */ }
+    }
   }
   let response;
   try {

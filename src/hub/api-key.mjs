@@ -57,3 +57,40 @@ export function createLiveTickets({ ttlMs = 30_000, max = 256, now = Date.now } 
     },
   };
 }
+
+/** Remote mode refuses a key an attacker could guess online. Throws with a clear message. */
+export const MIN_KEY_LENGTH = 32;
+export function assertKeyLength(key) {
+  if (key && key.length < MIN_KEY_LENGTH) {
+    throw new Error(`ALETHEIA_API_KEY is ${key.length} characters; remote mode needs at least ${MIN_KEY_LENGTH}. Generate one with: openssl rand -hex 32`);
+  }
+}
+
+/** Counts 401s per peer on /v1 and /mcp. After `max` in `windowMs` the peer gets 429 until the window ends. Bounded map. */
+export function createAuthThrottle({ max = 10, windowMs = 60_000, maxPeers = 1000, now = Date.now } = {}) {
+  const peers = new Map(); // peer -> { count, since }
+  const prune = () => {
+    const at = now();
+    for (const [peer, entry] of peers) if (at - entry.since >= windowMs) peers.delete(peer);
+    while (peers.size >= maxPeers) peers.delete(peers.keys().next().value);
+  };
+  return {
+    /** Seconds to wait, or 0 when the peer may try. */
+    retryAfter(peer) {
+      const entry = peers.get(peer);
+      if (!entry || entry.count < max) return 0;
+      const left = entry.since + windowMs - now();
+      return left > 0 ? Math.ceil(left / 1000) : 0;
+    },
+    fail(peer) {
+      let entry = peers.get(peer);
+      if (!entry || now() - entry.since >= windowMs) {
+        if (!entry) prune();
+        entry = { count: 0, since: now() };
+        peers.set(peer, entry);
+      }
+      entry.count += 1;
+    },
+    size: () => peers.size,
+  };
+}

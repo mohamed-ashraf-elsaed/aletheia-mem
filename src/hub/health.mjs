@@ -77,3 +77,14 @@ export function healthReport(store, { model = process.env.ALETHEIA_EMBED_MODEL ?
     model: safeModel(model),
   };
 }
+
+/** Wraps healthReport so /healthz, open to anyone, runs the integrity check at most once per `ttlMs`. */
+export function createHealthCache({ ttlMs = 30_000, now = Date.now } = {}) {
+  let cached = null;
+  return (store, options) => {
+    if (cached && cached.store === store && now() - cached.at < ttlMs) return cached.report;
+    const report = healthReport(store, options);
+    cached = { store, at: now(), report };
+    return report;
+  };
+}
