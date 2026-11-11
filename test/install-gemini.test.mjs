@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { compressionQueue } from "../src/hub/hooks/shared.mjs";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { applyInstall, applyUninstall, doctor, installerFor, planUninstall } from "../src/hub/install.mjs";
@@ -117,7 +118,7 @@ describe("Gemini CLI installer and hooks", () => {
     expect(blob).not.toContain("sk-ant-api03");
     expect(blob).not.toContain("abcdefghijklmnop12345");
     expect(blob).toContain("[redacted");
-    expect(read.setting("compress.queue", []).some((item) => item.sessionId === "gem-1")).toBe(true);
+    expect(compressionQueue(read).some((item) => item.sessionId === "gem-1")).toBe(true);
     read.close();
 
     const checks = await doctor(ctx.env);

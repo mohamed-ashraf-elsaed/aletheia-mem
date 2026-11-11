@@ -34,7 +34,7 @@ Aletheia is a small server, a command line tool and an MCP server over one local
 - [Windsurf memory with Aletheia](https://aletheia.mohamedashrafelsaed.com/docs/tools/windsurf.md): Install Aletheia memory in Windsurf (now documented as Devin Desktop): the MCP entry, four Cascade hooks and rules files, with the status that no hook ran.
 - [OpenCode memory with Aletheia](https://aletheia.mohamedashrafelsaed.com/docs/tools/opencode.md): Connect OpenCode to Aletheia: the opencode.json MCP entry and AGENTS.md rules block it writes, why no hooks are installed, and what was tested.
 - [Claude Desktop and the aletheia MCP server](https://aletheia.mohamedashrafelsaed.com/docs/claude-desktop.md): Claude Desktop speaks MCP over stdio. Aletheia's server is bin/mcp.mjs; one JSON entry under mcpServers is all it needs. No hook and no rules file exist for Claude Desktop, so t...
-- [GitHub Copilot, Aider and any MCP client with Aletheia](https://aletheia.mohamedashrafelsaed.com/docs/tools/other-tools.md): Use Aletheia with GitHub Copilot and Aider rules files, any MCP client over stdio, the REST API with curl, and the CLI in scripts and cron.
+- [GitHub Copilot, Aider, Goose, Roo Code and any MCP client with Aletheia](https://aletheia.mohamedashrafelsaed.com/docs/tools/other-tools.md): Use Aletheia with GitHub Copilot and Aider rules files, any MCP client over stdio, the REST API with curl, and the CLI in scripts and cron.
 - [25. Installers and automatic capture](https://aletheia.mohamedashrafelsaed.com/docs/25-installers.md): Status: implemented and validated 2026-10-26. This page records what each installer writes, which hook fields it reads, and what is verified on this machine. Five more hosts and...
 
 ## Guides
@@ -53,7 +53,7 @@ Aletheia is a small server, a command line tool and an MCP server over one local
 ## Reference
 
 - [Aletheia CLI reference: every aletheia command and flag](https://aletheia.mohamedashrafelsaed.com/docs/reference/cli.md): Every aletheia command and flag with a synopsis and a real example: capture, search, rules, install, sync, team, service, erase and alerts.
-- [MCP tools reference: the 13 Aletheia MCP tools and their inputs](https://aletheia.mohamedashrafelsaed.com/docs/reference/mcp-tools.md): The 13 tools the Aletheia MCP server lists, with input schemas, read or write access, example calls and results, plus stdio and HTTP setup.
+- [MCP tools reference: the 14 Aletheia MCP tools and their inputs](https://aletheia.mohamedashrafelsaed.com/docs/reference/mcp-tools.md): The 14 tools the Aletheia MCP server lists, with input schemas, read or write access, example calls and results, plus stdio and HTTP setup.
 - [Aletheia configuration reference: environment variables, settings and data directory](https://aletheia.mohamedashrafelsaed.com/docs/reference/configuration.md): Every Aletheia environment variable with its default, the runtime settings and where they are stored, and the files in the data directory.
 - [Aletheia hooks reference: events, payloads, redaction and fail-open behavior](https://aletheia.mohamedashrafelsaed.com/docs/reference/hooks.md): How Aletheia hooks work: events per host, payload fields read, redaction, fail-open exit 0, the spool, timeouts, and how to test or remove a hook.
 - [3. HTTP API](https://aletheia.mohamedashrafelsaed.com/docs/03-http-api.md): Base: http://127.0.0.1:<port>. All JSON responses carry Cache-Control: no-store. Pages carry Content-Security-Policy: frame-ancestors 'none' and X-Frame-Options: DENY.
@@ -79,6 +79,7 @@ Aletheia is a small server, a command line tool and an MCP server over one local
 
 ## Release notes
 
+- [Aletheia 0.2.0 release notes](https://aletheia.mohamedashrafelsaed.com/docs/releases/v0.2.0.md): Aletheia (aletheia-mem) 0.2.0, released 2026-11-12: 6 security, 17 added, 6 changed, 6 fixed, 1 removed. Remote mode (a non-loopback bind) served /v1/, the /v1/live socket...
 - [Aletheia 0.1.13 release notes](https://aletheia.mohamedashrafelsaed.com/docs/releases/v0.1.13.md): Aletheia (aletheia-mem) 0.1.13, released 2026-11-03: 4 added, 3 changed, 2 fixed. aletheia mcp runs the MCP server over stdio, the same server as aletheia-mcp. From npm it...
 - [Aletheia 0.1.12 release notes](https://aletheia.mohamedashrafelsaed.com/docs/releases/v0.1.12.md): Aletheia (aletheia-mem) 0.1.12, released 2026-11-01: 2 added, 3 changed. The release workflow now publishes to the official MCP registry on every tag: it bumps server.json...
 - [Aletheia 0.1.11 release notes](https://aletheia.mohamedashrafelsaed.com/docs/releases/v0.1.11.md): Aletheia (aletheia-mem) 0.1.11, released 2026-10-30: 4 added, 2 changed, 7 fixed. A full documentation site: 49 pages in eight sections (Get started, Concepts, Connect...

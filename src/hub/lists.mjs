@@ -1,6 +1,7 @@
 // Paged list queries for the UI. Each function takes the store and returns { rows or items, total } for one
 // page. Orders always end with a unique id so consecutive pages never overlap or skip a row. Nothing here writes.
 import { slicePage } from "./paging.mjs";
+import { expandQuery, timeFilter } from "./query.mjs";
 import { ruleStrength } from "./rule-suggest.mjs";
 
 const iso = (epoch) => (Number.isFinite(epoch) ? new Date(epoch).toISOString() : null);
@@ -165,13 +166,14 @@ const SEARCH_CAP = 300;
  * Search as one ordered list (facts first, then memories; `mix` alternates them) with a window. `totals` counts each kind; `capped` says the
  * ranking pool was full, so more may exist than the total shows.
  */
-export function searchPage(hub, { query, project, kind, type, tool, scope = "current", includeHistory = false, asOf = null, since = null, until = null, order = "relevance", limit, offset, mix = false } = {}) {
+export function searchPage(hub, { query, project, kind, type, tool, scope = "current", includeHistory = false, asOf = null, since = null, until = null, order = "relevance", limit, offset, mix = false, queryVec = null } = {}) {
+  if (since == null && until == null) ({ since = null, until = null } = timeFilter(expandQuery(query)) ?? {});
   const inRange = (item) => {
     const at = Date.parse(item.at);
     return (!Number.isFinite(since) || at >= since) && (!Number.isFinite(until) || at <= until);
   };
-  const facts = hub.searchFacts({ query, project, limit: SEARCH_CAP, pool: SEARCH_CAP, includeHistory, asOf, scope, cap: SEARCH_CAP, since, until }).filter(inRange);
-  const memories = hub.ranked({ query, project, kind, type, tool, limit: SEARCH_CAP, pool: SEARCH_CAP, scope, includeHistory, cap: SEARCH_CAP, since, until })
+  const facts = hub.searchFacts({ query, project, limit: SEARCH_CAP, pool: SEARCH_CAP, includeHistory, asOf, scope, cap: SEARCH_CAP, since, until, queryVec }).filter(inRange);
+  const memories = hub.ranked({ query, project, kind, type, tool, limit: SEARCH_CAP, pool: SEARCH_CAP, scope, includeHistory, cap: SEARCH_CAP, since, until, queryVec })
     .map((m) => ({ id: m.id, kind: m.kind, type: m.type, title: m.title, project: m.project, tool: m.tool, pinned: m.pinned, at: new Date(m.created_at_epoch).toISOString() }))
     .filter(inRange);
   const all = [...facts, ...memories];

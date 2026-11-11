@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { compressionQueue } from "../src/hub/hooks/shared.mjs";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { applyInstall, applyUninstall, doctor, installerFor, planUninstall } from "../src/hub/install.mjs";
@@ -54,7 +55,9 @@ describe("Windsurf installer and hooks", () => {
   test("a dry run plans the current MCP path, hooks and global rules", () => {
     const ctx = setup();
     const plan = installerFor("windsurf").plan(ctx.env);
-    expect(plan.capabilities).toBe("full");
+    expect(plan.capabilities).toBe("capture-only");
+    expect(plan.capture).toBe("yes");
+    expect(plan.context).toBe("no");
     expect(plan.verification).toBe("from-docs-only");
     expect(plan.steps.map((step) => step.kind)).toEqual(["mcp", "hooks", "rules"]);
     expect(plan.steps.find((step) => step.kind === "mcp").file).toBe(currentMcpPath(ctx.home));
@@ -121,7 +124,7 @@ describe("Windsurf installer and hooks", () => {
     expect(blob).not.toContain("sk-ant-api03");
     expect(blob).not.toContain("abcdefghijklmnop12345");
     expect(blob).toContain("[redacted");
-    expect(read.setting("compress.queue", []).some((item) => item.sessionId === "wf-1")).toBe(true);
+    expect(compressionQueue(read).some((item) => item.sessionId === "wf-1")).toBe(true);
     read.close();
 
     const checks = await doctor(ctx.env);

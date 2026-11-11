@@ -33,7 +33,6 @@ export function loadConfig(overrides = {}) {
     humanCopyCache: overrides.humanCopyCache ?? join(dataDir, "human-copy.json"),
     rulesFile: overrides.rulesFile ?? env.ALETHEIA_RULES_FILE ?? join(dataDir, "MY-RULES.md"),
     claudeInstructionsFile: overrides.claudeInstructionsFile ?? env.ALETHEIA_CLAUDE_MD ?? join(home, ".claude", "CLAUDE.md"),
-    setupStateFile: overrides.setupStateFile ?? join(dataDir, "setup-state.json"),
     publicDir: overrides.publicDir ?? join(import.meta.dir, "..", "public"),
     hubDb: overrides.hubDb ?? env.ALETHEIA_HUB_DB ?? join(dataDir, "hub.db"),
     hubUiDir: overrides.hubUiDir ?? join(import.meta.dir, "..", "public-hub"),
@@ -61,7 +60,7 @@ export function loadConfig(overrides = {}) {
     // Projects whose activity is never captured. Comma-separated, matched case-insensitively by project key.
     excludedProjects: overrides.excludedProjects ?? String(env.ALETHEIA_EXCLUDED_PROJECTS ?? "").split(",").map((name) => name.trim()).filter(Boolean),
     // The LLM refresh (grouping, reviews, goals, story) is off unless a provider is chosen.
-    // ALETHEIA_PROVIDER = claude-cli | openai | none
+    // ALETHEIA_PROVIDER = none | local | openai | openrouter | claude-cli | fake (see PROVIDER_KINDS in src/refresh/providers.mjs)
     provider: overrides.provider ?? env.ALETHEIA_PROVIDER ?? "none",
     // Extraction mode: code, chill, language-en or language-es. See src/hub/modes/*.json.
     mode: overrides.mode ?? env.ALETHEIA_MODE ?? "code",
@@ -100,7 +99,7 @@ export function loadConfig(overrides = {}) {
     },
     claudeBin: env.ALETHEIA_CLAUDE_BIN ?? "claude",
     teamMode: env.WORK_STATE_TEAM_MODE === "1",
-    // 1 = reproduce the original's silent failure to read observations (see docs/08-findings.md, F1).
+    // 1 = reproduce the original's silent failure to read observations.
     bugCompatible: (overrides.bugCompatible ?? env.ALETHEIA_BUG_COMPAT) === true || (overrides.bugCompatible ?? env.ALETHEIA_BUG_COMPAT) === "1",
     home,
     ...overrides.extra,

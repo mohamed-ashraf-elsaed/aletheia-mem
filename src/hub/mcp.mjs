@@ -1,16 +1,20 @@
 // MCP server (JSON-RPC 2.0 over stdio, newline-delimited) so ANY MCP-capable tool can search, read and write
 // the shared memory. Tools follow the token-efficient 3-layer pattern: search (index) -> timeline (context)
 // -> get_observations (full text for chosen ids only).
+import { WORKTREE_SETTING_KEY, useWorktreeSetting } from "../lib/project-key.mjs";
 import { VERSION } from "../lib/version.mjs";
 import { projectKeyForPath } from "../readmodel/project.mjs";
+import { resolve as resolvePath } from "node:path";
+import { fileOutline } from "./smart-file.mjs";
 import { wrapUntrusted } from "./untrusted.mjs";
 import { redact } from "./capture.mjs";
 import { searchPage } from "./lists.mjs";
+import { denseQuery } from "./dense.mjs";
 import { earlierOf, epochOrIso, olderThanCutoff, pagingOf, whenOf } from "./paging.mjs";
 import { checkEvidenceInput, describeRules, provenanceLine, recheckMarker } from "./rule-evidence.mjs";
 import { readWorkStateList, writeWorkStateList } from "./work-state.mjs";
-import { TOOL_DEFS } from "./mcp-tools.mjs";
-export { TOOL_DEFS };
+import { TEAM_TOOL_DEFS, TOOL_DEFS } from "./mcp-tools.mjs";
+export { TEAM_TOOL_DEFS, TOOL_DEFS };
 
 // Newest first. Per the spec: answer with the client's version if supported, else with our latest.
 export const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
@@ -18,6 +22,8 @@ export const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "202
 
 const recalled = (t) => text(wrapUntrusted(t));
 const text = (t) => ({ content: [{ type: "text", text: t }] });
+// The dense-channel note rides as its own content part, outside the wrapped memory text.
+const withNotice = (result, notice) => (notice ? { ...result, content: [...result.content, { type: "text", text: `Note: ${notice}` }] } : result);
 const fail = (t) => ({ content: [{ type: "text", text: t }], isError: true });
 
 const REASON = {
@@ -34,6 +40,38 @@ function fmtFull(m) {
   const source = [m.tool, m.session_id ? `session ${m.session_id}` : null, m.origin ? `origin ${m.origin}` : null].filter(Boolean).join(", ");
   return [`#${m.id} [${m.type}] ${m.title}`, `${m.project} · ${new Date(m.created_at_epoch).toISOString()} · source: ${source}`, m.subtitle ?? "", m.narrative ?? "", m.facts.length ? `Facts: ${m.facts.join("; ")}` : "", m.files.length ? `Files: ${m.files.join(", ")}` : ""].filter(Boolean).join("\n");
 }
+
+// ---- team tools --------------------------------------------------------------------------------
+// ctx.team = { store (TeamStore), accountId, tokenId, operator }. The local stdio device acts as the operator,
+// like the CLI; a remote token acts as its own member. Both tools call the same TeamStore methods as the REST routes.
+function teamMemberships(ctx) {
+  const t = ctx.team;
+  if (!t?.store) return [];
+  if (!t.operator && !(Number.isSafeInteger(Number(t.tokenId)) && Number(t.tokenId) > 0)) return [];
+  try {
+    return t.store.listTeams(t.accountId, t.tokenId ?? null, { operator: !!t.operator });
+  } catch {
+    return [];
+  }
+}
+
+/** The tools tools/list shows for this caller: the 13 core tools, plus the two team tools for a team member. */
+export function toolsFor(ctx) {
+  return teamMemberships(ctx).length ? [...TOOL_DEFS, ...TEAM_TOOL_DEFS] : TOOL_DEFS;
+}
+
+function pickTeam(ctx, requested) {
+  const memberships = teamMemberships(ctx);
+  if (!memberships.length) throw new Error("This device does not belong to a team.");
+  if (requested != null && String(requested).trim()) return String(requested).trim();
+  if (memberships.length > 1) throw new Error(`This device belongs to several teams (${memberships.map((m) => m.name).join(", ")}). Pass team.`);
+  return String(memberships[0].id);
+}
+
+const oneLine = (value, max = 400) => {
+  const flat = String(value ?? "").replace(/\s+/g, " ").trim();
+  return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat;
+};
 
 /** Run one tool. `ctx`: { store, tool (the calling client), cwd, projects (allowed projects, null = all) }.
  *  Never throws: errors come back as isError results. */
@@ -61,17 +99,17 @@ export function callTool(name, args = {}, ctx) {
         const since = whenOf(args.since);
         const until = earlierOf(whenOf(args.until, { end: true }), olderThanCutoff(args.older_than_days));
         const pickProject = allowed ? (args.project ?? (ctx.projects.length === 1 ? ctx.projects[0] : undefined)) : args.project;
-        const page = searchPage(store, { query: args.query, project: pickProject, type: args.type, kind: args.kind, order, since, until, ...paging, scope: "current" });
+        const page = searchPage(store, { query: args.query, project: pickProject, type: args.type, kind: args.kind, order, since, until, ...paging, scope: "current", queryVec: ctx.dense?.queryVec ?? null });
         const facts = page.facts.filter((fact) => !allowed || allowed(fact.project));
         const index = page.results.filter((row) => !allowed || allowed(row.project));
         const factLines = facts.map((fact) => `fact #${fact.id} ${fact.text}${fact.source?.episodeId ? ` (episode #${fact.source.episodeId})` : ""}`);
         const memoryIndex = fmtIndex(index);
         if (!factLines.length && !index.length) {
-          const detailed = store.searchDetailed({ query: args.query, project: pickProject, type: args.type, kind: args.kind, limit: paging.limit });
+          const detailed = store.searchDetailed({ query: args.query, project: pickProject, type: args.type, kind: args.kind, limit: paging.limit, queryVec: ctx.dense?.queryVec ?? null });
           const reason = detailed.reason ? (REASON[detailed.reason] ?? "filtered") : (allowed ? "filtered" : "");
-          return text(`No matches. ${reason}`.trim());
+          return withNotice(text(`No matches. ${reason}`.trim()), ctx.dense?.notice);
         }
-        return recalled([...factLines, memoryIndex].filter(Boolean).join("\n"));
+        return withNotice(recalled([...factLines, memoryIndex].filter(Boolean).join("\n")), ctx.dense?.notice);
       }
       case "timeline": {
         const denied = scopedProject(args.project);
@@ -106,6 +144,34 @@ export function callTool(name, args = {}, ctx) {
         }
         if (!rows.length) return text(`No facts found for subject "${subject}".`);
         return recalled(rows.map((fact) => `#${fact.id} [${fact.status}] ${fact.text}${fact.validFrom || fact.validTo ? ` (${(fact.validFrom ?? "?").slice(0, 10)} → ${(fact.validTo ?? "now").slice(0, 10)})` : ""}`).join("\n"));
+      }
+      case "team_brief": {
+        if (typeof args.project !== "string" || !args.project.trim()) return fail("project is required.");
+        const denied = scopedProject(args.project);
+        if (denied) return denied;
+        const t = ctx.team;
+        const teamId = pickTeam(ctx, args.team);
+        const brief = t.store.brief(t.accountId, teamId, t.tokenId ?? null, { project: args.project.trim(), days: args.days ?? undefined, maxChars: args.max_chars ?? undefined }, { operator: !!t.operator });
+        return recalled(brief.text);
+      }
+      case "team_search": {
+        if (typeof args.query !== "string" || !args.query.trim()) return fail("query is required.");
+        if (args.project != null) {
+          const denied = scopedProject(args.project);
+          if (denied) return denied;
+        }
+        const t = ctx.team;
+        const teamId = pickTeam(ctx, args.team);
+        const found = t.store.search(t.accountId, teamId, t.tokenId ?? null, { query: args.query, project: args.project ?? null, limit: args.limit ?? 20 }, { operator: !!t.operator });
+        const rows = found.results.filter((row) => !allowed || allowed(row.project));
+        if (!rows.length) return text(found.reason === "no_terms" ? "No matches. The query had no searchable words." : "No matches.");
+        return recalled(rows.map((row) => `${row.source} ${row.at.slice(0, 10)} [${row.kind}] ${oneLine(row.title ? `${row.title}: ${row.text}` : row.text)}  (${row.project}, ${row.author.name})`).join("\n"));
+      }
+      case "file_outline": {
+        const denied = scopedProject(args.project);
+        if (denied) return denied;
+        const project = args.project ?? (ctx.cwd ? projectKeyForPath(ctx.cwd) : undefined);
+        return recalled(fileOutline(store, { file: typeof args.file === "string" ? resolvePath(ctx.cwd ?? "/", args.file) : args.file, root: ctx.cwd, project }));
       }
       case "save_memory": {
         if (typeof args.text !== "string" || !args.text.trim()) return fail("text is required.");
@@ -192,7 +258,7 @@ export function handleMessage(msg, ctx) {
       return reply({ protocolVersion: PROTOCOL_VERSIONS.includes(wanted) ? wanted : PROTOCOL_VERSIONS[0], capabilities: { tools: { listChanged: false } }, serverInfo: { name: "aletheia", version: VERSION }, instructions: "Shared, tool-neutral memory. Start with session_start_context, then search -> timeline -> get_observations. Use save_memory for decisions and gotchas worth keeping." });
     }
     case "ping": return reply({});
-    case "tools/list": return reply({ tools: TOOL_DEFS });
+    case "tools/list": return reply({ tools: toolsFor(ctx) });
     case "tools/call": {
       if (!params?.name) return error(-32602, "Missing tool name");
       return reply(callTool(params.name, params.arguments ?? {}, ctx));
@@ -201,9 +267,47 @@ export function handleMessage(msg, ctx) {
   }
 }
 
+/**
+ * handleMessage for the transports: a `search` call first embeds its query (lazy, under a time budget) so the sync
+ * handler can use the hybrid ranking. `ctx.embedder` is an embedder, a function that returns one, or undefined for
+ * the shared optional runtime. Every other message goes straight to handleMessage.
+ */
+export async function handleMessageAsync(msg, ctx) {
+  const call = msg?.method === "tools/call" && msg.id !== undefined ? msg.params : null;
+  const query = call?.name === "search" ? call.arguments?.query : null;
+  if (typeof query !== "string" || !query.trim() || (typeof call.arguments?.file === "string" && call.arguments.file.trim())) return handleMessage(msg, ctx);
+  const dense = await denseQuery({ store: ctx.store, query, embedder: ctx.embedder });
+  return handleMessage(msg, { ...ctx, dense });
+}
+
+/** The local device's team, for stdio: the team store next to the sync store, acting as the local operator
+ *  (what `aletheia team ...` does without --token-id). Null when no team was ever created here. */
+async function openLocalTeam() {
+  try {
+    const [{ existsSync }, { loadConfig }] = await Promise.all([import("node:fs"), import("../config.mjs")]);
+    const config = loadConfig();
+    if (!existsSync(config.teamDb) || !existsSync(config.syncDb)) return null;
+    const [{ TeamStore }, { SyncStore }] = await Promise.all([import("./team.mjs"), import("./sync/store.mjs")]);
+    const sync = new SyncStore(config.syncDb);
+    const accountId = sync.ensureAccount().id;
+    const teamStore = new TeamStore(config.teamDb, {
+      tokenActive: (id) => {
+        const row = sync.db.prepare("SELECT revoked_at, expires_at FROM sync_token WHERE id = ?").get(Number(id));
+        return !!row && !row.revoked_at && !(row.expires_at && row.expires_at < Date.now());
+      },
+    });
+    return { store: teamStore, accountId, tokenId: null, operator: true };
+  } catch {
+    return null;
+  }
+}
+
 /** Newline-delimited JSON-RPC over a readable/writable pair. */
-export async function serveStdio({ store, input = process.stdin, output = process.stdout, tool = process.env.ALETHEIA_TOOL, cwd = process.env.ALETHEIA_CWD ?? process.cwd() }) {
-  const ctx = { store, tool, cwd };
+export async function serveStdio({ store, input = process.stdin, output = process.stdout, tool = process.env.ALETHEIA_TOOL, cwd = process.env.ALETHEIA_CWD ?? process.cwd(), team = undefined, embedder = undefined }) {
+  const local = team === undefined ? await openLocalTeam() : team;
+  const ctx = { store, tool, cwd, team: local?.store ? local : null, embedder };
+  // The default project for a call follows this hub's `project.worktrees` setting for the life of the process.
+  useWorktreeSetting(() => store.setting(WORKTREE_SETTING_KEY, null));
   let buffer = "";
   input.setEncoding("utf8");
   for await (const chunk of input) {
@@ -215,7 +319,7 @@ export async function serveStdio({ store, input = process.stdin, output = proces
       if (!line) continue;
       let msg;
       try { msg = JSON.parse(line); } catch { output.write(`${JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } })}\n`); continue; }
-      const responses = Array.isArray(msg) ? msg.map((m) => handleMessage(m, ctx)).filter(Boolean) : [handleMessage(msg, ctx)].filter(Boolean);
+      const responses = (Array.isArray(msg) ? await Promise.all(msg.map((m) => handleMessageAsync(m, ctx))) : [await handleMessageAsync(msg, ctx)]).filter(Boolean);
       for (const r of responses) output.write(`${JSON.stringify(r)}\n`);
     }
   }

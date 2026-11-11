@@ -69,6 +69,20 @@ export const TOOL_DEFS = [
     },
   },
   {
+    name: "file_outline",
+    title: "Outline a file with its history",
+    description: `Return a cheap outline of one file (markdown headings and code symbols with line numbers) plus the titles of earlier memories that touched it, so you can read only the line range you need. Read-only. Works only for a file inside the project working directory of a local server, and is refused over a remote connection. ${UNTRUSTED}`,
+    annotations: annotate("Outline a file with its history", { readOnly: true, idempotent: true }),
+    inputSchema: {
+      type: "object",
+      properties: {
+        file: str("Path of the file to outline, absolute or relative to the working directory. Required."),
+        project: str("Project key used to find earlier memories. Default: the project of the server's working directory."),
+      },
+      required: ["file"],
+    },
+  },
+  {
     name: "save_memory",
     title: "Save a memory",
     description: "Store one durable memory (a decision, gotcha, convention or fix) that every connected tool can later find. Secrets in the text are redacted before storage. Saving the same project, title and text again is a no-op and returns the existing id. Use work_state_write for a running to-do list and add_rule for a standing instruction. Returns \"Saved as #id in project.\" or \"Already saved as #id.\".",
@@ -209,6 +223,45 @@ export const TOOL_DEFS = [
         project: str("Project key the list belongs to. Default: the project of the server's working directory, else \"default\"."),
       },
       required: ["list"],
+    },
+  },
+];
+
+const TEAM_ARG = str("Team name or id. Optional when this device belongs to exactly one team; required when it belongs to several.");
+
+// Listed by tools/list only when the caller belongs to a team (see toolsFor in mcp.mjs). They read the team
+// store through the same access check as the REST routes, so a member only ever gets the projects shared with them.
+export const TEAM_TOOL_DEFS = [
+  {
+    name: "team_brief",
+    title: "Read a team project brief",
+    description: `Return the team's short brief for one project: board decisions first, then facts teammates shared in the last 14 days, each with the id of the team entry and its author. Built by a fixed rule, no model involved. Read-only. Refused with an error when you are not allowed to read that project. ${UNTRUSTED}`,
+    annotations: annotate("Read a team project brief", { readOnly: true, idempotent: true }),
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: str("Team project to brief. Required, and must be a project shared with you."),
+        team: TEAM_ARG,
+        days: num("How many days of shared facts to include. Default 14."),
+        max_chars: num("Cut the brief at this many characters. Default 2000."),
+      },
+      required: ["project"],
+    },
+  },
+  {
+    name: "team_search",
+    title: "Search team shared memory",
+    description: `Search what teammates shared with the team and return one line per hit: team entry id, date, kind, text, project and author. It covers only projects you may read, so another team's rows and projects not shared with you never appear. Read-only. Returns "No matches." when nothing is found. This is separate from search, which reads only this device's own memory. ${UNTRUSTED}`,
+    annotations: annotate("Search team shared memory", { readOnly: true, idempotent: true }),
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: str("Words to search for. Required."),
+        project: str("Limit to one team project. Omitted: every project you may read. A project you cannot read is refused."),
+        team: TEAM_ARG,
+        limit: num("Maximum hits. Default 20, at most 200."),
+      },
+      required: ["query"],
     },
   },
 ];

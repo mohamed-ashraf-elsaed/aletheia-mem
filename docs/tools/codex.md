@@ -155,7 +155,7 @@ The `(no aletheia hooks)` label is the installer's own wording for the hooks lin
 
 ## Verification status
 
-- The MCP server was listed by the real CLI (Codex 0.130.0) on 2026-10-27.
+- The MCP server was listed by the real CLI on 2026-10-27 (Codex 0.130.0) and on 2026-10-29 (Codex 0.165.0).
 - Hooks ran in one interactive Codex CLI session (reviewed once with `/hooks`), one user on one machine.
 - The hook, config and AGENTS.md formats were fetched from the OpenAI Codex pages on 2026-10-26 and again on 2026-10-29. The pages now live under `learn.chatgpt.com`; the old `developers.openai.com` addresses redirect there.
 - Fetched 2026-10-29: the hooks page lists `SessionStart`, `SessionEnd`, `UserPromptSubmit`, `PostToolUse`, `Stop` and others, the `~/.codex/hooks.json` location, the `last_assistant_message` field on `Stop`, and the `/hooks` trust step. The config reference shows `[mcp_servers.<id>]` with `command`, `args` and `env`.

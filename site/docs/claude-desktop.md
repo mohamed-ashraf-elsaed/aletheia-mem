@@ -13,7 +13,19 @@ is all it needs. No hook and no rules file exist for Claude Desktop, so this pag
 
 Source: <https://modelcontextprotocol.io/quickstart/user> (fetched 2026-10-26).
 
+## One command
+
+```bash
+aletheia install claude-desktop           # dry run: shows the file and the entry, writes nothing
+aletheia install claude-desktop --write   # merge the entry, backing the file up first
+```
+
+The command fills in the absolute Bun path and the absolute path to `bin/mcp.mjs` for you. `aletheia uninstall`
+does not cover Claude Desktop: remove `mcpServers.aletheia` from the file by hand.
+
 ## The entry
+
+The command writes this. To do it by hand instead:
 
 Use an absolute Bun path and an absolute path to `bin/mcp.mjs`:
 

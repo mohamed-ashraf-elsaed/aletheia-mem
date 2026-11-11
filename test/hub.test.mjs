@@ -77,7 +77,7 @@ describe("store: memories and search", () => {
     s.add(mem({ project: "a" }));
     s.add(mem({ project: "b" }));
     s.add(mem({ project: "b", title: "only in b", narrative: "z" }));
-    expect(s.mergeProjects("b", "a")).toEqual({ moved: 1, dropped: 1 });
+    expect(s.mergeProjects("b", "a")).toMatchObject({ from: "b", into: "a", moved: 1, dropped: 1, tables: { memories: { moved: 1, dropped: 1 } } });
     expect(s.projects().map((p) => [p.name, p.memories])).toEqual([["a", 2]]);
     expect(() => s.mergeProjects("a", "a")).toThrow();
   });
@@ -317,7 +317,7 @@ describe("MCP server", () => {
     expect(ctx.tool).toBe("cursor");
     expect(rpc("initialize", { protocolVersion: "1999-01-01" }).result.protocolVersion).toBe("2025-11-25");
     expect(rpc("initialize", { protocolVersion: "2024-11-05" }).result.protocolVersion).toBe("2024-11-05");
-    expect(rpc("tools/list").result.tools.map((t) => t.name)).toEqual(["search", "timeline", "get_observations", "save_memory", "session_start_context", "fact_history", "list_rules", "add_rule", "confirm_rule", "dismiss_memory", "restore_memory", "work_state_write", "work_state_read"]);
+    expect(rpc("tools/list").result.tools.map((t) => t.name)).toEqual(["search", "timeline", "get_observations", "file_outline", "save_memory", "session_start_context", "fact_history", "list_rules", "add_rule", "confirm_rule", "dismiss_memory", "restore_memory", "work_state_write", "work_state_read"]);
     expect(handleMessage({ jsonrpc: "2.0", method: "notifications/initialized" }, ctx)).toBeNull();
     expect(rpc("nope").error.code).toBe(-32601);
     expect(handleMessage({ id: 1 }, ctx).error.code).toBe(-32600);

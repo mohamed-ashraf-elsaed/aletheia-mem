@@ -34,7 +34,7 @@ For Claude Code, the adapter in [`src/hub/hooks/claude-code.mjs`](https://github
 - `Stop` and `SessionEnd` store a `summary` memory from the assistant's last message (capped at 4,000 characters), queue the session for compression and mark the session ended.
 - `SessionStart` stores nothing. It returns context. A resumed session gets none, because the host already has the conversation.
 
-The project key comes from the payload's `cwd`. The hook walks up to the git root and uses the folder name. A git worktree becomes `parent/worktree`. With no git folder, it uses the folder name. Projects listed in `ALETHEIA_EXCLUDED_PROJECTS` are skipped before anything is written. In a test, a hook run with `ALETHEIA_EXCLUDED_PROJECTS=shop` exited 0 and stored nothing.
+The project key comes from the payload's `cwd`. The hook walks up to the git root and uses the folder name. A git worktree uses its main repository's key, so it shares that project's memory (set `project.worktrees` to `separate` for `parent/worktree`, see [Git worktrees](../concepts/memory-model.md#git-worktrees)). With no git folder, it uses the folder name. Projects listed in `ALETHEIA_EXCLUDED_PROJECTS` are skipped before anything is written. In a test, a hook run with `ALETHEIA_EXCLUDED_PROJECTS=shop` exited 0 and stored nothing.
 
 The other five hosts have their own adapters with their own event names. [Hooks](../reference/hooks.md) lists them. What has been checked on a real install is in the [Tools overview](../tools/overview.md).
 

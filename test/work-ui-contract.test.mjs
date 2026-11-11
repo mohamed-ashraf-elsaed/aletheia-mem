@@ -71,8 +71,9 @@ describe("the Work UI contract", () => {
     expect(clean(read(join(publicDir, "index.html")))).toBe(true);
 
     const tools = read(join(publicDir, "tabs", "tools.js"));
-    expect(tools).toContain(classicLink);
-    expect(tools.replace(classicLink, "")).not.toContain("claude-mem");
+    // The one named legacy link now lives in the English catalogue, so no module holds the word.
+    expect(JSON.parse(read(join(publicDir, "i18n", "en.json")))["toolsPage.classicTitle"]).toBe(classicLink);
+    expect(tools).not.toContain("claude-mem");
     expect(tools).not.toContain("103.3K");
     expect(tools).not.toContain("github.com/thedotmack");
   });

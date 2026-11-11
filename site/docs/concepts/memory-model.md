@@ -51,7 +51,7 @@ The store keeps any type string up to 40 characters, and the legend shows `?` fo
 
 ## Scope: project and global
 
-Every memory, episode, observation and fact has a project and a scope. The project key is the repository folder name, or `<repo>/<worktree>` for a git worktree. Hooks derive it from the working directory the host reports. A folder with no git checkout uses its own name.
+Every memory, episode, observation and fact has a project and a scope. The project key is the repository folder name. Hooks derive it from the working directory the host reports. A folder with no git checkout uses its own name. A git submodule uses `<repo>/<path>`, for example `shop/vendor/lib`.
 
 The scope is `project` by default. A project read returns that project's rows plus every row promoted to `global`. Promote a row to make it visible in every project:
 
@@ -69,6 +69,14 @@ aletheia promote memory 6
 ```
 
 The row keeps its project label and the change is written to the audit log. There is no command to turn a promoted row back into a project row. To stop seeing it, [dismiss it](#dismiss-and-restore). Pass `--scope all` to `aletheia search` or `aletheia context` to read every project at once.
+
+### Git worktrees
+
+A session in a git worktree uses the key of its main repository. A worktree of `shop` at `shop/.claude/worktrees/feature-abc123` files its memory under `shop`, and its session-start context lists the memory of `shop`. A new worktree therefore starts with the main project's memory, and what it learns stays with the main project.
+
+To keep each worktree apart under its own `<repo>/<worktree>` key, as earlier versions did, set the runtime setting `project.worktrees` to `separate`, or set `ALETHEIA_WORKTREE_PROJECTS=separate` in the environment of the hooks, the server and the CLI. The variable wins over the setting. See [Configuration](../reference/configuration.md#runtime-settings).
+
+Memory captured before this change is still under keys such as `shop/feature-abc123`. Fold those keys into their main project with [`aletheia projects fold-worktrees`](../reference/cli.md#projects). It is a dry run until you add `--write`. A fold moves every project-scoped table in one transaction. A row that already exists under the main key is dropped as a duplicate, after the rows that point at it are pointed at the main key's copy. The audit log gets one `project.merge` entry per folded key, with the moved and dropped counts per table.
 
 ## Pin
 

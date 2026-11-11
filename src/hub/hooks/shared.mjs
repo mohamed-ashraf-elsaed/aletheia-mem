@@ -1,11 +1,15 @@
 // Shared hook plumbing: normalise one payload into a redacted memory, spool it when the store is unavailable,
 // flush the spool later, and wrap recalled text as untrusted data.
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { checkoutKey } from "../../lib/project-key.mjs";
 import { ensureDirMode, ensureFileMode } from "../permissions.mjs";
 import { redact } from "../redact.mjs";
 import { wrapUntrusted } from "../untrusted.mjs";
+
+// Kept here, not imported from queue.mjs: a hook process must not load the extraction code to queue a job.
+export const COMPRESS_JOB_TYPE = "extract_session";
 
 export const SPOOL_FILE = "hook-spool.jsonl";
 export const MAX_TOOL_OUTPUT = 1500;
@@ -35,33 +39,13 @@ function repoRootOf(start) {
 
 /**
  * The same project key as projectKeyForPath, without spawning git (a hook has ~100 ms in total).
- * It walks up to the checkout, reads a worktree's `.git` file by hand, and falls back to the folder name.
+ * It walks up to the checkout and reads a worktree's `.git` file by hand (src/lib/project-key.mjs). A worktree gets
+ * its main repository's key unless the worktree mode is "separate"; a folder outside git uses its own name.
  */
-export function projectKeyForHook(cwd) {
+export function projectKeyForHook(cwd, options = {}) {
   if (!cwd || !cwd.trim()) return "unknown-project";
   const expanded = cwd.startsWith("~/") ? join(homedir(), cwd.slice(2)) : cwd;
-  const root = repoRootOf(expanded) ?? resolve(expanded);
-  const name = basename(root) || "unknown-project";
-  try {
-    if (!statSync(join(root, ".git")).isFile()) return name;
-    const match = readFileSync(join(root, ".git"), "utf8").trim().match(/^gitdir:\s*(.+)$/);
-    if (!match) return name;
-    const gitdir = resolve(dirname(join(root, ".git")), match[1]);
-    const worktree = gitdir.match(/^(.+)[/\\]\.git[/\\]worktrees[/\\]([^/\\]+)$/);
-    if (worktree) {
-      const parentName = basename(worktree[1]);
-      return parentName === name ? parentName : `${parentName}/${name}`;
-    }
-    const submodule = gitdir.match(/^(.+)[/\\]\.git[/\\]modules[/\\](.+)$/);
-    if (submodule) {
-      const parentName = basename(submodule[1]);
-      const rel = relative(submodule[1], root);
-      return rel && !rel.startsWith("..") && !isAbsolute(rel) ? `${parentName}/${rel.split(sep).join("/")}` : name;
-    }
-  } catch {
-    // no .git, or an unreadable one: the folder name is the safe answer
-  }
-  return name;
+  return checkoutKey(repoRootOf(expanded) ?? resolve(expanded), options);
 }
 
 export const projectOf = (payload) => (payload?.cwd ? projectKeyForHook(payload.cwd) : "default");
@@ -77,6 +61,23 @@ export function toolMemory({ name, display, input, response }, base) {
   const summary = redact(brief(input));
   const narrative = cut(`input: ${redact(asText(input))}\n\noutput: ${redact(asText(response))}`, MAX_TOOL_OUTPUT);
   return { ...base, kind: "event", type: "event", title: cut(oneLine(`${display ?? name}: ${summary}`), 160), narrative };
+}
+
+/** A tool call that started and failed. `error` is the text Claude Code reports; it is redacted like any output. */
+export function toolFailureMemory({ name, display, input, error, interrupted }, base) {
+  if (!name || SKIP_TOOLS.has(name)) return null;
+  const summary = redact(brief(input));
+  const message = redact(asText(error));
+  const narrative = cut(`input: ${redact(asText(input))}\n\nerror${interrupted === true ? " (interrupted)" : ""}: ${message}`, MAX_TOOL_OUTPUT);
+  return { ...base, kind: "event", type: "event", title: cut(oneLine(`${display ?? name} failed: ${summary}`), 160), narrative, concepts: ["failure"] };
+}
+
+/** The closing message of a subagent. Tagged by origin so session-start context can leave it out. */
+export function subagentMemory({ agentType, agentId, text }, base) {
+  const type = typeof agentType === "string" ? oneLine(redact(agentType)).slice(0, 60) : "";
+  if (!type || typeof text !== "string" || text.trim().length < 3) return null;
+  const clean = redact(text);
+  return { ...base, kind: "observation", type: "note", title: cut(`Subagent ${type}: ${oneLine(clean)}`, 140), narrative: cut(clean, MAX_SUMMARY), concepts: ["subagent", type], origin: `subagent:${type}`, subtitle: agentId ? `agent ${oneLine(redact(String(agentId))).slice(0, 80)}` : undefined };
 }
 
 export function summaryMemory(text, base) {
@@ -189,25 +190,37 @@ export function flushSpool(store, dataDir) {
   return { flushed, failed: failed.length };
 }
 
+/**
+ * Queue a finished session for compression as a row in `jobs`. There is no cap: a row stays until a worker
+ * completes it, so a machine with no worker running loses nothing. A second stop for a session whose job is still
+ * pending refreshes that job's `at` and keeps its place in line. Returns true when a new job was queued.
+ */
 export function enqueueCompression(store, { project, sessionId, at = Date.now() }) {
-  const key = "compress.queue";
-  const queue = store.setting(key, []);
-  if (!Array.isArray(queue)) return false;
-  const existing = sessionId ? queue.find((item) => item.project === project && item.sessionId === sessionId) : null;
-  if (existing) {
-    // A session-end after a stop must not create a second job, but the job should cover the newer summary.
-    existing.at = at;
-    store.setSetting(key, queue.slice(-200));
-    return false;
+  const sid = sessionId ?? null;
+  const payload = JSON.stringify({ project, sessionId: sid, at });
+  if (sid) {
+    const refreshed = store.db
+      .prepare(`UPDATE OR IGNORE jobs SET payload = ?, updated_at_epoch = ?
+                WHERE id = (SELECT id FROM jobs WHERE type = ? AND status = 'pending'
+                            AND json_extract(payload, '$.project') = ? AND json_extract(payload, '$.sessionId') = ? LIMIT 1)`)
+      .run(payload, Date.now(), COMPRESS_JOB_TYPE, project, sid);
+    if (refreshed.changes) return false;
   }
-  queue.push({ project, sessionId: sessionId ?? null, at });
-  store.setSetting(key, queue.slice(-200));
-  return true;
+  const now = Date.now();
+  const info = store.db
+    .prepare("INSERT OR IGNORE INTO jobs (type, payload, status, attempts, max_attempts, next_attempt_epoch, created_at_epoch, updated_at_epoch) VALUES (?, ?, 'pending', 0, 5, 0, ?, ?)")
+    .run(COMPRESS_JOB_TYPE, payload, now, now);
+  return info.changes > 0;
 }
 
+/** Sessions waiting for compression, oldest first: any not-yet-migrated settings entries, then pending jobs. */
 export function compressionQueue(store) {
-  const queue = store.setting("compress.queue", []);
-  return Array.isArray(queue) ? queue : [];
+  const legacy = store.setting("compress.queue", []);
+  const rows = store.db.prepare("SELECT payload FROM jobs WHERE type = ? AND status = 'pending' ORDER BY id").all(COMPRESS_JOB_TYPE);
+  const jobs = rows.map((row) => {
+    try { return JSON.parse(row.payload); } catch { return null; }
+  }).filter(Boolean);
+  return [...(Array.isArray(legacy) ? legacy : []), ...jobs];
 }
 
 /** Parse stdin. Empty or broken input is an empty payload, never an error (a hook must not break the tool). */

@@ -1,12 +1,13 @@
 // The refresh: goals -> grouping -> reviews -> alignment -> story. Each step asks a model for ONE JSON object,
 // validates it with the ledger's own validators (the same code the CLI uses), and writes ledger files.
-// Port of the original refresh-task.ts (rYe). Differences are listed in docs/08-findings.md.
+// Port of the original refresh-task.ts (rYe).
 import { Database } from "bun:sqlite";
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { configureLedger, runCli, readGoals } from "../ledger/commands.mjs";
+import { guardProvider } from "./providers.mjs";
 
 const REVIEW_BATCH = 8;
 const DAY_WINDOW = 31;
@@ -68,7 +69,8 @@ const countPrompts = (path) => (existsSync(path) ? (readFileSync(path, "utf8").m
  *   needs      {due, ungrouped, goalsStale, unaligned, needed}  (from refreshNeeds)
  *   ask        async (prompt, {stage}) => text
  */
-export function createRefreshJob({ config, needs, ask, now = Date.now }) {
+export function createRefreshJob({ config, needs, ask: rawAsk, now = Date.now }) {
+  const ask = guardProvider(rawAsk); // the evidence can come from a claude-mem database Aletheia never redacted
   configureLedger({ overlayDb: config.overlayDb });
   const ledgerDir = config.ledgerDir;
   const skillsDir = config.promptsDir;

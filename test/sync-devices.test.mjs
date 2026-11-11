@@ -121,6 +121,14 @@ describe("device pairing, tokens and revoke", () => {
       }
       const limited = await attempt("device-flood-6");
       expect(limited.status).toBe(429);
+      // While locked out, even the right code is refused: the lockout is checked before the code.
+      const realCode = fresh.store.createPairCode(fresh.store.ensureAccount().id);
+      const correct = await fetch(`${fresh.url}/v1/sync/join`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: realCode, device_id: "device-flood-real" }),
+      });
+      expect(correct.status).toBe(429);
     } finally {
       fresh.stop();
     }

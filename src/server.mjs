@@ -1,7 +1,6 @@
 // HTTP server: static SPA, the /api/work-view* routes, /api/work-state, and /api/setup/*.
 // Same contract as the original worker; see docs/03-http-api.md.
 import { existsSync, readFileSync, statSync } from "node:fs";
-import { createHash, timingSafeEqual } from "node:crypto";
 import { extname, join, normalize, sep } from "node:path";
 import { HttpError, WorkViewService } from "./app.mjs";
 import { isCrossOrigin, isLocalRequest, isSameOriginJson } from "./http/guards.mjs";
@@ -9,13 +8,17 @@ import { ValidationError, validateMarkFinished, validateReview, validateRuleActi
 import { EVIDENCE_KINDS } from "./readmodel/evidence.mjs";
 import { MIME_TYPES } from "./readmodel/work-product.mjs";
 import { BadRequest, createHubRoutes } from "./hub/routes.mjs";
+import { KEY_CHALLENGE, KEY_REQUIRED, REMOTE_AUTH_REQUIRED, assertKeyLength, bearerMatches, createAuthThrottle, createLiveTickets, keyGuards, liveUpgradeHeaders } from "./hub/api-key.mjs";
 import { AlertStore } from "./hub/alerts.mjs";
 import { createLiveHub } from "./hub/live.mjs";
 import { createMcpHttpHandler } from "./hub/mcp-http.mjs";
 import { createLoginGuard } from "./hub/login.mjs";
 import { SyncStore } from "./hub/sync/store.mjs";
+import { workerEmbedder } from "./hub/dense.mjs";
 import { startBackgroundWorker } from "./hub/queue.mjs";
+import { backupTick } from "./hub/backup.mjs";
 import { HubStore } from "./hub/store.mjs";
+import { WORKTREE_SETTING_KEY, useWorktreeSetting } from "./lib/project-key.mjs";
 import { makeProvider } from "./refresh/providers.mjs";
 
 const STATIC_TYPES = {
@@ -26,6 +29,17 @@ const BASE_HEADERS = { "Content-Security-Policy": "frame-ancestors 'self'", "X-F
 // The app page loads only its own scripts and styles. Same-origin requests and sockets, data: images for the tab icon,
 // no inline script, no inline style attribute, no plugin, no form posting elsewhere.
 const APP_CSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'";
+
+/** Remote mode: a browser socket must come from a page this server served (Origin host equals Host), or carry no Origin. */
+const sameHostOrigin = (request) => {
+  const origin = request.headers.get("origin");
+  if (!origin) return true;
+  try {
+    return new URL(origin).host === (request.headers.get("host") ?? "");
+  } catch {
+    return false;
+  }
+};
 
 const json = (body, status = 200, extra = {}) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...BASE_HEADERS, ...extra } });
@@ -44,12 +58,27 @@ export function startServer(config, {
   sessionTtlMs = 24 * 60 * 60 * 1000,
   loginLockMs = 60_000,
   loginMaxFailures = 5,
+  authMaxFailures = 10,
+  authWindowMs = 60_000,
+  embedder = undefined,
 } = {}) {
+  const remoteMode = requireLogin ?? !["127.0.0.1", "localhost", "::1"].includes(config.host);
+  if (remoteMode) assertKeyLength(config.apiKey);
   const service = new WorkViewService(config, { autoRefresh });
   const hub = new HubStore(config.hubDb);
+  // Project keys computed in this process follow the hub's `project.worktrees` setting; a saved change applies at once.
+  const previousWorktreeSetting = useWorktreeSetting(() => hub.setting(WORKTREE_SETTING_KEY, null));
   // Remote login: on by default exactly when the bind is not loopback-only. The sync account's
   // admin token is the password. Loopback-only keeps today's behaviour (no login, no sessions).
-  const remoteMode = requireLogin ?? !["127.0.0.1", "localhost", "::1"].includes(config.host);
+  // The client a lockout or throttle counts. Behind a TLS proxy every socket peer is the proxy, so the proxy's own
+  // X-Forwarded-For entry (the last one) is used; without --behind-tls the header is client-controlled and ignored.
+  const clientKey = (request, server) => {
+    const peer = server?.requestIP(request)?.address ?? "unknown";
+    if (!behindTls) return peer;
+    const forwarded = (request.headers.get("x-forwarded-for") ?? "").split(",").map((part) => part.trim()).filter(Boolean);
+    return forwarded.at(-1) ?? peer;
+  };
+  const sessionStreams = new Map(); // session token -> Set<AbortController> of open SSE streams
   let loginStore = null;
   const getLoginStore = () => loginStore ?? (loginStore = new SyncStore(config.syncDb));
   const login = createLoginGuard({
@@ -59,8 +88,14 @@ export function startServer(config, {
     sessionTtlMs,
     lockMs: loginLockMs,
     maxFailures: loginMaxFailures,
-    getPeer: (request, server) => server?.requestIP(request)?.address ?? "unknown",
+    getPeer: (request, server) => clientKey(request, server),
+    onSessionEnd: (token) => {
+      for (const controller of sessionStreams.get(token) ?? []) controller.abort();
+      sessionStreams.delete(token);
+      liveHub.closeSession(token);
+    },
   });
+  const authThrottle = createAuthThrottle({ max: authMaxFailures, windowMs: authWindowMs });
   // The extraction worker is a background task of the server, not part of any hook. A misconfigured provider
   // must not stop the server from booting: extraction falls back to the rule extractor and doctor reports it.
   let ask = null;
@@ -70,25 +105,31 @@ export function startServer(config, {
     ask = null;
   }
   const alerts = new AlertStore(config.alertsDb);
-  const worker = config.extractionWorker ? startBackgroundWorker({ store: hub, ask, config, alerts, onTick: (result) => {
+  const worker = config.extractionWorker ? startBackgroundWorker({ store: hub, ask, config, alerts, embedder: workerEmbedder(embedder), onTick: (result) => {
     const project = result.last?.project ?? null;
     for (const id of result.last?.factIds ?? []) liveHub.broadcast({ kind: "fact", id, project });
   } }) : null;
+  // Scheduled local backups: off by default (setting backup.enabled). Check each minute; a failure is logged, never fatal.
+  const runScheduledBackup = () => {
+    try {
+      backupTick(hub, { dataDir: config.dataDir });
+    } catch (error) {
+      console.error("[backup] scheduled backup failed:", error.message);
+    }
+  };
+  const backupTimer = setInterval(runScheduledBackup, 60_000);
+  backupTimer.unref?.();
+  const backupFirst = setTimeout(runScheduledBackup, 5_000);
+  backupFirst.unref?.();
   const liveHub = createLiveHub(hub);
-  const hubRoutes = createHubRoutes({ hub, config, liveHub, alerts });
+  const liveTickets = createLiveTickets();
+  const hubRoutes = createHubRoutes({ hub, config, liveHub, alerts, liveTickets, embedder });
   // MCP over Streamable HTTP on the main (loopback) server. Optional bearer key, same one as /v1.
   const mcpHttp = createMcpHttpHandler({
     store: hub,
+    embedder,
     authorize: config.apiKey
-      ? async (request) => {
-          const header = request.headers.get("authorization") ?? "";
-          const match = /^Bearer\s+(.+)$/i.exec(header);
-          if (!match) return { status: 401, error: "A valid bearer key is required." };
-          const wanted = createHash("sha256").update(String(match[1])).digest();
-          const expected = createHash("sha256").update(String(config.apiKey)).digest();
-          if (!timingSafeEqual(wanted, expected)) return { status: 401, error: "A valid bearer key is required." };
-          return { token: { scope: "local" }, projects: null };
-        }
+      ? async (request) => (bearerMatches(request, config.apiKey) ? { token: { scope: "local" }, projects: null } : { status: 401, error: KEY_REQUIRED })
       : null,
   });
   const html = new Map();
@@ -115,7 +156,13 @@ export function startServer(config, {
   }
 
   function staticFile(pathname) {
-    const rel = normalize(decodeURIComponent(pathname.replace(/^\/work-view\//, "").replace(/^\//, "")));
+    let decoded;
+    try {
+      decoded = decodeURIComponent(pathname.replace(/^\/work-view\//, "").replace(/^\//, ""));
+    } catch {
+      return null;
+    }
+    const rel = normalize(decoded);
     if (rel.startsWith("..") || rel.includes(`${sep}..${sep}`)) return null;
     const full = join(config.publicDir, rel);
     if (!existsSync(full) || !statSync(full).isFile()) return null;
@@ -127,26 +174,45 @@ export function startServer(config, {
     const { pathname } = url;
     const method = request.method;
 
-    // ---- MCP over Streamable HTTP (its own bearer auth and Origin rules)
-    if (pathname === "/mcp") return await mcpHttp(request);
+    // ---- remote mode: the API tools use (/v1/*, /v1/live, /mcp) answers only a login session or the API key. The login
+    // gate below covers / and /api/*; without this, a non-loopback bind with no key served all memory to the network.
+    // /mcp clients cannot hold a session cookie, so in remote mode they need ALETHEIA_API_KEY.
+    if (remoteMode && (pathname === "/mcp" || pathname.startsWith("/v1/"))) {
+      if (!(config.apiKey && bearerMatches(request, config.apiKey))) {
+        if (pathname === "/mcp" || !login.hasSession(request)) return json({ error: REMOTE_AUTH_REQUIRED }, 401, config.apiKey ? KEY_CHALLENGE : {});
+        if (method !== "GET" && method !== "HEAD" && !login.csrfOk(request)) return json({ error: "CSRF token missing or wrong." }, 403);
+      }
+    }
+
+    // ---- MCP over Streamable HTTP (its own bearer auth and Origin rules). On loopback with no key, /mcp answers only
+    // this computer, like /v1: behind a reverse proxy or tunnel it would otherwise answer anyone.
+    if (pathname === "/mcp") {
+      if (!remoteMode && !config.apiKey) {
+        const denied = guarded(request, server);
+        if (denied) return denied;
+      }
+      return await mcpHttp(request);
+    }
 
     // ---- login sessions (remote mode): /api/login, /api/logout, and the 401/403 gates
     const loginResponse = await login.handle(request, { server });
     if (loginResponse) return loginResponse;
 
-    // ---- /v1/live WebSocket: same guards as /v1 (local only + optional bearer key), Origin check, upgrade
+    // ---- /v1/live WebSocket: same guards as /v1 (local only), Origin check, then the optional key: the bearer header
+    // (tools) or a one-time ticket offered as a subprotocol (browsers cannot set headers on a WebSocket).
     if (pathname === "/v1/live" && method === "GET") {
       const denied = guarded(request, server);
       if (denied) return denied;
-      if (config.apiKey) {
-        const auth = request.headers.get("authorization") ?? "";
-        if (auth !== `Bearer ${config.apiKey}`) return json({ error: "A valid bearer key is required." }, 401);
-      }
-      if (isCrossOrigin(request)) return json({ error: "This origin is not allowed." }, 403);
+      if (remoteMode ? !sameHostOrigin(request) : isCrossOrigin(request)) return json({ error: "This origin is not allowed." }, 403);
+      if (config.apiKey && !bearerMatches(request, config.apiKey) && !liveTickets.redeem(request)) return json({ error: KEY_REQUIRED }, 401, KEY_CHALLENGE);
       const project = new URL(request.url).searchParams.get("project") || null;
-      if (server.upgrade(request, { data: { project } })) return undefined;
+      if (server.upgrade(request, { data: { project, session: remoteMode ? login.sessionIdOf(request) : null }, headers: liveUpgradeHeaders(request) })) return undefined;
       return json({ error: "WebSocket upgrade failed." }, 400);
     }
+
+    // ---- the optional API key: every /api and /v1 route returns memory or changes data. In remote mode the login
+    // session above is checked first, so a keyed remote server needs both the session and the key.
+    if (config.apiKey && keyGuards(pathname) && !bearerMatches(request, config.apiKey)) return json({ error: KEY_REQUIRED }, 401, KEY_CHALLENGE);
 
     // ---- static
     if (method === "GET" && (pathname === "/" || pathname === "/index.html")) {
@@ -165,7 +231,17 @@ export function startServer(config, {
     }
     if (method === "GET" && pathname === "/api/work-view/events") {
       const denied = guarded(request, server);
-      return denied ?? service.eventStream(request.signal);
+      if (denied) return denied;
+      const sessionToken = remoteMode ? login.sessionIdOf(request) : null;
+      if (!sessionToken) return service.eventStream(request.signal);
+      // Tie the stream to the login session: logout or expiry aborts it.
+      const controller = new AbortController();
+      const streams = sessionStreams.get(sessionToken) ?? new Set();
+      streams.add(controller);
+      sessionStreams.set(sessionToken, streams);
+      controller.signal.addEventListener("abort", () => streams.delete(controller));
+      request.signal?.addEventListener("abort", () => controller.abort());
+      return service.eventStream(controller.signal);
     }
     let m = /^\/api\/work-view\/evidence\/([^/]+)\/([^/]+)$/.exec(pathname);
     if (method === "GET" && m) {
@@ -187,10 +263,6 @@ export function startServer(config, {
       return new Response(Bun.file(path), {
         headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "sandbox allow-scripts", "Content-Type": MIME_TYPES[extname(path).toLowerCase()] ?? "application/octet-stream" },
       });
-    }
-    if (method === "GET" && pathname === "/api/work-state") {
-      const denied = guarded(request, server);
-      return denied ?? text("The clone does not read work state through this route. Use /api/work-view.", 501);
     }
 
     // ---- setup (cloud onboarding is not part of the clone: setup is permanently complete)
@@ -236,8 +308,18 @@ export function startServer(config, {
     idleTimeout: 0,
     maxRequestBodySize: 9 * 1024 * 1024, // refuse larger uploads at the socket (the hub caps bodies at 8 MB)
     async fetch(request, srv) {
+      // Bun builds request.url from Host, so a Host with a path, query, fragment or userinfo changes the routed path.
+      if (/[\/?#@\\\s]/.test(request.headers.get("host") ?? "")) return json({ error: "Invalid Host header." }, 400);
+      const guardedPath = /^\/(?:v1\/|mcp$)/.test(new URL(request.url).pathname);
+      const peer = guardedPath ? clientKey(request, srv) : null;
+      if (guardedPath) {
+        const wait = authThrottle.retryAfter(peer);
+        if (wait) return json({ error: "Too many failed attempts; wait." }, 429, { "Retry-After": String(wait) });
+      }
       try {
-        return await route(request, srv);
+        const response = await route(request, srv);
+        if (guardedPath && response?.status === 401) authThrottle.fail(peer);
+        return response;
       } catch (error) {
         if (error instanceof ValidationError) return json({ error: "Invalid request body.", details: error.issues }, 400);
         if (error instanceof BadRequest) return json({ error: error.message }, error.status);
@@ -259,11 +341,15 @@ export function startServer(config, {
     hub,
     liveHub,
     stop() {
+      clearInterval(backupTimer);
+      clearTimeout(backupFirst);
       worker?.stop();
       server.stop(true);
       service.close();
+      useWorktreeSetting(previousWorktreeSetting);
       hub.close();
       alerts.close();
+      login.close();
       loginStore?.close();
     },
   };

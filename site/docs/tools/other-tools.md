@@ -1,4 +1,4 @@
-# GitHub Copilot, Aider and any MCP client with Aletheia
+# GitHub Copilot, Aider, Goose, Roo Code and any MCP client with Aletheia
 
 <!-- description: Use Aletheia with GitHub Copilot and Aider rules files, any MCP client over stdio, the REST API with curl, and the CLI in scripts and cron. -->
 <!-- keywords: github copilot instructions memory, aider conventions.md rules, mcp client stdio config, aletheia rest api curl, aletheia cli cron, generic mcp server memory -->
@@ -12,6 +12,7 @@ Aletheia (aletheia-mem) reaches tools that have no installer in three ways: a ru
 | GitHub Copilot rules file | Your rules in `.github/copilot-instructions.md` | No |
 | Aider rules file | Your rules in `CONVENTIONS.md` | No |
 | MCP stdio entry | Aletheia tools in any MCP client | No. The model must call a tool. |
+| `aletheia connect` for Copilot CLI, Goose, Roo Code | The same MCP entry, written to the host's file from its docs | No |
 | REST API | `curl` or any HTTP client reads and writes memory | No |
 | CLI | `aletheia save`, `search`, `capture`, `export` from scripts | No |
 
@@ -71,6 +72,53 @@ read: CONVENTIONS.md                 # a line in .aider.conf.yml, to load it alw
 ```
 
 Aletheia does not edit `.aider.conf.yml`. Add the `read:` line yourself. No Aider session was run with this file.
+
+## MCP-only hosts: Copilot CLI, Goose and Roo Code
+
+`aletheia connect <host>` writes an MCP entry for these three hosts. There are no hooks and no rules file, so nothing is captured automatically: the model must call an Aletheia tool. The status of all three is `config written from docs, not tested on a real install`. None of the three was run, and none is claimed to work.
+
+| Host id | File | Shape | Docs fetched 2026-11-11 |
+|---|---|---|---|
+| `copilot-cli` | `~/.copilot/mcp-config.json` (`COPILOT_HOME` moves the folder) | JSON, `mcpServers.aletheia` with `type: "local"`, `command`, `args`, `env`, `tools` | https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-mcp-servers |
+| `goose` | `~/.config/goose/config.yaml` | YAML, `extensions.aletheia` with `cmd`, `args`, `enabled`, `type: stdio`, `timeout` | https://goose-docs.ai/docs/getting-started/using-extensions/ |
+| `roo-code` | `<project>/.roo/mcp.json`, in the folder you run the command from (or `--dir`) | JSON, `mcpServers.aletheia` with `command`, `args` | https://docs.roocode.com/features/mcp/using-mcp-in-roo |
+
+```bash
+aletheia connect copilot-cli                      # dry run: prints the file and the text, writes nothing
+aletheia connect copilot-cli --write              # merges into the file and keeps a .bak copy
+aletheia connect copilot-cli --remove             # dry run of the removal
+aletheia connect copilot-cli --remove --write     # removes only the entry Aletheia wrote
+```
+
+The write step keeps every other key and server in the file. If the file already holds an `aletheia` entry that Aletheia did not write, it is left alone and the command says so. A JSON file that does not parse is refused. The same flags work for `goose` and `roo-code`.
+
+Real dry-run output in a temporary home folder:
+
+```
+$ aletheia connect goose
+Goose: config written from docs, not tested on a real install
+Source: https://goose-docs.ai/docs/getting-started/using-extensions/ (fetched 2026-11-11)
+File: ~/.config/goose/config.yaml. The docs name that path as the macOS example; the Linux and Windows paths are UNVERIFIED.
+Would write to /tmp/home/.config/goose/config.yaml:
+extensions:
+  aletheia:
+    name: aletheia
+    cmd: "/home/mashraf/.bun/bin/bun"
+    args: ["/path/to/aletheia-mem/bin/mcp.mjs"]
+    enabled: true
+    type: stdio
+    timeout: 300
+
+Add --write to apply (a backup is kept). Add --remove to undo.
+```
+
+Goose merge edits the text of `config.yaml` (Aletheia has no YAML library). It supports a block-style `extensions:` map and refuses `extensions: {}` or any inline form.
+
+UNVERIFIED, not written:
+
+- **Warp.** The Warp docs (https://docs.warp.dev/knowledge-and-collaboration/mcp, fetched 2026-11-11) name `~/.warp/.mcp.json` and `.warp/.mcp.json` as file-based config but show the JSON shape only for the in-app Add dialog. The file's own shape is not stated, so Aletheia writes nothing for Warp. Add the server in Warp's MCP settings with the `command` and `args` from the generic section below.
+- **Roo Code global file.** The page does not give the path of the global `mcp_settings.json`, so only the project file is written.
+- **Goose on Linux and Windows.** The page gives one path, as a macOS example.
 
 ## Any MCP client: the stdio config
 
@@ -147,7 +195,7 @@ $ curl -s -X POST http://127.0.0.1:37998/v1/search \
 {"results":[{"id":1,"kind":"observation","type":"note","title":"Use bun test","project":"myproject","tool":"my-script","pinned":false,"at":"2026-10-29T19:46:46.100Z"}],"facts":[],"reason":null,"channels":{...}}
 ```
 
-The `channels` field says this route answers from keyword channels only. For vector results, use the CLI with `--semantic`.
+The `channels` field says which channels ran. With the optional embedding package and stored vectors, `channels.dense.status` is `on` and the ranking is hybrid; otherwise the reply is keyword results and `channels.notice` says why.
 
 `GET /v1/info` returns the version and counts:
 

@@ -3,8 +3,8 @@
 // ./tabs/ loaded on first visit, so the shell stays small. Nothing here builds markup from strings.
 import { SUBVIEWS, TABS, isDemo, parseRoute, routeOf } from "./ui-core.js";
 import { brainMark } from "./ui-brand.js";
-import { banner, errorState, segmented, startClock, tabs, toast } from "./ui-components.js";
-import { byId, h, state, swap } from "./ui-dom.js";
+import { apiKeyDialog, banner, errorState, segmented, startClock, tabs, toast } from "./ui-components.js";
+import { api, byId, h, setKeyPrompt, state, swap } from "./ui-dom.js";
 import { installKeys, openPalette, openShortcuts } from "./ui-keys.js";
 import { enter, watchVisibility } from "./ui-motion.js";
 import { parseHash } from "./ui-pure.js";
@@ -12,9 +12,10 @@ import { realProjects } from "./ui-home-model.js";
 import { mountSearch } from "./ui-search.js";
 import { mountStatus } from "./ui-status.js";
 import { applyTheme, readTheme } from "./ui-theme.js";
+import { LANGS, getLang, initLang, setLang, t } from "./ui-i18n.js";
 
 const RENDERERS = { home: "renderHome", work: "renderWork", memory: "renderMemory", rules: "renderRules", tools: "renderTools" };
-const LABEL = Object.fromEntries(TABS.map((tab) => [tab.id, tab.label]));
+const label = (id) => TABS.find((tab) => tab.id === id)?.label ?? id;
 const PROJECT_KEY = "aletheia.project";
 
 let nav = null;
@@ -34,14 +35,14 @@ function storeProject(value) {
 
 async function loadProjects() {
   try {
-    const data = await fetch("/api/hub/projects").then((response) => response.json());
+    const data = await api("/api/hub/projects");
     const select = byId("ui-project");
     const names = data.projects.map((project) => project.name);
     if (state.project && !names.includes(state.project)) state.project = "";
     // Worktree, temp and tiny folders are not projects a person works in; the Home page lists them under "other folders".
     const { main } = realProjects(data.projects, { selected: state.project });
     swap(select,
-      h("option", { value: "" }, "All projects"),
+      h("option", { value: "" }, t("shell.allProjects")),
       ...main.map((project) => h("option", { value: project.name, selected: state.project === project.name }, `${project.name} (${project.memories})`)));
     select.value = state.project;
   } catch {
@@ -57,7 +58,7 @@ async function tabRenderer(id) {
   } catch (error) {
     return () => {
       const root = byId(`ui-${id}`);
-      if (root) swap(root, errorState({ title: "Could not load this tab", error, onRetry: () => { current = null; return showRoute(); } }));
+      if (root) swap(root, errorState({ title: t("shell.loadTabFailed"), error, onRetry: () => { current = null; return showRoute(); } }));
     };
   }
 }
@@ -80,8 +81,8 @@ async function showRoute() {
   const section = byId(`tab-${route.tab}`);
   if (changedTab) enter(section, "rise");
   const page = SUBVIEWS[route.tab]?.find((item) => item.id === route.sub);
-  document.title = `${page && route.tab !== "work" && page.label !== LABEL[route.tab] ? `${page.label} · ` : ""}${LABEL[route.tab]} · Aletheia`;
-  announce(`${LABEL[route.tab]}${page ? `, ${page.label}` : ""}`);
+  document.title = `${page && route.tab !== "work" && page.label !== label(route.tab) ? `${page.label} · ` : ""}${label(route.tab)} · Aletheia`;
+  announce(`${label(route.tab)}${page ? `, ${page.label}` : ""}`);
   syncSearchField(route);
   const render = await tabRenderer(route.tab);
   if (!render) return;
@@ -90,7 +91,7 @@ async function showRoute() {
     state.loaded[route.tab] = true;
   } catch (error) {
     const root = byId(`ui-${route.tab}`);
-    if (root) swap(root, errorState({ title: "Could not load this tab", error, onRetry: () => { current = null; return showRoute(); } }));
+    if (root) swap(root, errorState({ title: t("shell.loadTabFailed"), error, onRetry: () => { current = null; return showRoute(); } }));
   }
 }
 
@@ -111,12 +112,12 @@ function reloadView() {
 function mountTheme() {
   const pref = readTheme();
   const control = segmented({
-    label: "Theme",
+    label: t("shell.theme"),
     value: pref,
     options: [
-      { value: "auto", label: "Auto", icon: "auto", iconOnly: true, title: "Follow the system theme" },
-      { value: "dark", label: "Dark", icon: "moon", iconOnly: true, title: "Dark theme" },
-      { value: "light", label: "Light", icon: "sun", iconOnly: true, title: "Light theme" },
+      { value: "auto", label: t("shell.themeAuto"), icon: "auto", iconOnly: true, title: t("shell.themeAutoTitle") },
+      { value: "dark", label: t("shell.themeDark"), icon: "moon", iconOnly: true, title: t("shell.themeDarkTitle") },
+      { value: "light", label: t("shell.themeLight"), icon: "sun", iconOnly: true, title: t("shell.themeLightTitle") },
     ],
     onChange: (value) => { applyTheme(value); },
   });
@@ -125,19 +126,54 @@ function mountTheme() {
   return control;
 }
 
-function boot() {
+/** Text in index.html that cannot be built by a view: data-i18n holds a key for the text, data-i18n-attr "attr:key,attr:key". */
+export function translateStatic(root = document) {
+  // Three elements keep their markup exactly as the accessibility tests expect, so they are found by selector.
+  for (const [selector, key] of [[".ui-skip", "shell.skip"], ["label[for=ui-project]", "shell.project"], ["label[for=ui-search]", "shell.searchMemory"]]) {
+    const el = root.querySelector(selector);
+    if (el) el.textContent = t(key);
+  }
+  for (const el of root.querySelectorAll("[data-i18n]")) el.textContent = t(el.getAttribute("data-i18n"));
+  for (const el of root.querySelectorAll("[data-i18n-attr]")) {
+    for (const pair of el.getAttribute("data-i18n-attr").split(",")) {
+      const [attr, key] = pair.split(":");
+      if (attr && key) el.setAttribute(attr, t(key));
+    }
+  }
+}
+
+/** The language switch. A change is saved, then the page reloads so every view is built again in the new language. */
+function mountLanguage() {
+  const select = byId("ui-lang");
+  if (!select) return;
+  swap(select, ...LANGS.map((lang) => h("option", { value: lang.code, lang: lang.tag, selected: lang.code === getLang() }, lang.name)));
+  select.value = getLang();
+  select.addEventListener("change", async () => {
+    await setLang(select.value);
+    globalThis.location.reload();
+  });
+  const note = byId("ui-i18n-note");
+  if (note) note.hidden = getLang() === "en";
+}
+
+async function boot() {
+  await initLang();
+  translateStatic();
+  mountLanguage();
   watchVisibility();
   startClock();
   // ?demo=1 labels the page: every row on it was made up by scripts/seed-demo.mjs.
   if (isDemo(globalThis.location.search)) {
     const slot = byId("ui-banner-slot");
-    if (slot) slot.append(banner({ tone: "info", text: "Demo mode. The data on this page is made up by scripts/seed-demo.mjs. None of it came from a real tool." }));
+    if (slot) slot.append(banner({ tone: "info", text: t("shell.demoBanner") }));
     document.documentElement.setAttribute("data-demo", "1");
   }
   state.project = storedProject();
+  // A server with ALETHEIA_API_KEY answers 401 with a Bearer challenge; the first one opens this dialog.
+  setKeyPrompt(apiKeyDialog);
   swap(byId("ui-brand-mark"), brainMark({ size: 30 }));
 
-  nav = tabs({ label: "Sections", active: routeOf(globalThis.location.hash).tab, className: "ui-nav-tabs", items: TABS.map((tab) => ({ id: tab.id, label: tab.label, href: tab.hash, icon: tab.icon })) });
+  nav = tabs({ label: t("shell.sections"), active: routeOf(globalThis.location.hash).tab, className: "ui-nav-tabs", items: TABS.map((tab) => ({ id: tab.id, label: tab.label, href: tab.hash, icon: tab.icon })) });
   swap(byId("ui-tabs"), nav);
   const themeControl = mountTheme();
 
@@ -156,7 +192,7 @@ function boot() {
     navigate,
     focusSearch: () => search.focus(),
     openPalette: () => openPalette(ctx),
-    setTheme: (value) => { applyTheme(value); themeControl.set(value); toast(`Theme: ${value === "auto" ? "follow the system" : value}`, { duration: 1800 }); },
+    setTheme: (value) => { applyTheme(value); themeControl.set(value); toast(t("shell.themeToast", { value: value === "auto" ? t("shell.themeValueAuto") : value === "dark" ? t("shell.themeValueDark") : t("shell.themeValueLight") }), { duration: 1800 }); },
     refresh: () => statusApi?.refresh?.(),
   };
   installKeys(ctx);

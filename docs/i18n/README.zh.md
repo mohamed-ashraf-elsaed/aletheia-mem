@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 7848b4a8e95c9ac13e13d97cb5ceaee3940f74ed28d3caff0f564b37b7cd62f5
+> Source: [README.md](../../README.md) · source-sha256: 63f99017dfa559d58e34e7cb9947daaeb9f84dd946a3cb55a70fa0a4a3376bbe
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -66,35 +66,36 @@ Aletheia 不依赖任何单一工具。它支持 MCP（stdio 和 HTTP）、普�
 | Automatic capture through a tool's hooks | Built for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf. Each installed hook command is exercised end to end in a temp HOME with a recorded payload; none has been run inside the tool. OpenCode is MCP+rules. |
 
 <!-- gen:tools -->
-| Tool | Level | Verification | Hook events installed |
-|---|---|---|---|
-| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| command-code | full | MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine | SessionStart, PostToolUse, Stop |
-| cursor | full | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
-| codex | full | MCP connection 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| gemini-cli | full | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
-| windsurf | full | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
-| opencode | mcp+rules | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |
+| Tool | Capture | Context | Verification | Hook events installed |
+|---|---|---|---|---|
+| claude-code | yes | yes | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; PreToolUse (read gate, off by default), PostToolUseFailure and SubagentStop have run in tests only; one user on one machine | SessionStart, UserPromptSubmit, PreToolUse (tests only), PostToolUse, PostToolUseFailure (tests only), Stop, SubagentStop (tests only), SessionEnd |
+| command-code | yes | yes | MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine | SessionStart, PostToolUse, Stop |
+| cursor | yes | yes | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
+| codex | yes | yes | MCP connection 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| gemini-cli | yes | yes | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
+| windsurf | yes | no | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
+| opencode | no | no | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |
 
-_Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run._
+_Generated from src/hub/install.mjs via `aletheia install --list`. Capture means a hook event records activity; context means a hook injects memory at session start. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run._
 <!-- /gen:tools -->
 
 ## 测量数字
 
-在 LoCoMo 上，claude-mem 15.2.0 原版对比本项目。**这些是检索数字，不是答案准确率。**
+在 LoCoMo 上，claude-mem (15.2.0, 15.17.0) 原版对比本项目。**这些是检索数字，不是答案准确率。**
 
 <!-- gen:bench -->
 | Run | Questions | Recall@5 | MRR | ms/query |
 |---|---|---|---|---|
 | claude-mem 15.2.0 (as shipped), raw turns — measured-by-us | 1,536 | 36.0% | 0.285 | p50 1,699 ms, p95 2,824 ms (idle, 40 queries) |
+| claude-mem 15.17.0 (as shipped), raw turns — measured-by-us | 1,536 | 43.5% | 0.377 | mean 1,079 ms (HTTP) |
 | Raw turns, all 10 conversations | 1,536 | 57.4% | 0.497 | 3.72 |
 | Dataset facts, all 10 | 1,536 | 64.8% | 0.591 | 5.53 |
 | Dataset facts, 3 conversations | 383 | 67.4% | 0.620 | 5.80 |
-| Dataset facts, 3 conversations, + rerank | 383 | 73.9% | 0.686 | 251.16 |
-| Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
+| Dataset facts, 3 conversations, + rerank (bench only) | 383 | 73.9% | 0.686 | 251.16 |
+| Dataset facts, all 10, + rerank (bench only) | 1,536 | 72.3% | 0.680 | 646.19 |
 | Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
-_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
+_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, bench/results/2026-11-11/claude-mem-15.17.0.json, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
 <!-- /gen:bench -->
 
 这样读这张表：
@@ -116,9 +117,9 @@ _Retrieval only: Recall@5 asks whether the gold evidence is in the top five resu
 | MCP | yes stdio + HTTP | yes | yes | partial (reference servers) | yes | yes |
 | REST | yes `/v1` | yes worker API | yes | yes | yes | partial |
 | CLI | yes | yes `npx` | partial | no | partial | yes |
-| Rules sync to tool files | yes 9 targets | no | no | no | no | partial (AGENTS.md) |
-| Import/export between tools | partial (own bundle + claude-mem) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
-| Hook capture | yes six hosts, fixture-tested; no host opened | yes | no | no | no | partial |
+| Rules sync to tool files | yes 10 targets | no | no | no | no | partial (AGENTS.md) |
+| Import/export between tools | partial (own bundle, claude-mem, Claude Code / Command Code / Codex transcripts, Claude Code auto-memory) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
+| Hook capture | yes six hosts; ran in real Claude Code, Command Code and Codex CLI sessions, the other three from docs only | yes | no | no | no | partial |
 | Vector search | partial (optional ONNX) | yes Chroma | yes | yes | yes | yes |
 | Graph / entity memory | partial (entity rows exist; graph retrieval) | no | yes | yes | UNVERIFIED | yes wikilinks |
 | Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query) | partial (dates) | yes | yes | yes | partial |
@@ -140,9 +141,9 @@ _Competitor cells are copied from each project's own public documentation, fetch
 
 | Interface | Where | Use |
 |---|---|---|
-| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | the 13 MCP tools below (read and write) |
-| MCP (HTTP) | sync hub `/mcp` | the same tools with a bearer token and per-token scope |
-| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, any language; optional `ALETHEIA_API_KEY` bearer key |
+| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | 14 个 MCP 工具（见下，可读可写），调用方属于团队时另有 2 个只读团队工具 |
+| MCP (HTTP) | sync hub `/mcp`; main server `/mcp` | 同样的工具。同步中心需要带每令牌范围的 bearer 令牌；主服务器只在本机回环上应答，设置了 `ALETHEIA_API_KEY` 或处于远程模式时，需要把它作为 bearer 密钥 |
+| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | 脚本、CI、任何语言。设置 `ALETHEIA_API_KEY` 后，每个 `/api` 和 `/v1` 路由都需要它作为 bearer 密钥；远程模式下 `/v1` 需要登录或该密钥 |
 | CLI | `bin/aletheia.mjs` | hooks, shell, cron, sync |
 | Files | rules sync | each tool's own instruction file |
 
@@ -153,6 +154,7 @@ _Competitor cells are copied from each project's own public documentation, fetch
 | `search` | Search shared memory | read |
 | `timeline` | Show context around a memory | read |
 | `get_observations` | Get full memory text by id | read |
+| `file_outline` | 代码文件的大纲，用于只读一段行范围而不是整个文件 | read |
 | `save_memory` | Save a memory | write |
 | `session_start_context` | Load session start context | read |
 | `fact_history` | Show how a fact changed | read |
@@ -163,6 +165,8 @@ _Competitor cells are copied from each project's own public documentation, fetch
 | `restore_memory` | Restore a dismissed memory | write |
 | `work_state_write` | Write a work-state list | write |
 | `work_state_read` | Read a work-state list | read |
+| `team_brief` | 团队项目简报（仅当调用方属于团队时列出） | read |
+| `team_search` | 搜索队友分享的内容（仅当调用方属于团队时列出） | read |
 
 ## 配置
 
@@ -174,7 +178,7 @@ _Competitor cells are copied from each project's own public documentation, fetch
 | `ALETHEIA_HOST` | `127.0.0.1` | Bind address. A non-loopback bind turns on Hub login. |
 | `ALETHEIA_DATA_DIR` | `~/.aletheia` | Everything this project writes, including `hub.db`. |
 | `ALETHEIA_HUB_DB` | `<data dir>/hub.db` | The shared memory store. |
-| `ALETHEIA_API_KEY` | empty | Bearer key required on `/v1/*` when set. |
+| `ALETHEIA_API_KEY` | empty | Bearer 密钥。设置后，除登录和登出外，每个 `/api` 和 `/v1` 路由都需要它（`src/hub/api-key.mjs`）。远程模式下 `/v1` 需要登录或该密钥，`/mcp` 需要该密钥；密钥至少 32 个字符。 |
 | `CLAUDE_MEM_DB` | `~/.claude-mem/claude-mem.db` | claude-mem's database (read-only; importer and optional legacy viewer). |
 | `ALETHEIA_RULES_FILE` | `<data dir>/MY-RULES.md` | The legacy Work view's rules file. |
 | `ALETHEIA_PROVIDER` | `none` | `none`, `claude-cli` or an OpenAI-compatible provider. |

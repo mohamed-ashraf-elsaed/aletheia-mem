@@ -1,32 +1,47 @@
 #!/usr/bin/env bun
 // aletheia: the command line for the shared memory hub. Works without the server running.
+//   aletheia help | --help | -h                           print this text (touches no data)
+//   aletheia version | --version | -v                     print the version
+//   aletheia migrate [--db path] [--dry-run] [--backup path]   upgrade the database schema after copying it
 //   aletheia capture --tool <name> [--project p]          read one hook payload (JSON) on stdin, store it (secrets redacted)
-//   aletheia context [--project p] [--tool t]             print session-start context for any tool
+//   aletheia context [--project p] [--tool t] [--limit n] [--scope all]   print session-start context for any tool
 //   aletheia context economics [--project p] [--limit n]   per-observation read and work tokens
-//   aletheia search <query> [--project p] [--scope all] [--explain] [--semantic]
+//   aletheia search <query> [--project p] [--scope all] [--explain] [--semantic] [--rerank | --no-rerank]
 //   aletheia embed [--limit n]                          write fact and memory vectors when the runtime is installed
 //   aletheia save <text> [--project p] [--type t] [--pin] save a memory
 //   aletheia import claude-mem [--path db] [--no-prompts] bring memory in from claude-mem
+//   aletheia import claude-memory [--path p] [--project key] [--dry-run]   Claude Code auto-memory files
 //   aletheia import bundle <file.jsonl>                   restore an export
 //   aletheia import transcripts <tool> [--since DATE] [--dry-run] [--limit n]
 //                                                          back-fill from local session files (read-only)
 //   aletheia watch [--once] [--interval ms] [--batch n] [--tool a,b]
 //                                                          poll the verified transcript folders incrementally (read-only, nice 10)
 //   aletheia export [--format jsonl|markdown] [--project p] [--events] [--out file]
+//   aletheia folder-context <dir> [--project p] [--write]  preview (default) or write a managed CLAUDE.md block per folder with memories; never run from a hook
 //   aletheia rules list [--stale] [--older-than N] | add <text> [--when w] | confirm <id> | retire <id> | diff [--dir path] [--tools a,b] [--json] | lint [--dir path] [--tools a,b] [--json] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
+//   aletheia rules suggest [--project p]                  propose rules from stored memory
+//   aletheia rules suggestions [--project p] [--status s] list the proposals
 //   aletheia mcp                                          run the MCP server over stdio (same as aletheia-mcp)
 //   aletheia tools                                        detected tools and how to connect each
-//   aletheia connect <tool> [--write]                     preview (default) or write the MCP config for a tool
+//   aletheia connect <tool> [--write] [--remove] [--dir d]  preview (default) or write the MCP config for a tool; --remove undoes it
 //   aletheia install <tool> [--write] [--dry-run]         preview (default) or write MCP, hooks and rules in one go
+//   aletheia install claude-desktop [--write]             merge the MCP entry into Claude Desktop's config (dry run by default)
 //   aletheia install --list                               capability level, verification and detection per tool
 //   aletheia install [<tool>] --verify                    report whether the recorded install still matches (no writes)
 //   aletheia uninstall <tool> [--write] [--force]         remove only the entries the install manifest lists
 //   aletheia hook <tool> <event>                          hook entry point: read one JSON payload on stdin
-//   aletheia doctor                                       check the server, hooks, spool and last capture
-//   aletheia compress [--project p] [--daemon]         drain the extraction queue (provider or rule-based)
-//   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
+//   aletheia backup run | list | status [--json]        local snapshots of hub.db in <data dir>/backups (settings: backup.enabled, backup.intervalHours, backup.keep)
+//   aletheia restore <snapshot file>                      replace hub.db with a snapshot (close AI tools and stop aletheia-server first; the current file is kept)
+//   aletheia doctor [--json]                              check the server, hooks, spool and last capture
+//   aletheia compress [--daemon] [--interval ms]       drain the extraction queue (provider or rule-based)
+//   aletheia entities [--project p] [--limit n] [--json]
+//   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id] [--days n]
+//   aletheia summarize --scope list [--project p] [--limit n]   list stored summaries
 //   aletheia prune [--apply]                            report cold facts and old episodes; --apply changes them
 //   aletheia promote <type> <id>                        make a memory, episode, observation or fact global
+//   aletheia projects [--json]                          project keys with their row count in each table
+//   aletheia projects fold-worktrees [--write] [--include key] [--repo path]
+//                                                          fold git worktree keys into their main project (dry run by default)
 //   aletheia dismiss <id | type:id> [--reason r]        hide a memory, episode, observation or fact (reversible)
 //   aletheia restore <id | type:id>                     undo a dismissal
 //   aletheia dismissed [--limit n]                      list dismissed items
@@ -38,7 +53,7 @@
 //   aletheia sync pair | join <url> <code> | status | devices | revoke <device> | push | pull | run | compact | purge <entity_id> | export <dir> | import <dir>
 //   aletheia sync enable-e2ee | unlock-e2ee | rotate-key | change-passphrase | upgrade-kdf | export-recovery-key --out <file> | purge-plaintext [--apply]
 //                                                          optional end-to-end encryption (passphrase via --passphrase or ALETHEIA_SYNC_PASSPHRASE)
-//   aletheia mcp-link create [--projects a,b] [--url https://hub.example] | list | revoke <id>
+//   aletheia mcp-link create [--projects a,b] [--scope mcp|sync|admin] [--name n] [--url https://hub.example] | list | revoke <id>
 //                                                          manage the private remote MCP endpoint
 //   aletheia team list | create <name> | add-project <team> <project> | add-member <team> --name n --role r --projects a,b
 //             | members <team> | revoke-member <team> <id> | share <team> <id> --projects a,b
@@ -53,19 +68,21 @@
 //                                                          report first; --apply exports, erases and signs a receipt
 //   aletheia erase verify <receipt.json>                  check a receipt's HMAC
 //   aletheia alerts add --event E --target webhook|file [--url u|--path p] [--secret s] [--allow-private]
+//                  [--name n] [--count n] [--min-value n] [--window s] [--rate-limit s] [--disabled]
 //                  | list | remove <id> | enable|disable <id> | test <id> | run | feed | check | emit <event> [--value n]
 //                                                          alert rules and delivery
 import { Database } from "bun:sqlite";
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join, relative, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { normalizeHook, redact } from "../src/hub/capture.mjs";
 import { importClaudeMem } from "../src/hub/importers.mjs";
-import { applyInstall, applyUninstall, doctor, formatInstallerList, formatPlan, formatUninstall, formatVerify, installerFor, installerIds, planUninstall, verifyInstall } from "../src/hub/install.mjs";
+import { applyInstall, applyUninstall, claudeDesktopInstallPlan, claudeDesktopPath, doctor, formatInstallerList, formatPlan, formatUninstall, formatVerify, installerFor, installerIds, planUninstall, verifyInstall } from "../src/hub/install.mjs";
 import { describeRules } from "../src/hub/rule-evidence.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "../src/hub/rules-sync.mjs";
 import { HubStore, inspectMigration, targetSchemaVersion } from "../src/hub/store.mjs";
-import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "../src/hub/tools.mjs";
+import { MCP_ONLY_HOSTS, TOOLS, applyMcp, applyMcpOnly, detectTools, mcpCommand, mcpOnlyHost, mcpOnlyPlan, mcpPlan, removeMcpOnly, toolById } from "../src/hub/tools.mjs";
+import { WORKTREE_SETTING_KEY, useWorktreeSetting } from "../src/lib/project-key.mjs";
 import { projectKeyForPath } from "../src/readmodel/project.mjs";
 import { makeProvider } from "../src/refresh/providers.mjs";
 
@@ -88,6 +105,13 @@ function parseArgs(args) {
 }
 const out = (v) => console.log(typeof v === "string" ? v : JSON.stringify(v, null, 2));
 const die = (m) => { console.error(m); process.exit(1); };
+
+/** The usage text is the header comment block above. */
+function helpText() {
+  const lines = readFileSync(new URL(import.meta.url), "utf8").split("\n").slice(1);
+  const end = lines.findIndex((l) => !l.startsWith("//"));
+  return lines.slice(0, end).map((l) => l.slice(3)).join("\n");
+}
 
 /** `12` means memory #12; `fact:12` names another dismissible type. */
 function dismissTarget(value) {
@@ -125,10 +149,11 @@ async function handleInstall(command, flags, pos) {
     return;
   }
   const id = pos[0];
-  if (!id) return die(`Usage: aletheia ${command} <tool>\nTools: ${installerIds().join(", ")}`);
+  if (!id) return die(`Usage: aletheia ${command} <tool>\nTools: ${[...installerIds(), "claude-desktop"].join(", ")}`);
+  if (command === "uninstall" && id === "claude-desktop") return die(`Uninstall is not supported for claude-desktop. Remove mcpServers.aletheia from ${claudeDesktopPath({ home: config.home })} by hand.`);
   let installer;
   try {
-    installer = installerFor(id);
+    installer = id === "claude-desktop" ? { plan: claudeDesktopInstallPlan } : installerFor(id);
   } catch (error) {
     return die(error.message);
   }
@@ -315,6 +340,7 @@ async function runAlertsCommand(flags, pos, hub) {
 }
 
 async function main() {
+  if (cmd === "help" || cmd === "--help" || cmd === "-h") return out(helpText());
   if (cmd === "--version" || cmd === "-v" || cmd === "version") {
     return out(JSON.parse(readFileSync(join(import.meta.dir, "..", "package.json"), "utf8")).version);
   }
@@ -368,6 +394,48 @@ async function main() {
     return;
   }
 
+  if (cmd === "backup") {
+    const { backupStatus, listBackups, runBackup } = await import("../src/hub/backup.mjs");
+    const sub = rest.find((arg) => !arg.startsWith("--")) ?? "status";
+    if (!["run", "list", "status"].includes(sub)) return die("Usage: aletheia backup run | list | status [--json]");
+    if (sub === "list") {
+      const items = listBackups(config.dataDir);
+      if (flags.json) return out(items);
+      return out(items.length ? items.map((item) => `${item.at}  ${String(item.bytes).padStart(10)} B  ${item.path}`).join("\n") : `No backups in ${join(config.dataDir, "backups")}.`);
+    }
+    const store = new HubStore(config.hubDb);
+    try {
+      if (sub === "run") {
+        const keep = store.setting("ui.settings.backup.keep", 7);
+        const result = runBackup(store, { dataDir: config.dataDir, keep });
+        if (flags.json) return out(result);
+        return out(`Backup written to ${result.path} (${result.bytes} bytes)${result.pruned.length ? `; removed ${result.pruned.length} older` : ""}.`);
+      }
+      const status = backupStatus(store, { dataDir: config.dataDir });
+      if (flags.json) return out(status);
+      return out([
+        `Scheduled backups: ${status.enabled ? "on" : "off"} (every ${status.intervalHours} h, keep ${status.keep})`,
+        `Folder: ${status.dir}`,
+        `Snapshots: ${status.count}${status.newest ? `, newest ${status.newest.at}` : ""}`,
+        ...(status.nextDue ? [`Next due: ${status.nextDue}`] : []),
+        ...(status.enabled ? [] : ["Turn on with the settings page, or: aletheia backup run (one snapshot now)."]),
+      ].join("\n"));
+    } finally {
+      store.close();
+    }
+  }
+
+  // `aletheia restore <file>` swaps hub.db, so it must run before the store opens. A bare dismissal target stays the old command.
+  if (cmd === "restore" && pos[0] && !dismissTarget(pos[0])) {
+    const { restoreBackup } = await import("../src/hub/backup.mjs");
+    try {
+      const result = await restoreBackup(pos[0], { dataDir: config.dataDir, dbPath: config.hubDb, port: config.port });
+      return out(`Restored ${result.restoredFrom}\n${result.safetyCopy ? `Previous hub.db kept at ${result.safetyCopy}\n` : ""}Run aletheia doctor to check the store.\nBefore a restore, close the AI tools that use Aletheia (they run its MCP server) and stop aletheia-server.`);
+    } catch (error) {
+      return die(error.message);
+    }
+  }
+
   // `npx aletheia-mem mcp` reaches this bin, so it must serve exactly what bin/mcp.mjs serves. stdout carries only JSON-RPC.
   if (cmd === "mcp") {
     const { serveStdio } = await import("../src/hub/mcp.mjs");
@@ -375,6 +443,7 @@ async function main() {
   }
 
   const hub = new HubStore(config.hubDb);
+  useWorktreeSetting(() => hub.setting(WORKTREE_SETTING_KEY, null));
   const argv = mcpCommand({ bun: process.execPath, script: join(import.meta.dir, "mcp.mjs") });
   try {
     switch (cmd) {
@@ -501,6 +570,7 @@ async function main() {
         const { results: rows, channels } = await searchMemory({
           store: hub, query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20,
           includeHistory: !!flags.history, asOf, scope: flags.scope === "all" ? "all" : "current", embedder,
+          rerank: flags.rerank === true || (flags.rerank !== false && flags["no-rerank"] !== true && hub.setting("ui.settings.search.rerank", false) === true),
         });
         const body = rows.length ? rows.map((r) => (r.kind === "fact"
           ? `fact #${r.id} ${r.at.slice(0, 10)} [${r.status}] ${r.text} (source episode #${r.source?.episodeId ?? "-"})`
@@ -538,7 +608,7 @@ async function main() {
         return out(result.changed ? `Dismissed ${result.type} #${result.id}. Restore with: aletheia restore ${result.type}:${result.id}` : `${result.type} #${result.id} was already dismissed.`);
       }
       case "restore": {
-        const target = dismissTarget(pos[0]) ?? die("Usage: aletheia restore <id | memory:id | fact:id | observation:id | episode:id>");
+        const target = dismissTarget(pos[0]) ?? die("Usage: aletheia restore <snapshot file> | <id | memory:id | fact:id | observation:id | episode:id>");
         const result = hub.restore(target.type, target.id, { actor: "cli" });
         return out(result.restored ? `Restored ${result.type} #${result.id}.` : `${result.type} #${result.id} was not dismissed.`);
       }
@@ -557,6 +627,21 @@ async function main() {
       case "promote": {
         if (!pos[0] || !pos[1]) return die("Usage: aletheia promote <memory|episode|observation|fact> <id>");
         return out(hub.promote(pos[0], Number(pos[1]), { actor: "cli" }));
+      }
+      case "projects": {
+        const { foldWorktrees, formatFold, formatProjects, planFold, projectCounts } = await import("../src/hub/projects.mjs");
+        // --include and --repo may repeat or take a comma-separated list.
+        const many = (name) => rest.flatMap((arg, i) => (arg === `--${name}` && rest[i + 1] && !rest[i + 1].startsWith("--") ? rest[i + 1].split(",") : [])).map((value) => value.trim()).filter(Boolean);
+        if (!pos[0] || pos[0] === "list") return out(flags.json ? projectCounts(hub) : formatProjects(projectCounts(hub)));
+        if (pos[0] !== "fold-worktrees") return die("Usage: aletheia projects [--json] | projects fold-worktrees [--write] [--include key] [--repo path]");
+        const plan = planFold(hub, { repos: [process.cwd(), ...many("repo")], include: many("include") });
+        if (!flags.write) return out(formatFold(plan, { dryRun: true }));
+        if (!plan.folds.length) return out(formatFold(plan, { dryRun: false }));
+        try {
+          return out(formatFold(foldWorktrees(hub, plan, { actor: "cli" }), { dryRun: false }));
+        } catch (error) {
+          return die(`Nothing was folded: ${error.message}`);
+        }
       }
       case "optimize": return out(hub.optimizeFts());
       case "scrub": {
@@ -583,9 +668,30 @@ async function main() {
           const verb = result.dryRun ? "Would import" : "Imported";
           return out(`${verb} ${result.added} episode(s) from ${result.files} file(s) for ${result.tool} (${result.skipped} already there, ${result.malformed} malformed line(s)); ${result.queued} extraction job(s) ${result.dryRun ? "would be queued" : "queued"}.`);
         }
+        if (pos[0] === "claude-memory") {
+          const { importClaudeMemory } = await import("../src/hub/importers.mjs");
+          const r = importClaudeMemory(hub, { path: typeof flags.path === "string" ? flags.path : null, home: config.home, project: flags.project || null, dryRun: !!flags["dry-run"] });
+          const lines = r.dryRun ? r.items.map((i) => `  ${i}`) : [];
+          const note = r.unmapped.length ? `\n${r.unmapped.length} folder(s) skipped, project not found on disk; rerun with --project: ${r.unmapped.join(", ")}` : "";
+          return out([...lines, `${r.dryRun ? "Would import" : "Imported"} ${r.added} memory(ies) from ${r.files} file(s) in ${r.folders} folder(s) (${r.skipped} already there).${note}`].join("\n"));
+        }
         if (pos[0] === "claude-mem") return out(importClaudeMem(hub, flags.path ?? config.sourceDb, { includePrompts: !flags["no-prompts"], project: flags.project || null }));
         if (pos[0] === "bundle") return out(hub.importBundle(readFileSync(pos[1] ?? die("Usage: aletheia import bundle <file>"), "utf8")));
-        return die("Usage: aletheia import claude-mem | bundle <file> | transcripts <claude-code|command-code|codex> [--since DATE] [--dry-run]");
+        return die("Usage: aletheia import claude-mem | claude-memory [--path p] [--project key] [--dry-run] | bundle <file> | transcripts <claude-code|command-code|codex> [--since DATE] [--dry-run]");
+      }
+      case "folder-context": {
+        const { writeFolderContexts } = await import("../src/hub/folder-context.mjs");
+        const dir = resolve(pos[0] ?? ".");
+        const project = flags.project ?? projectKeyForPath(dir);
+        const result = writeFolderContexts(hub, { project, baseDir: dir, dryRun: !flags.write, requireOptIn: false });
+        if (!result.files.length) return out(`No memories for project ${project}; nothing to write.`);
+        const lines = result.files.map((file) => {
+          const rel = relative(dir, file.path);
+          if (!flags.write) return `${rel} (${file.changed ? "would change" : "already up to date"}, ${file.count} memories)\n${file.block}`;
+          return `${file.written ? "Wrote" : "Unchanged"} ${rel} (${file.count} memories)`;
+        });
+        if (!flags.write) lines.push("Dry run: nothing was written. Add --write to update these files; text outside the managed block is kept.");
+        return out(lines.join("\n\n"));
       }
       case "export": {
         const body = flags.format === "markdown" ? hub.exportMarkdown({ project: flags.project }) : hub.exportBundle({ project: flags.project, includeEvents: !!flags.events });
@@ -678,7 +784,20 @@ async function main() {
       }
       case "tools": return out(detectTools(config.home).map((t) => `${t.installed ? "✔" : "·"} ${t.id.padEnd(12)} ${t.name}  rules: ${t.rulesProject}${t.rulesGlobal ? ` | ~/${t.rulesGlobal}` : ""}${t.canConnect ? "  mcp: yes" : ""}`).join("\n"));
       case "connect": {
-        const tool = toolById(pos[0] ?? "") ?? die(`Unknown tool. Try: ${TOOLS.filter((t) => t.mcp).map((t) => t.id).join(", ")}`);
+        const mcpOnly = mcpOnlyHost(pos[0] ?? "");
+        if (mcpOnly) {
+          const ctx = { home: config.home, project: typeof flags.dir === "string" ? resolve(flags.dir) : process.cwd(), argv, env: process.env };
+          const head = `${mcpOnly.name}: ${mcpOnly.status}\nSource: ${mcpOnly.source} (fetched ${mcpOnly.fetchedOn})`;
+          if (flags.remove) {
+            const plan = mcpOnlyPlan(mcpOnly, ctx);
+            if (!flags.write) return out(`${head}\nWould remove the aletheia entry from ${plan.path}${plan.connected ? "" : ` (nothing to remove: ${plan.foreign ? "the aletheia entry is not ours" : "no aletheia entry"})`}.\nAdd --write to apply (a backup is kept).`);
+            return out(removeMcpOnly(mcpOnly, ctx));
+          }
+          const plan = mcpOnlyPlan(mcpOnly, ctx);
+          if (!flags.write) return out(`${head}\n${plan.notes.join("\n")}\n${plan.connected ? "Already connected.\n" : ""}${plan.foreign ? "An aletheia entry that is not ours exists; it will not be changed.\n" : ""}Would write to ${plan.path}:\n${plan.snippet}\nAdd --write to apply (a backup is kept). Add --remove to undo.`);
+          return out(applyMcpOnly(mcpOnly, ctx));
+        }
+        const tool = toolById(pos[0] ?? "") ?? die(`Unknown tool. Try: ${[...TOOLS.filter((t) => t.mcp).map((t) => t.id), ...MCP_ONLY_HOSTS.map((h) => h.id)].join(", ")}`);
         const plan = mcpPlan(tool, config.home, argv);
         if (!plan.supported) return die(`${tool.name} has no MCP configuration in the registry.`);
         if (plan.kind === "command") return out(`Run this:\n  ${plan.command}`);
@@ -689,6 +808,12 @@ async function main() {
         if (pos[0] !== "recompute") return die("Usage: aletheia importance recompute [--project p]");
         const { recomputeImportance } = await import("../src/hub/importance.mjs");
         return out(recomputeImportance(hub, { project: flags.project }));
+      }
+      case "entities": {
+        const { entityCounts } = await import("../src/hub/entities.mjs");
+        const rows = entityCounts(hub, { project: flags.project, limit: Number(flags.limit) || 500 });
+        if (flags.json) return out(rows);
+        return out(rows.length ? rows.map((e) => `#${e.id} ${e.name} [${e.type}] (${e.project}) ${e.facts} fact(s), ${e.memories} memory/memories`).join("\n") : "No entities.");
       }
       case "summarize": {
         const { buildEntitySummary, buildProjectSummary, buildSessionSummary, listSummaries } = await import("../src/hub/summaries.mjs");
@@ -772,10 +897,22 @@ async function main() {
         return out(`Extraction mode: ${mode}${embedder ? `; embeddings ${embedder.model}` : "; keyword only"}\nqueue: ${JSON.stringify(result.counts)}${last}`);
       }
       default:
-        return die(readFileSync(new URL(import.meta.url), "utf8").split("\n").filter((l) => l.startsWith("//")).map((l) => l.slice(3)).join("\n"));
+        return die(helpText());
     }
   } finally {
     hub.close();
   }
 }
-await main();
+
+// A known user error is one line. Anything else keeps its stack, and --debug or ALETHEIA_DEBUG=1 keeps it for all.
+const USER_ERRORS = new Set(["TeamAccessError", "RangeError", "EraseError", "ValidationError", "BadRequest"]);
+try {
+  await main();
+} catch (error) {
+  const debug = process.argv.includes("--debug") || process.env.ALETHEIA_DEBUG === "1";
+  if (!debug && error && USER_ERRORS.has(error.name)) {
+    console.error(String(error.message).split("\n")[0]);
+    process.exit(1);
+  }
+  throw error;
+}

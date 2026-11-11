@@ -3,6 +3,7 @@
 // also replaces the Stop hook's raw "last assistant message" row, so a real summary wins over a paste.
 import { sha256 } from "../lib/hash.mjs";
 import { estimateTokens } from "./usage.mjs";
+import { contestedFacts } from "./beliefs.mjs";
 
 export const SUMMARY_SCOPES = ["session", "project", "entity"];
 export const MAX_SUMMARY_CHARS = 1200;
@@ -12,10 +13,21 @@ const DAY = 86_400_000;
 const oneLine = (text) => String(text ?? "").replace(/\s+/g, " ").trim();
 
 /** Compact bullet list of facts, capped so a summary stays smaller than the episodes it summarises. */
-export function summaryText(facts, heading) {
+export function summaryText(facts, heading, { contested = [] } = {}) {
   const lines = facts.slice(0, MAX_SUMMARY_FACTS).map((fact) => `- ${oneLine(fact.text).slice(0, 180)}`);
   const body = `${heading}\n${lines.join("\n")}`;
-  return body.length > MAX_SUMMARY_CHARS ? `${body.slice(0, MAX_SUMMARY_CHARS - 1).trimEnd()}…` : body;
+  // contested beliefs keep their place; the fact list gives up room first
+  const tail = contested.length ? `\nContested:\n${contested.map((line) => `- ${oneLine(line).slice(0, 180)}`).join("\n")}` : "";
+  const room = Math.max(MAX_SUMMARY_CHARS - tail.length, 0);
+  return (body.length > room ? `${body.slice(0, Math.max(room - 1, 0)).trimEnd()}…` : body) + tail;
+}
+
+/** One line per belief that has two or more different objects among the entity's active facts, both sides named. */
+function contestedLines(store, entity, facts) {
+  const ids = new Set(facts.map((fact) => fact.id));
+  return contestedFacts(store, { project: entity.project })
+    .filter((group) => group.some((fact) => ids.has(fact.id)))
+    .map((group) => `${group[0].subject} ${group[0].predicate}: ${[...new Set(group.map((fact) => fact.object))].join(" vs ")}`);
 }
 
 export function sessionFacts(store, { project, sessionId, limit = 200 } = {}) {
@@ -131,7 +143,7 @@ export function buildEntitySummary(store, { entityId, now = Date.now() } = {}) {
   if (!entity) throw new RangeError(`No entity #${entityId}.`);
   const facts = entityFacts(store, { entityId: entity.id });
   if (!facts.length) return null;
-  const text = summaryText(facts, `Entity summary: ${entity.name} (${entity.type})`);
+  const text = summaryText(facts, `Entity summary: ${entity.name} (${entity.type})`, { contested: contestedLines(store, entity, facts) });
   const sourceIds = facts.map((fact) => fact.id);
   const summary = addSummary(store, { project: entity.project, scope: "entity", fromEpoch: facts.at(-1).recorded_at_epoch, toEpoch: now, text, sourceIds, now });
   const observationId = addSummaryObservation(store, { project: entity.project, scope: "entity", text, sourceIds, now });

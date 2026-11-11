@@ -41,7 +41,7 @@ aletheia-server
 OpenCode listed the generated MCP config. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), all on the author's machine and one user, with secrets redacted and no leaks found by the checker. No hook has run inside Cursor, Gemini CLI, Windsurf or OpenCode yet, and answer accuracy is not measured. CI runs the test suite on Linux, macOS and Windows. On Windows, two hook checks (Windsurf and Gemini CLI) are skipped and no real tool was tried there, so Windows is tested in CI only.
 
 <!-- claims:begin -->
-**1,533 tests** — 0 failures (run `bun test`).
+**1,835 tests** — 0 failures (run `bun test`).
 <!-- claims:end -->
 
 [English](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/README.md) · [中文](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.zh.md) · [Español](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.es.md) · [Português (Brasil)](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.pt-br.md) · [日本語](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ja.md) · [Deutsch](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.de.md) · [Français](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.fr.md) · [한국어](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ko.md) · [हिन्दी](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.hi.md) · [العربية](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ar.md) · [Русский](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/docs/i18n/README.ru.md).
@@ -102,35 +102,36 @@ the instruction file each tool already reads. What has and has not been checked:
 | Automatic capture through a tool's hooks | Built for Claude Code, Command Code, Cursor, Codex CLI, Gemini CLI and Windsurf. Each installed hook command is exercised end to end in a temp HOME with a recorded payload. Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run. OpenCode is MCP+rules. |
 
 <!-- gen:tools -->
-| Tool | Level | Verification | Hook events installed |
-|---|---|---|---|
-| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| command-code | full | MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine | SessionStart, PostToolUse, Stop |
-| cursor | full | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
-| codex | full | MCP connection 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| gemini-cli | full | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
-| windsurf | full | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
-| opencode | mcp+rules | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |
+| Tool | Capture | Context | Verification | Hook events installed |
+|---|---|---|---|---|
+| claude-code | yes | yes | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; PreToolUse (read gate, off by default), PostToolUseFailure and SubagentStop have run in tests only; one user on one machine | SessionStart, UserPromptSubmit, PreToolUse (tests only), PostToolUse, PostToolUseFailure (tests only), Stop, SubagentStop (tests only), SessionEnd |
+| command-code | yes | yes | MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine | SessionStart, PostToolUse, Stop |
+| cursor | yes | yes | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
+| codex | yes | yes | MCP connection 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| gemini-cli | yes | yes | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
+| windsurf | yes | no | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
+| opencode | no | no | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |
 
-_Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run._
+_Generated from src/hub/install.mjs via `aletheia install --list`. Capture means a hook event records activity; context means a hook injects memory at session start. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run._
 <!-- /gen:tools -->
 
 ## Measured numbers
 
-On LoCoMo, claude-mem 15.2.0 as shipped vs this project. **These are retrieval numbers, not answer accuracy.**
+On LoCoMo, claude-mem (15.2.0 and 15.17.0, as shipped) vs this project. **These are retrieval numbers, not answer accuracy.**
 
 <!-- gen:bench -->
 | Run | Questions | Recall@5 | MRR | ms/query |
 |---|---|---|---|---|
 | claude-mem 15.2.0 (as shipped), raw turns — measured-by-us | 1,536 | 36.0% | 0.285 | p50 1,699 ms, p95 2,824 ms (idle, 40 queries) |
+| claude-mem 15.17.0 (as shipped), raw turns — measured-by-us | 1,536 | 43.5% | 0.377 | mean 1,079 ms (HTTP) |
 | Raw turns, all 10 conversations | 1,536 | 57.4% | 0.497 | 3.72 |
 | Dataset facts, all 10 | 1,536 | 64.8% | 0.591 | 5.53 |
 | Dataset facts, 3 conversations | 383 | 67.4% | 0.620 | 5.80 |
-| Dataset facts, 3 conversations, + rerank | 383 | 73.9% | 0.686 | 251.16 |
-| Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
+| Dataset facts, 3 conversations, + rerank (bench only) | 383 | 73.9% | 0.686 | 251.16 |
+| Dataset facts, all 10, + rerank (bench only) | 1,536 | 72.3% | 0.680 | 646.19 |
 | Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
-_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
+_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, bench/results/2026-11-11/claude-mem-15.17.0.json, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
 <!-- /gen:bench -->
 
 Read the table this way:
@@ -157,9 +158,9 @@ Read the table this way:
 | MCP | yes stdio + HTTP | yes | yes | partial (reference servers) | yes | yes |
 | REST | yes `/v1` | yes worker API | yes | yes | yes | partial |
 | CLI | yes | yes `npx` | partial | no | partial | yes |
-| Rules sync to tool files | yes 9 targets | no | no | no | no | partial (AGENTS.md) |
-| Import/export between tools | partial (own bundle + claude-mem) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
-| Hook capture | yes six hosts, fixture-tested; no host opened | yes | no | no | no | partial |
+| Rules sync to tool files | yes 10 targets | no | no | no | no | partial (AGENTS.md) |
+| Import/export between tools | partial (own bundle, claude-mem, Claude Code / Command Code / Codex transcripts, Claude Code auto-memory) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
+| Hook capture | yes six hosts; ran in real Claude Code, Command Code and Codex CLI sessions, the other three from docs only | yes | no | no | no | partial |
 | Vector search | partial (optional ONNX) | yes Chroma | yes | yes | yes | yes |
 | Graph / entity memory | partial (entity rows exist; graph retrieval) | no | yes | yes | UNVERIFIED | yes wikilinks |
 | Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query) | partial (dates) | yes | yes | yes | partial |
@@ -186,9 +187,9 @@ Both are self-hosted and free; neither is tested across two real machines.
 
 | Interface | Where | Use |
 |---|---|---|
-| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | the 13 MCP tools below (read and write) |
-| MCP (HTTP) | sync hub `/mcp` | the same tools with a bearer token and per-token scope |
-| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, any language; optional `ALETHEIA_API_KEY` bearer key |
+| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | the 14 MCP tools below (read and write), plus 2 read-only team tools when the caller belongs to a team |
+| MCP (HTTP) | sync hub `/mcp`; main server `/mcp` | the same tools. The sync hub needs a bearer token with a per-token scope. The main server answers loopback only, or needs `ALETHEIA_API_KEY` as a bearer key when it is set and always in remote mode |
+| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, any language. When `ALETHEIA_API_KEY` is set, every `/api` and `/v1` route needs it as a bearer key; in remote mode `/v1` needs a login or the key |
 | CLI | `bin/aletheia.mjs` | hooks, shell, cron, sync |
 | Files | rules sync | each tool's own instruction file |
 
@@ -199,6 +200,7 @@ Both are self-hosted and free; neither is tested across two real machines.
 | `search` | Search shared memory | read |
 | `timeline` | Show context around a memory | read |
 | `get_observations` | Get full memory text by id | read |
+| `file_outline` | Outline of a code file, to read a line range instead of the whole file | read |
 | `save_memory` | Save a memory | write |
 | `session_start_context` | Load session start context | read |
 | `fact_history` | Show how a fact changed | read |
@@ -209,6 +211,8 @@ Both are self-hosted and free; neither is tested across two real machines.
 | `restore_memory` | Restore a dismissed memory | write |
 | `work_state_write` | Write a work-state list | write |
 | `work_state_read` | Read a work-state list | read |
+| `team_brief` | Brief for one team project (listed only when the caller is in a team) | read |
+| `team_search` | Search what teammates shared (listed only when the caller is in a team) | read |
 
 ## Configuration
 
@@ -220,7 +224,7 @@ All settings are environment variables. The defaults are safe for a single-user 
 | `ALETHEIA_HOST` | `127.0.0.1` | Bind address. A non-loopback bind turns on Hub login. |
 | `ALETHEIA_DATA_DIR` | `~/.aletheia` | Everything this project writes, including `hub.db`. |
 | `ALETHEIA_HUB_DB` | `<data dir>/hub.db` | The shared memory store. |
-| `ALETHEIA_API_KEY` | empty | Bearer key required on `/v1/*` when set. |
+| `ALETHEIA_API_KEY` | empty | Bearer key. When set, every `/api` and `/v1` route needs it, except login and logout (`src/hub/api-key.mjs`). In remote mode `/v1` needs a login or the key and `/mcp` needs the key; the key must be at least 32 characters. |
 | `CLAUDE_MEM_DB` | `~/.claude-mem/claude-mem.db` | claude-mem's database (read-only; importer and optional legacy viewer). |
 | `ALETHEIA_RULES_FILE` | `<data dir>/MY-RULES.md` | The legacy Work view's rules file. |
 | `ALETHEIA_PROVIDER` | `none` | `none`, `claude-cli` or an OpenAI-compatible provider. |

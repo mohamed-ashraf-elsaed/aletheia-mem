@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { runHook } from "../src/hub/hooks/run.mjs";
-import { spoolPath, spoolRead } from "../src/hub/hooks/shared.mjs";
+import { compressionQueue, spoolPath, spoolRead } from "../src/hub/hooks/shared.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 import { startServer } from "../src/server.mjs";
 import { makeFixture } from "./fixture.mjs";
@@ -99,7 +99,7 @@ describe.skipIf(process.platform === "win32")("end to end: install, hooks, serve
     expect(blob).not.toContain("sk-ant-api03");
     expect(blob).not.toContain("abcdefghijklmnop12345");
     expect(blob).toContain("[redacted");
-    expect(store.setting("compress.queue", []).some((item) => item.sessionId === "e2e-session")).toBe(true);
+    expect(compressionQueue(store).some((item) => item.sessionId === "e2e-session")).toBe(true);
     store.close();
 
     // The server that a user runs alongside the hooks still answers.
@@ -172,7 +172,7 @@ describe.skipIf(process.platform === "win32")("end to end: install, hooks, serve
     expect(doctor.exitCode).toBe(0);
     expect(doctor.stdout).toContain("ok   server");
     expect(doctor.stdout).toContain("ok   hooks claude-code");
-    expect(doctor.stdout).toContain("5/5");
+    expect(doctor.stdout).toContain("8/8");
     expect(doctor.stdout).toContain("ok   hooks command-code");
     expect(doctor.stdout).toContain("3/3");
     expect(doctor.stdout).toContain("ok   spool");

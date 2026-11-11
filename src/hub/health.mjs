@@ -12,7 +12,24 @@ const count = (store, table) => {
 
 const safeModel = (model) => String(model ?? DEFAULT_EMBED_MODEL).replace(/\bsk-[A-Za-z0-9_-]{6,}\b/g, "[redacted]").slice(0, 200);
 
-/** Returns {status, db, fts, vectors, model}. status is "ok" or "error"; an error always carries a reason. */
+/**
+ * Compression queue depth. Hooks write jobs rows with no cap, so `dropped` is always 0; it is reported so a reader
+ * can see that nothing is silently discarded. Entries an older version left in the `compress.queue` setting count
+ * as pending until a worker migrates them.
+ */
+function queueReport(store) {
+  try {
+    const rows = store.db.prepare("SELECT status, COUNT(*) AS n FROM jobs GROUP BY status").all();
+    const by = Object.fromEntries(rows.map((row) => [row.status, row.n]));
+    const legacy = store.setting("compress.queue", []);
+    const oldest = store.db.prepare("SELECT MIN(created_at_epoch) AS at FROM jobs WHERE status = 'pending'").get().at;
+    return { pending: (by.pending ?? 0) + (Array.isArray(legacy) ? legacy.length : 0), running: by.running ?? 0, failed: by.failed ?? 0, dropped: 0, oldestPendingEpoch: oldest ?? null };
+  } catch {
+    return { pending: null, running: null, failed: null, dropped: null, oldestPendingEpoch: null };
+  }
+}
+
+/** Returns {status, db, fts, vectors, queue, model}. status is "ok" or "error"; an error always carries a reason. */
 export function healthReport(store, { model = process.env.ALETHEIA_EMBED_MODEL ?? DEFAULT_EMBED_MODEL } = {}) {
   let db = { ok: false, detail: "database is not open" };
   let fts = { ok: false, detail: "not checked" };
@@ -56,6 +73,36 @@ export function healthReport(store, { model = process.env.ALETHEIA_EMBED_MODEL ?
     db,
     fts,
     vectors,
+    queue: queueReport(store),
     model: safeModel(model),
+  };
+}
+
+/**
+ * Wraps healthReport so /healthz, open to anyone, answers from a cache. The integrity check runs once per `ttlMs`
+ * and never on the request path once the cache is warm: a stale report is served at once and refreshed right after
+ * the response. On a large database quick_check takes close to a second, longer than a health probe waits.
+ */
+export function createHealthCache({ ttlMs = 30_000, now = Date.now, defer = (fn) => setTimeout(fn, 0) } = {}) {
+  let cached = null;
+  let refreshing = false;
+  const run = (store, options) => {
+    const report = healthReport(store, options);
+    cached = { store, at: now(), report };
+    return report;
+  };
+  return (store, options) => {
+    if (!cached || cached.store !== store) return run(store, options);
+    if (now() - cached.at >= ttlMs && !refreshing) {
+      refreshing = true;
+      defer(() => {
+        try {
+          run(store, options);
+        } catch { /* keep the old report */ } finally {
+          refreshing = false;
+        }
+      });
+    }
+    return cached.report;
   };
 }

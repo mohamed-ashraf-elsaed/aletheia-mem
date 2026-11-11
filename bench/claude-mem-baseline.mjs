@@ -6,6 +6,9 @@
 //   CLAUDE_MEM_DATA_DIR=/tmp/cm-iso CLAUDE_MEM_WORKER_PORT=37795 CLAUDE_MEM_TELEMETRY=0 \
 //     bun ~/.claude/plugins/cache/thedotmack/claude-mem/<ver>/scripts/worker-service.cjs --daemon
 //   bun bench/claude-mem-baseline.mjs --data locomo10.json --port 37795 [--limit N] [--out file]
+// 15.17.0 (2026-11-11): same two endpoints, no harness change. Also set HOME=<temp dir>, DO_NOT_TRACK=1,
+// CLAUDE_MEM_AUTO_UPDATE=false, and run the worker from an `npm pack claude-mem@15.17.0` extract
+// (plugin/scripts/worker-service.cjs --daemon). Chroma starts through uvx on first use; pre-warm its cache, then UV_OFFLINE=1.
 //
 // Ingest: each dialog turn is saved with POST /api/memory/save (project = conversation id, metadata.dia = turn id).
 // Query: GET /api/search?query=<question>&project=<conversation>&limit=10&format=json, observations in returned order.

@@ -14,7 +14,7 @@ export const MANIFEST_FILE = "install-manifest.json";
 export const MANIFEST_VERSION = 2;
 export const HOOK_MARKER = "aletheia-managed";
 export const SERVER_NAME = "aletheia";
-export const CAPABILITIES = ["full", "mcp+rules", "rules-only"];
+export const CAPABILITIES = ["full", "capture-only", "mcp+rules", "rules-only"];
 export const VERIFICATION = ["tested-on-real-install", "from-docs-only", "mcp-verified"];
 
 const quote = (value) => (/^[A-Za-z0-9_./:@%+=-]+$/.test(value) ? value : `'${String(value).replace(/'/g, `'\\''`)}'`);
@@ -212,26 +212,37 @@ function planRules({ tool, home, rules }) {
   return { kind: "rules", title: `rules in ${file}`, file, before, after, changed: before !== after, rules: count, markers: [MARK_BEGIN, MARK_END] };
 }
 
-const claudeEvents = { SessionStart: "startup|clear|compact", UserPromptSubmit: null, PostToolUse: "*", Stop: null, SessionEnd: null };
+const claudeEvents = { SessionStart: "startup|clear|compact", UserPromptSubmit: null, PreToolUse: "Read", PostToolUse: "*", PostToolUseFailure: "*", Stop: null, SubagentStop: null, SessionEnd: null };
 
+/**
+ * Two facts, not one label. capture: the host has at least one hook event that records activity. context: one of
+ * those events (contextEvent) lets the hook inject memory. `capabilities` is derived from them, so it cannot claim
+ * context that the hooks do not inject.
+ */
 function defineInstaller(spec) {
-  const capabilities = spec.capabilities ?? "full";
   const verification = spec.verification ?? "from-docs-only";
-  if (!CAPABILITIES.includes(capabilities)) throw new RangeError(`Unknown capability: ${capabilities}`);
   if (!VERIFICATION.includes(verification)) throw new RangeError(`Unknown verification: ${verification}`);
+  const events = spec.events ?? [];
+  const capture = events.length ? "yes" : "no";
+  const context = spec.contextEvent && events.includes(spec.contextEvent) ? "yes" : "no";
+  const capabilities = capture === "no" ? "mcp+rules" : context === "yes" ? "full" : "capture-only";
+  if (!CAPABILITIES.includes(capabilities)) throw new RangeError(`Unknown capability: ${capabilities}`);
   const installer = {
-    capabilities,
     verification,
     evidence: spec.evidence ?? "",
     detection: spec.detection ?? [],
     notes: spec.notes ?? [],
-    events: spec.events ?? [],
+    testOnlyEvents: [],
     ...spec,
+    events,
+    capture,
+    context,
+    capabilities,
   };
   const originalPlan = spec.plan;
   installer.plan = (env) => {
     const plan = originalPlan.call(installer, env);
-    return { capabilities, verification, evidence: installer.evidence, ...plan };
+    return { capabilities, capture, context, verification, evidence: installer.evidence, ...plan };
   };
   installer.apply = spec.apply ?? ((plan, opts) => applyInstall(plan, opts));
   installer.uninstall = spec.uninstall ?? ((env, opts) => applyUninstall(planUninstall(installer.id, env, opts), opts));
@@ -243,15 +254,16 @@ export const INSTALLERS = [
   defineInstaller({
     id: "claude-code",
     name: "Claude Code",
-    capabilities: "full",
     verification: "mcp-verified",
     toolVersion: "2.1.312",
     verifiedOn: "2026-10-27",
-    hookNote: "hooks ran in real sessions over two days of use; one user on one machine",
-    evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); MCP server listed by Claude Code 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine",
+    hookNote: "hooks ran in real sessions over two days of use; PreToolUse (read gate, off by default), PostToolUseFailure and SubagentStop have run in tests only; one user on one machine",
+    evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); MCP server listed by Claude Code 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use, except PreToolUse, PostToolUseFailure and SubagentStop, which have run in tests only; one user on one machine",
     detection: [".claude"],
     notes: ["The hook shape was checked against a real installed plugin; hooks ran in real Claude Code sessions over two days of use; one user on one machine."],
-    events: ["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop", "SessionEnd"],
+    events: ["SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure", "Stop", "SubagentStop", "SessionEnd"],
+    contextEvent: "SessionStart",
+    testOnlyEvents: ["PreToolUse", "PostToolUseFailure", "SubagentStop"],
     plan(env) {
       const settingsFile = join(env.home, ".claude", "settings.json");
       const mcpFile = join(env.home, ".claude.json");
@@ -269,7 +281,6 @@ export const INSTALLERS = [
   defineInstaller({
     id: "command-code",
     name: "Command Code",
-    capabilities: "full",
     verification: "mcp-verified",
     toolVersion: "1.88.1",
     verifiedOn: "2026-10-27",
@@ -282,6 +293,7 @@ export const INSTALLERS = [
       "Command Code SessionStart reports startup, resume or clear only; there is no compact source.",
     ],
     events: ["SessionStart", "PostToolUse", "Stop"],
+    contextEvent: "SessionStart",
     plan(env) {
       const settingsFile = join(env.home, ".commandcode", "settings.json");
       const mcpFile = join(env.home, ".commandcode", "mcp.json");
@@ -303,7 +315,6 @@ export const INSTALLERS = [
   defineInstaller({
     id: "cursor",
     name: "Cursor",
-    capabilities: "full",
     verification: "from-docs-only",
     evidence: "https://cursor.com/docs/agent/hooks, /docs/context/mcp and /docs/context/rules fetched 2026-10-26; Cursor is not installed on this machine",
     detection: [".cursor"],
@@ -313,6 +324,7 @@ export const INSTALLERS = [
       "Cursor has no global rules file. Use `aletheia rules sync --tools cursor --dir <project> --write` for .cursor/rules/aletheia.mdc.",
     ],
     events: ["sessionStart", "beforeSubmitPrompt", "postToolUse", "afterAgentResponse", "stop", "sessionEnd"],
+    contextEvent: "sessionStart",
     plan(env) {
       const hooks = { sessionStart: null, beforeSubmitPrompt: null, postToolUse: null, afterAgentResponse: null, stop: null, sessionEnd: null };
       const steps = [
@@ -333,7 +345,6 @@ export const INSTALLERS = [
   defineInstaller({
     id: "codex",
     name: "Codex CLI",
-    capabilities: "full",
     verification: "mcp-verified",
     toolVersion: "0.165.0",
     verifiedOn: "2026-10-29",
@@ -346,6 +357,7 @@ export const INSTALLERS = [
       "The MCP block is written to ~/.codex/config.toml; hooks go to ~/.codex/hooks.json.",
     ],
     events: ["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop", "SessionEnd"],
+    contextEvent: "SessionStart",
     plan(env) {
       const events = { SessionStart: "startup|clear|compact|fork", UserPromptSubmit: null, PostToolUse: null, Stop: null, SessionEnd: null };
       const steps = [
@@ -367,7 +379,6 @@ export const INSTALLERS = [
   defineInstaller({
     id: "gemini-cli",
     name: "Gemini CLI",
-    capabilities: "full",
     verification: "from-docs-only",
     evidence: "https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/hooks/reference.md, docs/tools/mcp-server.md and docs/cli/gemini-md.md fetched 2026-10-26; Gemini 0.37.0 present, no hook run",
     detection: [".gemini"],
@@ -377,6 +388,7 @@ export const INSTALLERS = [
       "No real Gemini hook has run here.",
     ],
     events: ["SessionStart", "BeforeAgent", "AfterTool", "AfterAgent", "SessionEnd"],
+    contextEvent: "SessionStart",
     plan(env) {
       const file = join(env.home, ".gemini", "settings.json");
       const events = { SessionStart: null, BeforeAgent: null, AfterTool: null, AfterAgent: null, SessionEnd: null };
@@ -417,7 +429,6 @@ export const INSTALLERS = [
   defineInstaller({
     id: "windsurf",
     name: "Windsurf",
-    capabilities: "full",
     verification: "from-docs-only",
     evidence: "https://docs.windsurf.com/windsurf/cascade/hooks, /cascade/mcp and /cascade/memories fetched 2026-10-26; no working Windsurf/Devin install here",
     detection: [".codeium/windsurf", ".windsurf", ".config/devin"],
@@ -450,7 +461,6 @@ export const INSTALLERS = [
   defineInstaller({
     id: "opencode",
     name: "OpenCode",
-    capabilities: "mcp+rules",
     verification: "mcp-verified",
     toolVersion: "1.18.33",
     verifiedOn: "2026-10-27",
@@ -493,10 +503,13 @@ export function listInstallers(env = {}) {
     id: installer.id,
     name: installer.name,
     capabilities: installer.capabilities,
+    capture: installer.capture,
+    context: installer.context,
     verification: installer.verification,
     evidence: installer.evidence,
     installed: env.home ? installer.detect(env.home) : null,
     events: installer.events,
+    testOnlyEvents: installer.testOnlyEvents,
     notes: installer.notes,
   }));
 }
@@ -504,11 +517,13 @@ export function listInstallers(env = {}) {
 export function formatInstallerList(env = {}) {
   const rows = listInstallers(env);
   const width = Math.max(...rows.map((row) => row.id.length));
-  const lines = ["tool".padEnd(width) + "  capability   verification     detected  events"];
+  const lines = ["tool".padEnd(width) + "  capture  context  verification     detected  events"];
   for (const row of rows) {
-    lines.push(`${row.id.padEnd(width)}  ${row.capabilities.padEnd(11)}  ${row.verification.padEnd(16)}  ${row.installed == null ? "?" : row.installed ? "yes     " : "no      "}  ${row.events.join(", ") || "none"}`);
+    const events = row.events.map((event) => (row.testOnlyEvents.includes(event) ? `${event} (tests only)` : event)).join(", ") || "none";
+    lines.push(`${row.id.padEnd(width)}  ${row.capture.padEnd(7)}  ${row.context.padEnd(7)}  ${row.verification.padEnd(16)}  ${row.installed == null ? "?" : row.installed ? "yes     " : "no      "}  ${events}`);
   }
   for (const row of rows) lines.push(`note  ${row.id}: ${row.evidence || "no evidence recorded"}`);
+  for (const row of rows.filter((candidate) => candidate.testOnlyEvents.length)) lines.push(`note  ${row.id}: events marked (tests only) have not run in a real session.`);
   return lines.join("\n");
 }
 
@@ -776,7 +791,7 @@ export function applyUninstall(plan, { dataDir } = {}) {
 
 /** Readable lines for the CLI. */
 export function formatPlan(plan) {
-  const lines = [`${plan.name} (${plan.tool}) — ${plan.capabilities ?? "full"}, ${plan.verification ?? "from-docs-only"}`];
+  const lines = [`${plan.name} (${plan.tool}) — capture ${plan.capture ?? "?"}, context ${plan.context ?? "?"}, ${plan.verification ?? "from-docs-only"}`];
   for (const step of plan.steps) {
     const state = step.kind === "rules" ? `${step.rules} rule${step.rules === 1 ? "" : "s"}` : step.kind === "hooks" ? Object.keys(step.commands ?? {}).join(", ") : step.kind === "settings" ? "MCP + hooks" : step.file.endsWith(".toml") ? "[mcp_servers.aletheia]" : `${step.key ?? "mcpServers"}.aletheia`;
     lines.push(`  ${step.changed ? "write " : "done  "} ${step.kind.padEnd(8)} ${step.file}${state ? `  (${state})` : ""}`);
@@ -808,6 +823,13 @@ function hookCommandsIn(doc) {
   return out;
 }
 
+/** What the hooks of a host are evidenced by, for the doctor verify line. Rules evidence is a separate claim. */
+function hooksLabel(id) {
+  const installer = INSTALLERS.find((candidate) => candidate.id === id);
+  if (!installer || !installer.events.length) return "hooks: none";
+  return installer.hookNote ? "hooks: ran in a real session" : "hooks: from docs only";
+}
+
 /** Health checks a user can run after install: server, every installer's hooks, spool and last capture. */
 export async function doctor(env) {
   const checks = [];
@@ -825,11 +847,18 @@ export async function doctor(env) {
   checks.push({ name: "port", ok: portOk, detail: portOk ? String(port) : `invalid port ${env.port}` });
 
   const url = `http://127.0.0.1:${env.port}/healthz`;
+  // /healthz can take a moment on a large database, so wait long and call a late answer slow, not unreachable.
+  const SERVER_WAIT_MS = 3000;
+  const SLOW_MS = 400;
+  const started = Date.now();
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(400) });
-    checks.push({ name: "server", ok: response.ok, detail: response.ok ? url : `HTTP ${response.status} at ${url}` });
-  } catch {
-    checks.push({ name: "server", ok: false, detail: `not reachable at ${url}` });
+    const response = await fetch(url, { signal: AbortSignal.timeout(SERVER_WAIT_MS) });
+    const elapsed = Date.now() - started;
+    const slow = elapsed > SLOW_MS ? ` slow (${elapsed} ms)` : "";
+    checks.push({ name: "server", ok: response.ok, detail: response.ok ? `${url}${slow}` : `HTTP ${response.status} at ${url}${slow}` });
+  } catch (error) {
+    const timedOut = error?.name === "TimeoutError";
+    checks.push({ name: "server", ok: false, detail: timedOut ? `slow (no answer within ${SERVER_WAIT_MS} ms) at ${url}` : `not reachable at ${url}` });
   }
 
   for (const installer of INSTALLERS) {
@@ -861,7 +890,8 @@ export async function doctor(env) {
   for (const tool of TOOLS) {
     const status = verificationStatus(tool);
     const evidence = tool.rules.evidence ? ` — ${tool.rules.evidence}` : "";
-    checks.push({ name: `verify ${tool.id}`, ok: status.status !== "stale", detail: `${status.label}: ${status.reason}${evidence}` });
+    const rules = status.label === "verified" ? `rules format ${status.reason}` : `rules format ${status.label}: ${status.reason}`;
+    checks.push({ name: `verify ${tool.id}`, ok: status.status !== "stale", detail: `${rules}; ${hooksLabel(tool.id)}${evidence}` });
   }
 
   const spooled = spoolRead(env.dataDir).length;
@@ -893,7 +923,7 @@ export async function doctor(env) {
   let last = null;
   let readable = true;
   let detail = env.dbPath;
-  let queue = { pending: 0, running: 0, done: 0, failed: 0 };
+  let queue = { pending: 0, running: 0, done: 0, failed: 0, dropped: 0 };
   let extraction = { mode: env.provider === "none" ? "rules" : env.provider ?? "unknown", lastAtEpoch: null, rejected: 0 };
   let health = null;
   try {
@@ -911,6 +941,7 @@ export async function doctor(env) {
         const lastUsage = store.db.prepare("SELECT MAX(at_epoch) AS at FROM fact_usage WHERE status = 'ok'").get();
         extraction = { mode: usage?.mode ?? (env.provider === "none" ? "rules" : env.provider ?? "unknown"), lastAtEpoch: lastUsage?.at ?? null, rejected: usage?.rejected ?? 0 };
         health = healthReport(store);
+        queue = { ...queue, pending: health.queue.pending ?? queue.pending, dropped: health.queue.dropped ?? 0 };
       } finally {
         store.close();
       }
@@ -921,7 +952,7 @@ export async function doctor(env) {
     detail = `cannot read ${env.dbPath}`;
   }
   checks.push({ name: "last capture", ok: readable, detail });
-  checks.push({ name: "queue", ok: queue.failed === 0, detail: `${queue.pending} pending, ${queue.running} running, ${queue.failed} failed` });
+  checks.push({ name: "queue", ok: queue.failed === 0, detail: `${queue.pending} pending, ${queue.running} running, ${queue.failed} failed, ${queue.dropped} dropped` });
   checks.push({ name: "extraction", ok: true, detail: `mode ${extraction.mode}; last ${extraction.lastAtEpoch ? new Date(extraction.lastAtEpoch).toISOString() : "never"}; ${extraction.rejected} rejected` });
   checks.push({ name: "database", ok: health ? health.db.ok : readable, detail: health ? health.db.detail : detail });
   checks.push({ name: "fts", ok: health ? health.fts.ok : readable, detail: health ? health.fts.detail : "no database yet" });
@@ -940,4 +971,19 @@ export function claudeDesktopPath({ home, platform = process.platform, env = pro
 /** The merge Claude Desktop needs, usable by docs and tests without writing anything. */
 export function planClaudeDesktop(env) {
   return planMcp({ file: claudeDesktopPath(env), entry: { command: env.bun, args: [env.mcpScript], env: {} } });
+}
+
+/** A full plan for `aletheia install claude-desktop`. MCP only: Claude Desktop has no hook or rules file. */
+export function claudeDesktopInstallPlan(env) {
+  return {
+    tool: "claude-desktop",
+    name: "Claude Desktop",
+    capabilities: "mcp-only",
+    capture: "no",
+    context: "no",
+    verification: "from-docs-only",
+    env: { ...env, hookScript: undefined, hookRunner: undefined },
+    notes: ["MCP entry only. Config written from docs, not tested on a real Claude Desktop install. Quit and reopen Claude Desktop after writing."],
+    steps: [planClaudeDesktop(env)],
+  };
 }

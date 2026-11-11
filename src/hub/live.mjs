@@ -30,5 +30,15 @@ export function createLiveHub(hub) {
     remove(ws) {
       sockets.delete(ws);
     },
+    /** Close every socket opened under a login session that has ended. */
+    closeSession(token) {
+      for (const ws of [...sockets]) {
+        if (ws.data?.session !== token) continue;
+        sockets.delete(ws);
+        try {
+          ws.close(1008, "session ended");
+        } catch { /* already closed */ }
+      }
+    },
   };
 }

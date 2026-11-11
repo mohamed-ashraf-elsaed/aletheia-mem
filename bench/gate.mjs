@@ -174,6 +174,8 @@ export function loadBaseline(path) {
 /** Run the synthetic benchmark once and return the two numbers plus the reproduction parameters. */
 export function computeMetrics({ rows = DEFAULTS.rows, queries = DEFAULTS.queries, seed = DEFAULTS.seed, runs = DEFAULTS.runs, topics = DEFAULTS.topics } = {}) {
   const store = new HubStore(":memory:");
+  // ALETHEIA_GATE_GRAPH=1 measures the gate with the dashboard setting graph.enabled turned on.
+  if (process.env.ALETHEIA_GATE_GRAPH === "1") store.setSetting("ui.settings.graph.enabled", true);
   try {
     const gold = buildCorpus(store, { rows, queries, seed, topics });
     const recall5 = Number(measureRecall5(store, gold).toFixed(4));

@@ -58,18 +58,22 @@ describe("queue mechanics", () => {
     store.close();
   });
 
-  test("the Stop hook only writes a setting; the worker turns it into jobs", () => {
+  test("the Stop hook only writes a pending job; extraction runs in the worker", () => {
     const store = new HubStore(":memory:");
-    const memory = store.add({ project: "p", kind: "summary", title: "t", narrative: "The checkout service uses Postgres." });
+    store.add({ project: "p", kind: "summary", title: "t", narrative: "The checkout service uses Postgres." });
     expect(enqueueCompression(store, { project: "p", sessionId: "s", at: 1 })).toBe(true);
     expect(compressionQueue(store)).toHaveLength(1);
     expect(store.db.prepare("SELECT COUNT(*) AS n FROM facts").get().n).toBe(0); // nothing extracted in the hook path
-    expect(store.db.prepare("SELECT COUNT(*) AS n FROM jobs").get().n).toBe(0);
+    expect(store.db.prepare("SELECT COUNT(*) AS n FROM jobs WHERE status = 'pending'").get().n).toBe(1);
+  });
+
+  test("entries an older version left in the setting are moved into job rows", () => {
+    const store = new HubStore(":memory:");
+    store.setSetting("compress.queue", [{ project: "p", sessionId: "old", at: 1 }]);
     const moved = enqueueFromSettings(store, { now: 2000 });
     expect(moved.enqueued).toBe(1);
-    expect(compressionQueue(store)).toEqual([]);
+    expect(store.setting("compress.queue", [])).toEqual([]);
     expect(store.db.prepare("SELECT COUNT(*) AS n FROM jobs").get().n).toBe(1);
-    expect(memory.created).toBe(true);
     store.close();
   });
 });

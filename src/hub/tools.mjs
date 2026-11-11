@@ -1,9 +1,10 @@
 // The tool registry: which AI tools exist, where each reads its standing instructions from, and how each
 // connects to an MCP server. One definition per tool; rules sync and the Tools page both read it.
 //
-// Formats (rules file names, MCP config shapes) are the tools' documented conventions as recalled when this
-// was written. They are UNVERIFIED against each tool's current release. Every apply is preview-first, makes a
-// timestamped backup, and the CLI prints the exact text it wrote. See docs/12-universal-memory-product.md.
+// Formats (rules file names, MCP config shapes) are each tool's documented conventions. A row with a
+// `verifiedOn` date was checked against that tool's documentation on that date; a row without one is not
+// verified. Every apply is preview-first, makes a timestamped backup, and the CLI prints the exact text it wrote.
+// See docs/25-installers.md.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 
@@ -17,7 +18,7 @@ export const MARK_END = "<!-- aletheia:rules:end -->";
  * mcp:   { path under $HOME, format }  formats: json-mcpServers | json-mcpServers-commandcode | json-opencode | toml-codex | command
  */
 export const TOOLS = [
-  { id: "claude-code", name: "Claude Code", detect: [".claude"], rules: { project: "CLAUDE.md", global: ".claude/CLAUDE.md", style: "block", verifiedOn: "2026-10-26", toolVersion: null, evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); hooks ran in real sessions over two days of use; one user on one machine", source: "docs/25-installers.md" }, mcp: { format: "command", command: (cmd) => `claude mcp add --scope user aletheia -- ${cmd.join(" ")}` } },
+  { id: "claude-code", name: "Claude Code", detect: [".claude"], rules: { project: "CLAUDE.md", global: ".claude/CLAUDE.md", style: "block", verifiedOn: "2026-10-26", toolVersion: null, evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); hooks ran in real sessions over two days of use, except PostToolUseFailure and SubagentStop, which have run in tests only; one user on one machine", source: "docs/25-installers.md" }, mcp: { format: "command", command: (cmd) => `claude mcp add --scope user aletheia -- ${cmd.join(" ")}` } },
   { id: "command-code", name: "Command Code", detect: [".commandcode"], rules: { project: "AGENTS.md", global: ".commandcode/AGENTS.md", style: "block", verifiedOn: "2026-10-26", toolVersion: "1.88.0", evidence: "CLI 1.88.0 reference generated from commandcode.ai/docs plus real files (2026-10-26); hooks ran in one short session; one user on one machine", source: "docs/25-installers.md" }, mcp: { path: ".commandcode/mcp.json", format: "json-mcpServers-commandcode" } },
   { id: "codex", name: "Codex CLI", detect: [".codex"], rules: { project: "AGENTS.md", global: ".codex/AGENTS.md", style: "block", verifiedOn: "2026-10-26", toolVersion: "0.130.0", evidence: "Codex 0.130.0 present; hooks configured from docs (2026-10-26); hooks ran in one interactive session (reviewed once with /hooks); one user on one machine", source: "https://developers.openai.com/codex/agent-configuration/agents-md" }, mcp: { path: ".codex/config.toml", format: "toml-codex" } },
   { id: "gemini-cli", name: "Gemini CLI", detect: [".gemini"], rules: { project: "GEMINI.md", global: ".gemini/GEMINI.md", style: "block", verifiedOn: "2026-10-26", toolVersion: "0.37.0", evidence: "Gemini 0.37.0 present; hooks configured from docs (2026-10-26); no hook run", source: "https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/cli/gemini-md.md" }, mcp: { path: ".gemini/settings.json", format: "json-mcpServers" } },
@@ -114,4 +115,159 @@ export function applyMcp(tool, home, argv) {
     writeFileSync(plan.path, `${JSON.stringify(cur, null, 2)}\n`);
   }
   return { written: true, backup: bak, path: plan.path };
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// MCP-only hosts. Each has an MCP config file and no hooks or rules file here, so they live outside TOOLS (rules
+// sync and the Tools page iterate TOOLS and need a rules path). Every format below was read from the host's own
+// docs on 2026-11-11; none was run against a real install. Warp is left out on purpose: its docs name
+// ~/.warp/.mcp.json but never show that file's JSON shape (UNVERIFIED), so nothing is written for it.
+// ---------------------------------------------------------------------------------------------------------------
+const DOCS_STATUS = "config written from docs, not tested on a real install";
+
+export const MCP_ONLY_HOSTS = [
+  {
+    id: "copilot-cli",
+    name: "GitHub Copilot CLI",
+    format: "json",
+    key: "mcpServers",
+    scope: "global",
+    source: "https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-mcp-servers",
+    fetchedOn: "2026-11-11",
+    status: DOCS_STATUS,
+    notes: ["File: ~/.copilot/mcp-config.json. The docs say COPILOT_HOME moves the folder, so that variable is honoured."],
+    path: (ctx) => join(ctx.env?.COPILOT_HOME || join(ctx.home, ".copilot"), "mcp-config.json"),
+    entry: (argv) => ({ type: "local", command: argv[0], args: argv.slice(1), env: {}, tools: ["*"] }),
+  },
+  {
+    id: "goose",
+    name: "Goose",
+    format: "yaml-goose",
+    scope: "global",
+    source: "https://goose-docs.ai/docs/getting-started/using-extensions/",
+    fetchedOn: "2026-11-11",
+    status: DOCS_STATUS,
+    notes: ["File: ~/.config/goose/config.yaml. The docs name that path as the macOS example; the Linux and Windows paths are UNVERIFIED."],
+    path: (ctx) => join(ctx.home, ".config", "goose", "config.yaml"),
+  },
+  {
+    id: "roo-code",
+    name: "Roo Code",
+    format: "json",
+    key: "mcpServers",
+    scope: "project",
+    source: "https://docs.roocode.com/features/mcp/using-mcp-in-roo",
+    fetchedOn: "2026-11-11",
+    status: DOCS_STATUS,
+    notes: ["File: <project>/.roo/mcp.json, in the folder you run the command from (or --dir). The global mcp_settings.json location is not documented on that page (UNVERIFIED), so it is not written."],
+    path: (ctx) => join(ctx.project, ".roo", "mcp.json"),
+    entry: (argv) => ({ command: argv[0], args: argv.slice(1) }),
+  },
+];
+
+export const mcpOnlyHost = (id) => MCP_ONLY_HOSTS.find((h) => h.id === id);
+
+const sameArgs = (a, b) => JSON.stringify(a ?? []) === JSON.stringify(b ?? []);
+
+function gooseBlock(argv) {
+  return [
+    `  ${SERVER_NAME}:`,
+    `    name: ${SERVER_NAME}`,
+    `    cmd: ${JSON.stringify(argv[0])}`,
+    `    args: [${argv.slice(1).map((a) => JSON.stringify(a)).join(", ")}]`,
+    "    enabled: true",
+    "    type: stdio",
+    "    timeout: 300",
+  ].join("\n");
+}
+
+/** Locate `extensions:` and our child block in a Goose config. Throws for shapes this text edit cannot touch safely. */
+function gooseLocate(text) {
+  const lines = text.split("\n");
+  const ext = lines.findIndex((l) => /^extensions:/.test(l));
+  if (ext === -1) return { lines, ext: -1 };
+  if (!/^extensions:\s*(#.*)?$/.test(lines[ext])) throw new RangeError("config.yaml has `extensions:` that is not in block style. Add the entry by hand or rewrite it as a block first.");
+  let end = lines.length;
+  for (let i = ext + 1; i < lines.length; i++) if (lines[i].trim() && !/^\s/.test(lines[i])) { end = i; break; }
+  const start = lines.findIndex((l, i) => i > ext && i < end && l === `  ${SERVER_NAME}:`);
+  if (start === -1) return { lines, ext, end, start: -1 };
+  let stop = start + 1;
+  while (stop < end && (lines[stop].startsWith("    ") || !lines[stop].trim())) stop++;
+  while (stop > start + 1 && !lines[stop - 1].trim()) stop--;
+  return { lines, ext, end, start, stop };
+}
+
+/** What `connect <host>` would do: target file, snippet, and whether our entry is already there. */
+export function mcpOnlyPlan(host, ctx) {
+  const file = host.path(ctx);
+  const text = existsSync(file) ? readFileSync(file, "utf8") : "";
+  const base = { host: host.id, name: host.name, path: file, format: host.format, status: host.status, source: host.source, notes: host.notes };
+  if (host.format === "yaml-goose") {
+    const block = gooseBlock(ctx.argv);
+    const snippet = `extensions:\n${block}\n`;
+    const loc = gooseLocate(text);
+    if (loc.start === undefined || loc.start === -1) return { ...base, snippet, connected: false, foreign: false };
+    const current = loc.lines.slice(loc.start, loc.stop).join("\n");
+    return { ...base, snippet, connected: current === block, foreign: current !== block, block: current };
+  }
+  const entry = host.entry(ctx.argv);
+  let doc = {};
+  try { doc = text.trim() ? JSON.parse(text) : {}; } catch { throw new RangeError(`${file} is not valid JSON. Fix it by hand first; aletheia will not overwrite it.`); }
+  if (!doc || typeof doc !== "object" || Array.isArray(doc)) throw new RangeError(`${file} is not valid JSON object. Fix it by hand first.`);
+  const current = doc[host.key]?.[SERVER_NAME];
+  const ours = !!current && current.command === entry.command && sameArgs(current.args, entry.args);
+  return { ...base, snippet: JSON.stringify({ [host.key]: { [SERVER_NAME]: entry } }, null, 2), connected: ours, foreign: !!current && !ours, entry, doc, text };
+}
+
+function backupFile(file) {
+  if (!existsSync(file)) return null;
+  const stem = `${file}.aletheia-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+  let copy = `${stem}.bak`;
+  for (let n = 1; existsSync(copy); n++) copy = `${stem}-${n}.bak`;
+  copyFileSync(file, copy);
+  return copy;
+}
+
+/** Merge our entry into the host's config. Keeps a timestamped backup of an existing file. */
+export function applyMcpOnly(host, ctx) {
+  const plan = mcpOnlyPlan(host, ctx);
+  if (plan.foreign) throw new RangeError(`${plan.path} already has an ${SERVER_NAME} entry that is not ours. Left alone.`);
+  if (plan.connected) return { written: false, backup: null, path: plan.path };
+  mkdirSync(dirname(plan.path), { recursive: true });
+  const bak = backupFile(plan.path);
+  if (host.format === "yaml-goose") {
+    const cur = existsSync(plan.path) ? readFileSync(plan.path, "utf8") : "";
+    const loc = gooseLocate(cur);
+    let next;
+    if (loc.ext === -1) next = `${cur}${cur && !cur.endsWith("\n") ? "\n" : ""}${plan.snippet}`;
+    else {
+      const lines = [...loc.lines];
+      lines.splice(loc.ext + 1, 0, gooseBlock(ctx.argv));
+      next = lines.join("\n");
+    }
+    writeFileSync(plan.path, next);
+  } else {
+    const doc = plan.doc;
+    doc[host.key] = { ...(doc[host.key] ?? {}), [SERVER_NAME]: plan.entry };
+    writeFileSync(plan.path, `${JSON.stringify(doc, null, 2)}\n`);
+  }
+  return { written: true, backup: bak, path: plan.path };
+}
+
+/** Remove only the entry this installer wrote. A foreign `aletheia` entry is never touched. */
+export function removeMcpOnly(host, ctx) {
+  const plan = mcpOnlyPlan(host, ctx);
+  if (!plan.connected) return { removed: false, backup: null, path: plan.path, note: plan.foreign ? "the aletheia entry is not ours; left alone" : "no aletheia entry" };
+  const bak = backupFile(plan.path);
+  if (host.format === "yaml-goose") {
+    const loc = gooseLocate(readFileSync(plan.path, "utf8"));
+    const lines = [...loc.lines];
+    lines.splice(loc.start, loc.stop - loc.start);
+    writeFileSync(plan.path, lines.join("\n"));
+  } else {
+    const doc = plan.doc;
+    delete doc[host.key][SERVER_NAME];
+    writeFileSync(plan.path, `${JSON.stringify(doc, null, 2)}\n`);
+  }
+  return { removed: true, backup: bak, path: plan.path, note: "" };
 }

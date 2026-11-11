@@ -4,7 +4,7 @@
 // against an allow-list (loopback by default) to stop DNS rebinding; bodies are capped; a stalled body
 // gets a timeout. Tool execution reuses the stdio handlers in mcp.mjs.
 import { randomUUID } from "node:crypto";
-import { handleMessage } from "./mcp.mjs";
+import { handleMessageAsync } from "./mcp.mjs";
 
 const WRITE_TOOLS = new Set(["save_memory", "add_rule", "confirm_rule", "dismiss_memory", "restore_memory", "work_state_write"]);
 
@@ -33,6 +33,7 @@ const json = (body, status = 200, headers = {}) =>
  * - path: the endpoint path; other paths return null so the caller's own routing answers.
  * - authorize(request): returns { token, projects } or { status, error }. Omit for no auth.
  * - toolAllowed(token, name): false denies one tool (used for scope-limited tokens).
+ * - team(token): returns { store, accountId, tokenId, operator } for the team tools, or null when the token has no team.
  * - allowedOrigins(origin): origin allow-list; defaults to loopback only.
  * - onCall({ token, tool, project, ok }): per tools/call audit hook. No payloads pass through it.
  * - rateLimit({ request, token, projects }): return { status, error, retryAfter } to refuse, or null.
@@ -43,6 +44,8 @@ export function createMcpHttpHandler({
   path = "/mcp",
   authorize = null,
   toolAllowed = null,
+  team = null,
+  embedder = undefined,
   allowedOrigins = loopbackOriginsOnly,
   onCall = null,
   rateLimit = null,
@@ -59,19 +62,19 @@ export function createMcpHttpHandler({
 
   const isInitialize = (msg) => !!msg && typeof msg === "object" && msg.method === "initialize";
 
-  function processOne(msg, ctx) {
+  async function processOne(msg, ctx) {
     if (msg?.method === "tools/call" && msg.id !== undefined) {
       const name = msg.params?.name ?? null;
       if (name && toolAllowed && !toolAllowed(ctx.token ?? null, name)) {
         return { jsonrpc: "2.0", id: msg.id, result: { content: [{ type: "text", text: `This token cannot call ${name}.` }], isError: true } };
       }
-      const response = handleMessage(msg, ctx);
+      const response = await handleMessageAsync(msg, ctx);
       if (onCall) {
         onCall({ token: ctx.token ?? null, tool: name, project: msg.params?.arguments?.project ?? null, ok: !response?.error && !response?.result?.isError });
       }
       return response;
     }
-    return handleMessage(msg, ctx);
+    return handleMessageAsync(msg, ctx);
   }
 
   return async function handle(request) {
@@ -133,16 +136,16 @@ export function createMcpHttpHandler({
     const hasInit = messages.some(isInitialize);
     let ctx;
     if (hasInit) {
-      ctx = { store, tool: null, cwd: null, token, projects };
+      ctx = { store, tool: null, cwd: null, token, projects, team: team ? team(token) : null, embedder };
     } else {
       const id = request.headers.get("mcp-session-id");
       if (!id) return json({ error: "Mcp-Session-Id is required before initialization." }, 400);
       const session = sessions.get(id);
       if (!session) return json({ error: "Session not found." }, 404);
-      ctx = { ...session.ctx, token, projects };
+      ctx = { ...session.ctx, token, projects, team: team ? team(token) : null };
     }
 
-    const responses = messages.map((msg) => processOne(msg, ctx)).filter((response) => response !== null && response !== undefined);
+    const responses = (await Promise.all(messages.map((msg) => processOne(msg, ctx)))).filter((response) => response !== null && response !== undefined);
 
     if (!responses.length) {
       // Only notifications: 202 Accepted with no body (the spec's case for input without requests).

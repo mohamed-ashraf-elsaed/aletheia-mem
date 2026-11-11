@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { runHook } from "../src/hub/hooks/run.mjs";
-import { spoolPath, spoolRead } from "../src/hub/hooks/shared.mjs";
+import { compressionQueue, spoolPath, spoolRead } from "../src/hub/hooks/shared.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 import { makeFixture } from "./fixture.mjs";
 
@@ -81,6 +81,83 @@ describe("Claude Code hooks", () => {
     store.close();
   });
 
+  test("PostToolUseFailure stores the failed call with its error text, redacted", async () => {
+    const { proj, project, config } = setup();
+    const payload = {
+      hook_event_name: "PostToolUseFailure",
+      tool_name: "Bash",
+      tool_input: { command: "npm test", description: "Run test suite" },
+      tool_use_id: "toolu_01ABC",
+      error: "Exit code 1\nError: Cannot find module 'express'\nusing key sk-ant-api03-abcdefghijklmnopqrstuvwx password=hunter22",
+      is_interrupt: false,
+      duration_ms: 4187,
+      cwd: proj,
+      session_id: "s1",
+    };
+    const result = await hook("claude-code", "PostToolUseFailure", payload, config);
+    expect(result).toMatchObject({ exitCode: 0, stdout: "", stored: true });
+    const store = read(config);
+    const rows = store.list({ project, kind: "event" }).items;
+    expect(rows.length).toBe(1);
+    expect(rows[0]).toMatchObject({ tool: "claude-code", session_id: "s1", title: "Bash failed: npm test" });
+    expect(rows[0].narrative).toContain("Exit code 1");
+    expect(rows[0].narrative).toContain("Cannot find module 'express'");
+    expect(rows[0].narrative).toContain("[redacted:anthropic-key]");
+    expect(rows[0].narrative).not.toContain("sk-ant-api03");
+    expect(rows[0].narrative).not.toContain("hunter22");
+    expect(rows[0].concepts).toContain("failure");
+    store.close();
+    expect((await hook("claude-code", "posttoolusefailure", { ...payload, tool_name: "TodoWrite" }, config)).stored).toBe(false);
+  });
+
+  test("SubagentStop stores the subagent's final message, tagged with the subagent", async () => {
+    const { proj, project, config } = setup();
+    const payload = {
+      hook_event_name: "SubagentStop",
+      stop_hook_active: false,
+      agent_id: "def456",
+      agent_type: "Explore",
+      agent_transcript_path: "/x/subagents/agent-def456.jsonl",
+      last_assistant_message: "Analysis complete. Found 3 issues. token ghp_abcdefghijklmnopqrstuvwxyz0123456789",
+      cwd: proj,
+      session_id: "s1",
+    };
+    const result = await hook("claude-code", "SubagentStop", payload, config);
+    expect(result).toMatchObject({ exitCode: 0, stdout: "", stored: true, queued: false, ended: false });
+    const store = read(config);
+    const rows = store.list({ project }).items.filter((row) => row.origin === "subagent:Explore");
+    expect(rows.length).toBe(1);
+    expect(rows[0]).toMatchObject({ tool: "claude-code", session_id: "s1" });
+    expect(rows[0].title).toContain("Subagent Explore");
+    expect(rows[0].narrative).toContain("Found 3 issues");
+    expect(rows[0].narrative).not.toContain("ghp_abcdef");
+    expect(rows[0].concepts).toEqual(expect.arrayContaining(["subagent", "Explore"]));
+    expect(store.list({ project, kind: "summary" }).total).toBe(0);
+    expect(compressionQueue(store)).toEqual([]);
+    store.close();
+    // Claude Code's own internal agents report an empty agent_type and no useful result.
+    expect((await hook("claude-code", "SubagentStop", { ...payload, agent_type: "", last_assistant_message: "suggestion text here" }, config)).stored).toBe(false);
+  });
+
+  test("session-start context leaves subagent rows out by default and includes them when asked", async () => {
+    const { proj, project, config } = setup();
+    await hook("claude-code", "Stop", { hook_event_name: "Stop", last_assistant_message: "Main agent shipped the retry button.", cwd: proj, session_id: "s1" }, config);
+    await hook("claude-code", "SubagentStop", { hook_event_name: "SubagentStop", agent_id: "a1", agent_type: "Explore", last_assistant_message: "Subagent found the stale cache.", cwd: proj, session_id: "s1" }, config);
+    const start = { hook_event_name: "SessionStart", source: "startup", cwd: proj, session_id: "s2" };
+
+    const byDefault = JSON.parse((await hook("claude-code", "SessionStart", start, config)).stdout).hookSpecificOutput.additionalContext;
+    expect(byDefault).toContain("Main agent shipped the retry button");
+    expect(byDefault).not.toContain("stale cache");
+
+    const store = read(config);
+    store.setSetting("context.includeSubagents", true);
+    store.close();
+    const included = JSON.parse((await hook("claude-code", "SessionStart", start, config)).stdout).hookSpecificOutput.additionalContext;
+    expect(included).toContain("Main agent shipped the retry button");
+    expect(included).toContain("stale cache");
+    expect(project.length).toBeGreaterThan(0);
+  });
+
   test("repeated events are deduped", async () => {
     const { proj, project, config } = setup();
     const payload = { hook_event_name: "PostToolUse", tool_name: "Read", tool_input: { file_path: "a.mjs" }, tool_response: "same", cwd: proj, session_id: "s1" };
@@ -103,7 +180,7 @@ describe("Claude Code hooks", () => {
     const summary = store.list({ project, kind: "summary" }).items;
     expect(summary.length).toBe(1);
     expect(summary[0].narrative).toContain("retry button");
-    expect(store.setting("compress.queue", [])).toEqual([{ project, sessionId: "s1", at: expect.any(Number) }]);
+    expect(compressionQueue(store)).toEqual([{ project, sessionId: "s1", at: expect.any(Number) }]);
     store.close();
   });
 
@@ -152,7 +229,7 @@ describe("Claude Code hooks", () => {
     expect(events.length).toBe(1);
     expect(events[0]).toMatchObject({ tool: "command-code", title: "SHELL: ls -la" });
     expect(after.list({ project, kind: "prompt" }).total).toBe(0);
-    expect(after.setting("compress.queue", [])).toHaveLength(1);
+    expect(compressionQueue(after)).toHaveLength(1);
     after.close();
 
     const startup = await hook("command-code", "SessionStart", { hook_event_name: "SessionStart", source: "startup", cwd: proj, session_id: "cc" }, config);

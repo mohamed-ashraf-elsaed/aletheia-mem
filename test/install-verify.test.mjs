@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync, unlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { applyInstall, formatVerify, installerFor, verifyInstall } from "../src/hub/install.mjs";
+import { applyInstall, doctor, formatInstallerList, formatVerify, installerFor, listInstallers, verifyInstall } from "../src/hub/install.mjs";
 import { makeFixture } from "./fixture.mjs";
 
 const root = join(import.meta.dir, "..");
@@ -70,5 +70,62 @@ describe("aletheia install --verify", () => {
     expect(stdout).toContain("drift");
     expect(stdout).toContain("opencode");
     expect(exitCode).toBe(1);
+  });
+});
+
+describe("capture and context labels", () => {
+  test("install --list shows capture and context as separate columns, not one capability word", () => {
+    const { home } = setup();
+    const text = formatInstallerList({ home });
+    const header = text.split("\n")[0];
+    expect(header).toContain("capture");
+    expect(header).toContain("context");
+    expect(header).not.toContain("capability");
+  });
+
+  test("Windsurf captures but never injects context", () => {
+    const { home } = setup();
+    const row = listInstallers({ home }).find((candidate) => candidate.id === "windsurf");
+    expect(row.capture).toBe("yes");
+    expect(row.context).toBe("no");
+    expect(row.capabilities).toBe("capture-only");
+  });
+
+  test("hosts with a session-start hook show context yes; OpenCode shows capture no and context no", () => {
+    const { home } = setup();
+    const rows = Object.fromEntries(listInstallers({ home }).map((row) => [row.id, row]));
+    for (const id of ["claude-code", "command-code", "codex", "gemini-cli", "cursor"]) {
+      expect(rows[id].context).toBe("yes");
+      expect(rows[id].capture).toBe("yes");
+    }
+    expect(rows.opencode.capture).toBe("no");
+    expect(rows.opencode.context).toBe("no");
+  });
+
+  test("Claude Code's two newest events are marked as tested only, never as seen in a real session", () => {
+    const { home } = setup();
+    const row = listInstallers({ home }).find((candidate) => candidate.id === "claude-code");
+    expect(row.testOnlyEvents).toEqual(["PreToolUse", "PostToolUseFailure", "SubagentStop"]);
+    const text = formatInstallerList({ home });
+    const claudeRow = text.split("\n").find((line) => line.startsWith("claude-code "));
+    expect(claudeRow).toContain("PostToolUseFailure (tests only)");
+    expect(claudeRow).toContain("SubagentStop (tests only)");
+    expect(claudeRow).not.toMatch(/PostToolUseFailure(?! \(tests only\))/);
+  });
+
+  test("doctor's verify line names the evidence type: rules format for the rules date, hooks for the hooks", async () => {
+    const { env } = setup();
+    const checks = await doctor(env);
+    const cursor = checks.find((check) => check.name === "verify cursor");
+    expect(cursor.detail).toContain("rules format verified 2026-10-26");
+    expect(cursor.detail).toContain("hooks: from docs only");
+    const windsurf = checks.find((check) => check.name === "verify windsurf");
+    expect(windsurf.detail).toContain("rules format verified 2026-10-26");
+    expect(windsurf.detail).toContain("hooks: from docs only");
+    const claude = checks.find((check) => check.name === "verify claude-code");
+    expect(claude.detail).toContain("hooks: ran in a real session");
+    const copilot = checks.find((check) => check.name === "verify copilot");
+    expect(copilot.detail).toContain("rules format unverified");
+    expect(copilot.detail).toContain("hooks: none");
   });
 });

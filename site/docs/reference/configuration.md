@@ -1,7 +1,7 @@
 # Aletheia configuration reference: environment variables, settings and data directory
 
 <!-- description: Every Aletheia environment variable with its default, the runtime settings and where they are stored, and the files in the data directory. -->
-<!-- keywords: aletheia configuration, aletheia environment variables, ALETHEIA_DATA_DIR, aletheia settings, facts.minConfidence, context.facts, aletheia data directory -->
+<!-- keywords: aletheia configuration, aletheia environment variables, ALETHEIA_DATA_DIR, aletheia settings, facts.minConfidence, context.facts, project.worktrees, ALETHEIA_WORKTREE_PROJECTS, aletheia data directory -->
 
 Aletheia (aletheia-mem) is configured in two ways: environment variables read at start-up, and a small set of runtime settings stored in the hub database. This page lists both, and the files that appear in the data directory.
 
@@ -22,11 +22,26 @@ $ ALETHEIA_DATA_DIR=/srv/aletheia ALETHEIA_PORT=37800 aletheia-server
 | `ALETHEIA_HOST` | `127.0.0.1` | Bind address for `aletheia-server`. A non-loopback value turns on dashboard login. `--host` overrides it. |
 | `ALETHEIA_PORT` | `37790` | Dashboard and API port. `aletheia doctor` checks `/healthz` on this port. |
 | `ALETHEIA_BEHIND_TLS` | unset | `1` says a reverse proxy ends TLS. `--behind-tls` does the same. |
-| `ALETHEIA_API_KEY` | empty | When set, the `/v1` API and the `/mcp` route on the main server need `Authorization: Bearer <key>`. |
+| `ALETHEIA_API_KEY` | empty | When set, every `/api/*` and `/v1/*` route and `/mcp` on the main server need `Authorization: Bearer <key>`. The dashboard asks for the key once. In remote mode the key must be at least 32 characters (for example `openssl rand -hex 32`); a shorter key stops the server at startup. See [What the API key protects](#what-the-api-key-protects). |
 | `ALETHEIA_EXTRACTION_WORKER` | unset | `1` starts the extraction worker when the server is embedded elsewhere. `aletheia-server` always starts it. |
 | `ALETHEIA_AUTO_REFRESH` | `true` | `false` turns off the periodic model refresh. It runs only when a provider is set. |
 | `ALETHEIA_REFRESH_CHECK_MS` | `600000` | How often the server checks whether a refresh is due. |
 | `ALETHEIA_POLL_MS` | `1000` | How often the server re-reads the claude-mem database for the Activity page. |
+
+### What the API key protects
+
+With `ALETHEIA_API_KEY` set:
+
+- Every route that returns memory or changes data needs `Authorization: Bearer <key>`. That is every `/api/*` route, `/api/hub/*` included, every `/v1/*` route, and `/mcp`. A request without the key, or with a wrong one, gets `401 {"error":"A valid bearer key is required."}` and the header `WWW-Authenticate: Bearer realm="aletheia"`.
+- These stay open: the dashboard page and its static files, `/health`, `/healthz` (status only, no memory text), `/api/login` and `/api/logout`.
+- The dashboard asks for the key once, in a dialog, and keeps it in the tab's `sessionStorage`. Closing the tab forgets it. The dashboard sends the key only in the `Authorization` header.
+- `/v1/live` takes the key in the `Authorization` header. A browser cannot set headers on a WebSocket, so the dashboard first sends the key to `POST /v1/live/ticket` and gets a ticket. It then offers `aletheia.live` and `aletheia.ticket.<ticket>` as WebSocket subprotocols. A ticket works once and expires after 30 seconds. The key never goes in a URL.
+- The classic viewer (`/work-view/work.html`) cannot send the key. The Tools tab does not offer it while a key is set.
+- Hooks and the stdio MCP server write to the database file directly. They do not use HTTP and do not need the key.
+
+On a non-loopback bind (remote mode), Hub login and the key are two separate checks. The login check runs first. On `/` and `/api/*` a keyed remote server needs both: log in with the admin token, then enter the key. `/v1/*` and `/mcp` accept the key alone, so tools do not log in.
+
+In remote mode, `/v1/*` (the live socket included) answers only a login session or the key, and `/mcp` answers only the key. A write through a login session also needs the CSRF header that the dashboard sends. Without `ALETHEIA_API_KEY`, tools cannot use `/v1` or `/mcp` in remote mode, and `aletheia-server` prints a warning at startup. Releases before this change served `/v1/*` and `/mcp` to the network in remote mode when no key was set; see `SECURITY.md`.
 
 ## Paths and files
 
@@ -51,6 +66,7 @@ $ ALETHEIA_DATA_DIR=/srv/aletheia ALETHEIA_PORT=37800 aletheia-server
 | Variable | Default | Meaning |
 |---|---|---|
 | `ALETHEIA_EXCLUDED_PROJECTS` | empty | Comma-separated project keys that are never captured. Matching is exact and case-insensitive. `*` excludes every project. |
+| `ALETHEIA_WORKTREE_PROJECTS` | unset | `main` or `separate`. Overrides the `project.worktrees` setting below for the process that reads it: set it where the hooks, the server and the CLI run. Any other value is ignored. |
 | `ALETHEIA_TOOL` | unset | MCP stdio only. Names the caller in saved memories. |
 | `ALETHEIA_CWD` | the working directory | MCP stdio only. Sets the default project. |
 
@@ -101,11 +117,15 @@ Runtime settings live in the `settings` table of `hub.db`, under the key `ui.set
 
 | Key | Type | Default | Allowed | Effect |
 |---|---|---|---|---|
+| `project.worktrees` | enum | `main` | `main`, `separate` | The project key of a session in a git worktree. `main` uses the main repository's key, so the worktree shares its memory. `separate` uses `<repo>/<worktree>`. Submodules keep `<repo>/<path>` either way. See [Git worktrees](../concepts/memory-model.md#git-worktrees). |
 | `facts.minConfidence` | number | `0.4` | 0.3 to 0.9 | Facts below this confidence are rejected when stored and by `aletheia facts clean`. |
 | `context.facts` | enum | `auto` | `auto`, `on`, `off` | Facts in the session-start context. `off` lists none. `on` lists up to 10 active facts. `auto` lists a fact only if it came from a provider, has confidence 0.6 or more, or comes from a pinned observation. |
+| `context.format` | enum | `index` | `index`, `classic` | The shape of the context block every host receives. `classic` is the earlier flat list of recent memories. |
+| `retention.retentionDays` | integer | `90` | 7 to 3650 | `aletheia prune` shortens episode text older than this many days to a head, a tail and a pointer. Nothing is deleted. |
+| `retention.coldDays` | integer | `180` | 7 to 3650 | `aletheia prune` marks a weak active fact cold after this many days. |
 | `rules.reviewDays` | integer | `90` | 7 to 730 | Days after which an unconfirmed rule gets a re-check flag. |
 
-These three are the only runtime settings. Version 0.1.10 also showed `provider`, `providers`, `factBudget.maxEpisodes`, `factBudget.maxChars`, `redaction`, `excludedProjects` and `apiKey` in the form, but no code read them, so they were removed. The provider, its chain and key, the fact budgets and the excluded projects are environment variables (see above), and redaction always runs. A value saved under one of the removed keys stays in the table and does nothing.
+The Settings form also has switches for backups, graph retrieval, rerank and the read gate; `src/hub/settings.mjs` is the full list. Version 0.1.10 also showed `provider`, `providers`, `factBudget.maxEpisodes`, `factBudget.maxChars`, `redaction`, `excludedProjects` and `apiKey` in the form, but no code read them, so they were removed. The provider, its chain and key, the fact budgets and the excluded projects are environment variables (see above), and redaction always runs. A value saved under one of the removed keys stays in the table and does nothing.
 
 ```
 $ curl -s -X PUT http://127.0.0.1:37790/api/hub/settings -H "Content-Type: application/json" \
@@ -117,6 +137,8 @@ HTTP/1.1 400 Bad Request
 ```
 
 Both calls ran against a temporary server on another port. The rows were stored as `ui.settings.context.facts = "on"`, `ui.settings.facts.minConfidence = 0.6` and `ui.settings.rules.reviewDays = 30`.
+
+A hook reads `project.worktrees` straight from `hub.db` once per event, which took about 1 ms on a test store on 2026-11-11 (measured-by-us (a scratch script timing `new Database(path, { readonly: true })` plus one `SELECT`)). When `ALETHEIA_WORKTREE_PROJECTS` is set, the hook skips that read. The server, the MCP server and the CLI read the setting from the store they opened, so a value saved in the dashboard applies to them at once.
 
 ## The data directory
 

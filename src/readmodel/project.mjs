@@ -1,12 +1,14 @@
-// Project keys. A project key is "<repo>" or "<repo>/<worktree>"; a request stays inside one project ROOT
-// (the key before its first "/"), so worktrees of one repo share requests.
+// Project keys. A project key is "<repo>", or "<repo>/<worktree>" when worktrees are kept separate, or
+// "<repo>/<path>" for a submodule; a request stays inside one project ROOT (the key before its first "/"), so
+// worktrees of one repo share requests.
 //
 // Simplification against the original: the original also supports CLAUDE_MEM_PROJECT_NAME_SOURCE=git-remote
 // and CLAUDE_MEM_PROJECT_ENVIRONMENTS globs. This port derives keys from the checkout path only.
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { existsSync, realpathSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
+import { checkoutKey } from "../lib/project-key.mjs";
 
 export const NO_PROJECT = "";
 
@@ -32,39 +34,14 @@ function gitRepoRoot(dir) {
   }
 }
 
-function worktreeParent(checkoutRoot) {
-  const gitPath = join(checkoutRoot, ".git");
-  let stat;
-  try {
-    stat = statSync(gitPath);
-  } catch {
-    return null;
-  }
-  if (!stat.isFile()) return null;
-  const match = readFileSync(gitPath, "utf8").trim().match(/^gitdir:\s*(.+)$/);
-  if (!match) return null;
-  const gitdir = resolve(dirname(gitPath), match[1]);
-  const worktree = gitdir.match(/^(.+)[/\\]\.git[/\\]worktrees[/\\]([^/\\]+)$/);
-  if (worktree) return { parentName: basename(worktree[1]), kind: "worktree" };
-  const submodule = gitdir.match(/^(.+)[/\\]\.git[/\\]modules[/\\](.+)$/);
-  if (submodule) return { parentName: basename(submodule[1]), parentPath: submodule[1], kind: "submodule" };
-  return null;
-}
-
-/** Project key for a working directory: repo name, "<parent>/<worktree>" for worktrees. */
-export function projectKeyForPath(cwd) {
+/**
+ * Project key for a working directory: the repository name. A git worktree uses its main repository's key unless
+ * the worktree mode is "separate" ("<parent>/<worktree>"); a submodule is "<parent>/<path>". Same rule as the hooks.
+ */
+export function projectKeyForPath(cwd, options = {}) {
   if (!cwd || !cwd.trim()) return "unknown-project";
   const expanded = cwd.startsWith("~/") ? join(homedir(), cwd.slice(2)) : cwd;
-  const repoRoot = gitRepoRoot(expanded);
-  const source = repoRoot ?? expanded;
-  const name = basename(source) || "unknown-project";
-  const info = worktreeParent(repoRoot ?? expanded);
-  if (info?.kind === "worktree") return info.parentName === name ? info.parentName : `${info.parentName}/${name}`;
-  if (info?.kind === "submodule") {
-    const rel = relative(info.parentPath, repoRoot ?? expanded);
-    return rel && !rel.startsWith("..") && !isAbsolute(rel) ? `${info.parentName}/${rel.split(sep).join("/")}` : name;
-  }
-  return name;
+  return checkoutKey(gitRepoRoot(expanded) ?? expanded, options);
 }
 
 // ---- Sessions recorded in an agent scratch folder: derive the real project from the paths its tools touched.

@@ -2,18 +2,27 @@
 // survive a restart. Only settings that backend code reads are listed (see src/hub/settings.mjs).
 import { button, emptyState, skeleton, toast } from "../ui-components.js";
 import { api, h } from "../ui-dom.js";
+import { t } from "../ui-i18n.js";
 import { region } from "../ui-region.js";
 
+// A setting's label comes from the catalogue when it has one (settings.label.<key>), else from the server.
+function labelOf(spec) {
+  const key = `settings.label.${spec.key}`;
+  const text = t(key);
+  return text === key ? spec.label : text;
+}
+
 function settingField(spec) {
+  const label = labelOf(spec);
   const id = `ui-setting-${spec.key.replace(/[^a-zA-Z0-9]/g, "-")}`;
   let control;
-  if (spec.kind === "boolean") control = h("input", { type: "checkbox", id, "aria-label": spec.label, checked: !!spec.value });
-  else if (spec.kind === "enum") control = h("select", { id, "aria-label": spec.label }, ...(spec.options ?? []).map((opt) => h("option", { value: opt, selected: opt === spec.value }, opt)));
-  else if (spec.kind === "int") control = h("input", { type: "number", id, "aria-label": spec.label, value: String(spec.value ?? "") });
-  else if (spec.kind === "list") control = h("input", { type: "text", id, "aria-label": spec.label, value: (spec.value ?? []).join(", ") });
-  else control = h("input", { type: "text", id, "aria-label": spec.label, value: String(spec.value ?? "") });
+  if (spec.kind === "boolean") control = h("input", { type: "checkbox", id, "aria-label": label, checked: !!spec.value });
+  else if (spec.kind === "enum") control = h("select", { id, "aria-label": label }, ...(spec.options ?? []).map((opt) => h("option", { value: opt, selected: opt === spec.value }, opt)));
+  else if (spec.kind === "int") control = h("input", { type: "number", id, "aria-label": label, value: String(spec.value ?? "") });
+  else if (spec.kind === "list") control = h("input", { type: "text", id, "aria-label": label, value: (spec.value ?? []).join(", ") });
+  else control = h("input", { type: "text", id, "aria-label": label, value: String(spec.value ?? "") });
   const row = h("div", { class: "ui-setting-row" },
-    h("label", { for: id, class: "ui-setting-label" }, spec.label),
+    h("label", { for: id, class: "ui-setting-label" }, label),
     control);
   return { row, control };
 }
@@ -24,11 +33,11 @@ export function settingsView() {
     load: async () => (await api("/api/hub/settings")).settings ?? [],
     skeleton: () => skeleton({ kind: "card", count: 3 }),
     isEmpty: (settings) => !settings.length,
-    empty: () => emptyState({ title: "No settings", text: "No editable settings are defined.", compact: true }),
-    errorTitle: "Could not load settings",
+    empty: () => emptyState({ title: t("settings.emptyTitle"), text: t("settings.emptyText"), compact: true }),
+    errorTitle: t("settings.errorTitle"),
     render: (settings) => {
       controls.clear();
-      const save = button({ label: "Save", variant: "primary", icon: "check", onClick: async () => {
+      const save = button({ label: t("settings.save"), variant: "primary", icon: "check", onClick: async () => {
         const patch = {};
         for (const spec of settings) {
           const control = controls.get(spec.key);
@@ -40,10 +49,10 @@ export function settingsView() {
         }
         try {
           await api("/api/hub/settings", { method: "PUT", body: patch });
-          toast("Settings saved.", { tone: "success" });
+          toast(t("settings.saved"), { tone: "success" });
           reg.reload({ soft: true });
         } catch (error) {
-          toast(error.message ?? "Could not save settings.", { tone: "danger" });
+          toast(error.message ?? t("settings.saveFailed"), { tone: "danger" });
         }
       } });
       const rows = settings.map((spec) => {
@@ -52,7 +61,7 @@ export function settingsView() {
         return field.row;
       });
       return h("div", {},
-        h("p", { class: "ui-meta" }, "Values are saved in the hub and survive a restart. The provider, fact budgets and excluded projects are set with environment variables, and redaction is always on."),
+        h("p", { class: "ui-meta" }, t("settings.intro")),
         h("div", { class: "ui-settings-form" }, ...rows),
         h("div", { class: "ui-acts" }, save));
     },

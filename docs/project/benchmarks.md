@@ -17,7 +17,7 @@ Not measured:
 
 - Whether a model gave a correct answer. There is no published reader-and-judge run.
 - Retrieval on your own memories, in other languages, or in long real sessions.
-- The claude-mem Chroma index, unless it was running during the claude-mem baseline. The committed files do not say.
+- How complete claude-mem's Chroma index was when each question ran. It was running for the 15.17.0 baseline. For 15.2.0 the committed files do not say whether it was.
 - Sync, remote MCP and team mode.
 
 Every number below is `measured-by-us`, with the command. None is a vendor claim.
@@ -91,26 +91,30 @@ The method is in [`bench/locomo-retrieval.mjs`](https://github.com/mohamed-ashra
 
 ## Results
 
-All rows are from `bench/results/2026-10-26/`, generated on 2026-10-26. The result files do not record the machine, the Bun version or the operating system, so latency columns cannot be compared across machines.
+All Aletheia rows are from `bench/results/2026-10-26/`, generated on 2026-10-26. The claude-mem 15.17.0 row is from `bench/results/2026-11-11/`. The result files do not record the machine, the Bun version or the operating system, so latency columns cannot be compared across machines.
 
 | Run | Questions | Recall@5 | MRR | ms/query |
 |---|---|---|---|---|
 | claude-mem 15.2.0 (as shipped), raw turns | 1,536 | 36.0% | 0.285 | p50 1,699 ms, p95 2,824 ms (idle, 40 queries) |
+| claude-mem 15.17.0 (as shipped, Chroma on), raw turns | 1,536 | 43.5% | 0.377 | mean 1,079 ms (HTTP, all 1,536 queries) |
 | Raw turns, keyword (BM25) | 1,536 | 55.3% | 0.482 | 2.00 |
 | Raw turns, hybrid | 1,536 | 57.4% | 0.497 | 3.72 |
 | Dataset facts, all 10 | 1,536 | 64.8% | 0.591 | 5.53 |
 | Dataset facts, 3 conversations | 383 | 67.4% | 0.620 | 5.80 |
-| Dataset facts, 3 conversations, + rerank | 383 | 73.9% | 0.686 | 251.16 |
-| Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
+| Dataset facts, 3 conversations, + rerank (bench only) | 383 | 73.9% | 0.686 | 251.16 |
+| Dataset facts, all 10, + rerank (bench only) | 1,536 | 72.3% | 0.680 | 646.19 |
 | Rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
 Notes on the table:
 
 - The Aletheia rows come from `bun scripts/compare-bench.mjs`. The BM25 row was added from the same output.
-- The claude-mem row comes from the project README. The raw output of that run is not committed in `bench/results/`. It was produced by [`bench/claude-mem-baseline.mjs`](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/bench/claude-mem-baseline.mjs), which saves each turn through claude-mem's save endpoint and queries its search endpoint with a limit of 10. The date of that run is not recorded in a committed file.
-- Latest claude-mem release on 2026-10-29 is v15.6.0 (`gh api repos/thedotmack/claude-mem/releases/latest`). The baseline used 15.2.0 and was not re-run.
+- The claude-mem 15.2.0 row comes from the project README. The raw output of that run is not committed. The date of that run, and whether Chroma was running, are not recorded in a committed file.
+- The claude-mem 15.17.0 row is `measured-by-us (bun bench/claude-mem-baseline.mjs --data bench/data/locomo10.json --port 37795 --out bench/results/2026-11-11/claude-mem-15.17.0.json)`, run on 2026-11-11. The raw output is committed. The harness is [`bench/claude-mem-baseline.mjs`](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/bench/claude-mem-baseline.mjs): it saves each turn through `POST /api/memory/save` and queries `GET /api/search` with a limit of 10. Both endpoints still exist in 15.17.0 and the harness did not change. The worker ran isolated (temporary `HOME`, own data directory, port 37795, telemetry and auto-update off) with its Chroma vector index running. Chroma indexes saved turns in the background and the harness waits a fixed 15 seconds per conversation, so some turns may not have been in the vector index when their questions ran. This was not measured. Mean latency (1,079 ms) was measured on a busy machine while Chroma was embedding.
+- Latest claude-mem release on 2026-11-11 is v15.17.0 (`gh api repos/thedotmack/claude-mem/releases/latest`). The 15.2.0 and 15.17.0 rows differ in version and in recorded conditions, so the gain from 36.0% to 43.5% cannot be assigned to the version alone.
 - claude-mem is built to ingest through its language-model observer. Raw saves are the closest model-free equivalent, so the baseline does not show how claude-mem does through its normal path.
 - The hybrid and rerank rows need the optional embeddings package. A default install without it searches by keyword only.
+- **The "+ rerank (bench only)" rows are not what `aletheia search` does by default.** They rerank the top 30 candidates of the benchmark's own hybrid search over dataset-supplied facts, with `bench/locomo-retrieval.mjs --rerank`. Product search has the same cross-encoder as an opt-in step (setting `search.rerank`, or `aletheia search --rerank`), off by default. It reorders the fused list of your own facts and memories, which is not the benchmark's candidate set, so these numbers do not transfer to it as they stand. See [Search](../concepts/search.md#optional-rerank).
+- Check of the product step, 2026-11-11, one conversation: `bun bench/locomo-retrieval.mjs --data bench/data/locomo10.json --limit 1 --facts dataset --rerank` (conv-26, 150 questions) gave Recall@5 62.2% for `hybrid+facts` and 70.3% with the rerank step, at 272.69 ms per question for the cross-encoder, measured on a busy machine. This runs the bench harness, not `aletheia search`; the product step uses the same `src/hub/rerank.mjs` scorer. It is one conversation and is not added to the table.
 - Dataset facts are an experiment, not a feature. They show what good facts could add: about 7 points of Recall@5 over raw turns.
 
 Compare the claude-mem row with the raw-turns rows only. They are the only rows where both systems store the same raw text. The speed columns are not like for like: one is an in-process call and the other is an HTTP request to a worker.

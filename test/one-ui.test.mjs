@@ -149,7 +149,7 @@ describe("the one page", () => {
     expect(data.tools.length).toBe(7);
     for (const tool of data.tools) {
       expect(tool).toHaveProperty("installed");
-      expect(["full", "mcp+rules", "rules-only"]).toContain(tool.capabilities);
+      expect(["full", "capture-only", "mcp+rules", "rules-only"]).toContain(tool.capabilities);
       expect(tool.hooks).toHaveProperty("present");
       expect(tool.hooks).toHaveProperty("expected");
       expect(tool).toHaveProperty("lastCapture");

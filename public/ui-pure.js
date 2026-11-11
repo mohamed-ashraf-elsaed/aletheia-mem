@@ -1,5 +1,6 @@
 // DOM-free helpers for the component system. Nothing here touches document, window or fetch, so each
 // function is covered by a plain unit test. Components import from here; nothing here imports a component.
+import { t } from "./ui-i18n.js";
 
 export const PAGE_SIZES = [10, 25, 50, 100];
 export const DEFAULT_PAGE_SIZE = 25;
@@ -36,7 +37,7 @@ export function pagerModel({ total = 0, limit = DEFAULT_PAGE_SIZE, offset = 0 } 
     offset: (page - 1) * size,
     hasPrev: page > 1, hasNext: page < pageCount,
     pages,
-    label: count === 0 ? "No results" : `Showing ${from} to ${to} of ${count}`,
+    label: count === 0 ? t("pure.noResults") : t("pure.showing", { from, to, count }),
   };
 }
 
@@ -64,22 +65,25 @@ const UNITS = [
   ["minute", 60_000, "min"],
 ];
 
+const AGO_KEYS = { y: "pure.agoY", mo: "pure.agoMo", w: "pure.agoW", d: "pure.agoD", h: "pure.agoH", min: "pure.agoMin" };
+const IN_KEYS = { y: "pure.inY", mo: "pure.inMo", w: "pure.inW", d: "pure.inD", h: "pure.inH", min: "pure.inMin" };
+
 /** "just now", "3 min ago", "2 h ago", "in 5 min". Other locales use Intl.RelativeTimeFormat. */
 export function relativeTime(value, now = Date.now(), locale = "en") {
   const ms = toMs(value);
-  if (!Number.isFinite(ms)) return "unknown";
+  if (!Number.isFinite(ms)) return t("pure.unknown");
   const diff = ms - now;
   const abs = Math.abs(diff);
-  if (abs < 45_000) return locale.startsWith("en") ? "just now" : new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(0, "second");
+  if (abs < 45_000) return locale.startsWith("en") ? t("pure.justNow") : new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(0, "second");
   const [unit, size, short] = UNITS.find(([, span]) => abs >= span) ?? UNITS[UNITS.length - 1];
   const count = Math.round(abs / size);
-  if (locale.startsWith("en")) return diff < 0 ? `${count} ${short} ago` : `in ${count} ${short}`;
+  if (locale.startsWith("en")) return t(diff < 0 ? AGO_KEYS[short] : IN_KEYS[short], { count });
   return new Intl.RelativeTimeFormat(locale, { numeric: "auto", style: "short" }).format(Math.sign(diff) * count, unit);
 }
 
 export function formatDateTime(value, locale = "en", timeZone) {
   const ms = toMs(value);
-  if (!Number.isFinite(ms)) return "unknown";
+  if (!Number.isFinite(ms)) return t("pure.unknown");
   return new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short", timeZone }).format(ms);
 }
 
@@ -178,7 +182,7 @@ export function regionReduce(state, event, now = Date.now()) {
       return { status: empty ? "empty" : "success", data: event.data ?? null, error: null, refreshing: false, updatedAt: now, attempts: 0 };
     }
     case "fail": {
-      const message = event.error?.message ?? String(event.error ?? "Unknown error");
+      const message = event.error?.message ?? String(event.error ?? t("pure.unknownError"));
       // A failed refresh keeps the old data visible and reports the error beside it.
       return state.refreshing && state.data != null
         ? { ...state, refreshing: false, error: message }
@@ -210,11 +214,11 @@ export function nextPollDelay({ base = 5000, max = 60_000, failures = 0, hidden 
 
 /** "updated 3 s ago" for the status bar; recomputed by a 1 s ticker. */
 export function updatedAgo(at, now = Date.now()) {
-  if (!Number.isFinite(at)) return "not yet updated";
+  if (!Number.isFinite(at)) return t("pure.notYetUpdated");
   const seconds = Math.max(0, Math.round((now - at) / 1000));
-  if (seconds < 60) return `updated ${seconds} s ago`;
+  if (seconds < 60) return t("pure.updatedSeconds", { count: seconds });
   const minutes = Math.round(seconds / 60);
-  return minutes < 60 ? `updated ${minutes} min ago` : `updated ${Math.round(minutes / 60)} h ago`;
+  return minutes < 60 ? t("pure.updatedMinutes", { count: minutes }) : t("pure.updatedHours", { count: Math.round(minutes / 60) });
 }
 
 /** Cap a number for display in a tile counting up: the value shown at progress t (0 to 1), eased out. */

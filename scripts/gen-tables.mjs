@@ -64,19 +64,20 @@ const note = (format, text) =>
   format === "html" ? `<p class="note">${inlineHtml(text)}</p>` : `_${text}_`;
 
 export function renderTools(format = "md", installers = INSTALLERS) {
-  const headers = ["Tool", "Level", "Verification", "Hook events installed"];
+  const headers = ["Tool", "Capture", "Context", "Verification", "Hook events installed"];
   const rows = installers.map((installer) => [
     installer.id,
-    installer.capabilities,
+    installer.capture,
+    installer.context,
     installer.verification === "mcp-verified"
       ? `MCP connection ${installer.toolVersion} on ${installer.verifiedOn}; ${installer.hookNote ?? "hooks not run"}`
       : installer.verification === "tested-on-real-install"
         ? "tested on a real install"
         : "config written from docs, not tested on a real install",
-    installer.events?.length ? installer.events.join(", ") : "none (MCP and rules only)",
+    installer.events?.length ? installer.events.map((event) => (installer.testOnlyEvents?.includes(event) ? `${event} (tests only)` : event)).join(", ") : "none (MCP and rules only)",
   ]);
   const lines = [table(format, headers, rows)];
-  lines.push(note(format, "Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run."));
+  lines.push(note(format, "Generated from src/hub/install.mjs via `aletheia install --list`. Capture means a hook event records activity; context means a hook injects memory at session start. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run."));
   return lines.join("\n\n");
 }
 
@@ -97,7 +98,8 @@ export function renderCapabilities(format = "md", root = DEFAULT_ROOT) {
 
 export function latestResultsDir(resultsRoot) {
   if (!existsSync(resultsRoot)) return null;
-  const dirs = readdirSync(resultsRoot).filter((name) => statSync(join(resultsRoot, name)).isDirectory()).sort();
+  const holdsRuns = (dir) => readdirSync(dir).some((name) => name.endsWith(".json") && !name.startsWith("claude-mem-"));
+  const dirs = readdirSync(resultsRoot).filter((name) => statSync(join(resultsRoot, name)).isDirectory() && holdsRuns(join(resultsRoot, name))).sort();
   return dirs.at(-1) ? join(resultsRoot, dirs.at(-1)) : null;
 }
 
@@ -107,8 +109,8 @@ const RUNS = [
   { file: "raw-turns.json", strategy: "hybrid", label: "Raw turns, all 10 conversations" },
   { file: "dataset-facts.json", strategy: "hybrid+facts", label: "Dataset facts, all 10" },
   { file: "dataset-facts-3-rerank.json", strategy: "hybrid+facts", label: "Dataset facts, 3 conversations" },
-  { file: "dataset-facts-3-rerank.json", strategy: "hybrid+facts+rerank", label: "Dataset facts, 3 conversations, + rerank" },
-  { file: "dataset-facts-rerank.json", strategy: "hybrid+facts+rerank", label: "Dataset facts, all 10, + rerank" },
+  { file: "dataset-facts-3-rerank.json", strategy: "hybrid+facts+rerank", label: "Dataset facts, 3 conversations, + rerank (bench only)" },
+  { file: "dataset-facts-rerank.json", strategy: "hybrid+facts+rerank", label: "Dataset facts, all 10, + rerank (bench only)" },
   { file: "our-facts-rules.json", strategy: "hybrid+facts", label: "Our rule-extracted facts, all 10" },
 ];
 
@@ -139,6 +141,32 @@ export function baselineRow(root = DEFAULT_ROOT) {
   };
 }
 
+// Rows from committed claude-mem baseline files (bench/results/<date>/claude-mem-<version>.json).
+export function baselineFileRows(root = DEFAULT_ROOT) {
+  const base = join(root, "bench/results");
+  if (!existsSync(base)) return [];
+  const rows = [];
+  for (const day of readdirSync(base).sort()) {
+    const dir = join(base, day);
+    if (!statSync(dir).isDirectory()) continue;
+    for (const name of readdirSync(dir).sort()) {
+      const match = name.match(/^claude-mem-(.+)\.json$/);
+      if (!match) continue;
+      const doc = JSON.parse(readFileSync(join(dir, name), "utf8"));
+      if (!doc.n || doc.results) continue;
+      rows.push({
+        label: `claude-mem ${match[1]} (as shipped), raw turns — measured-by-us`,
+        questions: withCommas(doc.n),
+        recall: `${((100 * doc["R@5"]) / doc.n).toFixed(1)}%`,
+        mrr: (doc.mrr / doc.n).toFixed(3),
+        latency: `mean ${withCommas(Math.round(doc.ms / doc.n))} ms (HTTP)`,
+        source: `bench/results/${day}/${name}`,
+      });
+    }
+  }
+  return rows;
+}
+
 export function renderBench(format = "md", resultsDir = latestResultsDir(join(DEFAULT_ROOT, "bench/results")), root = DEFAULT_ROOT) {
   if (!resultsDir || !existsSync(resultsDir)) {
     return note(format, "No benchmark results found. Run `bun run bench:locomo` and write JSON under bench/results/<date>/ first.");
@@ -150,6 +178,10 @@ export function renderBench(format = "md", resultsDir = latestResultsDir(join(DE
   if (baseline) {
     rows.push([baseline.label, baseline.questions, baseline.recall, baseline.mrr, baseline.latency]);
     sources.push(baseline.source);
+  }
+  for (const row of baselineFileRows(root)) {
+    rows.push([row.label, row.questions, row.recall, row.mrr, row.latency]);
+    sources.push(row.source);
   }
   for (const spec of RUNS) {
     const run = loadRun(resultsDir, spec.file);

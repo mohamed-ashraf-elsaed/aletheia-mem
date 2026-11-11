@@ -60,7 +60,7 @@ MCP is an open standard for connecting AI tools to other systems. The Claude Cod
 - Claude Code warns when one tool result is over 10,000 tokens and caps it at 25,000 by default.
 - The docs tell you to trust a server before connecting it, because a server that fetches outside content can carry prompt injection.
 
-An MCP memory server is one that stores and returns memories through these tools. Aletheia has one: 13 tools, listed in [MCP tools](../reference/mcp-tools.md). An MCP server gives Claude tools to call, such as a memory search. Loading context at the start of a session is the job of a hook.
+An MCP memory server is one that stores and returns memories through these tools. Aletheia has one: 14 core tools plus 2 team tools, listed in [MCP tools](../reference/mcp-tools.md). An MCP server gives Claude tools to call, such as a memory search. Loading context at the start of a session is the job of a hook.
 
 ## Plugins and hooks
 
@@ -68,7 +68,7 @@ A plugin is a directory of skills, agents, hooks and MCP servers that Claude Cod
 
 A hook is a command that Claude Code runs at a point in the session. A `SessionStart` hook can return `hookSpecificOutput.additionalContext`, and Claude Code inserts it as a system reminder at the start of the conversation. The other events include `UserPromptSubmit`, `PostToolUse`, `Stop` and `SessionEnd`. Source: https://code.claude.com/docs/en/hooks, 2026-10-29.
 
-Hooks are how a memory tool loads context without waiting for Claude to ask, and how it captures what happened. Aletheia is not a Claude Code plugin. Its installer edits your settings files directly. See below.
+Hooks are how a memory tool loads context without waiting for Claude to ask, and how it captures what happened. Aletheia ships a Claude Code plugin manifest in `.claude-plugin/` (`plugin.json` and `marketplace.json`) with the MCP server and five hooks; the manifest is marked `from-docs-only`, so it has not been installed in a real Claude Code. The other route, `aletheia install claude-code --write`, edits your settings files directly. See [Install](../start/installation.md#install-as-a-claude-code-plugin).
 
 ## Where Aletheia fits
 

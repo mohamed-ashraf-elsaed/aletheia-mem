@@ -1,6 +1,21 @@
 #!/usr/bin/env bun
-// Start the work view: bun bin/aletheia-server.mjs [--host 0.0.0.0] [--behind-tls]
+// Start the work view: bun bin/aletheia-server.mjs [--host 0.0.0.0] [--behind-tls] [--help]
 // A non-loopback bind turns on Hub login; without --behind-tls it prints a warning.
+const HELP = `aletheia-server: the dashboard, the HTTP API and the extraction worker.
+
+Usage: aletheia-server [--host addr] [--behind-tls] [--help]
+
+  --host addr    bind address (default 127.0.0.1; a non-loopback bind turns on Hub login)
+  --behind-tls   a TLS-terminating proxy sits in front; login cookies are sent with Secure
+  --help, -h     print this text and exit
+
+Environment: ALETHEIA_PORT (default 37790), ALETHEIA_DATA_DIR, ALETHEIA_PROVIDER, ALETHEIA_API_KEY.
+`;
+if (process.argv.slice(2).some((arg) => arg === "--help" || arg === "-h")) {
+  process.stdout.write(HELP);
+  process.exit(0);
+}
+
 import { loadConfig } from "../src/config.mjs";
 import { createAutoRefresh } from "../src/refresh/auto-refresh.mjs";
 import { startServer } from "../src/server.mjs";
@@ -25,6 +40,9 @@ console.log(`  source db : ${config.sourceDb} (read-only)`);
 console.log(`  data dir  : ${config.dataDir}`);
 console.log(`  refresh   : ${autoRefresh ? `on (${config.provider}, every ${Math.round(config.refreshCheckMs / 60000)} min)` : "off (set ALETHEIA_PROVIDER=claude-cli|openai to enable)"}`);
 console.log(`  extraction: worker on (${config.provider === "none" ? "rule-based" : config.provider})`);
+if (!["127.0.0.1", "localhost", "::1"].includes(config.host) && !config.apiKey) {
+  console.log(`  warning  : remote mode with no ALETHEIA_API_KEY: the dashboard needs a login, and tools cannot use /v1 or /mcp until the key is set`);
+}
 if (!["127.0.0.1", "localhost", "::1"].includes(config.host) && !config.behindTls) {
   console.log(`  warning  : this bind is not TLS-terminated and login cookies are sent without Secure; use --behind-tls with a reverse proxy or tunnel`);
 }

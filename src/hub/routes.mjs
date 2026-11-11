@@ -5,7 +5,7 @@ import { isAbsolute, join, resolve } from "node:path";
 import { extname } from "node:path";
 import { makeProvider } from "../refresh/providers.mjs";
 import { isProjectExcluded, normalizeHook } from "./capture.mjs";
-import { healthReport } from "./health.mjs";
+import { createHealthCache, healthReport } from "./health.mjs";
 import { projectKeyForPath } from "../readmodel/project.mjs";
 import { compressRecent } from "./compress.mjs";
 import { importClaudeMem } from "./importers.mjs";
@@ -31,9 +31,12 @@ import { earlierOf, epochOrIso, olderThanCutoff, pageInfo, pagingOf, slicePage, 
 import { auditPage, dismissedPage, reviewRows, ruleSuggestionsPage, searchPage, sessionsPage } from "./lists.mjs";
 import { AlertStore, deliverDue, extractionFailures, queueDepth } from "./alerts.mjs";
 import { applyErase, erasePlan, loadEraseKey, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } from "./erasure.mjs";
+import { planProjectMerge } from "./projects.mjs";
 import { teamRequest } from "./team-api.mjs";
 import { TeamStore } from "./team.mjs";
 import { readSettings, writeSettings } from "./settings.mjs";
+import { denseChannels, denseQuery } from "./dense.mjs";
+import { KEY_CHALLENGE, KEY_REQUIRED, bearerMatches } from "./api-key.mjs";
 
 const MAX_BODY = 8 * 1024 * 1024;
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml" };
@@ -49,11 +52,15 @@ function absDir(p, what = "projectDir") {
   return resolve(p);
 }
 
-export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) {
+export function createHubRoutes({ hub, config, liveHub = null, alerts = null, liveTickets = null, embedder = undefined }) {
   const mcpScript = join(import.meta.dir, "..", "..", "bin", "mcp.mjs");
   const argv = () => mcpCommand({ bun: process.execPath, script: mcpScript });
   const qs = (url) => Object.fromEntries(url.searchParams);
   const live = (frame) => liveHub?.broadcast(frame);
+  const cachedHealth = createHealthCache();
+  // Warm the cache right after startup so the first /healthz does not pay for the integrity check.
+  const warm = setTimeout(() => { try { cachedHealth(hub); } catch { /* the hub was closed first */ } }, 0);
+  warm.unref?.();
   let syncStore = null;
   const getSyncStore = () => syncStore ?? (syncStore = new SyncStore(config.syncDb));
   let teamStore = null;
@@ -207,7 +214,8 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
 </html>`;
         return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": "frame-ancestors 'none'", "X-Frame-Options": "DENY" } });
       }
-      const rel = decodeURIComponent(pathname.slice(5));
+      let rel;
+      try { rel = decodeURIComponent(pathname.slice(5)); } catch { return h.json({ error: "Not found." }, 404); }
       if (rel.includes("..")) return h.json({ error: "Not found." }, 404);
       const file = join(config.hubUiDir, rel);
       if (!existsSync(file) || !statSync(file).isFile()) return h.json({ error: "Not found." }, 404);
@@ -215,15 +223,13 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
     }
 
     if (pathname === "/healthz" && method === "GET") {
-      const health = healthReport(hub);
+      const health = cachedHealth(hub);
       return h.json(health, health.status === "ok" ? 200 : 503);
     }
     const denied = h.guarded(request, h.server, { post: method !== "GET" && method !== "HEAD" });
     if (denied) return denied;
-    if (isV1 && config.apiKey) {
-      const auth = request.headers.get("authorization") ?? "";
-      if (auth !== `Bearer ${config.apiKey}`) return h.json({ error: "A valid bearer key is required." }, 401);
-    }
+    // The optional API key guards /api/hub as well as /v1: both return memory and change data.
+    if (!bearerMatches(request, config.apiKey)) return h.json({ error: KEY_REQUIRED }, 401, KEY_CHALLENGE);
     const tool = request.headers.get("x-tool") ?? undefined;
     let m;
 
@@ -348,6 +354,8 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
         return h.json({ ...report, ok: report.status === "ok" }, report.status === "ok" ? 200 : 503);
       }
       if (pathname === "/v1/info" && method === "GET") return h.json({ name: "aletheia-mem", version: VERSION, api: "v1", stats: hub.stats() });
+      // A one-time ticket for the /v1/live socket, for a browser that holds the key but cannot send headers on a WebSocket.
+      if (pathname === "/v1/live/ticket" && method === "POST" && liveTickets) return h.json(liveTickets.issue());
       if (pathname === "/v1/work" && method === "GET") {
         const q = qs(url);
         return h.json({ ...workOverview(hub, {
@@ -413,33 +421,26 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
         const b = await readJson(request);
         need(typeof b.query === "string" && b.query.trim(), "query is required.");
         const scope = b.scope === "all" ? "all" : "current";
+        // Hybrid ranking when the optional embedding package and stored vectors exist; otherwise keywords plus a note.
+        const { queryVec, dense, notice } = await denseQuery({ store: hub, query: b.query, embedder });
+        const channels = denseChannels(dense, { notice });
         if (b.offset != null || b.paged === true || b.older_than_days != null) {
           const paging = pagingOf(b);
-          const page = searchPage(hub, { query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, scope, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, since: whenOf(b.since), until: earlierOf(whenOf(b.until, { end: true }), olderThanCutoff(b.older_than_days)), order: b.order, mix: b.mix === true, ...paging });
-          const detail = page.total === 0 ? hub.searchDetailed({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: 1, scope }) : { reason: null };
+          const page = searchPage(hub, { query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, scope, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, since: whenOf(b.since), until: earlierOf(whenOf(b.until, { end: true }), olderThanCutoff(b.older_than_days)), order: b.order, mix: b.mix === true, queryVec, ...paging });
+          const detail = page.total === 0 ? hub.searchDetailed({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: 1, scope, queryVec }) : { reason: null };
           return h.json({
             ...page,
             ...pageInfo({ total: page.total, ...paging, count: page.facts.length + page.results.length }),
             reason: detail.reason,
-            channels: {
-              facts: { lexical: true, keys: true, vector: false },
-              episodes: { lexical: true, vector: false },
-              fused: "none",
-              note: "This route answers from keyword channels only. Use the CLI with --semantic, or POST a query vector, for dense results.",
-            },
+            channels,
           });
         }
-        const detailed = hub.searchDetailed({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope });
+        const detailed = hub.searchDetailed({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope, queryVec });
         return h.json({
-          results: hub.search({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope }),
-          facts: hub.searchFacts({ query: b.query, project: b.project, limit: b.limit ?? 20, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, scope }),
+          results: hub.search({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope, queryVec }),
+          facts: hub.searchFacts({ query: b.query, project: b.project, limit: b.limit ?? 20, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, scope, queryVec }),
           reason: detailed.reason,
-          channels: {
-            facts: { lexical: true, keys: true, vector: false },
-            episodes: { lexical: true, vector: false },
-            fused: "none",
-            note: "This route answers from keyword channels only. Use the CLI with --semantic, or POST a query vector, for dense results.",
-          },
+          channels,
         });
       }
       if (pathname === "/v1/timeline" && method === "POST") {
@@ -450,6 +451,11 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
         const b = await readJson(request);
         need(Array.isArray(b.ids), "ids must be an array.");
         return h.json({ observations: hub.getMany(b.ids) });
+      }
+      if (pathname === "/v1/entities" && method === "GET") {
+        const q = qs(url);
+        const { entityCounts } = await import("./entities.mjs");
+        return h.json({ entities: entityCounts(hub, { project: q.project || null, type: q.type || null, limit: Number(q.limit) || 100 }) });
       }
       if (pathname === "/v1/facts" && method === "GET") {
         const q = qs(url);
@@ -531,6 +537,10 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
       if (method === "DELETE") return hub.remove(id) ? h.json({ deleted: true }) : h.json({ error: "No memory has that id." }, 404);
     }
     if (pathname === "/api/hub/projects" && method === "GET") return h.json({ projects: hub.projects() });
+    if (pathname === "/api/hub/projects/merge-plan" && method === "GET") {
+      const q = qs(url);
+      try { return h.json(planProjectMerge(hub, q.from, q.into)); } catch (error) { if (error instanceof RangeError) throw new BadRequest(error.message); throw error; }
+    }
     if (pathname === "/api/hub/projects/merge" && method === "POST") {
       const b = await readJson(request);
       return h.json(hub.mergeProjects(b.from, b.into));

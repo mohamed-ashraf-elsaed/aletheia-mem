@@ -1,10 +1,9 @@
-// entity summaries cite their source facts, a contested belief stays visible with both sides, and
-// regeneration is deterministic. Rule-based only; model-generated summary prose is UNVERIFIED.
+// entity summaries cite their source facts, and a contested belief stays visible with both sides, in the summary too.
 import { describe, expect, test } from "bun:test";
 import { HubStore } from "../src/hub/store.mjs";
 import { attachFactEntities, upsertEntity } from "../src/hub/entities.mjs";
 import { buildEntitySummary } from "../src/hub/summaries.mjs";
-import { beliefSignature, beliefView, changedBeyond, contestedFacts, entitySummaryStale } from "../src/hub/beliefs.mjs";
+import { contestedFacts } from "../src/hub/beliefs.mjs";
 
 function seed(store) {
   const entity = upsertEntity(store, { project: "p", name: "database", type: "concept" });
@@ -23,33 +22,28 @@ describe("beliefs", () => {
     const groups = contestedFacts(store, { project: "p" });
     expect(groups.length).toBe(1);
     expect(groups[0].map((fact) => fact.id)).toEqual(expect.arrayContaining([older.id, newer.id]));
-    expect(beliefView(older.fact)).toMatchObject({ subject: "database", object: "Postgres 15", status: "active" });
     store.close();
   });
 
-  test("an entity summary cites its source facts and is deterministic", () => {
+  test("an entity summary cites its source facts, names the contested belief and is deterministic", () => {
     const store = new HubStore(":memory:");
     const { entity, older, newer } = seed(store);
     const first = buildEntitySummary(store, { entityId: entity.id, now: 1000 });
     const second = buildEntitySummary(store, { entityId: entity.id, now: 2000 });
     expect(first.factIds).toEqual(expect.arrayContaining([older.id, newer.id]));
+    expect(first.summary.text).toContain("Contested:");
+    expect(first.summary.text).toMatch(/database uses: Postgres 1[56] vs Postgres 1[56]/);
     expect(second.summary.text).toBe(first.summary.text);
-    expect(beliefSignature([older, newer])).toBe(beliefSignature([older, newer]));
     store.close();
   });
 
-  test("regeneration is gated on a >20% source-fact change", () => {
-    expect(changedBeyond([1, 2, 3, 4, 5], [1, 2, 3, 4])).toBe(false);
-    expect(changedBeyond([1, 2, 3, 4, 5], [1, 2, 3])).toBe(true);
-
+  test("a settled entity has no Contested section", () => {
     const store = new HubStore(":memory:");
-    const { entity, older } = seed(store);
-    const summary = buildEntitySummary(store, { entityId: entity.id, now: 1000 });
-    expect(entitySummaryStale(store, { entityId: entity.id, summary: summary.summary })).toBe(false);
-    const episode = store.addEpisode({ project: "p", text: "database now uses MySQL", createdAtEpoch: 2 });
-    const third = store.addFact({ project: "p", episodeId: episode.id, subject: "database", predicate: "uses", object: "MySQL", text: "database uses MySQL" });
-    attachFactEntities(store, { factId: third.id, project: "p", subject: "database", object: "MySQL", text: "database uses MySQL", entities: [{ name: "database", type: "concept" }] });
-    expect(entitySummaryStale(store, { entityId: entity.id, summary: summary.summary })).toBe(true);
+    const entity = upsertEntity(store, { project: "p", name: "cache", type: "concept" });
+    const episode = store.addEpisode({ project: "p", text: "cache uses Redis", createdAtEpoch: 1 });
+    const fact = store.addFact({ project: "p", episodeId: episode.id, subject: "cache", predicate: "uses", object: "Redis", text: "cache uses Redis" });
+    attachFactEntities(store, { factId: fact.id, project: "p", subject: "cache", object: "Redis", text: "cache uses Redis", entities: [{ name: "cache", type: "concept" }] });
+    expect(buildEntitySummary(store, { entityId: entity.id, now: 1000 }).summary.text).not.toContain("Contested:");
     store.close();
   });
 });

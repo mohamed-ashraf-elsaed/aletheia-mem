@@ -11,7 +11,9 @@ import { basename, dirname, join, relative, resolve, sep } from "node:path";
 import { isTracked, trackedFiles } from "./tracked.mjs";
 
 const ROOT = process.env.SITE_ROOT ? resolve(process.env.SITE_ROOT) : join(import.meta.dir, "..");
-const SITE = join(ROOT, "site");
+// SITE_OUT writes the generated files to another folder. Its hand-written files (index.html, fonts, CSS) must already be
+// there, so copy site/ first. The default is the tracked site/ folder, which the release workflow rebuilds.
+const SITE = process.env.SITE_OUT ? resolve(process.env.SITE_OUT) : join(ROOT, "site");
 const DOCS = join(ROOT, "docs");
 const SITE_URL = "https://aletheia.mohamedashrafelsaed.com/";
 const REPO = "https://github.com/mohamed-ashraf-elsaed/aletheia-mem";

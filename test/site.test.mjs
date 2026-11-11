@@ -1,11 +1,16 @@
 // the docs site is generated from Markdown, uses relative links, and its sitemap matches the pages.
-import { describe, expect, test } from "bun:test";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { cpSync, existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
+import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { faqOf, highlight, parseChangelog } from "../scripts/build-site.mjs";
+import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
 
 const root = join(import.meta.dir, "..");
-const site = join(root, "site");
+const committed = join(root, "site");
+// The suite never writes the tracked site/. It builds into a temporary copy, and every test reads that copy.
+let site = committed;
+let build = { out: "", err: "", code: -1 };
+let check = { out: "", err: "", code: -1 };
 const read = (path) => readFileSync(path, "utf8");
 
 const htmlFiles = (dir) =>
@@ -14,19 +19,28 @@ const htmlFiles = (dir) =>
     return statSync(path).isDirectory() ? htmlFiles(path) : name.endsWith(".html") ? [path] : [];
   });
 
+beforeAll(async () => {
+  const out = tempDir("aletheia-site-");
+  site = join(out, "site");
+  cpSync(committed, site, { recursive: true });
+  const built = Bun.spawn([process.execPath, "scripts/build-site.mjs"], { cwd: root, env: { ...process.env, SITE_OUT: site }, stdout: "pipe", stderr: "pipe" });
+  [build.out, build.err, build.code] = await Promise.all([new Response(built.stdout).text(), new Response(built.stderr).text(), built.exited]);
+  // check-sitemap reads $SITE_ROOT/site, so pointing it at the temporary root checks the fresh build.
+  const checked = Bun.spawn([process.execPath, "scripts/check-sitemap.mjs"], { cwd: root, env: { ...process.env, SITE_ROOT: out }, stdout: "pipe", stderr: "pipe" });
+  [check.out, check.err, check.code] = await Promise.all([new Response(checked.stdout).text(), new Response(checked.stderr).text(), checked.exited]);
+}, 60000);
+
+afterAll(() => cleanupTempDirs());
+
 describe("docs site", () => {
-  test("the build and sitemap check pass", async () => {
-    const build = Bun.spawn([process.execPath, "scripts/build-site.mjs"], { cwd: root, stdout: "pipe", stderr: "pipe" });
-    const [buildOut, buildErr, buildCode] = await Promise.all([new Response(build.stdout).text(), new Response(build.stderr).text(), build.exited]);
-    expect(buildCode).toBe(0);
-    expect(buildErr).toBe("");
-    expect(buildOut).toMatch(/site built: \d+ document pages/);
-    const check = Bun.spawn([process.execPath, "scripts/check-sitemap.mjs"], { cwd: root, stdout: "pipe", stderr: "pipe" });
-    const [checkOut, checkErr, checkCode] = await Promise.all([new Response(check.stdout).text(), new Response(check.stderr).text(), check.exited]);
-    expect(checkCode).toBe(0);
-    expect(checkErr).toBe("");
-    expect(checkOut).toMatch(/sitemap matches pages: \d+/);
-  }, 60000);
+  test("the build and sitemap check pass", () => {
+    expect(build.code).toBe(0);
+    expect(build.err).toBe("");
+    expect(build.out).toMatch(/site built: \d+ document pages/);
+    expect(check.code).toBe(0);
+    expect(check.err).toBe("");
+    expect(check.out).toMatch(/sitemap matches pages: \d+/);
+  });
 
   test("there is one page per top-level document", () => {
     // Count only tracked documents: private files may sit on a maintainer's disk but are never published.

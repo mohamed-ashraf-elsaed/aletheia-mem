@@ -1,6 +1,7 @@
 // The brain mark, the loader, the empty-state picture and the favicon. All built from the logo's idea: a
 // brain drawn as a network of nodes. Colours come from CSS variables, so both themes work. The favicon is a static
 // data URL with literal colours because a favicon cannot read page variables.
+import { t } from "./ui-i18n.js";
 const NS = "http://www.w3.org/2000/svg";
 
 // Node positions on a 120 by 104 grid, and the lines between them (indexes into NODES).
@@ -33,7 +34,7 @@ export function brainMark({ size = 28, animated = false, label = null, doc = glo
 }
 
 /** The loading mark: the nodes pulse in sequence. `text` is announced by screen readers. */
-export function brainLoader({ size = 48, text = "Loading", doc = globalThis.document } = {}) {
+export function brainLoader({ size = 48, text = t("ui.loading"), doc = globalThis.document } = {}) {
   const wrap = doc.createElement("div");
   wrap.className = "ui-loader";
   wrap.setAttribute("role", "status");
