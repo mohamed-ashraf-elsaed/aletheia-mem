@@ -15,6 +15,7 @@ import { createMcpHttpHandler } from "./hub/mcp-http.mjs";
 import { createLoginGuard } from "./hub/login.mjs";
 import { SyncStore } from "./hub/sync/store.mjs";
 import { startBackgroundWorker } from "./hub/queue.mjs";
+import { backupTick } from "./hub/backup.mjs";
 import { HubStore } from "./hub/store.mjs";
 import { makeProvider } from "./refresh/providers.mjs";
 
@@ -74,6 +75,18 @@ export function startServer(config, {
     const project = result.last?.project ?? null;
     for (const id of result.last?.factIds ?? []) liveHub.broadcast({ kind: "fact", id, project });
   } }) : null;
+  // Scheduled local backups: off by default (setting backup.enabled). Check each minute; a failure is logged, never fatal.
+  const runScheduledBackup = () => {
+    try {
+      backupTick(hub, { dataDir: config.dataDir });
+    } catch (error) {
+      console.error("[backup] scheduled backup failed:", error.message);
+    }
+  };
+  const backupTimer = setInterval(runScheduledBackup, 60_000);
+  backupTimer.unref?.();
+  const backupFirst = setTimeout(runScheduledBackup, 5_000);
+  backupFirst.unref?.();
   const liveHub = createLiveHub(hub);
   const hubRoutes = createHubRoutes({ hub, config, liveHub, alerts });
   // MCP over Streamable HTTP on the main (loopback) server. Optional bearer key, same one as /v1.
@@ -259,6 +272,8 @@ export function startServer(config, {
     hub,
     liveHub,
     stop() {
+      clearInterval(backupTimer);
+      clearTimeout(backupFirst);
       worker?.stop();
       server.stop(true);
       service.close();
