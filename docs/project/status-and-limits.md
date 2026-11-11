@@ -31,24 +31,24 @@ A fixture test proves the file is well formed. It does not prove the real tool a
 These sentences are the only claims made about real tools:
 
 - MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0, OpenCode 1.18.33.
-- Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine.
+- Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine. Claude Code's `PostToolUseFailure` and `SubagentStop` hooks have run in tests only.
 - Cursor, Gemini CLI and Windsurf: config written from docs, not tested on a real install. No hook ran in Cursor, Gemini CLI, Windsurf or OpenCode.
 
 In those sessions prompts and tool events were captured, secrets were redacted and the checker found no leaks. "Works with" is not claimed for any tool.
 
-`aletheia install --list` prints the same status for every host. On 2026-10-29 it printed:
+`aletheia install --list` prints the same status for every host. Capture means a hook event records activity. Context means a session-start hook injects memory. Events marked (tests only) have run only in tests. On 2026-11-11 it printed:
 
-| Host | Level | Verification | Hook events installed |
-|---|---|---|---|
-| claude-code | full | mcp-verified | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| command-code | full | mcp-verified | SessionStart, PostToolUse, Stop |
-| cursor | full | from-docs-only | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
-| codex | full | mcp-verified | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| gemini-cli | full | from-docs-only | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
-| windsurf | full | from-docs-only | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
-| opencode | mcp+rules | mcp-verified | none (MCP and rules only) |
+| Host | Capture | Context | Verification | Hook events installed |
+|---|---|---|---|---|
+| claude-code | yes | yes | mcp-verified | SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure (tests only), Stop, SubagentStop (tests only), SessionEnd |
+| command-code | yes | yes | mcp-verified | SessionStart, PostToolUse, Stop |
+| cursor | yes | yes | from-docs-only | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
+| codex | yes | yes | mcp-verified | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| gemini-cli | yes | yes | from-docs-only | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
+| windsurf | yes | no | from-docs-only | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
+| opencode | no | no | mcp-verified | none (MCP and rules only) |
 
-`mcp-verified` means the real CLI listed the server. `from-docs-only` means the format came from the host's documentation and was tested against fixtures. See [Tools overview](../tools/overview.md) for each host.
+`mcp-verified` means the real CLI listed the server. It is a check of the MCP entry, not of hooks. `from-docs-only` means the format came from the host's documentation and was tested against fixtures. `aletheia doctor` names both kinds of evidence on each `verify` line: the rules format date and what the hooks rest on. See [Tools overview](../tools/overview.md) for each host.
 
 ## What is not verified
 
