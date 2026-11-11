@@ -1,4 +1,4 @@
-// T-244: the Claude Code PreToolUse hook for the Read tool asks the file-read gate. Off by default, fails open.
+// The Claude Code PreToolUse hook for the Read tool asks the file-read gate. Off by default, fails open.
 import { describe, expect, test } from "bun:test";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
