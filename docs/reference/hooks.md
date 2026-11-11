@@ -33,7 +33,7 @@ Each finished session becomes one row in the `jobs` table (type `extract_session
 
 ## Verification status
 
-- MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0, OpenCode 1.18.33.
+- MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0 (listed again by Codex 0.165.0 on 2026-10-29), OpenCode 1.18.33.
 - Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine.
 - Cursor, Gemini CLI and Windsurf: "config written from docs, not tested on a real install". No hook ran in Cursor, Gemini CLI, Windsurf or OpenCode.
 

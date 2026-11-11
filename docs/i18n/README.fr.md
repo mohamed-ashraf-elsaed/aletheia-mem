@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 7d563f5c97a9b1f73bee3864f0413e1889d843d7443e20db1487b82107bce5fe
+> Source: [README.md](../../README.md) · source-sha256: c5b73e2f3e08a23c5111454dc4f35a34d52da947eaa9e43e3d41fa9a62bc8f1c
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -141,9 +141,9 @@ Les deux sont auto-hébergés et gratuits ; aucun n'est testé entre deux machin
 
 | Interface | Where | Use |
 |---|---|---|
-| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | the 13 MCP tools below (read and write) |
-| MCP (HTTP) | sync hub `/mcp` | the same tools with a bearer token and per-token scope |
-| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, any language; optional `ALETHEIA_API_KEY` bearer key |
+| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | les 14 outils MCP ci-dessous (lecture et écriture), plus 2 outils d'équipe en lecture seule quand l'appelant appartient à une équipe |
+| MCP (HTTP) | sync hub `/mcp`; main server `/mcp` | les mêmes outils. Le hub de synchronisation exige un jeton bearer avec une portée par jeton ; le serveur principal ne répond qu'en loopback, ou exige `ALETHEIA_API_KEY` comme clé bearer quand elle est définie et toujours en mode distant |
+| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, tout langage. Quand `ALETHEIA_API_KEY` est définie, chaque route `/api` et `/v1` l'exige comme clé bearer ; en mode distant `/v1` exige une connexion ou la clé |
 | CLI | `bin/aletheia.mjs` | hooks, shell, cron, sync |
 | Files | rules sync | each tool's own instruction file |
 
@@ -154,6 +154,7 @@ Les deux sont auto-hébergés et gratuits ; aucun n'est testé entre deux machin
 | `search` | Search shared memory | read |
 | `timeline` | Show context around a memory | read |
 | `get_observations` | Get full memory text by id | read |
+| `file_outline` | Plan d'un fichier de code, pour lire une plage de lignes au lieu du fichier entier | read |
 | `save_memory` | Save a memory | write |
 | `session_start_context` | Load session start context | read |
 | `fact_history` | Show how a fact changed | read |
@@ -164,6 +165,8 @@ Les deux sont auto-hébergés et gratuits ; aucun n'est testé entre deux machin
 | `restore_memory` | Restore a dismissed memory | write |
 | `work_state_write` | Write a work-state list | write |
 | `work_state_read` | Read a work-state list | read |
+| `team_brief` | Résumé d'un projet d'équipe (listé seulement si l'appelant appartient à une équipe) | read |
+| `team_search` | Recherche ce que les coéquipiers ont partagé (listé seulement si l'appelant appartient à une équipe) | read |
 
 ## Configuration
 
@@ -175,7 +178,7 @@ Tous les réglages sont des variables d'environnement. Les valeurs par défaut c
 | `ALETHEIA_HOST` | `127.0.0.1` | Bind address. A non-loopback bind turns on Hub login. |
 | `ALETHEIA_DATA_DIR` | `~/.aletheia` | Everything this project writes, including `hub.db`. |
 | `ALETHEIA_HUB_DB` | `<data dir>/hub.db` | The shared memory store. |
-| `ALETHEIA_API_KEY` | empty | Bearer key required on `/v1/*` when set. |
+| `ALETHEIA_API_KEY` | empty | Clé bearer. Si elle est définie, chaque route `/api` et `/v1` l'exige, sauf connexion et déconnexion (`src/hub/api-key.mjs`). En mode distant `/v1` exige une connexion ou la clé et `/mcp` exige la clé ; la clé doit faire au moins 32 caractères. |
 | `CLAUDE_MEM_DB` | `~/.claude-mem/claude-mem.db` | claude-mem's database (read-only; importer and optional legacy viewer). |
 | `ALETHEIA_RULES_FILE` | `<data dir>/MY-RULES.md` | The legacy Work view's rules file. |
 | `ALETHEIA_PROVIDER` | `none` | `none`, `claude-cli` or an OpenAI-compatible provider. |

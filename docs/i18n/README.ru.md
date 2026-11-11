@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 7d563f5c97a9b1f73bee3864f0413e1889d843d7443e20db1487b82107bce5fe
+> Source: [README.md](../../README.md) · source-sha256: c5b73e2f3e08a23c5111454dc4f35a34d52da947eaa9e43e3d41fa9a62bc8f1c
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -141,9 +141,9 @@ _Competitor cells are copied from each project's own public documentation, fetch
 
 | Interface | Where | Use |
 |---|---|---|
-| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | the 13 MCP tools below (read and write) |
-| MCP (HTTP) | sync hub `/mcp` | the same tools with a bearer token and per-token scope |
-| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, any language; optional `ALETHEIA_API_KEY` bearer key |
+| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | 14 инструментов MCP ниже (чтение и запись), плюс 2 командных инструмента только для чтения, если вызывающий состоит в команде |
+| MCP (HTTP) | sync hub `/mcp`; main server `/mcp` | те же инструменты. Хабу синхронизации нужен bearer-токен с областью на токен; основной сервер отвечает только на loopback или требует `ALETHEIA_API_KEY` как bearer-ключ, если он задан, и всегда в удалённом режиме |
+| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | скрипты, CI, любой язык. Если задан `ALETHEIA_API_KEY`, каждый маршрут `/api` и `/v1` требует его как bearer-ключ; в удалённом режиме `/v1` требует вход или ключ |
 | CLI | `bin/aletheia.mjs` | hooks, shell, cron, sync |
 | Files | rules sync | each tool's own instruction file |
 
@@ -154,6 +154,7 @@ _Competitor cells are copied from each project's own public documentation, fetch
 | `search` | Search shared memory | read |
 | `timeline` | Show context around a memory | read |
 | `get_observations` | Get full memory text by id | read |
+| `file_outline` | Структура файла с кодом, чтобы читать диапазон строк, а не весь файл | read |
 | `save_memory` | Save a memory | write |
 | `session_start_context` | Load session start context | read |
 | `fact_history` | Show how a fact changed | read |
@@ -164,6 +165,8 @@ _Competitor cells are copied from each project's own public documentation, fetch
 | `restore_memory` | Restore a dismissed memory | write |
 | `work_state_write` | Write a work-state list | write |
 | `work_state_read` | Read a work-state list | read |
+| `team_brief` | Сводка по командному проекту (в списке только если вызывающий состоит в команде) | read |
+| `team_search` | Поиск того, чем поделились коллеги (в списке только если вызывающий состоит в команде) | read |
 
 ## Конфигурация
 
@@ -175,7 +178,7 @@ _Competitor cells are copied from each project's own public documentation, fetch
 | `ALETHEIA_HOST` | `127.0.0.1` | Bind address. A non-loopback bind turns on Hub login. |
 | `ALETHEIA_DATA_DIR` | `~/.aletheia` | Everything this project writes, including `hub.db`. |
 | `ALETHEIA_HUB_DB` | `<data dir>/hub.db` | The shared memory store. |
-| `ALETHEIA_API_KEY` | empty | Bearer key required on `/v1/*` when set. |
+| `ALETHEIA_API_KEY` | empty | Bearer-ключ. Если задан, его требует каждый маршрут `/api` и `/v1`, кроме входа и выхода (`src/hub/api-key.mjs`). В удалённом режиме `/v1` требует вход или ключ, а `/mcp` требует ключ; длина ключа не меньше 32 символов. |
 | `CLAUDE_MEM_DB` | `~/.claude-mem/claude-mem.db` | claude-mem's database (read-only; importer and optional legacy viewer). |
 | `ALETHEIA_RULES_FILE` | `<data dir>/MY-RULES.md` | The legacy Work view's rules file. |
 | `ALETHEIA_PROVIDER` | `none` | `none`, `claude-cli` or an OpenAI-compatible provider. |

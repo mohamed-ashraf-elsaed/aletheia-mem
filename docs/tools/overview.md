@@ -14,7 +14,7 @@ The table matches the generated table in the project README. The `aletheia insta
 | [Claude Code](claude-code.md) | yes | yes | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; PreToolUse (read gate, off by default), PostToolUseFailure and SubagentStop have run in tests only; one user on one machine | SessionStart, UserPromptSubmit, PreToolUse (tests only), PostToolUse, PostToolUseFailure (tests only), Stop, SubagentStop (tests only), SessionEnd |
 | [Command Code](command-code.md) | yes | yes | MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine | SessionStart, PostToolUse, Stop |
 | [Cursor](cursor.md) | yes | yes | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
-| [Codex CLI](codex.md) | yes | yes | MCP connection 0.130.0 on 2026-10-27; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| [Codex CLI](codex.md) | yes | yes | MCP connection 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
 | [Gemini CLI](gemini-cli.md) | yes | yes | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
 | [Windsurf](windsurf.md) | yes | no | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
 | [OpenCode](opencode.md) | no | no | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |

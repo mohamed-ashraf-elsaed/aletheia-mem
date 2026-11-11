@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 7d563f5c97a9b1f73bee3864f0413e1889d843d7443e20db1487b82107bce5fe
+> Source: [README.md](../../README.md) · source-sha256: c5b73e2f3e08a23c5111454dc4f35a34d52da947eaa9e43e3d41fa9a62bc8f1c
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -141,9 +141,9 @@ _Competitor cells are copied from each project's own public documentation, fetch
 
 | Interface | Where | Use |
 |---|---|---|
-| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | the 13 MCP tools below (read and write) |
-| MCP (HTTP) | sync hub `/mcp` | the same tools with a bearer token and per-token scope |
-| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, any language; optional `ALETHEIA_API_KEY` bearer key |
+| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | 아래의 MCP 도구 14개(읽기와 쓰기), 호출자가 팀에 속하면 읽기 전용 팀 도구 2개가 더 있음 |
+| MCP (HTTP) | sync hub `/mcp`; main server `/mcp` | 같은 도구. 동기화 허브는 토큰별 범위가 있는 bearer 토큰이 필요하다. 메인 서버는 루프백에서만 응답하며, `ALETHEIA_API_KEY`를 설정했거나 원격 모드이면 이를 bearer 키로 요구한다 |
+| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | 스크립트, CI, 모든 언어. `ALETHEIA_API_KEY`를 설정하면 모든 `/api`와 `/v1` 경로가 이를 bearer 키로 요구한다. 원격 모드에서 `/v1`은 로그인 또는 키가 필요하다 |
 | CLI | `bin/aletheia.mjs` | hooks, shell, cron, sync |
 | Files | rules sync | each tool's own instruction file |
 
@@ -154,6 +154,7 @@ _Competitor cells are copied from each project's own public documentation, fetch
 | `search` | Search shared memory | read |
 | `timeline` | Show context around a memory | read |
 | `get_observations` | Get full memory text by id | read |
+| `file_outline` | 코드 파일의 개요. 파일 전체 대신 줄 범위만 읽기 위한 것 | read |
 | `save_memory` | Save a memory | write |
 | `session_start_context` | Load session start context | read |
 | `fact_history` | Show how a fact changed | read |
@@ -164,6 +165,8 @@ _Competitor cells are copied from each project's own public documentation, fetch
 | `restore_memory` | Restore a dismissed memory | write |
 | `work_state_write` | Write a work-state list | write |
 | `work_state_read` | Read a work-state list | read |
+| `team_brief` | 팀 프로젝트 요약(호출자가 팀에 속할 때만 표시) | read |
+| `team_search` | 팀원이 공유한 내용 검색(호출자가 팀에 속할 때만 표시) | read |
 
 ## 설정
 
@@ -175,7 +178,7 @@ _Competitor cells are copied from each project's own public documentation, fetch
 | `ALETHEIA_HOST` | `127.0.0.1` | Bind address. A non-loopback bind turns on Hub login. |
 | `ALETHEIA_DATA_DIR` | `~/.aletheia` | Everything this project writes, including `hub.db`. |
 | `ALETHEIA_HUB_DB` | `<data dir>/hub.db` | The shared memory store. |
-| `ALETHEIA_API_KEY` | empty | Bearer key required on `/v1/*` when set. |
+| `ALETHEIA_API_KEY` | empty | Bearer 키. 설정하면 로그인과 로그아웃을 제외한 모든 `/api`와 `/v1` 경로가 이를 요구한다(`src/hub/api-key.mjs`). 원격 모드에서 `/v1`은 로그인 또는 키, `/mcp`는 키가 필요하다. 키는 32자 이상이어야 한다. |
 | `CLAUDE_MEM_DB` | `~/.claude-mem/claude-mem.db` | claude-mem's database (read-only; importer and optional legacy viewer). |
 | `ALETHEIA_RULES_FILE` | `<data dir>/MY-RULES.md` | The legacy Work view's rules file. |
 | `ALETHEIA_PROVIDER` | `none` | `none`, `claude-cli` or an OpenAI-compatible provider. |

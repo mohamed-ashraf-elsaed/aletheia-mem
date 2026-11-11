@@ -7,14 +7,14 @@ Aletheia (aletheia-mem) ships a command line named `aletheia` that reads and wri
 
 ## How to read this page
 
-- Output blocks were produced on 2026-10-29 by version 0.1.10 in a temporary home and data directory. Paths are shortened with `...`, and `...` also marks cut text. JSON output is shown on one line here; the real output is indented over several lines.
+- Output blocks were produced on 2026-10-29 by version 0.1.10 (the current package is 0.1.13) in a temporary home and data directory. Paths are shortened with `...`, and `...` also marks cut text. JSON output is shown on one line here; the real output is indented over several lines.
 - I did not run these: `import claude-mem` (no claude-mem database here), `rules confirm`, `compress --daemon`, `facts clean --apply`, `sync join` (it failed, no hub), `sync pull`, `run`, `revoke`, `import` and the encryption commands other than `enable-e2ee`, `mcp-link revoke`, `team revoke-member`, `share`, `leave`, `pin` and `memory`, `service install --write` and `uninstall`, `audit export`, `alerts enable` and `bin/ledger.mjs`. Their syntax comes from [bin/aletheia.mjs](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/bin/aletheia.mjs) and the modules it calls.
 
 ## Entry points and basics
 
 The package `aletheia-mem` declares four command names in its `package.json`: `aletheia`, `aletheia-mem` (the same file as `aletheia`), `aletheia-server` and `aletheia-mcp`. All four run on Bun. From a source checkout run `bun bin/aletheia.mjs <command>`.
 
-- `aletheia --version`, `-v` and `version` print the version (`0.1.10`).
+- `aletheia --version`, `-v` and `version` print the version from `package.json` (`0.1.10` when the examples were run, `0.1.13` now).
 - `aletheia help`, `--help` and `-h` print the usage to stdout and exit 0. They open no database and create no file. An unknown command prints the same usage to stderr and exits 1.
 - Flags are long only: `--name value` or a bare `--name`. A value that starts with `--` is read as the next flag.
 - Most commands open `hub.db` in the data directory and create it if missing. `help`, `version`, `doctor`, `migrate`, `uninstall` and `install` without `--write` do not create it. `hook` opens it only when it has something to store.
@@ -325,6 +325,6 @@ There is no `aletheia settings` command. Runtime settings such as `facts.minConf
 ## Next steps
 
 - [Hooks reference](hooks.md) - the `hook`, `doctor`, `install --verify` and `uninstall` behavior in detail.
-- [MCP tools reference](mcp-tools.md) - the 13 tools the stdio and HTTP servers list.
+- [MCP tools reference](mcp-tools.md) - the 14 core tools (and 2 team tools) the stdio and HTTP servers list.
 - [Configuration](configuration.md) - environment variables, runtime settings and the data directory.
 - [Backup, export and import](../guides/backup-export-import.md) - move memory between machines and tools.

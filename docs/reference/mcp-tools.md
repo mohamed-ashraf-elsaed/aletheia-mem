@@ -5,7 +5,7 @@
 
 Aletheia (aletheia-mem) runs an MCP server that gives any MCP client 14 tools to search, read and write the shared memory and rules. The same tool handlers run over stdio and over HTTP.
 
-Examples on this page were run on 2026-10-29 against version 0.1.10 in a temporary data directory. Results are trimmed with `...`. The schemas come from [src/hub/mcp-tools.mjs](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/src/hub/mcp-tools.mjs) and the handlers from [src/hub/mcp.mjs](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/src/hub/mcp.mjs).
+Examples on this page were run on 2026-10-29 against version 0.1.10 in a temporary data directory, so the version strings in them read 0.1.10; the current package is 0.1.13. Results are trimmed with `...`. Schema text and tool lists follow the current code. The schemas come from [src/hub/mcp-tools.mjs](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/src/hub/mcp-tools.mjs) and the handlers from [src/hub/mcp.mjs](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/src/hub/mcp.mjs).
 
 ## The tools at a glance
 
@@ -62,11 +62,11 @@ command = ".../.bun/bin/bun"
 args = [".../aletheia-mem/bin/mcp.mjs"]
 ```
 
-Status of real tools: MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0, OpenCode 1.18.33. Cursor, Gemini CLI and Windsurf: config written from docs, not tested on a real install. See [Tools overview](../tools/overview.md).
+Status of real tools: MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0 (listed again by Codex 0.165.0 on 2026-10-29), OpenCode 1.18.33. Cursor, Gemini CLI and Windsurf: config written from docs, not tested on a real install. See [Tools overview](../tools/overview.md).
 
 ## Protocol versions and errors
 
-The server answers `initialize` with the client's protocol version when it is one of `2025-11-25`, `2025-06-18`, `2025-03-26` or `2024-11-05`, and with `2025-11-25` otherwise. A client that sent `2099-01-01` got `2025-11-25`. The reply carries `serverInfo` `{"name":"aletheia","version":"0.1.10"}` and `capabilities.tools.listChanged: false`. The server offers tools only: no resources and no prompts.
+The server answers `initialize` with the client's protocol version when it is one of `2025-11-25`, `2025-06-18`, `2025-03-26` or `2024-11-05`, and with `2025-11-25` otherwise. A client that sent `2099-01-01` got `2025-11-25`. The reply carries `serverInfo` `{"name":"aletheia","version":"<package version>"}` (`VERSION` in `src/hub/mcp.mjs`; it read `0.1.10` when the examples were run) and `capabilities.tools.listChanged: false`. The server offers tools only: no resources and no prompts.
 
 - A tool that fails returns a normal result with `isError: true` and a text message, for example `query is required.`
 - Unknown methods return JSON-RPC error `-32601`, bad JSON `-32700`, an invalid message `-32600`, and a missing tool name `-32602`.
@@ -83,7 +83,7 @@ Token scope on the sync hub:
 - `mcp` and `read` tokens may call the read tools. `sync` and `admin` tokens may call all tools. A write tool refused for scope returns `This token cannot call save_memory.` with `isError: true`.
 - A token limited to projects is refused for any other project: `Project "billing" is not allowed for this token.`
 - Each token is limited to 60 requests per minute. Each `tools/call` adds an audit row with the tool, project and result, never the arguments.
-- `work_state_write` is a write tool like the others, so an `mcp`-scope token is refused. Before this fix, which is not in a published release yet, the scope check missed it: in 0.1.10 an `mcp`-scope token could call `work_state_write` (observed 2026-10-29).
+- `work_state_write` is a write tool like the others, so an `mcp`-scope token is refused. Before 0.1.11 the scope check missed it: in 0.1.10 an `mcp`-scope token could call `work_state_write` (observed 2026-10-29). The fix shipped in 0.1.11 ([CHANGELOG](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md)).
 
 ## search
 
@@ -100,7 +100,7 @@ Search memories and facts, or find memories by exact file path. Read-only. Retur
 - `older_than_days` (number): only results older than this. The earlier of this and `until` wins.
 - `order` (string, default `relevance`): `relevance`, `date_desc` or `date_asc`.
 
-The schema text says an omitted `project` means the working directory's project. For `search` the code applies no project filter then: a call from project `shop` returned a memory from project `billing`.
+When `project` is omitted, `search` searches all projects, as the schema text says (`src/hub/mcp-tools.mjs`, `project` property). A remote token limited to one project searches that project. Example from 2026-10-29: a call from project `shop` returned a memory from project `billing`.
 
 ```
 {"name":"search","arguments":{"query":"pnpm","limit":5}}
