@@ -97,7 +97,8 @@ export function renderCapabilities(format = "md", root = DEFAULT_ROOT) {
 
 export function latestResultsDir(resultsRoot) {
   if (!existsSync(resultsRoot)) return null;
-  const dirs = readdirSync(resultsRoot).filter((name) => statSync(join(resultsRoot, name)).isDirectory()).sort();
+  const holdsRuns = (dir) => readdirSync(dir).some((name) => name.endsWith(".json") && !name.startsWith("claude-mem-"));
+  const dirs = readdirSync(resultsRoot).filter((name) => statSync(join(resultsRoot, name)).isDirectory() && holdsRuns(join(resultsRoot, name))).sort();
   return dirs.at(-1) ? join(resultsRoot, dirs.at(-1)) : null;
 }
 
