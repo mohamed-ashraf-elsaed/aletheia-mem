@@ -1,5 +1,6 @@
 // Excluded projects store nothing, and context scope separates the current project from all projects.
 import { afterAll, describe, expect, test } from "bun:test";
+import { compressionQueue } from "../src/hub/hooks/shared.mjs";
 import { mkdirSync, mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -56,7 +57,7 @@ describe("excluded projects", () => {
     try {
       expect(store.db.prepare("SELECT COUNT(*) AS n FROM memories").get().n).toBe(0);
       expect(store.db.prepare("SELECT COUNT(*) AS n FROM episodes").get().n).toBe(0);
-      expect(store.setting("compress.queue", [])).toHaveLength(0);
+      expect(compressionQueue(store)).toHaveLength(0);
     } finally {
       store.close();
     }

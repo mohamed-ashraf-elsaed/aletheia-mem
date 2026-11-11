@@ -893,7 +893,7 @@ export async function doctor(env) {
   let last = null;
   let readable = true;
   let detail = env.dbPath;
-  let queue = { pending: 0, running: 0, done: 0, failed: 0 };
+  let queue = { pending: 0, running: 0, done: 0, failed: 0, dropped: 0 };
   let extraction = { mode: env.provider === "none" ? "rules" : env.provider ?? "unknown", lastAtEpoch: null, rejected: 0 };
   let health = null;
   try {
@@ -911,6 +911,7 @@ export async function doctor(env) {
         const lastUsage = store.db.prepare("SELECT MAX(at_epoch) AS at FROM fact_usage WHERE status = 'ok'").get();
         extraction = { mode: usage?.mode ?? (env.provider === "none" ? "rules" : env.provider ?? "unknown"), lastAtEpoch: lastUsage?.at ?? null, rejected: usage?.rejected ?? 0 };
         health = healthReport(store);
+        queue = { ...queue, pending: health.queue.pending ?? queue.pending, dropped: health.queue.dropped ?? 0 };
       } finally {
         store.close();
       }
@@ -921,7 +922,7 @@ export async function doctor(env) {
     detail = `cannot read ${env.dbPath}`;
   }
   checks.push({ name: "last capture", ok: readable, detail });
-  checks.push({ name: "queue", ok: queue.failed === 0, detail: `${queue.pending} pending, ${queue.running} running, ${queue.failed} failed` });
+  checks.push({ name: "queue", ok: queue.failed === 0, detail: `${queue.pending} pending, ${queue.running} running, ${queue.failed} failed, ${queue.dropped} dropped` });
   checks.push({ name: "extraction", ok: true, detail: `mode ${extraction.mode}; last ${extraction.lastAtEpoch ? new Date(extraction.lastAtEpoch).toISOString() : "never"}; ${extraction.rejected} rejected` });
   checks.push({ name: "database", ok: health ? health.db.ok : readable, detail: health ? health.db.detail : detail });
   checks.push({ name: "fts", ok: health ? health.fts.ok : readable, detail: health ? health.fts.detail : "no database yet" });

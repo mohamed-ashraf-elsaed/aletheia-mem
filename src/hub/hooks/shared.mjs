@@ -8,6 +8,9 @@ import { ensureDirMode, ensureFileMode } from "../permissions.mjs";
 import { redact } from "../redact.mjs";
 import { wrapUntrusted } from "../untrusted.mjs";
 
+// Kept here, not imported from queue.mjs: a hook process must not load the extraction code to queue a job.
+export const COMPRESS_JOB_TYPE = "extract_session";
+
 export const SPOOL_FILE = "hook-spool.jsonl";
 export const MAX_TOOL_OUTPUT = 1500;
 export const MAX_PROMPT = 8000;
@@ -187,25 +190,37 @@ export function flushSpool(store, dataDir) {
   return { flushed, failed: failed.length };
 }
 
+/**
+ * Queue a finished session for compression as a row in `jobs`. There is no cap: a row stays until a worker
+ * completes it, so a machine with no worker running loses nothing. A second stop for a session whose job is still
+ * pending refreshes that job's `at` and keeps its place in line. Returns true when a new job was queued.
+ */
 export function enqueueCompression(store, { project, sessionId, at = Date.now() }) {
-  const key = "compress.queue";
-  const queue = store.setting(key, []);
-  if (!Array.isArray(queue)) return false;
-  const existing = sessionId ? queue.find((item) => item.project === project && item.sessionId === sessionId) : null;
-  if (existing) {
-    // A session-end after a stop must not create a second job, but the job should cover the newer summary.
-    existing.at = at;
-    store.setSetting(key, queue.slice(-200));
-    return false;
+  const sid = sessionId ?? null;
+  const payload = JSON.stringify({ project, sessionId: sid, at });
+  if (sid) {
+    const refreshed = store.db
+      .prepare(`UPDATE OR IGNORE jobs SET payload = ?, updated_at_epoch = ?
+                WHERE id = (SELECT id FROM jobs WHERE type = ? AND status = 'pending'
+                            AND json_extract(payload, '$.project') = ? AND json_extract(payload, '$.sessionId') = ? LIMIT 1)`)
+      .run(payload, Date.now(), COMPRESS_JOB_TYPE, project, sid);
+    if (refreshed.changes) return false;
   }
-  queue.push({ project, sessionId: sessionId ?? null, at });
-  store.setSetting(key, queue.slice(-200));
-  return true;
+  const now = Date.now();
+  const info = store.db
+    .prepare("INSERT OR IGNORE INTO jobs (type, payload, status, attempts, max_attempts, next_attempt_epoch, created_at_epoch, updated_at_epoch) VALUES (?, ?, 'pending', 0, 5, 0, ?, ?)")
+    .run(COMPRESS_JOB_TYPE, payload, now, now);
+  return info.changes > 0;
 }
 
+/** Sessions waiting for compression, oldest first: any not-yet-migrated settings entries, then pending jobs. */
 export function compressionQueue(store) {
-  const queue = store.setting("compress.queue", []);
-  return Array.isArray(queue) ? queue : [];
+  const legacy = store.setting("compress.queue", []);
+  const rows = store.db.prepare("SELECT payload FROM jobs WHERE type = ? AND status = 'pending' ORDER BY id").all(COMPRESS_JOB_TYPE);
+  const jobs = rows.map((row) => {
+    try { return JSON.parse(row.payload); } catch { return null; }
+  }).filter(Boolean);
+  return [...(Array.isArray(legacy) ? legacy : []), ...jobs];
 }
 
 /** Parse stdin. Empty or broken input is an empty payload, never an error (a hook must not break the tool). */
