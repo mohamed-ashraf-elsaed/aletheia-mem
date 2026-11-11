@@ -2,6 +2,8 @@
 // alias resolver. Candidates come from extractor output and from cheap rules over the fact text. Resolution is
 // deliberately conservative: exact canonical name, then normalised name, then an explicit alias, then a single
 // high-confidence string match. An ambiguous match creates the new row and goes to the review queue.
+import { linkMemoryEntity } from "./graph.mjs";
+
 export const ENTITY_TYPES = ["person", "service", "file", "repo", "library", "concept", "org"];
 
 export const ALIAS_AUTO = 0.95;
@@ -101,6 +103,15 @@ export function getEntity(store, id) {
   return store.db.prepare("SELECT * FROM entities WHERE id = ?").get(Number(id)) ?? null;
 }
 
+/** Entities with how many facts and memories point at each one. Read-only; used by the CLI and GET /v1/entities. */
+export function entityCounts(store, { project, type, limit = 500 } = {}) {
+  return listEntities(store, { project, type, limit }).map((e) => ({
+    id: e.id, project: e.project, name: e.name, type: e.type,
+    facts: store.db.prepare("SELECT COUNT(*) AS n FROM fact_entities WHERE entity_id = ?").get(e.id).n,
+    memories: store.db.prepare("SELECT COUNT(DISTINCT owner_id) AS n FROM memory_keys WHERE owner_type = 'memory' AND key_type = 'entity' AND text = ? AND owner_id IN (SELECT id FROM memories WHERE project = ?)").get(e.canonical_name, e.project).n,
+  }));
+}
+
 export function listEntities(store, { project, type, limit = 500 } = {}) {
   const where = [];
   const params = [];
@@ -190,6 +201,19 @@ export function roleFor(name, subject, object) {
   return "participant";
 }
 
+/** The memories a fact came from: its observation's memory and any `memory:<id>` episode it cites. */
+function factMemoryIds(store, fact) {
+  const ids = new Set();
+  const fromRef = (ref) => { const m = /^memory:(\d+)$/.exec(String(ref ?? "")); if (m) ids.add(Number(m[1])); };
+  fromRef(store.getEpisode(fact.episode_id)?.source_ref);
+  for (const row of store.db.prepare("SELECT e.source_ref FROM memory_links l JOIN episodes e ON e.id = l.to_id WHERE l.from_type = 'fact' AND l.from_id = ? AND l.to_type = 'episode'").all(fact.id)) fromRef(row.source_ref);
+  if (fact.observation_id) {
+    const legacy = store.db.prepare("SELECT legacy_memory_id AS id FROM observations WHERE id = ?").get(fact.observation_id)?.id;
+    if (legacy) ids.add(Number(legacy));
+  }
+  return [...ids].filter((id) => store.db.prepare("SELECT 1 FROM memories WHERE id = ?").get(id));
+}
+
 /**
  * Create entities for one stored fact and link them. Uses the extractor's own `entities` first, then the rule
  * candidates that are literally in the fact text. Returns { entities, created, reviews }.
@@ -205,6 +229,7 @@ export function attachFactEntities(store, { factId, project, subject, object, te
       known.add(normalizeName(candidate.name));
     }
   }
+  const memoryIds = factMemoryIds(store, fact);
   let created = 0;
   const reviews = [];
   for (const candidate of declared.slice(0, MAX_ENTITY_CANDIDATES)) {
@@ -213,6 +238,7 @@ export function attachFactEntities(store, { factId, project, subject, object, te
     const role = roleFor(result.entity?.canonical_name ?? candidate.name, fact.subject, fact.object);
     store.db.prepare("INSERT OR IGNORE INTO fact_entities (fact_id, entity_id, role) VALUES (?,?,?)").run(fact.id, result.id, role);
     store.addKey({ ownerType: "fact", ownerId: fact.id, keyType: "entity", text: result.entity?.name ?? candidate.name });
+    for (const memoryId of memoryIds) linkMemoryEntity(store, { memoryId, entity: result.entity?.canonical_name ?? normalizeName(candidate.name) });
     if (result.created) created++;
     if (result.review) reviews.push({ entityId: result.id, reason: result.review });
   }

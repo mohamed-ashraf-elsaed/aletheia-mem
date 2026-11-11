@@ -12,7 +12,7 @@ import { normalizeLanguage } from "./language.mjs";
 import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVector, unpackVector } from "./retrieval.mjs";
 import { CJK_GLOB, cjkGrams, cjkMatch, hasCjk } from "./search.mjs";
 import { epochOrIso } from "./paging.mjs";
-import { graphWalk } from "./graph.mjs";
+import { graphEnabled, graphWalk } from "./graph.mjs";
 import { mergeProjects } from "./projects.mjs";
 import { redact } from "./redact.mjs";
 import { describeRules, recheckNote } from "./rule-evidence.mjs";
@@ -1493,7 +1493,7 @@ export class HubStore {
    * Natural-language queries work: ANY content word may match and BM25 ranks (see retrieval.mjs). When `queryVec` is
    * given and memories have vectors, keyword and semantic rankings are fused with reciprocal rank fusion.
    */
-  search({ query, project, kind, type, tool, limit = 20, queryVec = null, scope = "current", file = null, fileSuffix = false, since = null, until = null, graph = false, graphOptions = {} } = {}) {
+  search({ query, project, kind, type, tool, limit = 20, queryVec = null, scope = "current", file = null, fileSuffix = false, since = null, until = null, graph = null, graphOptions = {} } = {}) {
     return this.ranked({ query, project, kind, type, tool, limit, queryVec, scope, file, fileSuffix, since, until, graph, graphOptions }).map((m) => ({ id: m.id, kind: m.kind, type: m.type, title: m.title, project: m.project, tool: m.tool, pinned: m.pinned, at: new Date(m.created_at_epoch).toISOString() }));
   }
 
@@ -1605,7 +1605,7 @@ export class HubStore {
   }
 
   /** Full rows, best first. Same ranking as search(). */
-  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false, scope = "current", cap = 200, since = null, until = null, file = null, fileSuffix = false, graph = false, graphOptions = {} } = {}) {
+  ranked({ query, project, kind, type, tool, limit = 20, queryVec = null, pool = 100, includeHistory = false, scope = "current", cap = 200, since = null, until = null, file = null, fileSuffix = false, graph = null, graphOptions = {} } = {}) {
     const filters = [];
     const params = [];
     if (project && scope !== "all") {
@@ -1633,7 +1633,8 @@ export class HubStore {
     if (queryVec) {
       lists.push(topKByVector(queryVec, this.vectorRows({ project, kind, type, tool, scope }), pool).map((r) => r.id));
     }
-    if (graph && project) {
+    // An explicit graph true/false wins; otherwise the dashboard setting decides.
+    if (project && (graph ?? graphEnabled(this))) {
       const walked = graphWalk(this, { seeds: (lexical.length ? lexical : cjk).slice(0, 20), project, ...graphOptions });
       this.graphTrace = walked.trace;
       if (walked.ids.length) lists.push(walked.ids);

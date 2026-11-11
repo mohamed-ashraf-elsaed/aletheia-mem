@@ -3,7 +3,8 @@
 // entity. The walk is project-scoped, bounded by fan-out and a deadline, and returns a fourth ranked list plus the
 // provenance (which entity led to each neighbour). An entity page resolves the entity's aliases, facts and links.
 
-export const GRAPH_ENABLED_KEY = "graph.enabled";
+// The dashboard Settings page stores `graph.enabled` under the editable-settings prefix.
+export const GRAPH_ENABLED_KEY = "ui.settings.graph.enabled";
 
 /**
  * Walk 1..maxHops from the seed memories over shared entities. A project is required: an entity name is only
@@ -66,7 +67,7 @@ export function linkMemoryEntity(store, { memoryId, entity, source = "graph" }) 
   store.addKey({ ownerType: "memory", ownerId: Number(memoryId), keyType: "entity", text: entity, source });
 }
 
-/** True when the production graph channel is turned on. Off by default until it has been measured. */
+/** True when the production graph channel is turned on. Off by default; search reads it on every ranked() call. */
 export function graphEnabled(store) {
   return store.setting(GRAPH_ENABLED_KEY, false) === true;
 }

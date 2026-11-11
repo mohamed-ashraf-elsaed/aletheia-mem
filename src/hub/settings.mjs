@@ -19,6 +19,8 @@ export const SETTINGS_SCHEMA = [
   // Read by `aletheia search` (bin/aletheia.mjs): reorders the top 30 hits with a cross-encoder. Needs the optional
   // @huggingface/transformers package and the cached model; without them search keeps the fused order.
   { key: "search.rerank", kind: "boolean", label: "Rerank search results (cross-encoder, optional package)", default: false, secret: false },
+  // Read by HubStore.ranked() (src/hub/graph.mjs graphEnabled): adds a graph-walk list over shared entities to the fusion.
+  { key: "graph.enabled", kind: "boolean", label: "Graph retrieval (follow shared entities from top hits)", default: false, secret: false },
   { key: "rules.reviewDays", kind: "int", label: "Rule review window (days)", min: 7, max: 730, default: 90, secret: false },
 ];
 
