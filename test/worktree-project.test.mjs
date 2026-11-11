@@ -1,4 +1,4 @@
-// T-262: a session in a git worktree files its memory under the main repository's project key by default, so a
+// A session in a git worktree files its memory under the main repository's project key by default, so a
 // new worktree starts with the main project's memory. `project.worktrees` = separate (or ALETHEIA_WORKTREE_PROJECTS)
 // keeps the old `<repo>/<worktree>` key. Submodules keep `<repo>/<path>` either way.
 import { afterAll, afterEach, beforeAll, describe, expect, test } from "bun:test";

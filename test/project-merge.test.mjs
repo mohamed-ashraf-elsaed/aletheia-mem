@@ -1,4 +1,4 @@
-// T-262: merging one project into another moves every project-scoped table in one transaction, collapses rows that
+// Merging one project into another moves every project-scoped table in one transaction, collapses rows that
 // already exist under the target, and writes one audit entry. `aletheia projects fold-worktrees` folds worktree
 // fragments into their main project: a dry run by default, worktree keys only, submodules only when named.
 import { describe, expect, test } from "bun:test";

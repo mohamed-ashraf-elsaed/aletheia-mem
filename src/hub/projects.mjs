@@ -1,5 +1,5 @@
 // Project keys across the hub: list them with per-table counts, merge one key into another, and fold the keys that
-// git worktree sessions left behind (`<repo>/<worktree>`, from before T-262) into their main project.
+// git worktree sessions left behind (`<repo>/<worktree>`, from before worktrees shared the main key) into their main project.
 //
 // A merge moves every table that has a `project` column, read from the schema, in one transaction. A row that already
 // exists under the target (same content hash once the hash is recomputed for the target, or the same unique key) is

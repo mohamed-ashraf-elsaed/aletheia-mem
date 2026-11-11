@@ -1,4 +1,4 @@
-// Project keys. A project key is "<repo>", or "<repo>/<worktree>" when worktrees are kept separate (T-262), or
+// Project keys. A project key is "<repo>", or "<repo>/<worktree>" when worktrees are kept separate, or
 // "<repo>/<path>" for a submodule; a request stays inside one project ROOT (the key before its first "/"), so
 // worktrees of one repo share requests.
 //
