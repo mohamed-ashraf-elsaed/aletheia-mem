@@ -264,10 +264,6 @@ export function startServer(config, {
         headers: { "Cache-Control": "no-store", "X-Content-Type-Options": "nosniff", "Content-Security-Policy": "sandbox allow-scripts", "Content-Type": MIME_TYPES[extname(path).toLowerCase()] ?? "application/octet-stream" },
       });
     }
-    if (method === "GET" && pathname === "/api/work-state") {
-      const denied = guarded(request, server);
-      return denied ?? text("The clone does not read work state through this route. Use /api/work-view.", 501);
-    }
 
     // ---- setup (cloud onboarding is not part of the clone: setup is permanently complete)
     if (method === "GET" && pathname === "/api/setup/state") {

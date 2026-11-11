@@ -33,7 +33,6 @@ export function loadConfig(overrides = {}) {
     humanCopyCache: overrides.humanCopyCache ?? join(dataDir, "human-copy.json"),
     rulesFile: overrides.rulesFile ?? env.ALETHEIA_RULES_FILE ?? join(dataDir, "MY-RULES.md"),
     claudeInstructionsFile: overrides.claudeInstructionsFile ?? env.ALETHEIA_CLAUDE_MD ?? join(home, ".claude", "CLAUDE.md"),
-    setupStateFile: overrides.setupStateFile ?? join(dataDir, "setup-state.json"),
     publicDir: overrides.publicDir ?? join(import.meta.dir, "..", "public"),
     hubDb: overrides.hubDb ?? env.ALETHEIA_HUB_DB ?? join(dataDir, "hub.db"),
     hubUiDir: overrides.hubUiDir ?? join(import.meta.dir, "..", "public-hub"),
