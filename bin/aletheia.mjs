@@ -3,7 +3,7 @@
 //   aletheia capture --tool <name> [--project p]          read one hook payload (JSON) on stdin, store it (secrets redacted)
 //   aletheia context [--project p] [--tool t]             print session-start context for any tool
 //   aletheia context economics [--project p] [--limit n]   per-observation read and work tokens
-//   aletheia search <query> [--project p] [--scope all] [--explain] [--semantic]
+//   aletheia search <query> [--project p] [--scope all] [--explain] [--semantic] [--rerank | --no-rerank]
 //   aletheia embed [--limit n]                          write fact and memory vectors when the runtime is installed
 //   aletheia save <text> [--project p] [--type t] [--pin] save a memory
 //   aletheia import claude-mem [--path db] [--no-prompts] bring memory in from claude-mem
@@ -550,6 +550,7 @@ async function main() {
         const { results: rows, channels } = await searchMemory({
           store: hub, query: pos.join(" "), project: flags.project, limit: Number(flags.limit) || 20,
           includeHistory: !!flags.history, asOf, scope: flags.scope === "all" ? "all" : "current", embedder,
+          rerank: flags.rerank === true || (flags.rerank !== false && flags["no-rerank"] !== true && hub.setting("ui.settings.search.rerank", false) === true),
         });
         const body = rows.length ? rows.map((r) => (r.kind === "fact"
           ? `fact #${r.id} ${r.at.slice(0, 10)} [${r.status}] ${r.text} (source episode #${r.source?.episodeId ?? "-"})`

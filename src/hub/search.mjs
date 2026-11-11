@@ -1,6 +1,7 @@
 // Product search: facts, episodes, keys and optional dense channels, fused with reciprocal rank fusion. Kept async
 // because a dense query needs an embedding call; when no runtime is present the same function answers from keyword
 // channels alone and says so in `channels`.
+import { RERANK_BUDGET_MS, RERANK_TOP_N, rerankCandidates, sharedReranker } from "./rerank.mjs";
 import { rrf, topKByVector, unpackVector } from "./retrieval.mjs";
 
 export const FUSION = { factWeight: 1, episodeWeight: 0.9 };
@@ -112,7 +113,7 @@ export async function embedMissingFacts(store, embedder, { limit = 5000, batch =
  * term, vector only when a query vector was produced and at least one row has a vector. `explain` is part of every
  * result so a caller can state why a hit appeared.
  */
-export async function searchMemory({ store, query, project, limit = 20, scope = "current", includeHistory = false, asOf = null, embedder = null } = {}) {
+export async function searchMemory({ store, query, project, limit = 20, scope = "current", includeHistory = false, asOf = null, embedder = null, rerank = false, reranker = null, rerankBudgetMs = RERANK_BUDGET_MS } = {}) {
   let queryVec = null;
   if (embedder) {
     try {
@@ -146,11 +147,47 @@ export async function searchMemory({ store, query, project, limit = 20, scope = 
   ], { weights: [FUSION.factWeight, FUSION.episodeWeight] });
   const factById = new Map(facts.map((fact) => [`fact:${fact.id}`, fact]));
   const episodeById = new Map(episodes.map((memory) => [`memory:${memory.id}`, { ...memory, kind: "memory", at: new Date(memory.created_at_epoch).toISOString(), source: { type: "memory", id: memory.id } }]));
-  const results = fused
-    .map((entry) => factById.get(entry.id) ?? episodeById.get(entry.id))
-    .filter(Boolean)
-    .slice(0, Math.min(Math.max(Number(limit) || 20, 1), 200));
+  let ordered = fused.map((entry) => factById.get(entry.id) ?? episodeById.get(entry.id)).filter(Boolean);
+  if (rerank) {
+    const outcome = await rerankWithBudget({ query, ordered, reranker, budgetMs: rerankBudgetMs });
+    ordered = outcome.ordered;
+    channels.rerank = outcome.channel;
+  }
+  const results = ordered.slice(0, Math.min(Math.max(Number(limit) || 20, 1), 200));
   return { results, channels };
+}
+
+const candidateText = (row) => (row.kind === "fact" ? String(row.text ?? "") : [row.title, row.narrative ?? row.text].filter(Boolean).join(". "));
+
+/**
+ * Optional cross-encoder rerank of the fused list. Never throws and never waits past the budget: a missing package, a
+ * scorer error, a bad score list or a timeout all keep the fused order and say why in the channel note. The model load
+ * counts against the budget, and a load that outlives it keeps running so a later call in the same process can use it.
+ */
+async function rerankWithBudget({ query, ordered, reranker, budgetMs }) {
+  const started = performance.now();
+  const fallback = (reason, model = null) => ({ ordered, channel: { status: "fallback", reason, ...(model ? { model } : {}), ms: Math.round(performance.now() - started) } });
+  if (ordered.length < 2) return { ordered, channel: { status: "on", model: reranker?.model ?? null, candidates: ordered.length, ms: 0 } };
+  let timer;
+  const timeout = new Promise((resolve) => { timer = setTimeout(() => resolve("budget"), Math.max(Number(budgetMs) || RERANK_BUDGET_MS, 1)); });
+  let model = reranker?.model ?? null;
+  try {
+    const work = (async () => {
+      const ce = reranker ?? (await sharedReranker());
+      model = ce.model ?? model;
+      const items = ordered.map((row) => ({ row, text: candidateText(row) }));
+      return (await rerankCandidates(ce, query, items, { topN: RERANK_TOP_N })).map((item) => item.row);
+    })();
+    work.catch(() => {}); // a late failure after the timeout is not an unhandled rejection
+    const winner = await Promise.race([work, timeout]);
+    if (winner === "budget") return fallback(`over the ${budgetMs} ms budget, kept the fused order`, model);
+    return { ordered: winner, channel: { status: "on", model, candidates: Math.min(ordered.length, RERANK_TOP_N), ms: Math.round(performance.now() - started) } };
+  } catch (error) {
+    const missing = /optional package/.test(String(error?.message));
+    return fallback(missing ? "needs the optional package @huggingface/transformers, kept the fused order" : `failed (${String(error?.message ?? error).slice(0, 120)}), kept the fused order`, model);
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export const formatChannels = (channels) => {
@@ -161,6 +198,10 @@ export const formatChannels = (channels) => {
     `episodes lexical=${on(channels.episodes?.lexical)} vectors=${on(channels.episodes?.vector)}${cjk(channels.episodes?.cjk)}`,
     `fusion=${channels.fused}`,
   ];
+  if (channels.rerank) {
+    const r = channels.rerank;
+    parts.push(r.status === "on" ? `rerank=on (${r.model ?? "cross-encoder"}, top ${r.candidates}, ${r.ms} ms)` : `rerank=fallback (${r.reason})`);
+  }
   if (channels.history) parts.push("history=on");
   if (channels.scope) parts.push(`scope=${channels.scope}`);
   return `channels: ${parts.join("; ")}`;
