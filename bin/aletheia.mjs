@@ -29,6 +29,9 @@
 //   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
 //   aletheia prune [--apply]                            report cold facts and old episodes; --apply changes them
 //   aletheia promote <type> <id>                        make a memory, episode, observation or fact global
+//   aletheia projects [--json]                          project keys with their row count in each table
+//   aletheia projects fold-worktrees [--write] [--include key] [--repo path]
+//                                                          fold git worktree keys into their main project (dry run by default)
 //   aletheia dismiss <id | type:id> [--reason r]        hide a memory, episode, observation or fact (reversible)
 //   aletheia restore <id | type:id>                     undo a dismissal
 //   aletheia dismissed [--limit n]                      list dismissed items
@@ -68,6 +71,7 @@ import { describeRules } from "../src/hub/rule-evidence.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "../src/hub/rules-sync.mjs";
 import { HubStore, inspectMigration, targetSchemaVersion } from "../src/hub/store.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "../src/hub/tools.mjs";
+import { WORKTREE_SETTING_KEY, useWorktreeSetting } from "../src/lib/project-key.mjs";
 import { projectKeyForPath } from "../src/readmodel/project.mjs";
 import { makeProvider } from "../src/refresh/providers.mjs";
 
@@ -419,6 +423,7 @@ async function main() {
   }
 
   const hub = new HubStore(config.hubDb);
+  useWorktreeSetting(() => hub.setting(WORKTREE_SETTING_KEY, null));
   const argv = mcpCommand({ bun: process.execPath, script: join(import.meta.dir, "mcp.mjs") });
   try {
     switch (cmd) {
@@ -601,6 +606,21 @@ async function main() {
       case "promote": {
         if (!pos[0] || !pos[1]) return die("Usage: aletheia promote <memory|episode|observation|fact> <id>");
         return out(hub.promote(pos[0], Number(pos[1]), { actor: "cli" }));
+      }
+      case "projects": {
+        const { foldWorktrees, formatFold, formatProjects, planFold, projectCounts } = await import("../src/hub/projects.mjs");
+        // --include and --repo may repeat or take a comma-separated list.
+        const many = (name) => rest.flatMap((arg, i) => (arg === `--${name}` && rest[i + 1] && !rest[i + 1].startsWith("--") ? rest[i + 1].split(",") : [])).map((value) => value.trim()).filter(Boolean);
+        if (!pos[0] || pos[0] === "list") return out(flags.json ? projectCounts(hub) : formatProjects(projectCounts(hub)));
+        if (pos[0] !== "fold-worktrees") return die("Usage: aletheia projects [--json] | projects fold-worktrees [--write] [--include key] [--repo path]");
+        const plan = planFold(hub, { repos: [process.cwd(), ...many("repo")], include: many("include") });
+        if (!flags.write) return out(formatFold(plan, { dryRun: true }));
+        if (!plan.folds.length) return out(formatFold(plan, { dryRun: false }));
+        try {
+          return out(formatFold(foldWorktrees(hub, plan, { actor: "cli" }), { dryRun: false }));
+        } catch (error) {
+          return die(`Nothing was folded: ${error.message}`);
+        }
       }
       case "optimize": return out(hub.optimizeFts());
       case "scrub": {

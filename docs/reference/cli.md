@@ -161,6 +161,51 @@ $ aletheia migrate --dry-run
 { "exists": true, "version": 3, "target": 3, "needsMigration": false, ... "dryRun": true }
 ```
 
+## Projects
+
+- `aletheia projects [--json]` - list every project key with its row count in each table that has a `project` column. `--json` prints the rows as JSON.
+- `aletheia projects fold-worktrees [--write] [--include key] [--repo path]` - fold the `<parent>/<child>` keys that git worktree sessions left behind into `<parent>`. A key qualifies when `<parent>` has rows and `<child>` is a worktree of a known repository, matches `agent-<hex>` (8 or more hex digits), or ends in `-` and 6 hex digits. Known repositories are the checkout of the current directory (a worktree resolves to its main repository) and each `--repo`. Submodule paths and older names such as `round14-gate` fold only when named with `--include`. Without `--write` it writes nothing and prints what each key would move, per table. With `--write` every key folds in one transaction and the audit log gets one `project.merge` entry per key. `--include` and `--repo` may repeat or take a comma-separated list.
+
+Worktree sessions use the main repository's key by default, so new memory does not need folding. See [Git worktrees](../concepts/memory-model.md#git-worktrees).
+
+The dry run counts each key against the current store. When two worktree keys hold the same row and the parent does not, the dry run counts it as moved for both; `--write` moves the first copy and drops the second as a duplicate.
+
+```
+$ aletheia projects
+project                       total  memories  episodes
+ghost/feature-abc123              1         1         0
+other                             1         1         0
+shop                              1         1         0
+shop/agent-a61eb72a195c718be      1         1         0
+shop/deps-c0ffee                  1         1         0
+shop/feature-abc123               3         2         1
+shop/round14-gate                 1         1         0
+shop/shop-hotfix                  1         1         0
+shop/vendor/lib                   1         1         0
+$ aletheia projects fold-worktrees
+3 worktree keys to fold:
+  shop/agent-a61eb72a195c718be -> shop  (agent worktree name)
+    memories: move 1
+  shop/feature-abc123 -> shop  (git worktree of shop)
+    memories: move 1, drop 1 duplicate
+    episodes: move 1
+  shop/shop-hotfix -> shop  (git worktree of shop)
+    memories: move 1
+Not folded:
+  ghost/feature-abc123  the parent key "ghost" has no rows
+  shop/deps-c0ffee  submodule path; name it with --include to fold it
+  shop/round14-gate  not a worktree name; name it with --include to fold it
+  shop/vendor/lib  submodule path; name it with --include to fold it
+Dry run: nothing was written. Add --write to fold 3 key(s).
+$ aletheia projects fold-worktrees --write
+Folded 3 key(s) into their main project: moved 4 rows, dropped 1 duplicate.
+  shop/agent-a61eb72a195c718be -> shop  (agent worktree name)
+    memories: moved 1
+...
+```
+
+These blocks were produced on 2026-11-11 against a temporary store, run from a worktree of a test repository `shop` that has two worktrees (`feature-abc123`, `shop-hotfix`) and two submodules (`vendor/lib`, `deps-c0ffee`).
+
 ## Sync and remote MCP
 
 These commands use the sync hub. See [Sync](../29-sync.md) and [Remote MCP](../30-remote-mcp.md).

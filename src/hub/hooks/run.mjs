@@ -11,6 +11,7 @@ import cursor from "./cursor.mjs";
 import geminiCli from "./gemini-cli.mjs";
 import windsurf from "./windsurf.mjs";
 import { enqueueCompression, flushSpool, projectOf, readPayload, spoolAppend } from "./shared.mjs";
+import { readWorktreeSetting, useWorktreeSetting } from "../../lib/project-key.mjs";
 
 export const ADAPTERS = { "claude-code": claudeCode, "command-code": commandCode, codex, cursor, "gemini-cli": geminiCli, windsurf };
 
@@ -22,8 +23,23 @@ export function adapterFor(tool) {
 
 const empty = () => ({ memory: null, compress: null });
 
-export async function runHook({ tool, event, stdin, config, dataDir } = {}) {
-  const cfg = config ?? loadConfig();
+/**
+ * One hook event. The worktree setting is read from the hub file once (about 1 ms, skipped when
+ * ALETHEIA_WORKTREE_PROJECTS is set) and applies to every project key computed during this event only.
+ */
+export async function runHook(options = {}) {
+  const cfg = options.config ?? loadConfig();
+  const stored = process.env.ALETHEIA_WORKTREE_PROJECTS ? null : readWorktreeSetting(cfg.hubDb);
+  const previous = useWorktreeSetting(stored);
+  try {
+    return await runHookEvent({ ...options, config: cfg });
+  } finally {
+    useWorktreeSetting(previous);
+  }
+}
+
+async function runHookEvent({ tool, event, stdin, config, dataDir } = {}) {
+  const cfg = config;
   const dir = dataDir ?? cfg.dataDir;
   const payload = readPayload(stdin);
   const name = event || payload.hook_event_name || payload.event || "";

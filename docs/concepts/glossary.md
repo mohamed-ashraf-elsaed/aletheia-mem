@@ -92,7 +92,7 @@ Mark a memory so it always appears under Pinned in the session-start context and
 The `<private>...</private>` markup you put around text that must not be stored. Aletheia replaces the block with `[private]` before it stores the text. The closing tag is required.
 
 ### Project
-The unit that memories belong to. A project key is the repository folder name, or `<repo>/<worktree>` for a git worktree.
+The unit that memories belong to. A project key is the repository folder name. A git worktree uses its main repository's key, or `<repo>/<worktree>` when the `project.worktrees` setting is `separate`. A submodule uses `<repo>/<path>`.
 
 ### Promote
 Make a memory, episode, observation or fact global, so that every project's search and context include it. `aletheia promote` does it.

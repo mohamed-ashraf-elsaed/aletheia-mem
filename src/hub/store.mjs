@@ -13,6 +13,7 @@ import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVe
 import { CJK_GLOB, cjkGrams, cjkMatch, hasCjk } from "./search.mjs";
 import { epochOrIso } from "./paging.mjs";
 import { graphWalk } from "./graph.mjs";
+import { mergeProjects } from "./projects.mjs";
 import { redact } from "./redact.mjs";
 import { describeRules, recheckNote } from "./rule-evidence.mjs";
 import { estimateTokens } from "./usage.mjs";
@@ -1709,25 +1710,9 @@ export class HubStore {
     return this.db.prepare("SELECT project AS name, COUNT(*) AS memories, MAX(created_at_epoch) AS lastAtEpoch FROM memories GROUP BY project ORDER BY lastAtEpoch DESC").all();
   }
 
+  /** Move every project-scoped table from one key to another in one transaction (src/hub/projects.mjs). */
   mergeProjects(from, into, { actor = "ui" } = {}) {
-    if (!from || !into || from === into) throw new RangeError("Pick two different projects.");
-    // Re-hash so merged duplicates collapse instead of violating the unique content hash.
-    const rows = this.db.prepare("SELECT id, kind, title, narrative FROM memories WHERE project = ?").all(from);
-    let moved = 0;
-    let dropped = 0;
-    for (const r of rows) {
-      const hash = sha256(JSON.stringify([into, r.kind, r.title, r.narrative ?? ""]));
-      if (this.db.prepare("SELECT 1 FROM memories WHERE content_hash = ?").get(hash)) {
-        this.db.prepare("DELETE FROM memories WHERE id = ?").run(r.id);
-        dropped++;
-      } else {
-        this.db.prepare("UPDATE memories SET project = ?, content_hash = ?, updated_at_epoch = ? WHERE id = ?").run(into, hash, Date.now(), r.id);
-        moved++;
-      }
-    }
-    this.statsCache = null;
-    this.audit(actor, "project.merge", { from, into, moved, dropped });
-    return { moved, dropped };
+    return mergeProjects(this, from, into, { actor });
   }
 
   /** Counts for the overview. Cached for 3 s and cleared on any write (a full scan costs ~110 ms at 50k rows). */
