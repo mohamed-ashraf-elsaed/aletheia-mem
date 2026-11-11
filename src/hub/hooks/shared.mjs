@@ -79,6 +79,23 @@ export function toolMemory({ name, display, input, response }, base) {
   return { ...base, kind: "event", type: "event", title: cut(oneLine(`${display ?? name}: ${summary}`), 160), narrative };
 }
 
+/** A tool call that started and failed. `error` is the text Claude Code reports; it is redacted like any output. */
+export function toolFailureMemory({ name, display, input, error, interrupted }, base) {
+  if (!name || SKIP_TOOLS.has(name)) return null;
+  const summary = redact(brief(input));
+  const message = redact(asText(error));
+  const narrative = cut(`input: ${redact(asText(input))}\n\nerror${interrupted === true ? " (interrupted)" : ""}: ${message}`, MAX_TOOL_OUTPUT);
+  return { ...base, kind: "event", type: "event", title: cut(oneLine(`${display ?? name} failed: ${summary}`), 160), narrative, concepts: ["failure"] };
+}
+
+/** The closing message of a subagent. Tagged by origin so session-start context can leave it out. */
+export function subagentMemory({ agentType, agentId, text }, base) {
+  const type = typeof agentType === "string" ? oneLine(redact(agentType)).slice(0, 60) : "";
+  if (!type || typeof text !== "string" || text.trim().length < 3) return null;
+  const clean = redact(text);
+  return { ...base, kind: "observation", type: "note", title: cut(`Subagent ${type}: ${oneLine(clean)}`, 140), narrative: cut(clean, MAX_SUMMARY), concepts: ["subagent", type], origin: `subagent:${type}`, subtitle: agentId ? `agent ${oneLine(redact(String(agentId))).slice(0, 80)}` : undefined };
+}
+
 export function summaryMemory(text, base) {
   if (typeof text !== "string" || text.trim().length < 3) return null;
   const clean = redact(text);

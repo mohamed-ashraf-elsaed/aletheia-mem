@@ -36,7 +36,7 @@ Payload field names are the ones the adapter source cites, from host documentati
 
 ```
 tool          capability   verification     detected  events
-claude-code   full         mcp-verified      no        SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd
+claude-code   full         mcp-verified      no        SessionStart, UserPromptSubmit, PostToolUse, PostToolUseFailure, Stop, SubagentStop, SessionEnd
 command-code  full         mcp-verified      no        SessionStart, PostToolUse, Stop
 cursor        full         from-docs-only    no        sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd
 codex         full         mcp-verified      no        SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd
@@ -58,6 +58,8 @@ Every row is from the adapter in `src/hub/hooks/`. "Summary" is a memory of kind
 | claude-code | SessionStart | Prints context. Prints nothing when `source` is `resume`. | `source` |
 | claude-code | UserPromptSubmit | Stores the prompt. | `prompt` |
 | claude-code | PostToolUse | Stores a tool event. | `tool_name`, `tool_input`, `tool_response` |
+| claude-code | PostToolUseFailure | Stores a failed tool call with its error text. | `tool_name`, `tool_input`, `error`, `is_interrupt` |
+| claude-code | SubagentStop | Stores the subagent's last message, tagged `subagent:<agent_type>`. Skipped when `agent_type` is empty. Not shown in session-start context unless `context.includeSubagents` is true. | `agent_type`, `agent_id`, `last_assistant_message` |
 | claude-code | Stop, SessionEnd | Stores a summary, queues compression, ends the session. | `last_assistant_message` |
 | command-code | SessionStart | Prints context. Nothing on `resume`. | `source` |
 | command-code | PostToolUse | Stores a tool event. | `tool_name`, `tool_display_name`, `tool_input`, `tool_response` |
@@ -102,7 +104,7 @@ The installer builds `aletheia.bundle.mjs` in the data directory so a hook loads
 
 | Host | `timeout` written | Matcher written |
 |---|---|---|
-| claude-code | 10 | SessionStart `startup\|clear\|compact`; PostToolUse `*` |
+| claude-code | 10 | SessionStart `startup\|clear\|compact`; PostToolUse `*`; PostToolUseFailure `*` |
 | command-code | 10 | none |
 | codex | 10, SessionEnd 3 | SessionStart `startup\|clear\|compact\|fork` |
 | cursor | 10 | none |

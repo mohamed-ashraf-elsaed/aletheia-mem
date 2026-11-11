@@ -172,7 +172,7 @@ describe.skipIf(process.platform === "win32")("end to end: install, hooks, serve
     expect(doctor.exitCode).toBe(0);
     expect(doctor.stdout).toContain("ok   server");
     expect(doctor.stdout).toContain("ok   hooks claude-code");
-    expect(doctor.stdout).toContain("5/5");
+    expect(doctor.stdout).toContain("7/7");
     expect(doctor.stdout).toContain("ok   hooks command-code");
     expect(doctor.stdout).toContain("3/3");
     expect(doctor.stdout).toContain("ok   spool");
