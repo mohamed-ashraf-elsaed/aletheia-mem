@@ -139,6 +139,8 @@ Dry run: nothing was written. Add --write to apply.
 
 [Hooks reference](hooks.md) covers `install --verify`, `uninstall` and `doctor` in detail.
 
+- `aletheia folder-context <dir> [--project p] [--write]` - preview, or with `--write` update, a `CLAUDE.md` in each folder under `<dir>` that has memories. Only the block between `<!-- aletheia:folder-context:begin -->` and `<!-- aletheia:folder-context:end -->` is written; your text outside it is kept. The default is a dry run: it prints each file it would change and the block, and writes nothing. A folder with no memories gets no file. The command is the only way these files are written. No hook, server route or installer calls it, and it never runs on its own.
+
 ## Maintenance
 
 - `aletheia compress [--daemon] [--interval ms]` - drain the extraction queue once, or keep running with `--daemon`. It uses the provider in `ALETHEIA_PROVIDER`, or the rule-based extractor when none is set. `--project` is in --help but the code does not read it. It creates no embeddings unless `ALETHEIA_EMBED_FACTS=1` is set, so it downloads no model by default.
