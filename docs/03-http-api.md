@@ -357,7 +357,8 @@ Hub routes are guarded local UI/admin routes. `/v1/sync/*` and `/v1/audit/export
 | `/api/hub/overview` | GET | stats, projects, tools, the Claude-mem source, data directory, provider, API-key flag and the MCP command |
 | `/api/hub/settings` | GET, PUT | read the settings; PUT saves them and returns `{settings, saved}`, or `400` with the errors |
 | `/api/hub/projects` | GET | project list |
-| `/api/hub/projects/merge` | POST | `{from, into}` merges one project into another |
+| `/api/hub/projects/merge-plan` | GET | `?from=&into=`; the dry run. Returns `{from, into, moved, dropped, tables}` with per-table counts and writes nothing. `400` for an empty name or the same name twice |
+| `/api/hub/projects/merge` | POST | `{from, into}`; moves every project-scoped row from `from` to `into` in one transaction, drops rows that already exist under `into`, writes one `project.merge` audit entry and returns the same shape as the plan. Irreversible: read the plan first |
 | `/api/hub/tools` | GET | the known tools and their state |
 | `/api/hub/doctor` | GET | installer and health checks |
 | `/api/hub/export` | GET | `?project=`, `?format=markdown`, `?events=1`: a JSONL bundle (or markdown) as an attachment |

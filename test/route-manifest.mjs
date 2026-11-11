@@ -45,6 +45,10 @@ export const ROUTES = [
   R("POST", "/api/hub/erasure/apply", { keys: ["plan", "erased"], body: { before: 0 } }),
   R("POST", "/api/hub/erasure/verify", { status: 400, keys: ["ok"], body: { receipt: {} } }),
 
+  // docs/03 §3.8 project merge
+  R("GET", "/api/hub/projects/merge-plan?from=a&into=b", { template: "/api/hub/projects/merge-plan", keys: ["from", "into", "moved", "dropped", "tables"] }),
+  R("POST", "/api/hub/projects/merge", { keys: ["from", "into", "moved", "dropped", "tables"], body: { from: "a", into: "b" } }),
+
   // docs/03 §3.6 alerts
   R("GET", "/api/hub/alerts/rules", { keys: ["rules"] }),
   R("POST", "/api/hub/alerts/rules", { status: 201, keys: ["rule"], body: { name: "contract", event: "queue.depth", target: "file", path: "@FIXTURE_DIR/alerts.log" } }),
