@@ -25,6 +25,9 @@ console.log(`  source db : ${config.sourceDb} (read-only)`);
 console.log(`  data dir  : ${config.dataDir}`);
 console.log(`  refresh   : ${autoRefresh ? `on (${config.provider}, every ${Math.round(config.refreshCheckMs / 60000)} min)` : "off (set ALETHEIA_PROVIDER=claude-cli|openai to enable)"}`);
 console.log(`  extraction: worker on (${config.provider === "none" ? "rule-based" : config.provider})`);
+if (!["127.0.0.1", "localhost", "::1"].includes(config.host) && !config.apiKey) {
+  console.log(`  warning  : remote mode with no ALETHEIA_API_KEY: the dashboard needs a login, and tools cannot use /v1 or /mcp until the key is set`);
+}
 if (!["127.0.0.1", "localhost", "::1"].includes(config.host) && !config.behindTls) {
   console.log(`  warning  : this bind is not TLS-terminated and login cookies are sent without Secure; use --behind-tls with a reverse proxy or tunnel`);
 }

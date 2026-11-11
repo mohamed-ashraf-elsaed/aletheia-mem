@@ -8,7 +8,7 @@ import { ValidationError, validateMarkFinished, validateReview, validateRuleActi
 import { EVIDENCE_KINDS } from "./readmodel/evidence.mjs";
 import { MIME_TYPES } from "./readmodel/work-product.mjs";
 import { BadRequest, createHubRoutes } from "./hub/routes.mjs";
-import { KEY_CHALLENGE, KEY_REQUIRED, bearerMatches, createLiveTickets, keyGuards, liveUpgradeHeaders } from "./hub/api-key.mjs";
+import { KEY_CHALLENGE, KEY_REQUIRED, REMOTE_AUTH_REQUIRED, bearerMatches, createLiveTickets, keyGuards, liveUpgradeHeaders } from "./hub/api-key.mjs";
 import { AlertStore } from "./hub/alerts.mjs";
 import { createLiveHub } from "./hub/live.mjs";
 import { createMcpHttpHandler } from "./hub/mcp-http.mjs";
@@ -135,6 +135,16 @@ export function startServer(config, {
     const url = new URL(request.url);
     const { pathname } = url;
     const method = request.method;
+
+    // ---- remote mode: the API tools use (/v1/*, /v1/live, /mcp) answers only a login session or the API key. The login
+    // gate below covers / and /api/*; without this, a non-loopback bind with no key served all memory to the network.
+    // /mcp clients cannot hold a session cookie, so in remote mode they need ALETHEIA_API_KEY.
+    if (remoteMode && (pathname === "/mcp" || pathname.startsWith("/v1/"))) {
+      if (!(config.apiKey && bearerMatches(request, config.apiKey))) {
+        if (pathname === "/mcp" || !login.hasSession(request)) return json({ error: REMOTE_AUTH_REQUIRED }, 401, config.apiKey ? KEY_CHALLENGE : {});
+        if (method !== "GET" && method !== "HEAD" && !login.csrfOk(request)) return json({ error: "CSRF token missing or wrong." }, 403);
+      }
+    }
 
     // ---- MCP over Streamable HTTP (its own bearer auth and Origin rules)
     if (pathname === "/mcp") return await mcpHttp(request);

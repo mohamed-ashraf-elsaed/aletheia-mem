@@ -6,6 +6,8 @@
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 
 export const KEY_REQUIRED = "A valid bearer key is required.";
+/** Remote mode: the tool API needs a login session (browser) or the API key (tools). */
+export const REMOTE_AUTH_REQUIRED = "This server is in remote mode: log in, or send the API key (ALETHEIA_API_KEY) as a bearer token.";
 /** Marks a 401 as "send the API key", so the dashboard can tell it from a remote-login "session required" 401. */
 export const KEY_CHALLENGE = { "WWW-Authenticate": 'Bearer realm="aletheia"' };
 export const LIVE_PROTOCOL = "aletheia.live";

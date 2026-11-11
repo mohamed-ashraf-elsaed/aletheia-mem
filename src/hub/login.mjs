@@ -147,7 +147,7 @@ export function createLoginGuard({
         if ((pathname === "/" || pathname === "/index.html") && method === "GET") {
           return new Response(LOGIN_PAGE, {
             status: 401,
-            headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'", "X-Frame-Options": "DENY" },
+            headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src 'self'; form-action 'self'", "X-Frame-Options": "DENY" },
           });
         }
         return json({ error: "A session is required." }, 401);
@@ -158,5 +158,7 @@ export function createLoginGuard({
     return null;
   }
 
-  return { handle };
+  /** True when the request carries a live login session (remote mode). */
+  const hasSession = (request) => !!sessionTokenOf(request);
+  return { handle, hasSession, csrfOk };
 }
