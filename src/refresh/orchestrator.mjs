@@ -1,6 +1,6 @@
 // The refresh: goals -> grouping -> reviews -> alignment -> story. Each step asks a model for ONE JSON object,
 // validates it with the ledger's own validators (the same code the CLI uses), and writes ledger files.
-// Port of the original refresh-task.ts (rYe). Differences are listed in docs/08-findings.md.
+// Port of the original refresh-task.ts (rYe).
 import { Database } from "bun:sqlite";
 import { spawn } from "node:child_process";
 import { randomBytes } from "node:crypto";

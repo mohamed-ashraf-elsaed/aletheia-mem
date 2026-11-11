@@ -1,9 +1,10 @@
 // The tool registry: which AI tools exist, where each reads its standing instructions from, and how each
 // connects to an MCP server. One definition per tool; rules sync and the Tools page both read it.
 //
-// Formats (rules file names, MCP config shapes) are the tools' documented conventions as recalled when this
-// was written. They are UNVERIFIED against each tool's current release. Every apply is preview-first, makes a
-// timestamped backup, and the CLI prints the exact text it wrote. See docs/12-universal-memory-product.md.
+// Formats (rules file names, MCP config shapes) are each tool's documented conventions. A row with a
+// `verifiedOn` date was checked against that tool's documentation on that date; a row without one is not
+// verified. Every apply is preview-first, makes a timestamped backup, and the CLI prints the exact text it wrote.
+// See docs/25-installers.md.
 import { copyFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 

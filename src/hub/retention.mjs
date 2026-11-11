@@ -1,7 +1,7 @@
 // Retention: facts go cold by a rule, old episode text is shortened to a head, a tail and a pointer. Nothing is
 // deleted, and nothing changes without an audited run. The default is a report; `--apply` performs the same plan.
 //
-// The cold rule (documented in docs/26-memory-pipeline.md):
+// The cold rule:
 //   status = active, recorded more than `coldDays` (180) ago, confidence < 0.8, only one episode source, and no
 //   pinned or high-importance observation. A fact confirmed by a second session, or attached to a pinned or
 //   importance >= 0.8 observation, never goes cold.
