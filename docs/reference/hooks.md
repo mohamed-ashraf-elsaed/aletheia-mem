@@ -36,7 +36,7 @@ Payload field names are the ones the adapter source cites, from host documentati
 
 ```
 tool          capability   verification     detected  events
-claude-code   full         mcp-verified      no        SessionStart, UserPromptSubmit, PostToolUse, PostToolUseFailure, Stop, SubagentStop, SessionEnd
+claude-code   full         mcp-verified      no        SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, Stop, SubagentStop, SessionEnd
 command-code  full         mcp-verified      no        SessionStart, PostToolUse, Stop
 cursor        full         from-docs-only    no        sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd
 codex         full         mcp-verified      no        SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd
@@ -57,6 +57,7 @@ Every row is from the adapter in `src/hub/hooks/`. "Summary" is a memory of kind
 |---|---|---|---|
 | claude-code | SessionStart | Prints context. Prints nothing when `source` is `resume`. | `source` |
 | claude-code | UserPromptSubmit | Stores the prompt. | `prompt` |
+| claude-code | PreToolUse (matcher `Read`) | The file-read gate. Stores nothing. With the `readGate.enabled` setting on, a whole-file `Read` of a file of at least 32 KB that already has memories is denied; the reason carries the file outline, earlier memory titles (wrapped as untrusted) and a request to read a line range. A `Read` with `offset` or `limit` is always allowed. Allows on any error, with the setting off, or when the database is missing. | `tool_name`, `tool_input.file_path`, `tool_input.offset`, `tool_input.limit` |
 | claude-code | PostToolUse | Stores a tool event. | `tool_name`, `tool_input`, `tool_response` |
 | claude-code | PostToolUseFailure | Stores a failed tool call with its error text. | `tool_name`, `tool_input`, `error`, `is_interrupt` |
 | claude-code | SubagentStop | Stores the subagent's last message, tagged `subagent:<agent_type>`. Skipped when `agent_type` is empty. Not shown in session-start context unless `context.includeSubagents` is true. | `agent_type`, `agent_id`, `last_assistant_message` |
@@ -104,7 +105,7 @@ The installer builds `aletheia.bundle.mjs` in the data directory so a hook loads
 
 | Host | `timeout` written | Matcher written |
 |---|---|---|
-| claude-code | 10 | SessionStart `startup\|clear\|compact`; PostToolUse `*`; PostToolUseFailure `*` |
+| claude-code | 10 | SessionStart `startup\|clear\|compact`; PreToolUse `Read`; PostToolUse `*`; PostToolUseFailure `*` |
 | command-code | 10 | none |
 | codex | 10, SessionEnd 3 | SessionStart `startup\|clear\|compact\|fork` |
 | cursor | 10 | none |
@@ -236,3 +237,11 @@ Two behaviors of 0.1.10 to know. First, when one file has drifted, the command e
 - [Configuration](configuration.md) - the data directory, the spool path and `ALETHEIA_EXCLUDED_PROJECTS`.
 - [Installer reference](../25-installers.md) - what each installer writes and the sources it used.
 - [Troubleshooting](../guides/troubleshooting.md) - when a hook does not seem to run.
+
+## The file-read gate (Claude Code)
+
+The gate is off by default. Turn it on in the dashboard under Connections, Settings, "Gate whole-file reads of large files with history (Claude Code)". Run `aletheia install claude-code --write` once so the `PreToolUse` entry exists; the entry is installed either way and does nothing while the setting is off.
+
+The hook answers with the documented deny shape: `hookSpecificOutput` with `hookEventName` `PreToolUse`, `permissionDecision` `deny` and `permissionDecisionReason`. Claude sees the reason. Source: https://code.claude.com/docs/en/hooks, fetched 2026-11-11. The `offset` and `limit` input fields of the `Read` tool come from a summary of that page, not its exact text: UNVERIFIED against a real Claude Code session.
+
+Cost: with the setting off, each `Read` starts the hook process, which reads one setting from the hub file and exits with empty output. The gate itself opens the store only for a whole-file read of a file over 32 KB. The hook uses the same 10 second `timeout` as the other events. A timeout or any error lets the read through. The MCP tool `file_outline` returns the same outline on request.
