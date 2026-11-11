@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { applyInstall, claudeDesktopPath, planClaudeDesktop } from "../src/hub/install.mjs";
+import { applyInstall, claudeDesktopInstallPlan, claudeDesktopPath, planClaudeDesktop } from "../src/hub/install.mjs";
 import { makeFixture } from "./fixture.mjs";
 
 const root = join(import.meta.dir, "..");
@@ -66,5 +66,48 @@ describe("Claude Desktop MCP config", () => {
     expect(text).toContain("~/.config/Claude/claude_desktop_config.json");
     expect(text).toContain("UNVERIFIED");
     expect(text).toContain("https://modelcontextprotocol.io/quickstart/user");
+  });
+
+  test("the CLI is a dry run by default, and --write merges with a backup and is idempotent", async () => {
+    const { home, dataDir } = setup();
+    const file = claudeDesktopPath({ home, platform: "linux" });
+    mkdirSync(join(home, ".config/Claude"), { recursive: true });
+    const user = { preferences: { sidebarMode: "dark" }, mcpServers: { other: { command: "npx", args: ["x"] } } };
+    writeFileSync(file, JSON.stringify(user));
+    const run = async (...args) => {
+      const proc = Bun.spawn([process.execPath, join(root, "bin/aletheia.mjs"), "install", "claude-desktop", ...args], {
+        stdin: "ignore", stdout: "pipe", stderr: "pipe", cwd: root, env: { ...process.env, HOME: home, ALETHEIA_DATA_DIR: dataDir, ALETHEIA_HUB_DB: join(dataDir, "hub.db") },
+      });
+      const [stdout, exitCode] = await Promise.all([new Response(proc.stdout).text(), proc.exited]);
+      return { stdout, exitCode };
+    };
+    const backups = () => readdirSync(join(home, ".config/Claude")).filter((name) => name.includes(".aletheia-bak-"));
+
+    const dry = await run();
+    expect(dry.exitCode).toBe(0);
+    expect(dry.stdout).toContain("Dry run: nothing was written");
+    expect(JSON.parse(readFileSync(file, "utf8"))).toEqual(user);
+    expect(backups()).toEqual([]);
+
+    const written = await run("--write");
+    expect(written.exitCode).toBe(0);
+    expect(written.stdout).toContain("Wrote 1 file(s)");
+    const doc = JSON.parse(readFileSync(file, "utf8"));
+    expect(doc.preferences).toEqual(user.preferences);
+    expect(doc.mcpServers.other).toEqual(user.mcpServers.other);
+    expect(doc.mcpServers.aletheia.args).toEqual([join(root, "bin/mcp.mjs")]);
+    expect(backups().length).toBe(1);
+
+    const again = await run("--write");
+    expect(again.stdout).toContain("Already installed; nothing changed.");
+    expect(backups().length).toBe(1);
+  });
+
+  test("the plan names no hook runner and reports mcp-only", () => {
+    const { home, dataDir } = setup();
+    const plan = claudeDesktopInstallPlan({ home, bun: "/opt/bun", mcpScript: join(root, "bin/mcp.mjs"), hookRunner: "/x/bundle.mjs", dataDir, platform: "linux" });
+    expect(plan.capabilities).toBe("mcp-only");
+    expect(plan.env.hookRunner).toBeUndefined();
+    expect(plan.steps.length).toBe(1);
   });
 });
