@@ -8,6 +8,7 @@
 // not a fact about the world. Keeping this narrow makes the extractor quiet instead of storing junk.
 import { readFileSync } from "node:fs";
 import { redact } from "./redact.mjs";
+import { guardProvider } from "../refresh/providers.mjs";
 import { attachFactEntities } from "./entities.mjs";
 import { languageInstruction } from "./language.mjs";
 import { parseTemporal } from "./temporal.mjs";
@@ -375,7 +376,8 @@ export function factsPrompt({ window, project, modeInstruction = "", existing = 
  * Ask, validate, retry once with the refusal quoted. A second refusal is returned, not stored, so the caller can
  * record the bad output. Provider errors are re-thrown: the queue must retry those, not throw the work away.
  */
-export async function extractFactsWithProvider({ window, project, ask, modeInstruction = "", existing = [], outputLanguage = "" }) {
+export async function extractFactsWithProvider({ window, project, ask: rawAsk, modeInstruction = "", existing = [], outputLanguage = "" }) {
+  const ask = guardProvider(rawAsk);
   const allowed = window.map((episode) => Number(episode.episodeId));
   const prompt = factsPrompt({ window, project, modeInstruction, existing, outputLanguage });
   let refusal = null;
