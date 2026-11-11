@@ -9,7 +9,9 @@ import { createRefreshJob, extractJson, validateGroupingDecisions } from "../src
 import { SourceReader } from "../src/source.mjs";
 import { OverlayStore } from "../src/store/overlay.mjs";
 import { Database } from "bun:sqlite";
-import { makeFixture } from "./fixture.mjs";
+import { NOW, makeFixture } from "./fixture.mjs";
+
+const clock = () => NOW;
 
 function setup() {
   const fx = makeFixture();
@@ -24,7 +26,7 @@ const openDb = (fx) => new Database(fx.dbPath, { readonly: true, create: false }
 const cli = (config, fx, argv) => {
   let out;
   const db = openDb(fx);
-  try { runCli(argv, { dir: config.ledgerDir, database: db, print: (v) => { out = v; } }); } finally { db.close(); }
+  try { runCli(argv, { dir: config.ledgerDir, database: db, now: NOW, print: (v) => { out = v; } }); } finally { db.close(); }
   return out;
 };
 const lastJsonBlock = (prompt) => JSON.parse(/```json\n([\s\S]*?)\n```/.exec(prompt)[1]);
@@ -126,7 +128,7 @@ describe("the full refresh with a fake model", () => {
     const { fx, config } = setup();
     const stages = [];
     const needs = cli(config, fx, ["refresh-needs"]);
-    const job = createRefreshJob({ config, needs: { ...needs, goalsStale: false }, ask: fakeModel(stages) });
+    const job = createRefreshJob({ config, needs: { ...needs, goalsStale: false }, ask: fakeModel(stages), now: clock });
     const result = await job.run();
     expect(result).toMatch(/new conversations grouped/);
     expect(result).toMatch(/requests reviewed/);
@@ -166,7 +168,7 @@ describe("the full refresh with a fake model", () => {
     const needs = { ...cli(config, fx, ["refresh-needs"]), goalsStale: false };
     const prompts = [];
     const stubborn = async (prompt, { stage }) => { prompts.push(prompt); return stage === "grouping" ? JSON.stringify({ groups: [], ignored: [] }) : "{}"; };
-    const job = createRefreshJob({ config, needs, ask: stubborn });
+    const job = createRefreshJob({ config, needs, ask: stubborn, now: clock });
     await expect(job.run()).rejects.toThrow(/grouping \(raw answer: .*\): Decide every conversation/);
     expect(prompts.length).toBe(2);
     expect(prompts[1]).toContain("Your previous answer was refused: Decide every conversation");
@@ -180,11 +182,12 @@ describe("auto refresh scheduling", () => {
     const logs = [];
     const auto = new AutoRefresh({
       dir: config.ledgerDir,
+      now: clock,
       openDatabase: () => openDb(fx),
       checkMs: 3_600_000,
       log: (level, message) => logs.push([level, message]),
       runJob: async ({ needs }) => {
-        const job = createRefreshJob({ config, needs: { ...needs, goalsStale: false }, ask: fakeModel() });
+        const job = createRefreshJob({ config, needs: { ...needs, goalsStale: false }, ask: fakeModel(), now: clock });
         return { state: "ok", agent: "fake", result: await job.run(), error: null, steps: job.steps };
       },
     });
@@ -197,13 +200,13 @@ describe("auto refresh scheduling", () => {
   });
   test("a failing job is recorded as failed with its error", async () => {
     const { fx, config } = setup();
-    const auto = new AutoRefresh({ dir: config.ledgerDir, openDatabase: () => openDb(fx), runJob: async () => { throw new Error("model unreachable"); } });
+    const auto = new AutoRefresh({ dir: config.ledgerDir, now: clock, openDatabase: () => openDb(fx), runJob: async () => { throw new Error("model unreachable"); } });
     expect(await auto.check()).toBe("failed");
     expect(JSON.parse(readFileSync(join(config.ledgerDir, "refresh.json"), "utf8"))).toMatchObject({ state: "failed", error: "model unreachable" });
   });
   test("disabled does nothing", async () => {
     const { fx, config } = setup();
-    const auto = new AutoRefresh({ dir: config.ledgerDir, openDatabase: () => openDb(fx), enabled: () => false, runJob: async () => ({ state: "ok" }) });
+    const auto = new AutoRefresh({ dir: config.ledgerDir, now: clock, openDatabase: () => openDb(fx), enabled: () => false, runJob: async () => ({ state: "ok" }) });
     expect(await auto.check()).toBe("disabled");
   });
 });
