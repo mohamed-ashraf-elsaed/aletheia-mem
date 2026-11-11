@@ -55,13 +55,16 @@ beforeAll(() => {
   store.add({ project: "shop", type: "decision", title: "use bcrypt for passwords", files: ["src/auth.ts"] }, { actor: "test" });
   store.add({ project: "shop", type: "gotcha", title: "never log tokens", files: ["src/auth.ts"] }, { actor: "test" });
   store.close();
+  // On Windows a closed bun:sqlite connection keeps the file open until its statements are collected; release it before
+  // the CLI subprocess opens the same database.
+  Bun.gc(true);
 });
 
 describe("aletheia folder-context", () => {
   test("dry run prints the files and block it would write, and writes nothing", async () => {
     const before = snapshot();
     const result = await run(["folder-context", project, "--project", "shop"]);
-    expect(result.exitCode).toBe(0);
+    expect({ exitCode: result.exitCode, stderr: result.exitCode === 0 ? "" : result.stderr }).toEqual({ exitCode: 0, stderr: "" });
     expect(result.stdout).toContain(join("src", "CLAUDE.md"));
     expect(result.stdout).toContain("use bcrypt for passwords");
     expect(result.stdout).toContain("never log tokens");
