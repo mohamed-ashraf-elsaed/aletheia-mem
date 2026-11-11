@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 6e1216648313946a6f6dfad5b4529e1831c4cbf9ba2ca2c197018b001b106a74
+> Source: [README.md](../../README.md) · source-sha256: ec126991523df4a5bf061755d2b276a38aba981c12dbc43f8053768b7de52759
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -81,12 +81,13 @@ _Generated from src/hub/install.mjs via `aletheia install --list`. A row says MC
 
 ## Números medidos
 
-En LoCoMo, claude-mem 15.2.0 tal como se distribuye frente a este proyecto. **Son números de recuperación, no precisión de respuestas.**
+En LoCoMo, claude-mem (15.2.0, 15.17.0) tal como se distribuye frente a este proyecto. **Son números de recuperación, no precisión de respuestas.**
 
 <!-- gen:bench -->
 | Run | Questions | Recall@5 | MRR | ms/query |
 |---|---|---|---|---|
 | claude-mem 15.2.0 (as shipped), raw turns — measured-by-us | 1,536 | 36.0% | 0.285 | p50 1,699 ms, p95 2,824 ms (idle, 40 queries) |
+| claude-mem 15.17.0 (as shipped), raw turns — measured-by-us | 1,536 | 43.5% | 0.377 | mean 1,079 ms (HTTP) |
 | Raw turns, all 10 conversations | 1,536 | 57.4% | 0.497 | 3.72 |
 | Dataset facts, all 10 | 1,536 | 64.8% | 0.591 | 5.53 |
 | Dataset facts, 3 conversations | 383 | 67.4% | 0.620 | 5.80 |
@@ -94,7 +95,7 @@ En LoCoMo, claude-mem 15.2.0 tal como se distribuye frente a este proyecto. **So
 | Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
 | Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
-_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
+_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, bench/results/2026-11-11/claude-mem-15.17.0.json, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
 <!-- /gen:bench -->
 
 Lee la tabla así:
