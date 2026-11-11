@@ -77,7 +77,7 @@ describe("store: memories and search", () => {
     s.add(mem({ project: "a" }));
     s.add(mem({ project: "b" }));
     s.add(mem({ project: "b", title: "only in b", narrative: "z" }));
-    expect(s.mergeProjects("b", "a")).toEqual({ moved: 1, dropped: 1 });
+    expect(s.mergeProjects("b", "a")).toMatchObject({ from: "b", into: "a", moved: 1, dropped: 1, tables: { memories: { moved: 1, dropped: 1 } } });
     expect(s.projects().map((p) => [p.name, p.memories])).toEqual([["a", 2]]);
     expect(() => s.mergeProjects("a", "a")).toThrow();
   });
