@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: ec126991523df4a5bf061755d2b276a38aba981c12dbc43f8053768b7de52759
+> Source: [README.md](../../README.md) · source-sha256: 25647ab1688f3f87ff343c65531da6e86e5badd8e26abdfa56522b9ee8aa6375
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -68,7 +68,7 @@ Aletheia は特定のツールに依存しません。MCP（stdio と HTTP）、
 <!-- gen:tools -->
 | Tool | Level | Verification | Hook events installed |
 |---|---|---|---|
-| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, PostToolUseFailure, Stop, SubagentStop, SessionEnd |
+| claude-code | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine | SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, Stop, SubagentStop, SessionEnd |
 | command-code | full | MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine | SessionStart, PostToolUse, Stop |
 | cursor | full | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
 | codex | full | MCP connection 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
@@ -91,8 +91,8 @@ LoCoMo で、出荷時の claude-mem (15.2.0, 15.17.0) とこのプロジェク�
 | Raw turns, all 10 conversations | 1,536 | 57.4% | 0.497 | 3.72 |
 | Dataset facts, all 10 | 1,536 | 64.8% | 0.591 | 5.53 |
 | Dataset facts, 3 conversations | 383 | 67.4% | 0.620 | 5.80 |
-| Dataset facts, 3 conversations, + rerank | 383 | 73.9% | 0.686 | 251.16 |
-| Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
+| Dataset facts, 3 conversations, + rerank (bench only) | 383 | 73.9% | 0.686 | 251.16 |
+| Dataset facts, all 10, + rerank (bench only) | 1,536 | 72.3% | 0.680 | 646.19 |
 | Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
 _Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, bench/results/2026-11-11/claude-mem-15.17.0.json, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
