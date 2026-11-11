@@ -22,7 +22,7 @@ $ ALETHEIA_DATA_DIR=/srv/aletheia ALETHEIA_PORT=37800 aletheia-server
 | `ALETHEIA_HOST` | `127.0.0.1` | Bind address for `aletheia-server`. A non-loopback value turns on dashboard login. `--host` overrides it. |
 | `ALETHEIA_PORT` | `37790` | Dashboard and API port. `aletheia doctor` checks `/healthz` on this port. |
 | `ALETHEIA_BEHIND_TLS` | unset | `1` says a reverse proxy ends TLS. `--behind-tls` does the same. |
-| `ALETHEIA_API_KEY` | empty | When set, every `/api/*` and `/v1/*` route and `/mcp` on the main server need `Authorization: Bearer <key>`. The dashboard asks for the key once. See [What the API key protects](#what-the-api-key-protects). |
+| `ALETHEIA_API_KEY` | empty | When set, every `/api/*` and `/v1/*` route and `/mcp` on the main server need `Authorization: Bearer <key>`. The dashboard asks for the key once. In remote mode the key must be at least 32 characters (for example `openssl rand -hex 32`); a shorter key stops the server at startup. See [What the API key protects](#what-the-api-key-protects). |
 | `ALETHEIA_EXTRACTION_WORKER` | unset | `1` starts the extraction worker when the server is embedded elsewhere. `aletheia-server` always starts it. |
 | `ALETHEIA_AUTO_REFRESH` | `true` | `false` turns off the periodic model refresh. It runs only when a provider is set. |
 | `ALETHEIA_REFRESH_CHECK_MS` | `600000` | How often the server checks whether a refresh is due. |

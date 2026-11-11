@@ -825,11 +825,18 @@ export async function doctor(env) {
   checks.push({ name: "port", ok: portOk, detail: portOk ? String(port) : `invalid port ${env.port}` });
 
   const url = `http://127.0.0.1:${env.port}/healthz`;
+  // /healthz can take a moment on a large database, so wait long and call a late answer slow, not unreachable.
+  const SERVER_WAIT_MS = 3000;
+  const SLOW_MS = 400;
+  const started = Date.now();
   try {
-    const response = await fetch(url, { signal: AbortSignal.timeout(400) });
-    checks.push({ name: "server", ok: response.ok, detail: response.ok ? url : `HTTP ${response.status} at ${url}` });
-  } catch {
-    checks.push({ name: "server", ok: false, detail: `not reachable at ${url}` });
+    const response = await fetch(url, { signal: AbortSignal.timeout(SERVER_WAIT_MS) });
+    const elapsed = Date.now() - started;
+    const slow = elapsed > SLOW_MS ? ` slow (${elapsed} ms)` : "";
+    checks.push({ name: "server", ok: response.ok, detail: response.ok ? `${url}${slow}` : `HTTP ${response.status} at ${url}${slow}` });
+  } catch (error) {
+    const timedOut = error?.name === "TimeoutError";
+    checks.push({ name: "server", ok: false, detail: timedOut ? `slow (no answer within ${SERVER_WAIT_MS} ms) at ${url}` : `not reachable at ${url}` });
   }
 
   for (const installer of INSTALLERS) {

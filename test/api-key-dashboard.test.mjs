@@ -13,7 +13,7 @@ import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
 import * as dom from "../public/ui-dom.js";
 import * as status from "../public/ui-status.js";
 
-const KEY = "dashboard-key-1234567890";
+const KEY = "dashboard-key-1234567890-abcdefghij";
 const MARKER = "zebra-marker-memory-text";
 const publicDir = join(import.meta.dir, "..", "public");
 

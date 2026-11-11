@@ -10,7 +10,7 @@ import { SyncStore } from "../src/hub/sync/store.mjs";
 import { removeDir } from "./temp-dirs.mjs";
 
 const temp = mkdtempSync(join(tmpdir(), "aletheia-remote-auth-"));
-const KEY = "remote-auth-test-key-0123456789";
+const KEY = "remote-auth-test-key-0123456789-abcdef";
 
 const makeConfig = (tag, extra = {}) => loadConfig({
   port: 0,

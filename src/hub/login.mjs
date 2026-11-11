@@ -7,6 +7,7 @@ import { randomBytes, timingSafeEqual } from "node:crypto";
 
 const COOKIE_SESSION = "aletheia_session";
 const COOKIE_CSRF = "aletheia_csrf";
+const COOKIE_CSRF_HOST = "__Host-aletheia_csrf"; // behind TLS: Secure, Path=/, no Domain, so a sibling host cannot plant it
 
 const safeEqual = (a, b) => {
   const left = Buffer.from(String(a ?? ""));
@@ -57,9 +58,33 @@ export function createLoginGuard({
   lockMs = 60_000,
   maxFailures = 5,
   getPeer = () => "unknown",
+  now = Date.now,
+  maxTrackedPeers = 1000,
+  onSessionEnd = () => {},
 } = {}) {
-  const sessions = new Map(); // session token -> { expiresAt, createdAt }
-  const failures = new Map(); // peer -> { count, lockedUntil }
+  const sessions = new Map(); // session token -> { expiresAt, createdAt, csrf }
+  const failures = new Map(); // peer -> { count, lockedUntil, at }
+  const csrfName = behindTls ? COOKIE_CSRF_HOST : COOKIE_CSRF;
+  const failureTtlMs = Math.max(lockMs * 2, 15 * 60_000);
+
+  const endSession = (token) => {
+    if (!sessions.delete(token)) return;
+    try {
+      onSessionEnd(token);
+    } catch { /* closing a stream must not break a request */ }
+  };
+  const sweep = () => {
+    const at = now();
+    for (const [token, session] of sessions) if (session.expiresAt < at) endSession(token);
+  };
+  const sweeper = requireLogin ? setInterval(sweep, Math.max(50, Math.min(30_000, sessionTtlMs / 2))) : null;
+  sweeper?.unref?.();
+
+  const pruneFailures = () => {
+    const at = now();
+    for (const [peer, entry] of failures) if (entry.lockedUntil <= at && at - entry.at > failureTtlMs) failures.delete(peer);
+    while (failures.size >= maxTrackedPeers) failures.delete(failures.keys().next().value);
+  };
 
   const randomToken = (bytes = 32) => randomBytes(bytes).toString("hex");
 
@@ -70,7 +95,12 @@ export function createLoginGuard({
 
   const cookieValue = (request, name) => {
     const pair = (request.headers.get("cookie") ?? "").split(";").map((part) => part.trim()).find((part) => part.startsWith(`${name}=`));
-    return pair ? decodeURIComponent(pair.slice(name.length + 1)) : "";
+    if (!pair) return "";
+    try {
+      return decodeURIComponent(pair.slice(name.length + 1));
+    } catch {
+      return "";
+    }
   };
 
   const sessionTokenOf = (request) => {
@@ -78,8 +108,8 @@ export function createLoginGuard({
     if (!token) return null;
     const session = sessions.get(token);
     if (!session) return null;
-    if (session.expiresAt < Date.now()) {
-      sessions.delete(token);
+    if (session.expiresAt < now()) {
+      endSession(token);
       return null;
     }
     return token;
@@ -87,7 +117,8 @@ export function createLoginGuard({
 
   const csrfOk = (request) => {
     const header = request.headers.get("x-csrf-token") ?? "";
-    const expected = cookieValue(request, COOKIE_CSRF);
+    const token = sessionTokenOf(request);
+    const expected = token ? sessions.get(token).csrf : "";
     return !!header && !!expected && safeEqual(header, expected);
   };
 
@@ -108,8 +139,8 @@ export function createLoginGuard({
     if (pathname === "/api/login" && method === "POST") {
       const peer = getPeer(request, server);
       const lock = failures.get(peer);
-      if (lock && lock.lockedUntil > Date.now()) {
-        return json({ error: "Too many failed logins; wait." }, 429, { "Retry-After": String(Math.max(1, Math.ceil((lock.lockedUntil - Date.now()) / 1000))) });
+      if (lock && lock.lockedUntil > now()) {
+        return json({ error: "Too many failed logins; wait." }, 429, { "Retry-After": String(Math.max(1, Math.ceil((lock.lockedUntil - now()) / 1000))) });
       }
       let body;
       try {
@@ -120,11 +151,13 @@ export function createLoginGuard({
       const token = store.findToken(String(body?.token ?? ""));
       const valid = !!token && !token.revoked_at && !(token.expires_at && token.expires_at < Date.now()) && token.scope === "admin";
       if (!valid) {
-        const entry = failures.get(peer) ?? { count: 0, lockedUntil: 0 };
+        if (!failures.has(peer)) pruneFailures();
+        const entry = failures.get(peer) ?? { count: 0, lockedUntil: 0, at: 0 };
         entry.count += 1;
+        entry.at = now();
         if (entry.count >= maxFailures) {
           const step = Math.max(0, entry.count - maxFailures);
-          entry.lockedUntil = Date.now() + Math.min(lockMs * 2 ** step, 15 * 60_000);
+          entry.lockedUntil = now() + Math.min(lockMs * 2 ** step, 15 * 60_000);
         }
         failures.set(peer, entry);
         return json({ error: "The admin token is not valid." }, 401);
@@ -132,8 +165,8 @@ export function createLoginGuard({
       failures.delete(peer);
       const sessionToken = randomToken(32);
       const csrfToken = randomToken(16);
-      sessions.set(sessionToken, { expiresAt: Date.now() + sessionTtlMs, createdAt: Date.now() });
-      return withCookies(json({ ok: true }, 200), [cookie(COOKIE_SESSION, sessionToken, { httpOnly: true }), cookie(COOKIE_CSRF, csrfToken)]);
+      sessions.set(sessionToken, { expiresAt: now() + sessionTtlMs, createdAt: now(), csrf: csrfToken });
+      return withCookies(json({ ok: true }, 200), [cookie(COOKIE_SESSION, sessionToken, { httpOnly: true }), cookie(csrfName, csrfToken)]);
     }
 
     if (pathname === "/api/logout" && method === "POST") {
@@ -141,8 +174,8 @@ export function createLoginGuard({
       const sessionToken = sessionTokenOf(request);
       if (!sessionToken) return json({ error: "No session." }, 401);
       if (!csrfOk(request)) return json({ error: "CSRF token missing or wrong." }, 403);
-      sessions.delete(sessionToken);
-      return withCookies(json({ ok: true }, 200), [cookie(COOKIE_SESSION, "", { httpOnly: true, maxAgeSeconds: 0 }), cookie(COOKIE_CSRF, "", { maxAgeSeconds: 0 })]);
+      endSession(sessionToken);
+      return withCookies(json({ ok: true }, 200), [cookie(COOKIE_SESSION, "", { httpOnly: true, maxAgeSeconds: 0 }), cookie(csrfName, "", { maxAgeSeconds: 0 })]);
     }
 
     if (!requireLogin) return null;
@@ -164,5 +197,9 @@ export function createLoginGuard({
 
   /** True when the request carries a live login session (remote mode). */
   const hasSession = (request) => !!sessionTokenOf(request);
-  return { handle, hasSession, csrfOk };
+  /** The live session token of a request, or null. The server ties open streams to it. */
+  const sessionIdOf = (request) => sessionTokenOf(request);
+  const stats = () => ({ failurePeers: failures.size, sessions: sessions.size });
+  const close = () => clearInterval(sweeper);
+  return { handle, hasSession, csrfOk, sessionIdOf, stats, close };
 }

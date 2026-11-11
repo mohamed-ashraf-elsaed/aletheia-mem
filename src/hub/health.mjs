@@ -77,3 +77,32 @@ export function healthReport(store, { model = process.env.ALETHEIA_EMBED_MODEL ?
     model: safeModel(model),
   };
 }
+
+/**
+ * Wraps healthReport so /healthz, open to anyone, answers from a cache. The integrity check runs once per `ttlMs`
+ * and never on the request path once the cache is warm: a stale report is served at once and refreshed right after
+ * the response. On a large database quick_check takes close to a second, longer than a health probe waits.
+ */
+export function createHealthCache({ ttlMs = 30_000, now = Date.now, defer = (fn) => setTimeout(fn, 0) } = {}) {
+  let cached = null;
+  let refreshing = false;
+  const run = (store, options) => {
+    const report = healthReport(store, options);
+    cached = { store, at: now(), report };
+    return report;
+  };
+  return (store, options) => {
+    if (!cached || cached.store !== store) return run(store, options);
+    if (now() - cached.at >= ttlMs && !refreshing) {
+      refreshing = true;
+      defer(() => {
+        try {
+          run(store, options);
+        } catch { /* keep the old report */ } finally {
+          refreshing = false;
+        }
+      });
+    }
+    return cached.report;
+  };
+}

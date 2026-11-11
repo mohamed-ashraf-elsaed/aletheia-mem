@@ -5,7 +5,7 @@ import { isAbsolute, join, resolve } from "node:path";
 import { extname } from "node:path";
 import { makeProvider } from "../refresh/providers.mjs";
 import { isProjectExcluded, normalizeHook } from "./capture.mjs";
-import { healthReport } from "./health.mjs";
+import { createHealthCache, healthReport } from "./health.mjs";
 import { projectKeyForPath } from "../readmodel/project.mjs";
 import { compressRecent } from "./compress.mjs";
 import { importClaudeMem } from "./importers.mjs";
@@ -56,6 +56,10 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null, li
   const argv = () => mcpCommand({ bun: process.execPath, script: mcpScript });
   const qs = (url) => Object.fromEntries(url.searchParams);
   const live = (frame) => liveHub?.broadcast(frame);
+  const cachedHealth = createHealthCache();
+  // Warm the cache right after startup so the first /healthz does not pay for the integrity check.
+  const warm = setTimeout(() => { try { cachedHealth(hub); } catch { /* the hub was closed first */ } }, 0);
+  warm.unref?.();
   let syncStore = null;
   const getSyncStore = () => syncStore ?? (syncStore = new SyncStore(config.syncDb));
   let teamStore = null;
@@ -209,7 +213,8 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null, li
 </html>`;
         return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Content-Security-Policy": "frame-ancestors 'none'", "X-Frame-Options": "DENY" } });
       }
-      const rel = decodeURIComponent(pathname.slice(5));
+      let rel;
+      try { rel = decodeURIComponent(pathname.slice(5)); } catch { return h.json({ error: "Not found." }, 404); }
       if (rel.includes("..")) return h.json({ error: "Not found." }, 404);
       const file = join(config.hubUiDir, rel);
       if (!existsSync(file) || !statSync(file).isFile()) return h.json({ error: "Not found." }, 404);
@@ -217,7 +222,7 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null, li
     }
 
     if (pathname === "/healthz" && method === "GET") {
-      const health = healthReport(hub);
+      const health = cachedHealth(hub);
       return h.json(health, health.status === "ok" ? 200 : 503);
     }
     const denied = h.guarded(request, h.server, { post: method !== "GET" && method !== "HEAD" });
