@@ -52,6 +52,55 @@ export class ApiError extends Error {
   }
 }
 
+// ---- the server's API key (ALETHEIA_API_KEY) --------------------------------------------------------------
+// The key lives in sessionStorage, so it is gone when the tab closes, and goes only in the Authorization header.
+
+const KEY_STORE = "aletheia.apiKey";
+let keyInMemory = "";
+
+export function storedKey() {
+  try { const storage = globalThis.sessionStorage; if (storage) return storage.getItem(KEY_STORE) ?? ""; } catch { /* storage blocked */ }
+  return keyInMemory;
+}
+export function storeKey(value) {
+  keyInMemory = value || "";
+  try {
+    if (value) globalThis.sessionStorage?.setItem(KEY_STORE, value);
+    else globalThis.sessionStorage?.removeItem(KEY_STORE);
+  } catch { /* storage blocked: the key lasts until the page reloads */ }
+}
+export const authHeaders = () => { const key = storedKey(); return key ? { Authorization: `Bearer ${key}` } : {}; };
+
+/** A 401 that asks for the API key. A remote-login "session required" 401 has no Bearer challenge. */
+const isKeyChallenge = (response) => response.status === 401 && /^Bearer\b/i.test(response.headers?.get?.("www-authenticate") ?? "");
+
+let keyPrompt = null;
+let asking = null;
+/** The shell registers the dialog that asks for the key: ({retry}) => key or null. */
+export const setKeyPrompt = (fn) => { keyPrompt = fn; asking = null; };
+
+/** Ask once, however many requests wait. Resolves true when the person entered a key. */
+function askForKey(retry) {
+  if (!keyPrompt) return Promise.resolve(false);
+  asking ??= Promise.resolve()
+    .then(() => keyPrompt({ retry }))
+    .then((value) => { const key = String(value ?? "").trim(); if (key) storeKey(key); return !!key; }, () => false)
+    .finally(() => { asking = null; });
+  return asking;
+}
+
+/** fetch with the stored key. On a key challenge it asks for the key and sends the request again, at most three times. */
+export async function authFetch(path, init = {}, fetchImpl = globalThis.fetch) {
+  for (let round = 0; ; round += 1) {
+    const used = storedKey();
+    const response = await fetchImpl(path, { ...init, headers: { ...init.headers, ...authHeaders() } });
+    if (!isKeyChallenge(response) || round === 3) return response;
+    if (storedKey() !== used) continue; // another request already got a new key
+    if (used) storeKey("");
+    if (!(await askForKey(!!used))) return response;
+  }
+}
+
 export async function api(path, { method = "GET", body } = {}) {
   const headers = {};
   if (body !== undefined) headers["Content-Type"] = "application/json";
@@ -62,7 +111,7 @@ export async function api(path, { method = "GET", body } = {}) {
   }
   let response;
   try {
-    response = await fetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
+    response = await authFetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   } catch (error) {
     throw new ApiError("The server is not reachable.", { status: 0, path });
   }

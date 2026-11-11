@@ -34,6 +34,7 @@ import { applyErase, erasePlan, loadEraseKey, receiptId, signReceipt, verifyRece
 import { teamRequest } from "./team-api.mjs";
 import { TeamStore } from "./team.mjs";
 import { readSettings, writeSettings } from "./settings.mjs";
+import { KEY_CHALLENGE, KEY_REQUIRED, bearerMatches } from "./api-key.mjs";
 
 const MAX_BODY = 8 * 1024 * 1024;
 const TYPES = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8", ".svg": "image/svg+xml" };
@@ -49,7 +50,7 @@ function absDir(p, what = "projectDir") {
   return resolve(p);
 }
 
-export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) {
+export function createHubRoutes({ hub, config, liveHub = null, alerts = null, liveTickets = null }) {
   const mcpScript = join(import.meta.dir, "..", "..", "bin", "mcp.mjs");
   const argv = () => mcpCommand({ bun: process.execPath, script: mcpScript });
   const qs = (url) => Object.fromEntries(url.searchParams);
@@ -220,10 +221,8 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
     }
     const denied = h.guarded(request, h.server, { post: method !== "GET" && method !== "HEAD" });
     if (denied) return denied;
-    if (isV1 && config.apiKey) {
-      const auth = request.headers.get("authorization") ?? "";
-      if (auth !== `Bearer ${config.apiKey}`) return h.json({ error: "A valid bearer key is required." }, 401);
-    }
+    // The optional API key guards /api/hub as well as /v1: both return memory and change data.
+    if (!bearerMatches(request, config.apiKey)) return h.json({ error: KEY_REQUIRED }, 401, KEY_CHALLENGE);
     const tool = request.headers.get("x-tool") ?? undefined;
     let m;
 
@@ -348,6 +347,8 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null }) 
         return h.json({ ...report, ok: report.status === "ok" }, report.status === "ok" ? 200 : 503);
       }
       if (pathname === "/v1/info" && method === "GET") return h.json({ name: "aletheia-mem", version: VERSION, api: "v1", stats: hub.stats() });
+      // A one-time ticket for the /v1/live socket, for a browser that holds the key but cannot send headers on a WebSocket.
+      if (pathname === "/v1/live/ticket" && method === "POST" && liveTickets) return h.json(liveTickets.issue());
       if (pathname === "/v1/work" && method === "GET") {
         const q = qs(url);
         return h.json({ ...workOverview(hub, {

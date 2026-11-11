@@ -1,7 +1,6 @@
 // HTTP server: static SPA, the /api/work-view* routes, /api/work-state, and /api/setup/*.
 // Same contract as the original worker; see docs/03-http-api.md.
 import { existsSync, readFileSync, statSync } from "node:fs";
-import { createHash, timingSafeEqual } from "node:crypto";
 import { extname, join, normalize, sep } from "node:path";
 import { HttpError, WorkViewService } from "./app.mjs";
 import { isCrossOrigin, isLocalRequest, isSameOriginJson } from "./http/guards.mjs";
@@ -9,6 +8,7 @@ import { ValidationError, validateMarkFinished, validateReview, validateRuleActi
 import { EVIDENCE_KINDS } from "./readmodel/evidence.mjs";
 import { MIME_TYPES } from "./readmodel/work-product.mjs";
 import { BadRequest, createHubRoutes } from "./hub/routes.mjs";
+import { KEY_CHALLENGE, KEY_REQUIRED, bearerMatches, createLiveTickets, keyGuards, liveUpgradeHeaders } from "./hub/api-key.mjs";
 import { AlertStore } from "./hub/alerts.mjs";
 import { createLiveHub } from "./hub/live.mjs";
 import { createMcpHttpHandler } from "./hub/mcp-http.mjs";
@@ -91,20 +91,13 @@ export function startServer(config, {
   const backupFirst = setTimeout(runScheduledBackup, 5_000);
   backupFirst.unref?.();
   const liveHub = createLiveHub(hub);
-  const hubRoutes = createHubRoutes({ hub, config, liveHub, alerts });
+  const liveTickets = createLiveTickets();
+  const hubRoutes = createHubRoutes({ hub, config, liveHub, alerts, liveTickets });
   // MCP over Streamable HTTP on the main (loopback) server. Optional bearer key, same one as /v1.
   const mcpHttp = createMcpHttpHandler({
     store: hub,
     authorize: config.apiKey
-      ? async (request) => {
-          const header = request.headers.get("authorization") ?? "";
-          const match = /^Bearer\s+(.+)$/i.exec(header);
-          if (!match) return { status: 401, error: "A valid bearer key is required." };
-          const wanted = createHash("sha256").update(String(match[1])).digest();
-          const expected = createHash("sha256").update(String(config.apiKey)).digest();
-          if (!timingSafeEqual(wanted, expected)) return { status: 401, error: "A valid bearer key is required." };
-          return { token: { scope: "local" }, projects: null };
-        }
+      ? async (request) => (bearerMatches(request, config.apiKey) ? { token: { scope: "local" }, projects: null } : { status: 401, error: KEY_REQUIRED })
       : null,
   });
   const html = new Map();
@@ -150,19 +143,21 @@ export function startServer(config, {
     const loginResponse = await login.handle(request, { server });
     if (loginResponse) return loginResponse;
 
-    // ---- /v1/live WebSocket: same guards as /v1 (local only + optional bearer key), Origin check, upgrade
+    // ---- /v1/live WebSocket: same guards as /v1 (local only), Origin check, then the optional key: the bearer header
+    // (tools) or a one-time ticket offered as a subprotocol (browsers cannot set headers on a WebSocket).
     if (pathname === "/v1/live" && method === "GET") {
       const denied = guarded(request, server);
       if (denied) return denied;
-      if (config.apiKey) {
-        const auth = request.headers.get("authorization") ?? "";
-        if (auth !== `Bearer ${config.apiKey}`) return json({ error: "A valid bearer key is required." }, 401);
-      }
       if (isCrossOrigin(request)) return json({ error: "This origin is not allowed." }, 403);
+      if (config.apiKey && !bearerMatches(request, config.apiKey) && !liveTickets.redeem(request)) return json({ error: KEY_REQUIRED }, 401, KEY_CHALLENGE);
       const project = new URL(request.url).searchParams.get("project") || null;
-      if (server.upgrade(request, { data: { project } })) return undefined;
+      if (server.upgrade(request, { data: { project }, headers: liveUpgradeHeaders(request) })) return undefined;
       return json({ error: "WebSocket upgrade failed." }, 400);
     }
+
+    // ---- the optional API key: every /api and /v1 route returns memory or changes data. In remote mode the login
+    // session above is checked first, so a keyed remote server needs both the session and the key.
+    if (config.apiKey && keyGuards(pathname) && !bearerMatches(request, config.apiKey)) return json({ error: KEY_REQUIRED }, 401, KEY_CHALLENGE);
 
     // ---- static
     if (method === "GET" && (pathname === "/" || pathname === "/index.html")) {

@@ -152,9 +152,12 @@ export function tabIdFromElement(element) {
 /** True when the page was opened with ?demo=1, which is how screenshots and demos of seeded data are labelled. */
 export const isDemo = (search) => new URLSearchParams(String(search ?? "")).get("demo") === "1";
 
-/** The optional legacy viewer is offered only when the old database exists. */
+/**
+ * The optional legacy viewer is offered only when the old database exists. It cannot send ALETHEIA_API_KEY (its
+ * EventSource and file links cannot carry a header), so it is not offered when the server needs the key.
+ */
 export function classicViewerAvailable(overview) {
-  return overview?.claudeMem?.exists === true;
+  return overview?.claudeMem?.exists === true && overview?.apiKeyRequired !== true;
 }
 
 /**

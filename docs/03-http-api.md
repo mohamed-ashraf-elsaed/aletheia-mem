@@ -10,9 +10,12 @@ Base: `http://127.0.0.1:<port>`. All JSON responses carry `Cache-Control: no-sto
 | **local only** | every `/api/*` route except `/health` | peer address is `127.0.0.1`, `::1` or `::ffff:127.0.0.1`; `Host` header names `127.0.0.1`, `localhost` or `::1`; none of `Forwarded`, `X-Forwarded-For`, `X-Forwarded-Host`, `X-Real-IP` present | `403 {"error":"Work view is available only on this computer."}` |
 | **same-origin JSON** | every POST | `Sec-Fetch-Site` is not `cross-site`; `Origin` is absent or exactly this server's loopback origin (same port); `Content-Type` is `application/json` | `403 {"error":"Review changes must come from the local work viewer."}` |
 | **file origin** | `GET /api/work-view/file/...` | not cross-site, not cross-origin | `403 {"error":"Recorded files open only from the local work viewer."}` |
+| **API key** | only when `ALETHEIA_API_KEY` is set: every `/api/*` route except `/api/login` and `/api/logout`, every `/v1/*` route, and `/mcp` | `Authorization: Bearer <key>`. `/v1/live` also accepts a one-time ticket from `POST /v1/live/ticket`, offered as the WebSocket subprotocol `aletheia.ticket.<ticket>` | `401 {"error":"A valid bearer key is required."}` with `WWW-Authenticate: Bearer realm="aletheia"` |
 
 The server also binds to `127.0.0.1` only. The Host check defeats DNS rebinding; the Origin check defeats a
-web page POSTing to your local port.
+web page POSTing to your local port. The API key stops another local process from reading memory; static files,
+`/health` and `/healthz` stay open. On a non-loopback bind the Hub login session is checked first, so `/api/*` then
+needs both the session and the key ([configuration](reference/configuration.md#what-the-api-key-protects)).
 
 Errors are `{"error": "<message>"}`. Validation errors are `400 {"error":"Invalid request body.","details":[{path,message}]}`.
 An unknown route is `404` with an HTML `Cannot <METHOD> <path>` body, like Express.
@@ -304,7 +307,8 @@ Hub routes are guarded local UI/admin routes. `/v1/sync/*` and `/v1/audit/export
 | `/healthz` | GET | the health report (`status` `ok` or `error`); `503` when not ok |
 | `/v1/health` | GET | the same report plus `ok`; `200` or `503` |
 | `/v1/info` | GET | `{name, version, api, stats}` |
-| `/v1/live` | GET | WebSocket upgrade for live events; `?project=` limits them. Same guards as `/v1` |
+| `/v1/live` | GET | WebSocket upgrade for live events; `?project=` limits them. Same guards as `/v1`; with a key set it takes the bearer header or a one-time ticket as the subprotocol `aletheia.ticket.<ticket>` (offer `aletheia.live` too; the server answers with it) |
+| `/v1/live/ticket` | POST | `{ticket, protocol, expiresInMs}`: a single-use ticket for `/v1/live`, valid for 30 seconds, for a browser that cannot set headers on a WebSocket |
 | `/mcp` | POST | one JSON-RPC 2.0 message over Streamable HTTP; checks the Origin and uses its own bearer auth |
 | `/mcp` | DELETE | ends a session; `Mcp-Session-Id` is required (`400`), unknown id is `404` |
 | `/mcp` | GET | `405`: the server sends no server-initiated messages |
