@@ -69,6 +69,20 @@ export const TOOL_DEFS = [
     },
   },
   {
+    name: "file_outline",
+    title: "Outline a file with its history",
+    description: `Return a cheap outline of one file (markdown headings and code symbols with line numbers) plus the titles of earlier memories that touched it, so you can read only the line range you need. Read-only. Works only for a file inside the project working directory of a local server, and is refused over a remote connection. ${UNTRUSTED}`,
+    annotations: annotate("Outline a file with its history", { readOnly: true, idempotent: true }),
+    inputSchema: {
+      type: "object",
+      properties: {
+        file: str("Path of the file to outline, absolute or relative to the working directory. Required."),
+        project: str("Project key used to find earlier memories. Default: the project of the server's working directory."),
+      },
+      required: ["file"],
+    },
+  },
+  {
     name: "save_memory",
     title: "Save a memory",
     description: "Store one durable memory (a decision, gotcha, convention or fix) that every connected tool can later find. Secrets in the text are redacted before storage. Saving the same project, title and text again is a no-op and returns the existing id. Use work_state_write for a running to-do list and add_rule for a standing instruction. Returns \"Saved as #id in project.\" or \"Already saved as #id.\".",

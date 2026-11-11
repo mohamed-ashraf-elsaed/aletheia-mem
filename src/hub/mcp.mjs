@@ -4,6 +4,8 @@
 import { WORKTREE_SETTING_KEY, useWorktreeSetting } from "../lib/project-key.mjs";
 import { VERSION } from "../lib/version.mjs";
 import { projectKeyForPath } from "../readmodel/project.mjs";
+import { resolve as resolvePath } from "node:path";
+import { fileOutline } from "./smart-file.mjs";
 import { wrapUntrusted } from "./untrusted.mjs";
 import { redact } from "./capture.mjs";
 import { searchPage } from "./lists.mjs";
@@ -161,6 +163,12 @@ export function callTool(name, args = {}, ctx) {
         const rows = found.results.filter((row) => !allowed || allowed(row.project));
         if (!rows.length) return text(found.reason === "no_terms" ? "No matches. The query had no searchable words." : "No matches.");
         return recalled(rows.map((row) => `${row.source} ${row.at.slice(0, 10)} [${row.kind}] ${oneLine(row.title ? `${row.title}: ${row.text}` : row.text)}  (${row.project}, ${row.author.name})`).join("\n"));
+      }
+      case "file_outline": {
+        const denied = scopedProject(args.project);
+        if (denied) return denied;
+        const project = args.project ?? (ctx.cwd ? projectKeyForPath(ctx.cwd) : undefined);
+        return recalled(fileOutline(store, { file: typeof args.file === "string" ? resolvePath(ctx.cwd ?? "/", args.file) : args.file, root: ctx.cwd, project }));
       }
       case "save_memory": {
         if (typeof args.text !== "string" || !args.text.trim()) return fail("text is required.");

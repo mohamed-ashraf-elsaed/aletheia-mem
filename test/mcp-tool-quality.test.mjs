@@ -1,6 +1,7 @@
 // Tool definitions are what MCP clients and registries judge a server by. Every tool must carry annotations,
 // a real description, a description on every input property, and hints that match what its handler does.
 import { afterAll, describe, expect, test } from "bun:test";
+import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { handleMessage, callTool } from "../src/hub/mcp.mjs";
 import { HubStore } from "../src/hub/store.mjs";
@@ -19,6 +20,7 @@ const calls = {
   search: { query: "alpha" },
   timeline: { anchor: 1 },
   get_observations: { ids: [1] },
+  file_outline: { file: "@FILE" },
   fact_history: { subject: "alpha" },
   session_start_context: {},
   list_rules: {},
@@ -32,8 +34,8 @@ const calls = {
 };
 
 describe("MCP tool definitions", () => {
-  test("lists 13 tools", () => {
-    expect(listed.length).toBe(13);
+  test("lists 14 tools", () => {
+    expect(listed.length).toBe(14);
     expect(Object.keys(calls).sort()).toEqual(Object.keys(byName).sort());
   });
 
@@ -54,7 +56,7 @@ describe("MCP tool definitions", () => {
   });
 
   test("tools that return recalled text say it is untrusted", () => {
-    for (const name of ["search", "timeline", "get_observations", "fact_history", "session_start_context"]) {
+    for (const name of ["search", "timeline", "get_observations", "fact_history", "session_start_context", "file_outline"]) {
       expect(byName[name].description).toContain("untrusted");
     }
   });
@@ -63,11 +65,13 @@ describe("MCP tool definitions", () => {
     const dir = tempDir();
     const db = new HubStore(join(dir, "quality.db"));
     db.add({ project: "p", kind: "observation", type: "note", title: "alpha", narrative: "alpha text" });
-    const local = { store: db, tool: "quality", cwd: "/work/quality" };
+    const outlined = join(dir, "outline.md");
+    writeFileSync(outlined, "# Title\n\ntext\n");
+    const local = { store: db, tool: "quality", cwd: dir };
     const snapshot = () => Buffer.from(db.db.serialize()).toString("base64");
     const ruleId = db.rules.add({ then: "Keep answers short." }).id;
     for (const [name, sample] of Object.entries(calls)) {
-      const args = JSON.parse(JSON.stringify(sample).replace("@RULE", ruleId));
+      const args = JSON.parse(JSON.stringify(sample).replace("@RULE", ruleId).replaceAll("@FILE", JSON.stringify(outlined).slice(1, -1)));
       const before = snapshot();
       const result = callTool(name, args, local);
       expect(result.isError, `${name} sample call must succeed`).toBeFalsy();
