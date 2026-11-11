@@ -1,7 +1,7 @@
 // The Data page of the Connections tab: erase memory with a report first and a typed confirmation, verify an erasure
 // receipt, and merge one project into another after a dry-run plan. Both writes are irreversible, so each one is
 // locked until a preview has run and then asks for typed words.
-import { badge, button, field, modal, mono, skeleton, toast } from "../ui-components.js";
+import { badge, button, copyText, field, modal, mono, skeleton, toast } from "../ui-components.js";
 import { api, h, swap } from "../ui-dom.js";
 import { region } from "../ui-region.js";
 
@@ -34,6 +34,7 @@ function erasureSection() {
   const before = h("input", { type: "date", class: "ui-input", "aria-label": "Erase: before (date)" });
   const result = h("div", { class: "ui-stack", role: "status" });
   let selector = null;
+  const verify = verifySection();
   const erase = button({ label: "Erase these rows…", variant: "danger", icon: "trash", disabled: true, onClick: () => confirmErase() });
   const lock = () => { selector = null; erase.disabled = true; };
   for (const el of [project, ids, before]) { el.addEventListener("input", lock); el.addEventListener("change", lock); }
@@ -77,8 +78,10 @@ function erasureSection() {
           h("h3", {}, "Erased"),
           h("div", { class: "ui-meta" }, h("span", {}, "Pre-erase export"), mono(out.exportPath, { copy: false })),
           h("div", { class: "ui-meta" }, h("span", {}, "Receipt file"), mono(out.receiptPath, { copy: false })),
-          h("p", { class: "ui-meta" }, "Paste the receipt JSON below to verify it later."),
-          mono(JSON.stringify(out.receipt), { copy: true, label: "Copy the receipt JSON" })));
+          h("p", { class: "ui-meta" }, "Keep the receipt file. It proves what was removed; verify it below at any time."),
+          h("div", { class: "ui-acts" },
+            button({ label: "Verify this receipt", size: "sm", icon: "check", onClick: () => verify.fill(JSON.stringify(out.receipt)) }),
+            button({ label: "Copy receipt JSON", size: "sm", icon: "copy", onClick: () => copyText(JSON.stringify(out.receipt)) }))));
       },
     });
   }
@@ -89,7 +92,7 @@ function erasureSection() {
     h("div", { class: "ui-inline" }, field({ label: "Project", control: project }), field({ label: "Ids (comma separated)", control: ids }), field({ label: "Older than", control: before })),
     h("div", { class: "ui-acts" }, button({ label: "Preview erasure", icon: "search", onClick: preview }), erase),
     result,
-    verifySection());
+    verify.node);
 }
 
 /** verify answers 400 with {ok:false, reason}; read it directly so the reason reaches the page. */
@@ -105,7 +108,7 @@ async function verifyReceipt(receipt) {
 function verifySection() {
   const text = h("textarea", { class: "ui-input ui-textarea", rows: "5", dir: "ltr", spellcheck: "false", "aria-label": "Receipt JSON", placeholder: '{"id": "…", "signature": "…"}' });
   const out = h("div", { role: "status" });
-  return h("div", { class: "ui-stack" },
+  const node = h("div", { class: "ui-stack" },
     h("h3", {}, "Verify a receipt"),
     h("p", { class: "ui-meta" }, "Checks the signature of an erasure receipt against the local key."),
     field({ label: "Receipt JSON", control: text }),
@@ -117,6 +120,7 @@ function verifySection() {
       swap(out, answer.ok ? h("p", {}, badge("valid", "success"), " The receipt is genuine: its signature matches.") : h("p", {}, badge("invalid", "danger"), ` The receipt does not verify: ${answer.reason ?? "unknown reason"}.`));
     } })),
     out);
+  return { node, fill: (value) => { text.value = value; text.scrollIntoView?.({ block: "center" }); text.focus?.(); } };
 }
 
 // ---- project merge ---------------------------------------------------------------------------------------------

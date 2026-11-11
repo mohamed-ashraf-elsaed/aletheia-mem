@@ -34,8 +34,8 @@ export function addMemberDialog({ team, onDone }) {
     onSave: async () => {
       if (!name.value.trim()) throw new Error("Type a name first.");
       const out = await api("/api/hub/team/members", { method: "POST", body: { team_id: team.id, name: name.value.trim(), role: role.value, projects: splitList(projects.value) } });
-      toast("Member added.", { tone: "success" });
       if (out.token) setTimeout(() => tokenDialog(name.value.trim(), out.token), 0);
+      else toast("Member added.", { tone: "success" });
       onDone();
     },
   });

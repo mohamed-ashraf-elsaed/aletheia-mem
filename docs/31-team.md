@@ -53,6 +53,23 @@ store gets `401 token_revoked`; the wrong project gets `403 project_forbidden`.
 operator. The full table is in [03-http-api.md](03-http-api.md#34-team-mode). The CLI mirrors it under
 `aletheia team ...`; `--token-id <id>` acts as that member, and the default is the local operator.
 
+## 31.4b The dashboard controls
+
+Connections, Team page. Every write has a button that calls the `/api/hub/team/*` route above; the server decides who may write, and a viewer sees the write buttons disabled.
+
+| Control | Route | Notes |
+|---|---|---|
+| Create a team | `POST /api/hub/team` | |
+| Share a project | `POST /api/hub/team/projects` | |
+| Add a member | `POST /api/hub/team/members` | name, role, projects. The new sync token is shown once in a dialog and cannot be read again |
+| Change shares (per member) | `POST /api/hub/team/shares` | replaces the member's project list |
+| Revoke (per member) | `POST /api/hub/team/members/revoke` | asks first; also revokes the member's sync token |
+| Pin a note, Record a decision | `POST /api/hub/team/board` | uses the selected project |
+| Leave this team | `POST /api/hub/team/leave` | asks first |
+| Read the audit | `GET /api/hub/team/audit` | owner only; loads on click, newest first, 50 rows |
+
+Covered by `test/ui-team-actions.test.mjs`.
+
 ## 31.4a MCP tools
 
 `team_brief` and `team_search` expose the brief and the shared search to MCP clients. They are listed in `tools/list` only when the caller belongs to a team, so a device without a team still sees the 13 core tools. They call `TeamStore.brief` and `TeamStore.search`, the same methods as the REST routes, so `authorize()` decides access: a member never gets rows from a project they cannot read, and asking for one is an error. Over stdio the local device acts as the operator, like the CLI. Over the sync hub's `/mcp` endpoint a token acts as its own member, and a token limited to projects stays inside them. Details: [MCP tools reference](reference/mcp-tools.md#team-tools). Covered by `test/mcp-team-tools.test.mjs` and `test/mcp-team-remote.test.mjs`.
