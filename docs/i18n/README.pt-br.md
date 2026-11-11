@@ -1,5 +1,5 @@
 > Machine-translated from the English README on 2026-10-26. Review welcome: open a pull request against this file.
-> Source: [README.md](../../README.md) · source-sha256: 7d563f5c97a9b1f73bee3864f0413e1889d843d7443e20db1487b82107bce5fe
+> Source: [README.md](../../README.md) · source-sha256: c5b73e2f3e08a23c5111454dc4f35a34d52da947eaa9e43e3d41fa9a62bc8f1c
 
 [English](../../README.md) · [中文](README.zh.md) · [Español](README.es.md) · [Português (Brasil)](README.pt-br.md) · [日本語](README.ja.md) · [Deutsch](README.de.md) · [Français](README.fr.md) · [한국어](README.ko.md) · [हिन्दी](README.hi.md) · [العربية](README.ar.md) · [Русский](README.ru.md)
 
@@ -141,9 +141,9 @@ Ambos são auto-hospedados e gratuitos; nenhum foi testado entre duas máquinas 
 
 | Interface | Where | Use |
 |---|---|---|
-| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | the 13 MCP tools below (read and write) |
-| MCP (HTTP) | sync hub `/mcp` | the same tools with a bearer token and per-token scope |
-| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, any language; optional `ALETHEIA_API_KEY` bearer key |
+| MCP (stdio) | `aletheia mcp`, `npx aletheia-mem mcp` or `bun bin/mcp.mjs` | as 14 ferramentas MCP abaixo (leitura e escrita), mais 2 ferramentas de equipe somente de leitura quando quem chama pertence a uma equipe |
+| MCP (HTTP) | sync hub `/mcp`; main server `/mcp` | as mesmas ferramentas. O hub de sincronização exige um token bearer com escopo por token; o servidor principal responde só em loopback, ou exige `ALETHEIA_API_KEY` como chave bearer quando definida e sempre no modo remoto |
+| REST | `/v1/memories`, `/v1/search`, `/v1/timeline`, `/v1/observations/batch`, `/v1/context`, `/v1/events`, `/v1/info`, `/v1/work` | scripts, CI, qualquer linguagem. Com `ALETHEIA_API_KEY` definida, toda rota `/api` e `/v1` exige essa chave bearer; no modo remoto `/v1` exige login ou a chave |
 | CLI | `bin/aletheia.mjs` | hooks, shell, cron, sync |
 | Files | rules sync | each tool's own instruction file |
 
@@ -154,6 +154,7 @@ Ambos são auto-hospedados e gratuitos; nenhum foi testado entre duas máquinas 
 | `search` | Search shared memory | read |
 | `timeline` | Show context around a memory | read |
 | `get_observations` | Get full memory text by id | read |
+| `file_outline` | Estrutura de um arquivo de código, para ler só um intervalo de linhas em vez do arquivo inteiro | read |
 | `save_memory` | Save a memory | write |
 | `session_start_context` | Load session start context | read |
 | `fact_history` | Show how a fact changed | read |
@@ -164,6 +165,8 @@ Ambos são auto-hospedados e gratuitos; nenhum foi testado entre duas máquinas 
 | `restore_memory` | Restore a dismissed memory | write |
 | `work_state_write` | Write a work-state list | write |
 | `work_state_read` | Read a work-state list | read |
+| `team_brief` | Resumo de um projeto de equipe (listada só se quem chama pertence a uma equipe) | read |
+| `team_search` | Busca o que os colegas compartilharam (listada só se quem chama pertence a uma equipe) | read |
 
 ## Configuração
 
@@ -175,7 +178,7 @@ Todas as configurações são variáveis de ambiente. Os padrões são seguros p
 | `ALETHEIA_HOST` | `127.0.0.1` | Bind address. A non-loopback bind turns on Hub login. |
 | `ALETHEIA_DATA_DIR` | `~/.aletheia` | Everything this project writes, including `hub.db`. |
 | `ALETHEIA_HUB_DB` | `<data dir>/hub.db` | The shared memory store. |
-| `ALETHEIA_API_KEY` | empty | Bearer key required on `/v1/*` when set. |
+| `ALETHEIA_API_KEY` | empty | Chave bearer. Quando definida, toda rota `/api` e `/v1` a exige, exceto login e logout (`src/hub/api-key.mjs`). No modo remoto `/v1` exige login ou a chave e `/mcp` exige a chave; a chave deve ter pelo menos 32 caracteres. |
 | `CLAUDE_MEM_DB` | `~/.claude-mem/claude-mem.db` | claude-mem's database (read-only; importer and optional legacy viewer). |
 | `ALETHEIA_RULES_FILE` | `<data dir>/MY-RULES.md` | The legacy Work view's rules file. |
 | `ALETHEIA_PROVIDER` | `none` | `none`, `claude-cli` or an OpenAI-compatible provider. |
