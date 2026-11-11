@@ -442,11 +442,13 @@ export class HubStore {
       ensureDirMode(dirname(path), 0o700);
     }
     this.db = new Database(path, { create: true });
+    // The busy timeout comes first: switching to WAL takes a lock, and processes that open the store at the same moment
+    // (hooks, the MCP server, the HTTP server) must wait for it instead of failing with "database is locked".
+    this.db.exec("PRAGMA busy_timeout = 3000");
     this.db.exec("PRAGMA journal_mode = WAL");
     // 0600 on the db before the first write: SQLite copies the main file's mode onto -wal and -shm.
     secureDbFiles(path);
     this.db.exec("PRAGMA synchronous = NORMAL");
-    this.db.exec("PRAGMA busy_timeout = 3000");
     this.db.exec("PRAGMA foreign_keys = ON");
     const version = this.db.prepare("PRAGMA user_version").get().user_version;
     const hadMemories = !!this.db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'memories'").get();

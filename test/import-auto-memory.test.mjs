@@ -39,6 +39,9 @@ const snapshot = () =>
     return [name, `${createHash("sha256").update(readFileSync(file)).digest("hex")}:${statSync(file).mtimeMs}`];
   }));
 const rows = (store) => store.db.prepare("SELECT * FROM memories").all();
+// Mapping a folder name back to a project walks the POSIX root; on Windows these tests name the folder and the project.
+const onWindows = process.platform === "win32";
+const source = onWindows ? { path: memDir, project: "shop" } : { home };
 
 afterAll(() => removeDir(temp));
 
@@ -74,7 +77,7 @@ describe("import claude-memory", () => {
 
   test("secrets are redacted and <private> blocks are dropped", () => {
     const store = new HubStore(join(temp, "r.db"));
-    importClaudeMemory(store, { home });
+    importClaudeMemory(store, source);
     const all = JSON.stringify(rows(store));
     expect(all).not.toContain("sk-ant-api03");
     expect(all).not.toContain("12 Elm St");
@@ -84,7 +87,7 @@ describe("import claude-memory", () => {
 
   test("a dry run writes nothing", () => {
     const store = new HubStore(join(temp, "d.db"));
-    const result = importClaudeMemory(store, { home, dryRun: true });
+    const result = importClaudeMemory(store, { ...source, dryRun: true });
     expect(result.dryRun).toBe(true);
     expect(result.added).toBe(3);
     expect(rows(store).length).toBe(0);
@@ -93,13 +96,13 @@ describe("import claude-memory", () => {
 
   test("--path accepts one memory folder", () => {
     const store = new HubStore(join(temp, "o.db"));
-    const result = importClaudeMemory(store, { path: memDir, home: join(temp, "empty-home") });
+    const result = importClaudeMemory(store, { path: memDir, home: join(temp, "empty-home"), ...(onWindows ? { project: "shop" } : {}) });
     expect(result.added).toBe(3);
     store.close?.();
   });
 
   test("the CLI prints the dry run and writes nothing", () => {
-    const run = Bun.spawnSync(["bun", join(root, "bin", "aletheia.mjs"), "import", "claude-memory", "--dry-run", "--path", join(home, ".claude", "projects")], {
+    const run = Bun.spawnSync(["bun", join(root, "bin", "aletheia.mjs"), "import", "claude-memory", "--dry-run", ...(onWindows ? ["--path", memDir, "--project", "shop"] : ["--path", join(home, ".claude", "projects")])], {
       env: { ...process.env, HOME: home, ALETHEIA_DATA_DIR: join(temp, "cli-hub") }, cwd: root,
     });
     expect(run.exitCode).toBe(0);
