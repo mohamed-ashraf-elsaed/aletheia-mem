@@ -1,6 +1,7 @@
 // The Aletheia component library. Every function returns a DOM node built with createElement,
 // createTextNode and setAttribute; text from data is only ever set as text. No framework, no markup strings, no
 // inline event handlers. Components that change over time return the node with a few methods attached.
+import { t } from "./ui-i18n.js";
 import { brainLoader, emptyArt } from "./ui-brand.js";
 import { icon } from "./ui-icons.js";
 import { renderMarkdown } from "./ui-markdown.js";
@@ -30,10 +31,10 @@ export { icon };
 export async function copyText(text, { quiet = false } = {}) {
   try {
     await globalThis.navigator.clipboard.writeText(String(text));
-    if (!quiet) toast("Copied", { tone: "success", duration: 1800 });
+    if (!quiet) toast(t("ui.copied"), { tone: "success", duration: 1800 });
     return true;
   } catch {
-    if (!quiet) toast("Could not copy. Select the text and copy it by hand.", { tone: "warning" });
+    if (!quiet) toast(t("ui.copyFailed"), { tone: "warning" });
     return false;
   }
 }
@@ -115,7 +116,7 @@ export function button({ label, variant = "secondary", icon: iconName = null, on
       } catch (error) {
         set("err");
         shake(el);
-        toast(error?.message ?? "That did not work.", { tone: "danger" });
+        toast(error?.message ?? t("ui.didNotWork"), { tone: "danger" });
       } finally {
         el.disabled = disabled;
       }
@@ -153,7 +154,7 @@ export function toast(message, { tone = "info", action = null, duration = 4000 }
 
 function showToast(entry) {
   const { message, tone, action, duration } = entry;
-  const close = iconButton({ icon: "x", label: "Dismiss message", onClick: () => entry.dismiss() });
+  const close = iconButton({ icon: "x", label: t("ui.dismissMessage"), onClick: () => entry.dismiss() });
   const kids = [h("span", { class: "ui-toast-icon", "aria-hidden": "true" }, icon(tone === "success" ? "check" : tone === "danger" ? "alert" : tone === "warning" ? "alert" : "info", { size: 16 })), h("span", { class: "ui-toast-text", dir: "auto" }, message)];
   if (action) kids.push(button({ label: action.label, variant: "ghost", size: "sm", onClick: async () => { entry.dismiss(); await action.onClick?.(); } }));
   kids.push(close);
@@ -187,7 +188,7 @@ async function dismissToast(entry) {
 }
 
 /** A message with an Undo button that stays for 8 seconds. */
-export const undoToast = (message, onUndo, { duration = 8000 } = {}) => toast(message, { tone: "info", duration, action: { label: "Undo", onClick: onUndo } });
+export const undoToast = (message, onUndo, { duration = 8000 } = {}) => toast(message, { tone: "info", duration, action: { label: t("ui.undo"), onClick: onUndo } });
 
 setToastHandler(toast);
 
@@ -206,7 +207,7 @@ export function resetUi() {
 function openLayer({ title, body, actions = [], side = null, size = "md", onClose, closeOnBackdrop = true, initialFocus = null }) {
   const titleId = nextId("ui-layer-title");
   const opener = doc().activeElement;
-  const closeButton = iconButton({ icon: "x", label: "Close", onClick: () => api.close(null) });
+  const closeButton = iconButton({ icon: "x", label: t("ui.close"), onClick: () => api.close(null) });
   const panel = h("div", { class: `ui-layer-panel ${side ? "ui-drawer" : "ui-modal"} size-${size}`, role: "dialog", "aria-modal": "true", "aria-labelledby": titleId, tabindex: "-1" },
     h("div", { class: "ui-layer-head" }, h("h2", { id: titleId, class: "ui-layer-title", dir: "auto" }, title), closeButton),
     h("div", { class: "ui-layer-body" }, body),
@@ -264,7 +265,7 @@ export const drawer = (options) => openLayer({ ...options, side: options.side ??
  * Ask before something that cannot be undone. Say what will happen in `message`. Resolves true or false.
  * The safe button has focus when the action is dangerous.
  */
-export function confirmDialog({ title, message, confirmLabel = "Confirm", cancelLabel = "Cancel", danger = false, details = null } = {}) {
+export function confirmDialog({ title, message, confirmLabel = t("ui.confirm"), cancelLabel = t("ui.cancel"), danger = false, details = null } = {}) {
   let cancelButton;
   const confirmButton = button({ label: confirmLabel, variant: danger ? "danger" : "primary", onClick: () => layer.close(true) });
   cancelButton = button({ label: cancelLabel, variant: "secondary", onClick: () => layer.close(false) });
@@ -279,14 +280,14 @@ export function confirmDialog({ title, message, confirmLabel = "Confirm", cancel
 }
 
 /** A one-line text prompt in a dialog. Resolves the trimmed text, or null when cancelled. */
-export function promptDialog({ title, label, value = "", confirmLabel = "Save", placeholder = "" } = {}) {
+export function promptDialog({ title, label, value = "", confirmLabel = t("ui.save"), placeholder = "" } = {}) {
   const input = h("input", { type: "text", class: "ui-input", value, placeholder, dir: "auto", "aria-label": label });
   const submit = () => layer.close(input.value.trim() || null);
   input.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); submit(); } });
   const layer = openLayer({
     title,
     body: h("label", { class: "ui-field" }, h("span", { class: "ui-field-label" }, label), input),
-    actions: [button({ label: "Cancel", onClick: () => layer.close(null) }), button({ label: confirmLabel, variant: "primary", onClick: submit })],
+    actions: [button({ label: t("ui.cancel"), onClick: () => layer.close(null) }), button({ label: confirmLabel, variant: "primary", onClick: submit })],
     size: "sm",
     initialFocus: () => input,
   });
@@ -298,16 +299,16 @@ export function promptDialog({ title, label, value = "", confirmLabel = "Save", 
  * null when cancelled. The field is a password field; the caller keeps the key for this browser tab only.
  */
 export function apiKeyDialog({ retry = false } = {}) {
-  const input = h("input", { type: "password", class: "ui-input", autocomplete: "off", spellcheck: "false", "aria-label": "API key", "aria-describedby": "ui-key-help" });
+  const input = h("input", { type: "password", class: "ui-input", autocomplete: "off", spellcheck: "false", "aria-label": t("ui.apiKey"), "aria-describedby": "ui-key-help" });
   const submit = () => layer.close(input.value.trim() || null);
   input.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); submit(); } });
   const help = retry
-    ? "The server did not accept that key. Check the value of ALETHEIA_API_KEY and try again."
-    : "This server has ALETHEIA_API_KEY set, so every request that reads or changes memory needs the key. This tab keeps it until you close the tab.";
+    ? t("ui.apiKeyRefused")
+    : t("ui.apiKeyHelp");
   const layer = openLayer({
-    title: "Enter the API key",
-    body: [h("p", { id: "ui-key-help", class: "ui-layer-text" }, help), h("label", { class: "ui-field" }, h("span", { class: "ui-field-label" }, "API key"), input)],
-    actions: [button({ label: "Cancel", onClick: () => layer.close(null) }), button({ label: "Unlock", variant: "primary", onClick: submit })],
+    title: t("ui.apiKeyTitle"),
+    body: [h("p", { id: "ui-key-help", class: "ui-layer-text" }, help), h("label", { class: "ui-field" }, h("span", { class: "ui-field-label" }, t("ui.apiKey")), input)],
+    actions: [button({ label: t("ui.cancel"), onClick: () => layer.close(null) }), button({ label: t("ui.unlock"), variant: "primary", onClick: submit })],
     size: "sm",
     closeOnBackdrop: false,
     initialFocus: () => input,
@@ -331,7 +332,7 @@ export function moveIndicator(container, indicator, active) {
  * A row of tabs with a sliding indicator. Items with `href` render as links (the app's main navigation); the rest
  * render as buttons. Arrow keys, Home and End move between tabs.
  */
-export function tabs({ items, active, onChange = null, label = "Sections", className = "" } = {}) {
+export function tabs({ items, active, onChange = null, label = t("ui.sections"), className = "" } = {}) {
   const indicator = h("span", { class: "ui-tab-indicator", "aria-hidden": "true" });
   const nodes = new Map();
   const list = h("div", { class: `ui-tablist ${className}`.trim(), role: "tablist", "aria-label": label }, indicator);
@@ -462,7 +463,7 @@ export function withTooltip(target, text, { placement = "bottom" } = {}) {
  * A small panel anchored to a control: the status bar's details. Click or Enter opens it; Esc, a click outside or
  * focus leaving closes it. `content` is a node or a function returning one, called each time it opens.
  */
-export function popover({ anchor, content, label = "Details", placement = "bottom", toggleOnClick = true }) {
+export function popover({ anchor, content, label = t("ui.details"), placement = "bottom", toggleOnClick = true }) {
   const panel = h("div", { class: "ui-popover", role: "dialog", "aria-label": label, tabindex: "-1", hidden: true });
   let open = false;
   const outside = (event) => { if (!panel.contains?.(event.target) && !anchor.contains?.(event.target)) api.close(); };
@@ -524,7 +525,7 @@ export function statTile({ label, value = null, detail = null, tone = null, form
 }
 
 /** A progress bar with a text value. Without a value it is indeterminate. `update({ value, max, label })` changes it. */
-export function progressBar({ value = null, max = 100, label = "Progress", text = null } = {}) {
+export function progressBar({ value = null, max = 100, label = t("ui.progress"), text = null } = {}) {
   const fill = h("span", { class: "ui-progress-fill" });
   const caption = h("span", { class: "ui-progress-text ui-meta" });
   const bar = h("div", { class: "ui-progress", role: "progressbar", "aria-label": label }, h("span", { class: "ui-progress-track" }, fill));
@@ -542,7 +543,7 @@ export function progressBar({ value = null, max = 100, label = "Progress", text 
     } else {
       bar.removeAttribute("aria-valuenow");
       fill.style.transform = "";
-      caption.textContent = next.text ?? "Working…";
+      caption.textContent = next.text ?? t("ui.working");
     }
   };
   wrap.update = (next) => apply({ max, text: null, ...next });
@@ -570,7 +571,7 @@ export function skeleton({ kind = "lines", count = 3, lines = 3 } = {}) {
 /** The picture, a title, a sentence about what it means and a way to fix it: buttons, or a command with Copy. */
 export function emptyState({ title, text, art = "memory", actions = [], command = null, compact = false } = {}) {
   const cmd = command
-    ? h("div", { class: "ui-command" }, h("code", { class: "ui-mono" }, command), iconButton({ icon: "copy", label: "Copy command", onClick: () => copyText(command) }))
+    ? h("div", { class: "ui-command" }, h("code", { class: "ui-mono" }, command), iconButton({ icon: "copy", label: t("ui.copyCommand"), onClick: () => copyText(command) }))
     : null;
   return h("div", { class: `ui-empty ui-empty-state${compact ? " is-compact" : ""}`, role: "status" },
     compact ? null : emptyArt({ kind: art }),
@@ -581,15 +582,15 @@ export function emptyState({ title, text, art = "memory", actions = [], command 
 }
 
 /** A failure the user can act on: what went wrong, Retry, and Copy details for a bug report. */
-export function errorState({ title = "Could not load this", message, onRetry, error = null, path = null, compact = false } = {}) {
+export function errorState({ title = t("ui.couldNotLoad"), message, onRetry, error = null, path = null, compact = false } = {}) {
   const details = errorDetails({ message: message ?? error?.message, path: path ?? error?.path, status: error?.status });
   return h("div", { class: `ui-error-state${compact ? " is-compact" : ""}`, role: "alert" },
     compact ? null : emptyArt({ kind: "error", size: 88 }),
     h("h3", { class: "ui-empty-title" }, title),
-    h("p", { class: "ui-empty-text", dir: "auto" }, message ?? error?.message ?? "Something went wrong."),
+    h("p", { class: "ui-empty-text", dir: "auto" }, message ?? error?.message ?? t("ui.somethingWrong")),
     h("div", { class: "ui-acts ui-empty-actions" },
-      onRetry ? button({ label: "Retry", variant: "primary", icon: "refresh", onClick: onRetry }) : null,
-      button({ label: "Copy details", icon: "copy", onClick: () => copyText(details) })));
+      onRetry ? button({ label: t("ui.retry"), variant: "primary", icon: "refresh", onClick: onRetry }) : null,
+      button({ label: t("ui.copyDetails"), icon: "copy", onClick: () => copyText(details) })));
 }
 
 /** A banner across the top of a region, for example "Connection lost". `action` is a button config. */
@@ -619,17 +620,17 @@ export const listView = ({ items = [], className = "" } = {}) => enterList(h("di
  * First, previous, numbered pages, next, last, a rows-per-page select and "Showing 26 to 50 of 312". `onChange`
  * receives { offset, limit }. Left and right arrows move between pages while focus is inside the pager.
  */
-export function pager({ total, limit, offset, onChange, sizes = PAGE_SIZES, label = "Pagination" } = {}) {
+export function pager({ total, limit, offset, onChange, sizes = PAGE_SIZES, label = t("ui.pagination") } = {}) {
   const model = pagerModel({ total, limit, offset });
   const go = (page) => onChange?.({ offset: (page - 1) * model.limit, limit: model.limit });
   const numbered = model.pages.map((entry) => (entry === "…"
     ? h("span", { class: "ui-pager-gap", "aria-hidden": "true" }, "…")
-    : h("button", { class: `ui-pager-page${entry === model.page ? " on" : ""}`, type: "button", "aria-label": `Page ${entry}`, "aria-current": entry === model.page ? "page" : null, "data-page": entry, onclick: () => entry !== model.page && go(entry) }, formatNumber(entry))));
+    : h("button", { class: `ui-pager-page${entry === model.page ? " on" : ""}`, type: "button", "aria-label": t("ui.pageN", { page: entry }), "aria-current": entry === model.page ? "page" : null, "data-page": entry, onclick: () => entry !== model.page && go(entry) }, formatNumber(entry))));
   const nav = (name, iconName, text, enabled, page) => h("button", { class: `ui-pager-nav ui-pager-${name}`, type: "button", "aria-label": text, title: text, disabled: !enabled, onclick: () => go(page) }, icon(iconName, { size: 16 }));
-  const select = h("select", { class: "ui-select ui-pager-size", "aria-label": "Rows per page", onchange: (event) => onChange?.({ offset: 0, limit: Number(event.target.value) }) },
-    ...sizes.map((size) => h("option", { value: String(size), selected: size === model.limit }, `${size} per page`)));
+  const select = h("select", { class: "ui-select ui-pager-size", "aria-label": t("ui.rowsPerPage"), onchange: (event) => onChange?.({ offset: 0, limit: Number(event.target.value) }) },
+    ...sizes.map((size) => h("option", { value: String(size), selected: size === model.limit }, t("ui.perPage", { size }))));
   const el = h("nav", { class: "ui-pager", "aria-label": label },
-    h("div", { class: "ui-pager-buttons" }, nav("first", "first", "First page", model.hasPrev, 1), nav("prev", "chevron-left", "Previous page", model.hasPrev, model.page - 1), ...numbered, nav("next", "chevron-right", "Next page", model.hasNext, model.page + 1), nav("last", "last", "Last page", model.hasNext, model.pageCount)),
+    h("div", { class: "ui-pager-buttons" }, nav("first", "first", t("ui.firstPage"), model.hasPrev, 1), nav("prev", "chevron-left", t("ui.previousPage"), model.hasPrev, model.page - 1), ...numbered, nav("next", "chevron-right", t("ui.nextPage"), model.hasNext, model.page + 1), nav("last", "last", t("ui.lastPage"), model.hasNext, model.pageCount)),
     h("div", { class: "ui-pager-meta" }, h("span", { class: "ui-pager-status", role: "status", "aria-live": "polite" }, model.label), select));
   el.model = model;
   el.addEventListener("keydown", (event) => {
@@ -682,13 +683,13 @@ export function markdownView(text, { query = "" } = {}) {
 /** A code block with a language label and a Copy button. Whitespace is kept. */
 export function codeBlock({ code, lang = "" } = {}) {
   return h("div", { class: "ui-md-code ui-codeblock" },
-    h("div", { class: "ui-md-code-head" }, h("span", { class: "ui-md-lang" }, lang || "text"), button({ label: "Copy", variant: "ghost", size: "sm", icon: "copy", ariaLabel: "Copy code", onClick: () => copyText(code) })),
+    h("div", { class: "ui-md-code-head" }, h("span", { class: "ui-md-lang" }, lang || "text"), button({ label: t("ui.copy"), variant: "ghost", size: "sm", icon: "copy", ariaLabel: t("ui.copyCode"), onClick: () => copyText(code) })),
     h("pre", { tabindex: "0", dir: "ltr" }, h("code", {}, code)));
 }
 
 /** An id or a path in a monospace face with a copy button. */
-export const mono = (text, { copy = true, label = "Copy" } = {}) =>
-  h("span", { class: "ui-mono-wrap" }, h("code", { class: "ui-mono", dir: "ltr" }, text), copy ? iconButton({ icon: "copy", label: `${label} ${text}`, onClick: () => copyText(text) }) : null);
+export const mono = (text, { copy = true, label = null } = {}) =>
+  h("span", { class: "ui-mono-wrap" }, h("code", { class: "ui-mono", dir: "ltr" }, text), copy ? iconButton({ icon: "copy", label: label ? `${label} ${text}` : t("ui.copyItem", { text }), onClick: () => copyText(text) }) : null);
 
 /** "3 min ago", with the exact time on hover and in the datetime attribute. Kept fresh by startClock(). */
 export function timeEl(value, { locale } = {}) {
@@ -712,7 +713,7 @@ export function startClock() {
 /** Long text cut to `lines` with Show more / Show less. The button appears only when the text is actually cut. */
 export function clampText({ text = "", lines = 4, markdown = false, query = "", mono: monoFace = false } = {}) {
   const body = h("div", { class: `ui-clamp-body${monoFace ? " ui-mono-block" : ""}`, dir: "auto", "data-lines": lines }, markdown ? markdownView(text, { query }) : query ? highlight(text, query) : text);
-  const more = button({ label: "Show more", variant: "ghost", size: "sm", icon: "chevron-down" });
+  const more = button({ label: t("ui.showMore"), variant: "ghost", size: "sm", icon: "chevron-down" });
   more.hidden = true;
   more.setAttribute("aria-expanded", "false");
   let expanded = false;
@@ -730,7 +731,7 @@ export function clampText({ text = "", lines = 4, markdown = false, query = "", 
       if (to && from > to && !reducedMotion()) animate(body, [{ maxHeight: `${from}px` }, { maxHeight: `${to}px` }], { duration: 150, easing: "cubic-bezier(0.2, 0, 0, 1)" });
     }
     more.setAttribute("aria-expanded", String(expanded));
-    more.querySelector(".ui-btn-label").textContent = expanded ? "Show less" : "Show more";
+    more.querySelector(".ui-btn-label").textContent = expanded ? t("ui.showLess") : t("ui.showMore");
   });
   const el = h("div", { class: "ui-clamp" }, body, more);
   // Show the button only if the text overflows. Measured after layout.
@@ -766,7 +767,7 @@ export function timeline(items = []) {
 }
 
 /** Filter chips. Single choice by default; `multi` lets several be on. Each option: { value, label, count }. */
-export function chipFilters({ options, value = null, multi = false, onChange, label = "Filter" } = {}) {
+export function chipFilters({ options, value = null, multi = false, onChange, label = t("ui.filter") } = {}) {
   const selected = new Set(multi ? [].concat(value ?? []) : value == null ? [] : [value]);
   const nodes = new Map();
   const group = h("div", { class: "ui-chipfilters", role: "group", "aria-label": label });

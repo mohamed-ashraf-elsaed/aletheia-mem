@@ -14,6 +14,7 @@ The header is on every tab. From left to right it holds:
 - The five tabs.
 - A **Project** drop-down. "All projects" is the default. Choose one project to filter every tab to it.
 - A search box. Press `/` to jump to it. It lists quick matches as you type and can open the full search page in Knowledge.
+- A language switch. It starts on your browser language and remembers your choice in this browser. English, Arabic, German, Spanish, French, Hindi, Japanese, Korean, Brazilian Portuguese, Russian and Chinese are available. Every language except English is machine-translated, and a note at the foot of the page says so. A string missing from a language shows in English. Arabic switches the page to right-to-left.
 - A theme switch with Auto, Dark and Light.
 - A health dot for the server.
 

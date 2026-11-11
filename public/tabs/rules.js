@@ -3,6 +3,7 @@
 // rather than deleted, so every hide action here can be undone.
 import { button, toast } from "../ui-components.js";
 import { api, byId, state, swap } from "../ui-dom.js";
+import { t } from "../ui-i18n.js";
 import { tabFrame } from "../ui-frame.js";
 import { addRuleDialog, importView, rulesView, suggestionsView, syncView } from "./rules-views.js";
 
@@ -27,9 +28,9 @@ function build() {
   };
   const made = tabFrame({
     tab: "rules",
-    title: "Rules",
-    lede: "How you want every AI tool to work. Write a rule once, then write it into each tool's file.",
-    actions: [button({ label: "Add a rule", variant: "primary", icon: "plus", onClick: () => ctx.addRule() })],
+    title: t("rulesPage.title"),
+    lede: t("rulesPage.lede"),
+    actions: [button({ label: t("rulesPage.addRule"), variant: "primary", icon: "plus", onClick: () => ctx.addRule() })],
     build: (sub) => ({ rules: rulesView, suggestions: suggestionsView, sync: syncView, import: importView }[sub] ?? rulesView)(ctx),
   });
   made.project = state.project;

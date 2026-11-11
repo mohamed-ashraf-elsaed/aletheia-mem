@@ -1,6 +1,7 @@
 // A small, safe Markdown renderer. parseMarkdown() turns text into a plain tree; renderMarkdown() builds DOM
 // nodes from that tree with createElement and createTextNode only. User text is never parsed as HTML, and a link is
 // created only for http, https and mailto addresses. There is no library and no innerHTML.
+import { t } from "./ui-i18n.js";
 
 const MAX_DEPTH = 6;
 export const MAX_CHARS = 200_000;
@@ -265,15 +266,15 @@ function inlineNodes(doc, nodes) {
 }
 
 function copyButton(doc, text, onCopy) {
-  const button = make(doc, "button", { type: "button", class: "ui-md-copy", "aria-label": "Copy code" }, ["Copy"]);
+  const button = make(doc, "button", { type: "button", class: "ui-md-copy", "aria-label": t("markdown.copyCode") }, [t("markdown.copy")]);
   button.addEventListener("click", async () => {
     try {
       await (onCopy ?? ((value) => globalThis.navigator?.clipboard?.writeText(value)))(text);
-      button.textContent = "Copied";
+      button.textContent = t("markdown.copied");
     } catch {
-      button.textContent = "Copy failed";
+      button.textContent = t("markdown.copyFailed");
     }
-    setTimeout(() => { if (globalThis.document) button.textContent = "Copy"; }, 1600);
+    setTimeout(() => { if (globalThis.document) button.textContent = t("markdown.copy"); }, 1600);
   });
   return button;
 }
@@ -293,7 +294,7 @@ function blockNodes(doc, blocks, options) {
       case "list": {
         const items = block.items.map((item) => {
           const kids = blockNodes(doc, item.children, options);
-          if (item.task !== null) kids.unshift(make(doc, "input", { type: "checkbox", disabled: true, checked: item.task, "aria-label": item.task ? "done" : "not done" }), doc.createTextNode(" "));
+          if (item.task !== null) kids.unshift(make(doc, "input", { type: "checkbox", disabled: true, checked: item.task, "aria-label": item.task ? t("markdown.taskDone") : t("markdown.taskNotDone") }), doc.createTextNode(" "));
           return make(doc, "li", item.task !== null ? { class: "ui-md-task" } : {}, kids);
         });
         return make(doc, block.ordered ? "ol" : "ul", block.ordered && block.start !== 1 ? { start: block.start } : {}, items);
@@ -316,6 +317,6 @@ export function renderMarkdown(text, options = {}) {
   const doc = options.doc ?? globalThis.document;
   const tree = parseMarkdown(text, options);
   const root = make(doc, "div", { class: "ui-md" }, blockNodes(doc, tree.blocks, options));
-  if (tree.truncated) root.append(make(doc, "p", { class: "ui-meta" }, ["The text was cut here because it is very long."]));
+  if (tree.truncated) root.append(make(doc, "p", { class: "ui-meta" }, [t("markdown.truncated")]));
   return root;
 }

@@ -2,6 +2,7 @@
 // rolls the screen back if the request fails. When it succeeds, an Undo toast stays for 8 seconds.
 import { progressBar, toast, undoToast } from "./ui-components.js";
 import { h } from "./ui-dom.js";
+import { t } from "./ui-i18n.js";
 
 export const UNDO_MS = 8000;
 
@@ -15,13 +16,14 @@ export const UNDO_MS = 8000;
  *   reapply()   (optional) run after a successful undo instead of rollback(), for example to reload a list.
  * Resolves true when the request succeeded.
  */
-export async function optimistic({ apply, rollback, request, done = null, undo = null, reapply = null, failure = "That did not work." }) {
+export async function optimistic({ apply, rollback, request, done = null, undo = null, reapply = null, failure = null }) {
   apply?.();
+  const failureText = failure ?? t("home.actionFailed");
   try {
     await request();
   } catch (error) {
     rollback?.();
-    toast(error?.message ? `${failure} ${error.message}` : failure, { tone: "danger" });
+    toast(error?.message ? `${failureText} ${error.message}` : failureText, { tone: "danger" });
     return false;
   }
   if (done) {
@@ -31,7 +33,7 @@ export async function optimistic({ apply, rollback, request, done = null, undo =
           await undo();
           (reapply ?? rollback)?.();
         } catch (error) {
-          toast(`Could not undo. ${error?.message ?? ""}`.trim(), { tone: "danger" });
+          toast(t("home.undoFailed", { message: error?.message ?? "" }).trim(), { tone: "danger" });
         }
       }, { duration: UNDO_MS });
     } else {
@@ -47,15 +49,15 @@ export async function optimistic({ apply, rollback, request, done = null, undo =
  * `task(report)` may call report({ value, max, text }) if the API ever streams counts.
  */
 export async function withProgress(container, { label, task, summarize = null }) {
-  const bar = progressBar({ label, text: "Working…" });
+  const bar = progressBar({ label, text: t("home.working") });
   const wrap = h("div", { class: "ui-longtask", role: "group", "aria-label": label }, h("div", { class: "ui-meta" }, label), bar);
   container.replaceChildren(wrap);
   try {
     const result = await task((next) => bar.update(next));
-    bar.update({ value: 1, max: 1, text: summarize ? summarize(result) : "Done" });
+    bar.update({ value: 1, max: 1, text: summarize ? summarize(result) : t("home.done") });
     return result;
   } catch (error) {
-    bar.update({ value: 0, max: 1, text: `Failed: ${error?.message ?? "unknown error"}` });
+    bar.update({ value: 0, max: 1, text: t("home.failed", { message: error?.message ?? t("home.unknownError") }) });
     wrap.classList.add("is-failed");
     throw error;
   }

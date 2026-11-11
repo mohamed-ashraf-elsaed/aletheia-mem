@@ -8,14 +8,15 @@ import { region, pagedList } from "../ui-region.js";
 import { estimated } from "../ui-estimates.js";
 import { chipFilter, filterBar, hideCard, segmentFilter, selectFilter, textFilter } from "../ui-views.js";
 import { queryString } from "./memory-views.js";
+import { t } from "../ui-i18n.js";
 
-const ruleTitle = (rule) => (rule.when ? `When ${rule.when}: ${rule.then}` : rule.then);
-const dayOf = (epoch) => (Number.isFinite(epoch) ? new Date(epoch).toISOString().slice(0, 10) : "unknown date");
+const ruleTitle = (rule) => (rule.when ? t("rules.ruleTitleWhen", { when: rule.when, then: rule.then }) : rule.then);
+const dayOf = (epoch) => (Number.isFinite(epoch) ? new Date(epoch).toISOString().slice(0, 10) : t("rules.unknownDate"));
 const evidenceRow = (item) => h("div", { class: "ui-fact-source", dir: "auto" },
-  h("span", { class: "ui-meta" }, `${item.kind} #${item.id} · ${dayOf(item.at_epoch)}`),
+  h("span", { class: "ui-meta" }, t("rules.evidenceHead", { kind: item.kind, id: item.id, day: dayOf(item.at_epoch) })),
   item.quote ? ` · ${item.quote}` : null,
-  item.session_id ? h("span", { class: "ui-meta" }, ` · session ${item.session_id}`) : null);
-const scopeLabel = (rule) => (rule.scopeTier === "everywhere" ? "everywhere" : `${rule.scopeTier}: ${rule.scopeName}`);
+  item.session_id ? h("span", { class: "ui-meta" }, t("rules.sessionSuffix", { id: item.session_id })) : null);
+const scopeLabel = (rule) => (rule.scopeTier === "everywhere" ? t("rules.everywhere") : t("rules.scopeTierName", { tier: rule.scopeTier, name: rule.scopeName }));
 
 // ---- rule list and the add and edit dialogs ---------------------------------------------------------------
 
@@ -25,21 +26,21 @@ function ruleCard(rule, ctx) {
   const render = () => swap(card,
     h("div", { class: "ui-item-head" },
       h("p", { class: "ui-item-title", dir: "auto" }, ruleTitle(rule)),
-      h("div", { class: "ui-row" }, rule.stale ? badge("Re-check", "warning") : null, badge(rule.enabled ? "on" : "off", rule.enabled ? "success" : "warning"))),
-    h("div", { class: "ui-meta" }, badge(scopeLabel(rule)), rule.tools?.length ? badge(`only ${rule.tools.join(", ")}`) : badge("all tools"), rule.replaced_by || rule.replacedBy ? badge(`replaced by ${rule.replaced_by ?? rule.replacedBy}`) : null),
+      h("div", { class: "ui-row" }, rule.stale ? badge(t("rules.recheck"), "warning") : null, badge(rule.enabled ? t("rules.on") : t("rules.off"), rule.enabled ? "success" : "warning"))),
+    h("div", { class: "ui-meta" }, badge(scopeLabel(rule)), rule.tools?.length ? badge(t("rules.onlyTools", { tools: rule.tools.join(", ") })) : badge(t("rules.allTools")), rule.replaced_by || rule.replacedBy ? badge(t("rules.replacedBy", { id: rule.replaced_by ?? rule.replacedBy })) : null),
     h("div", { class: "ui-meta" },
-      h("span", {}, `added ${dayOf(rule.createdAtEpoch ?? rule.created_at_epoch)}`),
-      h("span", {}, `source: ${rule.source}`),
-      h("span", {}, `last confirmed ${dayOf(rule.last_confirmed_epoch)}`),
-      h("span", {}, `${rule.evidence?.length ?? 0} evidence`)),
+      h("span", {}, t("rules.added", { day: dayOf(rule.createdAtEpoch ?? rule.created_at_epoch) })),
+      h("span", {}, t("rules.source", { source: rule.source })),
+      h("span", {}, t("rules.lastConfirmed", { day: dayOf(rule.last_confirmed_epoch) })),
+      h("span", {}, t("rules.evidenceCount", { count: rule.evidence?.length ?? 0 }))),
     rule.stale ? h("div", { class: "ui-reasons", role: "note" }, ...(rule.reasons ?? []).map((reason) => h("p", { class: "ui-meta", "data-code": reason.code }, reason.message))) : null,
-    rule.evidence?.length ? disclosure({ summary: `Evidence (${rule.evidence.length})`, content: h("div", { class: "ui-quotes" }, ...rule.evidence.map(evidenceRow)) }) : null,
+    rule.evidence?.length ? disclosure({ summary: t("rules.evidenceSummary", { count: rule.evidence.length }), content: h("div", { class: "ui-quotes" }, ...rule.evidence.map(evidenceRow)) }) : null,
     h("div", { class: "ui-acts" },
-      button({ label: "Confirm", size: "sm", icon: "check", onClick: () => confirm() }),
-      rule.stale && rule.enabled ? button({ label: "Retire", size: "sm", icon: "eye-off", onClick: () => retire() }) : null,
-      button({ label: rule.enabled ? "Turn off" : "Turn on", size: "sm", icon: rule.enabled ? "eye-off" : "check", onClick: () => toggle() }),
-      button({ label: "Edit", size: "sm", icon: "edit", onClick: () => edit() }),
-      button({ label: "Replace", size: "sm", icon: "undo", onClick: () => replace() })));
+      button({ label: t("rules.confirm"), size: "sm", icon: "check", onClick: () => confirm() }),
+      rule.stale && rule.enabled ? button({ label: t("rules.retire"), size: "sm", icon: "eye-off", onClick: () => retire() }) : null,
+      button({ label: rule.enabled ? t("rules.turnOff") : t("rules.turnOn"), size: "sm", icon: rule.enabled ? "eye-off" : "check", onClick: () => toggle() }),
+      button({ label: t("rules.edit"), size: "sm", icon: "edit", onClick: () => edit() }),
+      button({ label: t("rules.replace"), size: "sm", icon: "undo", onClick: () => replace() })));
   // Confirm says "this rule is still right". It only moves the last-confirmed date; the Re-check flag clears with it,
   // and Undo puts the earlier date back.
   const confirm = () => {
@@ -49,9 +50,9 @@ function ruleCard(rule, ctx) {
       apply: () => { Object.assign(rule, { stale: false, reasons: [], last_confirmed_epoch: Date.now(), age_days: 0 }); render(); },
       rollback: () => { Object.assign(rule, before); render(); },
       request: async () => { const result = await post({}); if (result?.rule) Object.assign(rule, result.rule); },
-      done: "Rule confirmed. It is unchanged; only its last-confirmed date moved.",
+      done: t("rules.confirmed"),
       undo: () => post({ restore: before.last_confirmed_epoch }),
-      failure: "Could not confirm this rule.",
+      failure: t("rules.confirmFailed"),
     }).then((ok) => { if (ok) ctx.changed?.({ soft: true }); return ok; });
   };
   const patch = (body) => api(`/api/hub/rules/${rule.id}`, { method: "PATCH", body });
@@ -63,10 +64,10 @@ function ruleCard(rule, ctx) {
       apply: () => { rule.enabled = next; render(); },
       rollback: () => { rule.enabled = !next; render(); },
       request: () => setEnabled(next),
-      done: next ? "Rule turned on. Write the files again to update your tools." : "Rule turned off. It is kept, not deleted.",
+      done: next ? t("rules.turnedOn") : t("rules.turnedOff"),
       undo: () => setEnabled(!next),
       reapply: () => { rule.enabled = !next; render(); },
-      failure: "Could not change this rule.",
+      failure: t("rules.changeFailed"),
     }).then((ok) => { if (ok) ctx.changed?.(); return ok; });
   };
   // Retire is the existing turn-off path (kept, not deleted) with wording for a rule that went stale.
@@ -76,43 +77,43 @@ function ruleCard(rule, ctx) {
       apply: () => { rule.enabled = false; render(); },
       rollback: () => { rule.enabled = back.enabled; render(); },
       request: () => setEnabled(false),
-      done: "Rule retired. It is turned off and kept, not deleted.",
+      done: t("rules.retired"),
       undo: () => setEnabled(true),
-      failure: "Could not retire this rule.",
+      failure: t("rules.retireFailed"),
     }).then((ok) => { if (ok) ctx.changed?.(); return ok; });
   };
   const replace = () => {
-    const then = h("textarea", { class: "ui-input", rows: "3", dir: "auto", "aria-label": "Replacement rule" });
+    const then = h("textarea", { class: "ui-input", rows: "3", dir: "auto", "aria-label": t("rules.replacementRule") });
     then.value = rule.then;
-    const when = h("input", { type: "text", class: "ui-input", value: rule.when ?? "", dir: "auto", "aria-label": "When (optional)" });
+    const when = h("input", { type: "text", class: "ui-input", value: rule.when ?? "", dir: "auto", "aria-label": t("rules.whenOptional") });
     const layer = modal({
-      title: "Replace this rule", size: "md",
+      title: t("rules.replaceTitle"), size: "md",
       body: h("div", {},
-        h("p", { class: "ui-meta" }, "The replacement is added as a new rule. This rule is kept and marked as replaced; there is no unreplace route, so this cannot be undone here."),
-        field({ label: "What the tool should do instead", control: then }),
-        field({ label: "When (optional)", control: when })),
-      actions: [button({ label: "Cancel", onClick: () => layer.close(false) }), button({ label: "Replace", variant: "primary", onClick: async () => {
-        if (!then.value.trim()) throw new Error("Write the replacement rule first.");
+        h("p", { class: "ui-meta" }, t("rules.replaceNote")),
+        field({ label: t("rules.doInstead"), control: then }),
+        field({ label: t("rules.whenOptional"), control: when })),
+      actions: [button({ label: t("rules.cancel"), onClick: () => layer.close(false) }), button({ label: t("rules.replace"), variant: "primary", onClick: async () => {
+        if (!then.value.trim()) throw new Error(t("rules.writeReplacement"));
         const result = await api(`/api/hub/rules/${rule.id}/replace`, { method: "POST", body: { then: then.value.trim(), when: when.value.trim() } });
-        toast(`Replaced with rule ${result.replacedBy}. The old rule is kept.`, { tone: "success" });
+        toast(t("rules.replacedToast", { id: result.replacedBy }), { tone: "success" });
         layer.close(true);
         ctx.changed?.();
       } })],
     });
   };
   const edit = () => {
-    const then = h("textarea", { class: "ui-input", rows: "3", dir: "auto", "aria-label": "Rule" });
+    const then = h("textarea", { class: "ui-input", rows: "3", dir: "auto", "aria-label": t("rules.rule") });
     then.value = rule.then;
-    const when = h("input", { type: "text", class: "ui-input", value: rule.when ?? "", dir: "auto", "aria-label": "When (optional)" });
+    const when = h("input", { type: "text", class: "ui-input", value: rule.when ?? "", dir: "auto", "aria-label": t("rules.whenOptional") });
     const layer = modal({
-      title: "Edit rule", size: "md",
-      body: h("div", {}, field({ label: "What the tool should do", control: then }), field({ label: "When (optional)", control: when })),
-      actions: [button({ label: "Cancel", onClick: () => layer.close(false) }), button({ label: "Save", variant: "primary", onClick: async () => {
-        if (!then.value.trim()) throw new Error("A rule needs some text.");
+      title: t("rules.editRule"), size: "md",
+      body: h("div", {}, field({ label: t("rules.doWhat"), control: then }), field({ label: t("rules.whenOptional"), control: when })),
+      actions: [button({ label: t("rules.cancel"), onClick: () => layer.close(false) }), button({ label: t("rules.save"), variant: "primary", onClick: async () => {
+        if (!then.value.trim()) throw new Error(t("rules.needsText"));
         const saved = await patch({ then: then.value.trim(), when: when.value.trim() });
         Object.assign(rule, saved);
         render();
-        toast("Saved. Write the files again to update your tools.", { tone: "success" });
+        toast(t("rules.savedWriteAgain"), { tone: "success" });
         layer.close(true);
       } })],
     });
@@ -123,24 +124,24 @@ function ruleCard(rule, ctx) {
 
 /** The dialog that adds a rule. `tools` comes from /api/hub/tools. */
 export function addRuleDialog({ tools = [], onAdded }) {
-  const then = h("textarea", { class: "ui-input", rows: "3", dir: "auto", "aria-label": "Rule", placeholder: "For example: Run the tests before saying a task is done" });
-  const when = h("input", { type: "text", class: "ui-input", dir: "auto", "aria-label": "When (optional)", placeholder: "When… (optional)" });
-  const tier = h("select", { class: "ui-select", "aria-label": "Scope" }, ...[["everywhere", "Everywhere"], ["project", "One project"], ["situation", "One situation"]].map(([value, label]) => h("option", { value }, label)));
-  const scopeName = h("input", { type: "text", class: "ui-input", dir: "auto", "aria-label": "Scope name", value: state.project || "", placeholder: "Project or situation name" });
-  const scopeField = field({ label: "Name of the project or situation", control: scopeName });
+  const then = h("textarea", { class: "ui-input", rows: "3", dir: "auto", "aria-label": t("rules.rule"), placeholder: t("rules.ruleExample") });
+  const when = h("input", { type: "text", class: "ui-input", dir: "auto", "aria-label": t("rules.whenOptional"), placeholder: t("rules.whenPlaceholder") });
+  const tier = h("select", { class: "ui-select", "aria-label": t("rules.scope") }, ...[["everywhere", t("rules.scopeEverywhere")], ["project", t("rules.scopeProject")], ["situation", t("rules.scopeSituation")]].map(([value, label]) => h("option", { value }, label)));
+  const scopeName = h("input", { type: "text", class: "ui-input", dir: "auto", "aria-label": t("rules.scopeName"), value: state.project || "", placeholder: t("rules.scopeNamePlaceholder") });
+  const scopeField = field({ label: t("rules.scopeNameLabel"), control: scopeName });
   scopeField.hidden = true;
   tier.addEventListener("change", () => { scopeField.hidden = tier.value === "everywhere"; });
   const checks = tools.map((tool) => h("label", { class: "ui-check" }, h("input", { type: "checkbox", name: "rule-tool", value: tool.id }), h("span", {}, tool.name)));
   const layer = modal({
-    title: "Add a rule", size: "md",
-    body: h("div", {}, field({ label: "What the tool should do", control: then }), field({ label: "When (optional)", control: when }), h("div", { class: "ui-inline" }, field({ label: "Applies to", control: tier }), scopeField),
-      tools.length ? h("fieldset", { class: "ui-fieldset" }, h("legend", { class: "ui-field-label" }, "Only for these tools (none ticked means all tools)"), h("div", { class: "ui-checks" }, ...checks)) : null),
-    actions: [button({ label: "Cancel", onClick: () => layer.close(false) }), button({ label: "Add rule", variant: "primary", onClick: async () => {
-      if (!then.value.trim()) throw new Error("A rule needs some text.");
-      if (tier.value !== "everywhere" && !scopeName.value.trim()) throw new Error("Name the project or situation, or choose Everywhere.");
+    title: t("rules.addTitle"), size: "md",
+    body: h("div", {}, field({ label: t("rules.doWhat"), control: then }), field({ label: t("rules.whenOptional"), control: when }), h("div", { class: "ui-inline" }, field({ label: t("rules.appliesTo"), control: tier }), scopeField),
+      tools.length ? h("fieldset", { class: "ui-fieldset" }, h("legend", { class: "ui-field-label" }, t("rules.onlyForTools")), h("div", { class: "ui-checks" }, ...checks)) : null),
+    actions: [button({ label: t("rules.cancel"), onClick: () => layer.close(false) }), button({ label: t("rules.addRule"), variant: "primary", onClick: async () => {
+      if (!then.value.trim()) throw new Error(t("rules.needsText"));
+      if (tier.value !== "everywhere" && !scopeName.value.trim()) throw new Error(t("rules.nameScope"));
       const chosen = checks.map((label) => label.querySelector("input")).filter((input) => input.checked).map((input) => input.value);
       await api("/api/hub/rules", { method: "POST", body: { then: then.value.trim(), when: when.value.trim(), scopeTier: tier.value, scopeName: tier.value === "everywhere" ? "Everywhere" : scopeName.value.trim(), tools: chosen } });
-      toast("Rule added. Write the files to put it in your tools.", { tone: "success" });
+      toast(t("rules.added2"), { tone: "success" });
       layer.close(true);
       onAdded?.();
     } })],
@@ -149,7 +150,7 @@ export function addRuleDialog({ tools = [], onAdded }) {
 }
 
 export function rulesView(ctx) {
-  const needle = h("input", { type: "search", class: "ui-input", placeholder: "Filter rules…", "aria-label": "Filter rules", dir: "auto" });
+  const needle = h("input", { type: "search", class: "ui-input", placeholder: t("rules.filterPlaceholder"), "aria-label": t("rules.filterRules"), dir: "auto" });
   const show = { value: "all" };
   let all = [];
   const syncLine = h("p", { class: "ui-meta", role: "status", hidden: true });
@@ -159,25 +160,25 @@ export function rulesView(ctx) {
     const text = needle.value.trim().toLowerCase();
     const staleCount = all.filter((rule) => rule.stale).length;
     staleLine.hidden = !staleCount;
-    staleLine.textContent = staleCount ? `${staleCount} rule${staleCount === 1 ? "" : "s"} to re-check. Flagged rules stay on and keep syncing until you retire them.` : "";
+    staleLine.textContent = staleCount ? t("rules.staleLine", { count: staleCount }) : "";
     const rows = all.filter((rule) => (show.value === "all" || (show.value === "recheck" ? rule.stale : (show.value === "on") === rule.enabled)) && (!text || `${ruleTitle(rule)} ${scopeLabel(rule)}`.toLowerCase().includes(text)));
-    swap(listEl, rows.length ? rows.map((rule) => ruleCard(rule, ctx)) : emptyState({ title: "No rule matches", text: "Clear the filter to see every rule.", compact: true, art: "rules" }));
+    swap(listEl, rows.length ? rows.map((rule) => ruleCard(rule, ctx)) : emptyState({ title: t("rules.noMatchTitle"), text: t("rules.noMatchText"), compact: true, art: "rules" }));
   };
   needle.addEventListener("input", draw);
-  const status = segmented({ label: "Show", value: "all", options: [{ value: "all", label: "All" }, { value: "on", label: "On" }, { value: "off", label: "Off" }, { value: "recheck", label: "Re-check" }], onChange: (value) => { show.value = value; draw(); } });
+  const status = segmented({ label: t("rules.show"), value: "all", options: [{ value: "all", label: t("rules.showAll") }, { value: "on", label: t("rules.showOn") }, { value: "off", label: t("rules.showOff") }, { value: "recheck", label: t("rules.recheck") }], onChange: (value) => { show.value = value; draw(); } });
   // How many tools' managed blocks differ from these rules. Read-only; a failed lookup just leaves the line hidden.
   const loadSync = async () => {
     try {
       const report = await api("/api/hub/rules/diff");
       syncLine.hidden = !report.outOfSync;
-      syncLine.textContent = report.outOfSync ? `${report.outOfSync} tool${report.outOfSync === 1 ? "" : "s"} out of sync with these rules. Open Write to tools to preview the difference.` : "";
+      syncLine.textContent = report.outOfSync ? t("rules.outOfSync", { count: report.outOfSync }) : "";
     } catch { syncLine.hidden = true; }
   };
   const reg = region({
     load: async () => (await api("/api/hub/rules")).rules,
     skeleton: () => skeleton({ kind: "card", count: 3 }),
-    empty: () => emptyState({ title: "No rules yet", text: "A rule is something you want every AI tool to follow. Write it once here, then write it into each tool's instruction file. You can also import the rules your tools already have.", art: "rules", actions: [button({ label: "Add a rule", variant: "primary", icon: "plus", onClick: () => ctx.addRule() }), button({ label: "Import from a tool", href: "#/rules/import" })] }),
-    render: (rules) => { all = rules; ctx.counts?.({ rules: rules.length }); draw(); loadSync(); return h("div", {}, syncLine, staleLine, h("div", { class: "ui-filterrow ui-paged-toolbar" }, h("div", { class: "ui-filter ui-filter-grow" }, needle), h("div", { class: "ui-filter" }, h("span", { class: "ui-filter-label" }, "Show"), status)), listEl); },
+    empty: () => emptyState({ title: t("rules.emptyTitle"), text: t("rules.emptyText"), art: "rules", actions: [button({ label: t("rules.addTitle"), variant: "primary", icon: "plus", onClick: () => ctx.addRule() }), button({ label: t("rules.importFromTool"), href: "#/rules/import" })] }),
+    render: (rules) => { all = rules; ctx.counts?.({ rules: rules.length }); draw(); loadSync(); return h("div", {}, syncLine, staleLine, h("div", { class: "ui-filterrow ui-paged-toolbar" }, h("div", { class: "ui-filter ui-filter-grow" }, needle), h("div", { class: "ui-filter" }, h("span", { class: "ui-filter-label" }, t("rules.show")), status)), listEl); },
   });
   reg.dispose = () => {};
   const wrap = h("div", {}, reg);
@@ -192,9 +193,9 @@ const strengthTone = (value) => STRENGTH_TONE[value] ?? "neutral";
 
 function quoteRow(quote) {
   return h("div", { class: "ui-fact-source", dir: "auto" },
-    h("span", { class: "ui-meta" }, quote.at ? String(quote.at) : "unknown time"),
+    h("span", { class: "ui-meta" }, quote.at ? String(quote.at) : t("rules.unknownTime")),
     " · ", quote.text,
-    quote.sessionId ? h("span", { class: "ui-meta" }, ` · session ${quote.sessionId}`) : null);
+    quote.sessionId ? h("span", { class: "ui-meta" }, t("rules.sessionSuffix", { id: quote.sessionId })) : null);
 }
 
 function suggestionCard(item, ctx, { dismissed }) {
@@ -220,15 +221,15 @@ function suggestionCard(item, ctx, { dismissed }) {
     if (result?.ruleId) await api(`/api/hub/rules/${result.ruleId}/toggle`, { method: "POST", body: { enabled: false } });
   };
   const edit = () => {
-    const text = h("textarea", { class: "ui-input", rows: "3", dir: "auto", "aria-label": "Rule text" });
+    const text = h("textarea", { class: "ui-input", rows: "3", dir: "auto", "aria-label": t("rules.ruleText") });
     text.value = item.text;
     const layer = modal({
-      title: "Edit before approving", size: "md",
-      body: field({ label: "Rule text", control: text }),
-      actions: [button({ label: "Cancel", onClick: () => layer.close(false) }), button({ label: "Save and approve", variant: "primary", onClick: async () => {
+      title: t("rules.editBeforeApproving"), size: "md",
+      body: field({ label: t("rules.ruleText"), control: text }),
+      actions: [button({ label: t("rules.cancel"), onClick: () => layer.close(false) }), button({ label: t("rules.saveApprove"), variant: "primary", onClick: async () => {
         const next = text.value.trim();
-        if (next.length < 6) throw new Error("The rule needs at least 6 characters.");
-        const ok = await decide("edit", { extra: { text: next }, done: "Edited and added. It is on, for every tool you write files for.", undo: undoDecide, failure: "Could not save this suggestion." });
+        if (next.length < 6) throw new Error(t("rules.minChars"));
+        const ok = await decide("edit", { extra: { text: next }, done: t("rules.editedAdded"), undo: undoDecide, failure: t("rules.saveSuggestionFailed") });
         if (ok) layer.close(true);
       } })],
     });
@@ -239,30 +240,30 @@ function suggestionCard(item, ctx, { dismissed }) {
       apply: () => { back = hideCard(card); },
       rollback: () => back(),
       request: () => post("restore"),
-      done: "Moved back to Suggested.",
+      done: t("rules.movedBack"),
       undo: () => post("reject"),
       reapply: () => { back(); ctx.changed?.(); },
-      failure: "Could not restore this suggestion.",
+      failure: t("rules.restoreSuggestionFailed"),
     }).then((ok) => { if (ok) ctx.changed?.({ soft: true }); return ok; });
   };
   swap(card,
-    h("div", { class: "ui-item-head" }, h("p", { class: "ui-item-title", dir: "auto" }, item.text), h("div", { class: "ui-row" }, badge(dismissed ? "dismissed" : "suggested", "warning"), item.project ? badge(item.project) : null, badge(`strength: ${item.strength ?? "Light"}`, strengthTone(item.strength)))),
+    h("div", { class: "ui-item-head" }, h("p", { class: "ui-item-title", dir: "auto" }, item.text), h("div", { class: "ui-row" }, badge(dismissed ? t("rules.dismissed") : t("rules.suggested"), "warning"), item.project ? badge(item.project) : null, badge(t("rules.strength", { value: item.strength ?? "Light" }), strengthTone(item.strength)))),
     h("div", { class: "ui-meta" },
-      h("span", {}, `${item.timesSeen ?? 1}× seen`),
-      h("span", {}, `confidence ${Number(item.confidence ?? 0).toFixed(2)}`),
-      item.latestAt ? h("span", {}, "last seen ") : null,
+      h("span", {}, t("rules.timesSeen", { count: item.timesSeen ?? 1 })),
+      h("span", {}, t("rules.confidence", { value: Number(item.confidence ?? 0).toFixed(2) })),
+      item.latestAt ? h("span", {}, t("rules.lastSeen")) : null,
       item.latestAt ? timeEl(item.latestAt) : null,
-      h("span", {}, `from ${item.sourceType ?? "prompt"}`),
-      estimated("Rule strength bands")),
-    item.when ? h("div", { class: "ui-meta" }, `When ${item.when}`) : null,
-    first.length ? h("div", { class: "ui-quotes" }, ...first.map(quoteRow)) : h("p", { class: "ui-meta" }, "No dated quotes were stored for this suggestion."),
-    more.length ? disclosure({ summary: `More quotes (${item.moreQuotes ?? more.length})`, content: h("div", { class: "ui-quotes" }, ...more.map(quoteRow)) }) : null,
+      h("span", {}, t("rules.from", { source: item.sourceType ?? "prompt" })),
+      estimated(t("rules.strengthBands"))),
+    item.when ? h("div", { class: "ui-meta" }, t("rules.whenLine", { when: item.when })) : null,
+    first.length ? h("div", { class: "ui-quotes" }, ...first.map(quoteRow)) : h("p", { class: "ui-meta" }, t("rules.noQuotes")),
+    more.length ? disclosure({ summary: t("rules.moreQuotes", { count: item.moreQuotes ?? more.length }), content: h("div", { class: "ui-quotes" }, ...more.map(quoteRow)) }) : null,
     h("div", { class: "ui-acts" }, dismissed
-      ? button({ label: "Restore", size: "sm", icon: "undo", onClick: restore })
+      ? button({ label: t("rules.restore"), size: "sm", icon: "undo", onClick: restore })
       : [
-        button({ label: "Approve", variant: "primary", size: "sm", icon: "check", onClick: () => decide("approve", { done: "Rule added. It is on, for every tool you write files for.", undo: undoDecide, failure: "Could not approve this suggestion." }) }),
-        button({ label: "Edit", size: "sm", icon: "edit", onClick: edit }),
-        button({ label: "Reject", size: "sm", icon: "x", onClick: () => decide("reject", { done: "Rejected. It is under Dismissed if you change your mind.", undo: () => post("restore"), failure: "Could not reject this suggestion." }) }),
+        button({ label: t("rules.approve"), variant: "primary", size: "sm", icon: "check", onClick: () => decide("approve", { done: t("rules.approved"), undo: undoDecide, failure: t("rules.approveFailed") }) }),
+        button({ label: t("rules.edit"), size: "sm", icon: "edit", onClick: edit }),
+        button({ label: t("rules.reject"), size: "sm", icon: "x", onClick: () => decide("reject", { done: t("rules.rejected"), undo: () => post("restore"), failure: t("rules.rejectFailed") }) }),
       ]));
   return card;
 }
@@ -270,34 +271,34 @@ function suggestionCard(item, ctx, { dismissed }) {
 /** The last learning run, and a button that runs it again. */
 function learningRunPanel({ onRan }) {
   const out = h("div", { class: "ui-meta", role: "status" });
-  const show = (run) => swap(out, run ? `${run.at ?? "unknown time"} · found ${run.found ?? 0} · proposed ${run.proposed ?? 0} · errors ${run.errors ?? 0}` : "No learning run has been recorded yet. Run it to scan your prompts for repeated corrections.");
+  const show = (run) => swap(out, run ? t("rules.runLine", { at: run.at ?? t("rules.unknownTime"), found: run.found ?? 0, proposed: run.proposed ?? 0, errors: run.errors ?? 0 }) : t("rules.noRun"));
   const load = async () => {
-    try { show((await api("/api/hub/rules/learning-run")).learningRun); } catch (error) { swap(out, `Could not read the learning run: ${error.message}`); }
+    try { show((await api("/api/hub/rules/learning-run")).learningRun); } catch (error) { swap(out, t("rules.runReadFailed", { message: error.message })); }
   };
-  const run = button({ label: "Run learning now", size: "sm", icon: "bolt", onClick: async () => {
+  const run = button({ label: t("rules.runNow"), size: "sm", icon: "bolt", onClick: async () => {
     const data = await api(`/api/hub/rules/learning-run${state.project ? `?project=${encodeURIComponent(state.project)}` : ""}`, { method: "POST" });
     show(data.learningRun);
-    toast(`Learning run recorded: found ${data.learningRun?.found ?? 0}, proposed ${data.learningRun?.proposed ?? 0}, errors ${data.learningRun?.errors ?? 0}.`, { tone: "success" });
+    toast(t("rules.runRecorded", { found: data.learningRun?.found ?? 0, proposed: data.learningRun?.proposed ?? 0, errors: data.learningRun?.errors ?? 0 }), { tone: "success" });
     onRan?.();
   } });
   load();
-  return h("div", { class: "ui-card ui-learning-run" }, h("div", { class: "ui-row" }, h("b", {}, "Rule learning"), run), out);
+  return h("div", { class: "ui-card ui-learning-run" }, h("div", { class: "ui-row" }, h("b", {}, t("rules.learning")), run), out);
 }
 
 export function suggestionsView(ctx) {
   const defaults = { limit: 25, status: "pending", q: "", sort: "newest" };
   const list = pagedList({
-    defaults, label: "Suggested rules",
+    defaults, label: t("rules.suggestedRules"),
     fetchPage: (p) => api(`/api/hub/rule-suggestions?${queryString({ limit: p.limit, offset: p.offset, project: state.project, status: p.status, q: p.q, sort: p.sort })}`),
     renderItem: (item, { state: s }) => suggestionCard(item, { changed: (options) => { list.reload(options); ctx.changed?.(); } }, { dismissed: s.status === "dismissed" }),
     skeleton: () => skeleton({ kind: "card", count: 3 }),
-    empty: (s) => emptyState({ title: s.status === "dismissed" ? "No dismissed suggestions" : "No rule suggestion is waiting", text: s.status === "dismissed" ? "Suggestions you dismiss are kept here, so you can restore them." : "When you correct a tool the same way a few times, Aletheia suggests a rule here. Nothing is applied until you Approve it.", art: "rules" }),
-    emptyFiltered: () => emptyState({ title: "No suggestion matches", text: "Try other words.", art: "search", compact: true }),
+    empty: (s) => emptyState({ title: s.status === "dismissed" ? t("rules.noDismissedTitle") : t("rules.noSuggestionTitle"), text: s.status === "dismissed" ? t("rules.noDismissedText") : t("rules.noSuggestionText"), art: "rules" }),
+    emptyFiltered: () => emptyState({ title: t("rules.noSuggestionMatch"), text: t("rules.tryOther"), art: "search", compact: true }),
     onData: (data, s) => { if (s.status === "pending") ctx.counts?.({ suggestions: data.total }); },
     toolbar: ({ state: s, set }) => filterBar([[
-      segmentFilter({ key: "status", label: "Show", value: s.status, options: [{ value: "pending", label: "Suggested" }, { value: "dismissed", label: "Dismissed" }], onChange: (status) => set({ status }) }),
-      textFilter({ key: "q", value: s.q, label: "Filter suggestions", placeholder: "Filter suggestions…", onChange: (q) => set({ q }, { replace: true }) }),
-      selectFilter({ key: "sort", label: "Sort", value: s.sort, options: [{ value: "newest", label: "Newest" }, { value: "confidence", label: "Most confident" }, { value: "oldest", label: "Oldest" }], onChange: (sort) => set({ sort }) }),
+      segmentFilter({ key: "status", label: t("rules.show"), value: s.status, options: [{ value: "pending", label: t("rules.optSuggested") }, { value: "dismissed", label: t("rules.optDismissed") }], onChange: (status) => set({ status }) }),
+      textFilter({ key: "q", value: s.q, label: t("rules.filterSuggestions"), placeholder: t("rules.filterSuggestionsPh"), onChange: (q) => set({ q }, { replace: true }) }),
+      selectFilter({ key: "sort", label: t("rules.sort"), value: s.sort, options: [{ value: "newest", label: t("rules.sortNewest") }, { value: "confidence", label: t("rules.sortConfident") }, { value: "oldest", label: t("rules.sortOldest") }], onChange: (sort) => set({ sort }) }),
     ]]),
   });
   const panel = learningRunPanel({ onRan: () => { list.reload(); ctx.changed?.(); } });
@@ -316,31 +317,31 @@ export function syncView(ctx) {
     isEmpty: () => false,
     render: (tools) => {
       const boxes = tools.map((tool) => ({ tool, input: h("input", { type: "checkbox", name: "sync-tool", value: tool.id, checked: tool.installed || tool.id === "agents-md" }) }));
-      const scope = h("select", { class: "ui-select", "aria-label": "Where to write" }, h("option", { value: "project" }, "A project folder"), h("option", { value: "global" }, "Global (files in your home folder)"));
-      const dir = h("input", { type: "text", class: "ui-input", dir: "ltr", placeholder: "/absolute/path/to/your/project", "aria-label": "Project folder" });
-      const dirField = field({ label: "Project folder", control: dir });
+      const scope = h("select", { class: "ui-select", "aria-label": t("rules.whereToWrite") }, h("option", { value: "project" }, t("rules.projectFolderOpt")), h("option", { value: "global" }, t("rules.globalOpt")));
+      const dir = h("input", { type: "text", class: "ui-input", dir: "ltr", placeholder: "/absolute/path/to/your/project", "aria-label": t("rules.projectFolder") });
+      const dirField = field({ label: t("rules.projectFolder"), control: dir });
       scope.addEventListener("change", () => { dirField.hidden = scope.value === "global"; });
       const body = (confirmWrite) => ({ tools: boxes.filter((entry) => entry.input.checked).map((entry) => entry.tool.id), scope: scope.value, projectDir: dir.value, confirm: confirmWrite || undefined });
       const show = (results, wrote) => swap(out, ...results.map((result) => h("div", { class: "ui-card" },
-        h("div", { class: "ui-row" }, h("b", {}, result.tool), badge(result.skipped ? "skipped" : result.written ? "written" : result.changed ? "would change" : "up to date", result.written ? "success" : result.changed ? "warning" : "neutral")),
-        result.path ? h("div", { class: "ui-meta" }, mono(result.path), result.backup ? h("span", {}, "backup:") : null, result.backup ? mono(result.backup) : null) : null,
+        h("div", { class: "ui-row" }, h("b", {}, result.tool), badge(result.skipped ? t("rules.skipped") : result.written ? t("rules.written") : result.changed ? t("rules.wouldChange") : t("rules.upToDate"), result.written ? "success" : result.changed ? "warning" : "neutral")),
+        result.path ? h("div", { class: "ui-meta" }, mono(result.path), result.backup ? h("span", {}, t("rules.backup")) : null, result.backup ? mono(result.backup) : null) : null,
         result.skipped ? h("div", { class: "ui-meta" }, result.skipped) : null,
-        result.changed && !wrote ? disclosure({ summary: "Show the new content", content: codeBlock({ code: result.after, lang: "md" }) }) : null)));
-      const check = () => { if (!body(false).tools.length) throw new Error("Tick at least one tool."); if (scope.value === "project" && !dir.value.trim()) throw new Error("Type the absolute path of the project folder."); };
+        result.changed && !wrote ? disclosure({ summary: t("rules.showNew"), content: codeBlock({ code: result.after, lang: "md" }) }) : null)));
+      const check = () => { if (!body(false).tools.length) throw new Error(t("rules.tickOne")); if (scope.value === "project" && !dir.value.trim()) throw new Error(t("rules.typePath")); };
       return h("div", { class: "ui-card" },
-        h("p", { class: "ui-meta" }, "Writes your enabled rules as a managed block in each tool's instruction file. Your own text outside the block is never touched, and a backup is kept."),
-        h("fieldset", { class: "ui-fieldset" }, h("legend", { class: "ui-field-label" }, "Tools"), h("div", { class: "ui-checks" }, ...boxes.map((entry) => h("label", { class: "ui-check" }, entry.input, h("span", {}, entry.tool.name), entry.tool.installed ? badge("detected", "success") : null)))),
-        h("div", { class: "ui-inline" }, field({ label: "Where", control: scope }), dirField),
+        h("p", { class: "ui-meta" }, t("rules.syncIntro")),
+        h("fieldset", { class: "ui-fieldset" }, h("legend", { class: "ui-field-label" }, t("rules.tools")), h("div", { class: "ui-checks" }, ...boxes.map((entry) => h("label", { class: "ui-check" }, entry.input, h("span", {}, entry.tool.name), entry.tool.installed ? badge(t("rules.detected"), "success") : null)))),
+        h("div", { class: "ui-inline" }, field({ label: t("rules.where"), control: scope }), dirField),
         h("div", { class: "ui-acts" },
-          button({ label: "Preview changes", icon: "search", onClick: async () => { check(); show((await api("/api/hub/rules/preview", { method: "POST", body: body(false) })).results, false); } }),
-          button({ label: "Write files", variant: "primary", icon: "upload", onClick: async () => {
+          button({ label: t("rules.preview"), icon: "search", onClick: async () => { check(); show((await api("/api/hub/rules/preview", { method: "POST", body: body(false) })).results, false); } }),
+          button({ label: t("rules.writeFiles"), variant: "primary", icon: "upload", onClick: async () => {
             check();
             const ids = body(false).tools;
-            const ok = await confirmDialog({ title: "Write these files?", message: `This writes a managed block into the rules file of ${ids.length} tool${ids.length === 1 ? "" : "s"} (${ids.join(", ")}). A backup of each existing file is kept, and nothing outside the block changes. You can run Preview first to see the new content.`, confirmLabel: "Write files" });
+            const ok = await confirmDialog({ title: t("rules.writeTitle"), message: t("rules.writeConfirm", { count: ids.length, tools: ids.join(", ") }), confirmLabel: t("rules.writeFiles") });
             if (!ok) return;
             const result = await api("/api/hub/rules/sync", { method: "POST", body: body(true) });
             show(result.results, true);
-            toast("Files written.", { tone: "success" });
+            toast(t("rules.filesWritten"), { tone: "success" });
           } })),
         out);
     },
@@ -357,15 +358,15 @@ export function importView(ctx) {
     skeleton: () => skeleton({ kind: "card", count: 1 }),
     isEmpty: () => false,
     render: (tools) => {
-      const tool = h("select", { class: "ui-select", "aria-label": "Tool" }, ...tools.map((option) => h("option", { value: option.id }, option.name)));
-      const dir = h("input", { type: "text", class: "ui-input", dir: "ltr", placeholder: "/absolute/path/to/project (blank for the global file)", "aria-label": "Project folder" });
+      const tool = h("select", { class: "ui-select", "aria-label": t("rules.tool") }, ...tools.map((option) => h("option", { value: option.id }, option.name)));
+      const dir = h("input", { type: "text", class: "ui-input", dir: "ltr", placeholder: t("rules.importPathPh"), "aria-label": t("rules.projectFolder") });
       return h("div", { class: "ui-card" },
-        h("p", { class: "ui-meta" }, "Reads the bullet lines from a tool's current instruction file and adds them as rules. Nothing is overwritten, and rules you already have are skipped."),
-        h("div", { class: "ui-inline" }, field({ label: "Tool", control: tool }), field({ label: "Project folder", control: dir })),
-        h("div", { class: "ui-acts" }, button({ label: "Import rules", variant: "primary", icon: "download", onClick: async () => {
+        h("p", { class: "ui-meta" }, t("rules.importIntro")),
+        h("div", { class: "ui-inline" }, field({ label: t("rules.tool"), control: tool }), field({ label: t("rules.projectFolder"), control: dir })),
+        h("div", { class: "ui-acts" }, button({ label: t("rules.importRules"), variant: "primary", icon: "download", onClick: async () => {
           const result = await api("/api/hub/rules/import", { method: "POST", body: { tool: tool.value, scope: dir.value ? "project" : "global", projectDir: dir.value || undefined } });
-          out.textContent = `Found ${result.found}, added ${result.added}, already had ${result.skipped}.`;
-          toast(`Imported ${result.added} rule${result.added === 1 ? "" : "s"}.`, { tone: "success" });
+          out.textContent = t("rules.importResult", { found: result.found, added: result.added, skipped: result.skipped });
+          toast(t("rules.imported", { count: result.added }), { tone: "success" });
           ctx.changed?.();
         } })),
         out);

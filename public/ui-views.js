@@ -7,14 +7,15 @@ import { factView, formatWhen } from "./ui-core.js";
 import { api, h, later, swap } from "./ui-dom.js";
 import { optimistic } from "./ui-actions.js";
 import { relativeTime } from "./ui-pure.js";
+import { t } from "./ui-i18n.js";
 
 export const KIND_OPTIONS = [
-  { value: "", label: "All" },
-  { value: "observation", label: "Observations" },
-  { value: "note", label: "Notes" },
-  { value: "prompt", label: "Prompts" },
-  { value: "event", label: "Events" },
-  { value: "summary", label: "Summaries" },
+  { value: "", get label() { return t("rules.kindAll"); } },
+  { value: "observation", get label() { return t("rules.kindObservations"); } },
+  { value: "note", get label() { return t("rules.kindNotes"); } },
+  { value: "prompt", get label() { return t("rules.kindPrompts"); } },
+  { value: "event", get label() { return t("rules.kindEvents"); } },
+  { value: "summary", get label() { return t("rules.kindSummaries"); } },
 ];
 export const TYPE_OPTIONS = ["bugfix", "feature", "refactor", "change", "discovery", "decision", "gotcha", "note", "event"];
 
@@ -46,12 +47,12 @@ export function selectFilter({ key, label, value = "", options, onChange, allLab
 
 /** From and To dates. The server reads a bare end date as the end of that day. */
 export function dateRange({ since = "", until = "", onChange }) {
-  const from = h("input", { type: "date", class: "ui-input ui-date", value: since, "aria-label": "From date" });
-  const to = h("input", { type: "date", class: "ui-input ui-date", value: until, "aria-label": "To date" });
+  const from = h("input", { type: "date", class: "ui-input ui-date", value: since, "aria-label": t("rules.fromDate") });
+  const to = h("input", { type: "date", class: "ui-input ui-date", value: until, "aria-label": t("rules.toDate") });
   const fire = () => onChange({ since: from.value, until: to.value });
   from.addEventListener("change", fire);
   to.addEventListener("change", fire);
-  const wrap = h("div", { class: "ui-filter ui-daterange" }, h("span", { class: "ui-filter-label" }, "Dates"), from, h("span", { class: "ui-meta" }, "to"), to);
+  const wrap = h("div", { class: "ui-filter ui-daterange" }, h("span", { class: "ui-filter-label" }, t("rules.dates")), from, h("span", { class: "ui-meta" }, t("rules.dateTo")), to);
   wrap.sync = (state) => { from.value = state.since ?? ""; to.value = state.until ?? ""; };
   return wrap;
 }
@@ -128,20 +129,20 @@ const projectBadge = (name) => h("span", { class: "ui-meta-item" }, name);
 export function memoryCard(memory, ctx = {}) {
   const card = h("article", { class: "ui-card ui-item", "data-kind": "memory", "data-id": memory.id });
   const render = () => {
-    const pinBadge = memory.pinned ? badge("pinned", "success") : null;
+    const pinBadge = memory.pinned ? badge(t("rules.pinned"), "success") : null;
     const files = Array.isArray(memory.files) ? memory.files.slice(0, 6) : [];
     swap(card,
       h("div", { class: "ui-item-head" },
-        h("h3", { class: "ui-item-title", dir: "auto" }, ctx.query ? highlight(memory.title || "(untitled)", ctx.query) : memory.title || "(untitled)"),
+        h("h3", { class: "ui-item-title", dir: "auto" }, ctx.query ? highlight(memory.title || t("rules.untitled"), ctx.query) : memory.title || t("rules.untitled")),
         h("div", { class: "ui-row" }, badge(memory.kind), memory.type && memory.type !== memory.kind ? badge(memory.type) : null, pinBadge)),
-      h("div", { class: "ui-meta" }, projectBadge(memory.project), projectBadge(memory.tool), timeEl(memory.created_at_epoch), mono(`#${memory.id}`, { label: "Copy id" })),
+      h("div", { class: "ui-meta" }, projectBadge(memory.project), projectBadge(memory.tool), timeEl(memory.created_at_epoch), mono(`#${memory.id}`, { label: t("rules.copyId") })),
       memory.narrative ? clampText({ text: memory.narrative, markdown: true, lines: 3, query: ctx.query }) : null,
-      files.length ? h("div", { class: "ui-meta ui-item-files" }, h("span", {}, "Files"), ...files.map((file) => mono(String(file), { copy: false })), memory.files.length > files.length ? h("span", {}, `+${memory.files.length - files.length} more`) : null) : null,
+      files.length ? h("div", { class: "ui-meta ui-item-files" }, h("span", {}, t("rules.files")), ...files.map((file) => mono(String(file), { copy: false })), memory.files.length > files.length ? h("span", {}, t("rules.moreFiles", { count: memory.files.length - files.length })) : null) : null,
       h("div", { class: "ui-acts" },
-        button({ label: "Open", size: "sm", icon: "external", onClick: () => ctx.onOpen?.(memory) }),
-        button({ label: memory.pinned ? "Unpin" : "Pin", size: "sm", icon: "pin", pressed: memory.pinned, onClick: () => togglePin() }),
-        button({ label: "Edit", size: "sm", icon: "edit", onClick: () => edit() }),
-        button({ label: "Dismiss", size: "sm", icon: "eye-off", onClick: () => dismiss() })));
+        button({ label: t("rules.open"), size: "sm", icon: "external", onClick: () => ctx.onOpen?.(memory) }),
+        button({ label: memory.pinned ? t("rules.unpin") : t("rules.pin"), size: "sm", icon: "pin", pressed: memory.pinned, onClick: () => togglePin() }),
+        button({ label: t("rules.edit"), size: "sm", icon: "edit", onClick: () => edit() }),
+        button({ label: t("rules.dismiss"), size: "sm", icon: "eye-off", onClick: () => dismiss() })));
     card.querySelector(".ui-clamp")?.measure?.();
   };
   const togglePin = () => {
@@ -150,10 +151,10 @@ export function memoryCard(memory, ctx = {}) {
       apply: () => { memory.pinned = next; render(); },
       rollback: () => { memory.pinned = !next; render(); },
       request: () => api(`/api/hub/memories/${memory.id}`, { method: "PATCH", body: { pinned: next } }),
-      done: next ? "Pinned. It stays at the top." : "Unpinned.",
+      done: next ? t("rules.pinnedToast") : t("rules.unpinnedToast"),
       undo: () => api(`/api/hub/memories/${memory.id}`, { method: "PATCH", body: { pinned: !next } }),
       reapply: () => { memory.pinned = !next; render(); },
-      failure: "Could not change the pin.",
+      failure: t("rules.pinFailed"),
     });
   };
   const dismiss = () => {
@@ -162,29 +163,29 @@ export function memoryCard(memory, ctx = {}) {
       apply: () => { restore = hideCard(card); },
       rollback: () => restore(),
       request: () => api("/api/hub/dismiss", { method: "POST", body: { type: "memory", id: memory.id } }),
-      done: "Hidden from search and context. Nothing was deleted.",
+      done: t("rules.memoryHidden"),
       undo: () => api("/api/hub/restore", { method: "POST", body: { type: "memory", id: memory.id } }),
       reapply: () => { restore(); ctx.onChanged?.(); },
-      failure: "Could not hide this memory.",
+      failure: t("rules.memoryHideFailed"),
     }).then((ok) => { if (ok) ctx.onChanged?.({ soft: true }); return ok; });
   };
   const edit = () => {
-    const title = h("input", { type: "text", class: "ui-input", value: memory.title ?? "", dir: "auto", "aria-label": "Title" });
-    const text = h("textarea", { class: "ui-input", dir: "auto", "aria-label": "Text", rows: "8" });
+    const title = h("input", { type: "text", class: "ui-input", value: memory.title ?? "", dir: "auto", "aria-label": t("rules.title") });
+    const text = h("textarea", { class: "ui-input", dir: "auto", "aria-label": t("rules.text"), rows: "8" });
     text.value = memory.narrative ?? "";
-    const type = h("select", { class: "ui-select", "aria-label": "Type" }, ...TYPE_OPTIONS.map((value) => h("option", { value, selected: memory.type === value }, value)));
-    const project = h("input", { type: "text", class: "ui-input", value: memory.project ?? "", "aria-label": "Project" });
+    const type = h("select", { class: "ui-select", "aria-label": t("rules.type") }, ...TYPE_OPTIONS.map((value) => h("option", { value, selected: memory.type === value }, value)));
+    const project = h("input", { type: "text", class: "ui-input", value: memory.project ?? "", "aria-label": t("rules.project") });
     const layer = modal({
-      title: "Edit memory",
+      title: t("rules.editMemory"),
       size: "md",
-      body: h("div", {}, field({ label: "Title", control: title }), field({ label: "Text (Markdown works)", control: text }), h("div", { class: "ui-inline" }, field({ label: "Type", control: type }), field({ label: "Project", control: project }))),
+      body: h("div", {}, field({ label: t("rules.title"), control: title }), field({ label: t("rules.textMarkdown"), control: text }), h("div", { class: "ui-inline" }, field({ label: t("rules.type"), control: type }), field({ label: t("rules.project"), control: project }))),
       actions: [
-        button({ label: "Cancel", onClick: () => layer.close(false) }),
-        button({ label: "Save", variant: "primary", onClick: async () => {
+        button({ label: t("rules.cancel"), onClick: () => layer.close(false) }),
+        button({ label: t("rules.save"), variant: "primary", onClick: async () => {
           const saved = await api(`/api/hub/memories/${memory.id}`, { method: "PATCH", body: { title: title.value, narrative: text.value, type: type.value, project: project.value } });
           Object.assign(memory, saved);
           render();
-          toast("Saved", { tone: "success", duration: 1800 });
+          toast(t("rules.saved"), { tone: "success", duration: 1800 });
           layer.close(true);
         } }),
       ],
@@ -203,14 +204,14 @@ export function factCard(fact, ctx = {}) {
   swap(card,
     h("div", { class: "ui-item-head" },
       h("p", { class: "ui-item-title ui-fact-text", dir: "auto" }, ctx.query ? highlight(view.text, ctx.query) : view.text),
-      h("div", { class: "ui-row" }, badge(view.status, tone), badge(`scope: ${view.scope}`), badge(`extractor: ${view.extractorMode}`))),
-    h("div", { class: "ui-meta" }, projectBadge(view.project), h("span", {}, `importance ${view.importanceLabel}`), h("span", {}, "valid from"), timeEl(fact.validAt ?? fact.validFrom ?? fact.recordedAt), mono(`#${view.id}`, { label: "Copy id" })),
-    view.sourceText ? clampText({ text: view.sourceText, lines: 2, mono: true, query: ctx.query }) : h("div", { class: "ui-meta" }, "No source episode is linked to this fact."),
+      h("div", { class: "ui-row" }, badge(view.status, tone), badge(t("rules.scopeBadge", { scope: view.scope })), badge(t("rules.extractorBadge", { mode: view.extractorMode })))),
+    h("div", { class: "ui-meta" }, projectBadge(view.project), h("span", {}, t("rules.importance", { label: view.importanceLabel })), h("span", {}, t("rules.validFrom")), timeEl(fact.validAt ?? fact.validFrom ?? fact.recordedAt), mono(`#${view.id}`, { label: t("rules.copyId") })),
+    view.sourceText ? clampText({ text: view.sourceText, lines: 2, mono: true, query: ctx.query }) : h("div", { class: "ui-meta" }, t("rules.noSourceEpisode")),
     h("div", { class: "ui-acts" },
-      button({ label: "Open", size: "sm", icon: "external", onClick: () => ctx.onOpen?.(fact) }),
+      button({ label: t("rules.open"), size: "sm", icon: "external", onClick: () => ctx.onOpen?.(fact) }),
       dismissed
-        ? button({ label: "Restore", size: "sm", icon: "undo", onClick: () => restore() })
-        : button({ label: "Dismiss", size: "sm", icon: "eye-off", onClick: () => dismiss() })));
+        ? button({ label: t("rules.restore"), size: "sm", icon: "undo", onClick: () => restore() })
+        : button({ label: t("rules.dismiss"), size: "sm", icon: "eye-off", onClick: () => dismiss() })));
   card.querySelector(".ui-clamp")?.measure?.();
   function dismiss() {
     let back = () => {};
@@ -218,10 +219,10 @@ export function factCard(fact, ctx = {}) {
       apply: () => { back = hideCard(card); },
       rollback: () => back(),
       request: () => api("/api/hub/dismiss", { method: "POST", body: { type: "fact", id: view.id } }),
-      done: "Fact hidden from search and context. Nothing was deleted.",
+      done: t("rules.factHidden"),
       undo: () => api("/api/hub/restore", { method: "POST", body: { type: "fact", id: view.id } }),
       reapply: () => { back(); ctx.onChanged?.(); },
-      failure: "Could not hide this fact.",
+      failure: t("rules.factHideFailed"),
     }).then((ok) => { if (ok) ctx.onChanged?.({ soft: true }); return ok; });
   }
   function restore() {
@@ -230,16 +231,21 @@ export function factCard(fact, ctx = {}) {
       apply: () => { back = hideCard(card); },
       rollback: () => back(),
       request: () => api("/api/hub/restore", { method: "POST", body: { type: "fact", id: view.id } }),
-      done: "Fact restored.",
+      done: t("rules.factRestored"),
       undo: () => api("/api/hub/dismiss", { method: "POST", body: { type: "fact", id: view.id } }),
       reapply: () => { back(); ctx.onChanged?.(); },
-      failure: "Could not restore this fact.",
+      failure: t("rules.factRestoreFailed"),
     }).then((ok) => { if (ok) ctx.onChanged?.({ soft: true }); return ok; });
   }
   return card;
 }
 
-const TYPE_LABEL = { memory: "Memory", fact: "Fact", observation: "Observation", episode: "Episode" };
+const TYPE_LABEL = {
+  get memory() { return t("rules.typeMemory"); },
+  get fact() { return t("rules.typeFact"); },
+  get observation() { return t("rules.typeObservation"); },
+  get episode() { return t("rules.typeEpisode"); },
+};
 
 /** One dismissed row, with what was hidden (when the server could look it up) and a Restore button. */
 export function dismissedCard(item, ctx = {}) {
@@ -248,23 +254,23 @@ export function dismissedCard(item, ctx = {}) {
     h("div", { class: "ui-item-head" },
       h("p", { class: "ui-item-title", dir: "auto" }, item.label || `${TYPE_LABEL[item.item_type] ?? item.item_type} #${item.item_id}`),
       h("div", { class: "ui-row" }, badge(TYPE_LABEL[item.item_type] ?? item.item_type), item.project ? badge(item.project) : null)),
-    h("div", { class: "ui-meta" }, h("span", {}, "hidden"), timeEl(item.at_epoch), item.reason ? h("span", {}, `reason: ${item.reason}`) : null, mono(`${item.item_type}:${item.item_id}`, { label: "Copy id" })),
-    h("div", { class: "ui-acts" }, button({ label: "Restore", size: "sm", icon: "undo", onClick: () => {
+    h("div", { class: "ui-meta" }, h("span", {}, t("rules.hidden")), timeEl(item.at_epoch), item.reason ? h("span", {}, t("rules.reason", { reason: item.reason })) : null, mono(`${item.item_type}:${item.item_id}`, { label: t("rules.copyId") })),
+    h("div", { class: "ui-acts" }, button({ label: t("rules.restore"), size: "sm", icon: "undo", onClick: () => {
       let back = () => {};
       return optimistic({
         apply: () => { back = hideCard(card); },
         rollback: () => back(),
         request: () => api("/api/hub/restore", { method: "POST", body: { type: item.item_type, id: item.item_id } }),
-        done: "Restored. It is back in search and context.",
+        done: t("rules.itemRestored"),
         undo: () => api("/api/hub/dismiss", { method: "POST", body: { type: item.item_type, id: item.item_id, reason: item.reason ?? undefined } }),
         reapply: () => { back(); ctx.onChanged?.(); },
-        failure: "Could not restore this item.",
+        failure: t("rules.itemRestoreFailed"),
       }).then((ok) => { if (ok) ctx.onChanged?.({ soft: true }); return ok; });
     } })));
   return card;
 }
 
 /** A small note about what a filter result means, used above a list: "12 of 312". */
-export const resultsLine = (shown, total, noun) => h("div", { class: "ui-meta ui-results-line", role: "status" }, total === 0 ? `No ${noun}` : `${shown} of ${total} ${noun}`);
+export const resultsLine = (shown, total, noun) => h("div", { class: "ui-meta ui-results-line", role: "status" }, total === 0 ? t("rules.noneOf", { noun }) : t("rules.shownOf", { shown, total, noun }));
 
 export { relativeTime, formatWhen, promptDialog, iconButton, statusDot };

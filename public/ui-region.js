@@ -2,6 +2,7 @@
 // of four things: a skeleton while loading, the content, an empty state that says what to do, or an error with
 // Retry and Copy details. A paged list is a Region plus a toolbar and a pager whose page and filters live in the
 // URL hash, so Back, Forward and reload return to the same place.
+import { t } from "./ui-i18n.js";
 import { button, emptyState, enterList, errorState, pager, skeleton } from "./ui-components.js";
 import { h, swap } from "./ui-dom.js";
 import { reducedMotion } from "./ui-motion.js";
@@ -16,7 +17,7 @@ import { DEFAULT_PAGE_SIZE, PAGE_SIZES, REGION_INITIAL, buildHash, clampLimit, p
  *   skeleton()    returns a node shaped like the final layout.
  * The returned element has reload({ soft }) (soft keeps the content on screen), state() and onChange.
  */
-export function region({ load, render, isEmpty = defaultEmpty, empty = () => emptyState({ title: "Nothing here yet" }), skeleton: makeSkeleton = () => skeleton({ kind: "lines", count: 1, lines: 3 }), errorTitle = "Could not load this", className = "", onData = null, animate = true } = {}) {
+export function region({ load, render, isEmpty = defaultEmpty, empty = () => emptyState({ title: t("ui.nothingYet") }), skeleton: makeSkeleton = () => skeleton({ kind: "lines", count: 1, lines: 3 }), errorTitle = t("ui.couldNotLoad"), className = "", onData = null, animate = true } = {}) {
   const body = h("div", { class: "ui-region-body" });
   const bar = h("div", { class: "ui-region-bar", hidden: true, "aria-hidden": "true" });
   const el = h("div", { class: `ui-region ${className}`.trim() }, bar, body);
@@ -73,7 +74,7 @@ export function region({ load, render, isEmpty = defaultEmpty, empty = () => emp
     const mark = focusMark();
     const content = state.status === "empty" ? empty(state.data) : render(state.data, { soft: lastKind === "reload" });
     const softError = state.error
-      ? h("div", { class: "ui-inline-error", role: "alert" }, h("span", {}, `Could not refresh: ${state.error}`), button({ label: "Retry", size: "sm", onClick: () => api.reload({ soft: true }) }))
+      ? h("div", { class: "ui-inline-error", role: "alert" }, h("span", {}, t("ui.couldNotRefresh", { error: state.error })), button({ label: t("ui.retry"), size: "sm", onClick: () => api.reload({ soft: true }) }))
       : null;
     swap(body, softError, content);
     restoreFocus(mark);
@@ -164,7 +165,7 @@ export function writeListState(hash, state, defaults, prefix = "") {
  *   renderItem(item, { query, state }) -> node
  *   toolbar({ state, set }) -> node, where set(patch) changes filters and returns to page 1.
  */
-export function pagedList({ defaults = { limit: DEFAULT_PAGE_SIZE }, prefix = "", fetchPage, renderItem, toolbar = null, skeleton: makeSkeleton, empty, emptyFiltered = null, rowsClass = "", onData = null, env = realEnv(), label = "Results" } = {}) {
+export function pagedList({ defaults = { limit: DEFAULT_PAGE_SIZE }, prefix = "", fetchPage, renderItem, toolbar = null, skeleton: makeSkeleton, empty, emptyFiltered = null, rowsClass = "", onData = null, env = realEnv(), label = t("ui.results") } = {}) {
   const base = { limit: DEFAULT_PAGE_SIZE, ...defaults };
   let state = readListState(env.getHash(), base, prefix);
   let lastTotal = 0;
@@ -190,8 +191,8 @@ export function pagedList({ defaults = { limit: DEFAULT_PAGE_SIZE }, prefix = ""
       if (state.page > maxPage && total > 0) { go({ page: maxPage }, { replace: true }); return; }
       // One page of results needs no pager, only the count, so a filter always says how many rows it found.
       swap(pagerSlot, total > Math.min(...PAGE_SIZES) || state.page > 1
-        ? pager({ total, limit: state.limit, offset: (state.page - 1) * state.limit, onChange: ({ offset, limit }) => go({ limit, page: Math.floor(offset / limit) + 1 }), label: `${label} pages` })
-        : total > 0 ? h("div", { class: "ui-meta ui-results-line", role: "status" }, `${total} ${total === 1 ? "result" : "results"}`) : null);
+        ? pager({ total, limit: state.limit, offset: (state.page - 1) * state.limit, onChange: ({ offset, limit }) => go({ limit, page: Math.floor(offset / limit) + 1 }), label: t("ui.pagesOf", { title: label }) })
+        : total > 0 ? h("div", { class: "ui-meta ui-results-line", role: "status" }, t("ui.resultCount", { count: total })) : null);
       onData?.(data, state);
     },
   });

@@ -1,5 +1,6 @@
 // The pages inside the Memory tab: memories, facts, dismissed and search. Each is a server-paged list whose
 // page and filters live in the URL hash. Rows come from the API; nothing here invents a number or a row.
+import { t } from "../ui-i18n.js";
 import { badge, button, emptyState, skeleton } from "../ui-components.js";
 import { channelLines, searchReasonText } from "../ui-core.js";
 import { api, h, state } from "../ui-dom.js";
@@ -15,34 +16,34 @@ export function queryString(params) {
 
 const clearAll = (defaults, keep = ["limit"]) => Object.fromEntries(Object.entries(defaults).filter(([key]) => !keep.includes(key)));
 
-function emptyFiltered(noun, set, defaults) {
-  return emptyState({ title: `No ${noun} match these filters`, text: "Try fewer filters, a wider date range or other words.", art: "search", actions: [button({ label: "Clear filters", icon: "x", onClick: () => set(clearAll(defaults)) })] });
+function emptyFiltered(title, set, defaults) {
+  return emptyState({ title, text: t("memory.filterHint"), art: "search", actions: [button({ label: t("memory.clearFilters"), icon: "x", onClick: () => set(clearAll(defaults)) })] });
 }
 
 export function memoriesView(ctx) {
   const defaults = { limit: 25, q: "", kind: "", type: "", scope: "", pinned: "", sort: "default", since: "", until: "" };
   let setRef = () => {};
   const list = pagedList({
-    defaults, label: "Memories",
+    defaults, label: t("memory.memories"),
     fetchPage: (p) => api(`/api/hub/memories?${queryString({ limit: p.limit, offset: p.offset, project: state.project, q: p.q, kind: p.kind, type: p.type, scope: p.scope, pinned: p.pinned, sort: p.sort, since: p.since, until: p.until })}`),
     renderItem: (memory, { query }) => memoryCard(memory, { query, onChanged: (opts) => ctx.changed(list, opts), onOpen: (m) => ctx.openMemory(m) }),
     skeleton: () => skeleton({ kind: "card", count: 4 }),
-    empty: () => emptyState({ title: "No memories yet", text: "Memories appear when a connected tool captures a session, or when you write one yourself.", command: "aletheia install claude-code --write", actions: [button({ label: "Write a note", variant: "primary", icon: "plus", onClick: () => ctx.newNote() })] }),
-    emptyFiltered: (s) => emptyFiltered("memories", setRef, defaults),
+    empty: () => emptyState({ title: t("memory.noMemoriesTitle"), text: t("memory.noMemoriesText"), command: "aletheia install claude-code --write", actions: [button({ label: t("memory.writeNote"), variant: "primary", icon: "plus", onClick: () => ctx.newNote() })] }),
+    emptyFiltered: (s) => emptyFiltered(t("memory.noMemoriesMatch"), setRef, defaults),
     onData: (data) => ctx.counts?.({ memories: data.total }),
     toolbar: ({ state: s, set }) => {
       setRef = set;
       return filterBar([
         [
-          textFilter({ key: "q", value: s.q, label: "Filter memories by text", placeholder: "Filter by words…", onChange: (q) => set({ q }, { replace: true }) }),
-          selectFilter({ key: "type", label: "Type", value: s.type, options: TYPE_OPTIONS, allLabel: "Any type", onChange: (type) => set({ type }) }),
+          textFilter({ key: "q", value: s.q, label: t("memory.filterMemoriesAria"), placeholder: t("memory.filterPlaceholder"), onChange: (q) => set({ q }, { replace: true }) }),
+          selectFilter({ key: "type", label: t("memory.type"), value: s.type, options: TYPE_OPTIONS, allLabel: t("memory.anyType"), onChange: (type) => set({ type }) }),
           dateRange({ since: s.since, until: s.until, onChange: (range) => set(range) }),
         ],
         [
-          chipFilter({ key: "kind", label: "Kind", options: KIND_OPTIONS, value: s.kind, onChange: (kind) => set({ kind }) }),
-          chipFilter({ key: "scope", label: "Scope", options: [{ value: "", label: "Any scope" }, { value: "project", label: "Project" }, { value: "global", label: "Global" }], value: s.scope, onChange: (scope) => set({ scope }) }),
-          chipFilter({ key: "pinned", label: "Pinned", options: [{ value: "", label: "Any" }, { value: "1", label: "Pinned only" }], value: s.pinned, onChange: (pinned) => set({ pinned }) }),
-          segmentFilter({ key: "sort", label: "Sort", value: s.sort, options: [{ value: "default", label: "Pinned first" }, { value: "newest", label: "Newest" }, { value: "oldest", label: "Oldest" }, { value: "title", label: "A to Z" }], onChange: (sort) => set({ sort }) }),
+          chipFilter({ key: "kind", label: t("memory.kind"), options: KIND_OPTIONS, value: s.kind, onChange: (kind) => set({ kind }) }),
+          chipFilter({ key: "scope", label: t("memory.scope"), options: [{ value: "", label: t("memory.anyScope") }, { value: "project", label: t("memory.project") }, { value: "global", label: t("memory.global") }], value: s.scope, onChange: (scope) => set({ scope }) }),
+          chipFilter({ key: "pinned", label: t("memory.pinned"), options: [{ value: "", label: t("memory.any") }, { value: "1", label: t("memory.pinnedOnly") }], value: s.pinned, onChange: (pinned) => set({ pinned }) }),
+          segmentFilter({ key: "sort", label: t("memory.sort"), value: s.sort, options: [{ value: "default", label: t("memory.sortPinnedFirst") }, { value: "newest", label: t("memory.sortNewest") }, { value: "oldest", label: t("memory.sortOldest") }, { value: "title", label: t("memory.sortAZ") }], onChange: (sort) => set({ sort }) }),
         ],
       ]);
     },
@@ -54,28 +55,28 @@ export function factsView(ctx) {
   const defaults = { limit: 25, q: "", status: "current", scope: "", sort: "recent", since: "", until: "" };
   let setRef = () => {};
   const list = pagedList({
-    defaults, label: "Facts",
+    defaults, label: t("memory.facts"),
     fetchPage: (p) => api(`/api/hub/facts?${queryString({ limit: p.limit, offset: p.offset, project: state.project, q: p.q, status: p.status, scope: p.scope, sort: p.sort, since: p.since, until: p.until })}`),
     renderItem: (fact, { query, state: s }) => factCard(fact, { query, dismissed: s.status === "dismissed", onChanged: (opts) => ctx.changed(list, opts), onOpen: (f) => ctx.openFact(f) }),
     skeleton: () => skeleton({ kind: "card", count: 4 }),
     empty: (s) => emptyState({
-      title: s.status === "dismissed" ? "No hidden facts" : s.status === "history" ? "No fact history yet" : "No facts yet",
-      text: s.status === "dismissed" ? "A fact you hide shows up here, and you can restore it." : "Facts are short statements the worker pulls out of captured sessions. They appear after the first captures are processed.",
+      title: s.status === "dismissed" ? t("memory.noHiddenFacts") : s.status === "history" ? t("memory.noFactHistory") : t("memory.noFacts"),
+      text: s.status === "dismissed" ? t("memory.hiddenFactsText") : t("memory.noFactsText"),
       command: s.status === "current" ? "aletheia compress" : null,
     }),
-    emptyFiltered: () => emptyFiltered("facts", setRef, defaults),
+    emptyFiltered: () => emptyFiltered(t("memory.noFactsMatch"), setRef, defaults),
     onData: (data, s) => ctx.counts?.(s.status === "current" ? { facts: data.total } : {}),
     toolbar: ({ state: s, set }) => {
       setRef = set;
       return filterBar([
         [
-          textFilter({ key: "q", value: s.q, label: "Filter facts by text", placeholder: "Filter facts…", onChange: (q) => set({ q }, { replace: true }) }),
+          textFilter({ key: "q", value: s.q, label: t("memory.filterFactsAria"), placeholder: t("memory.filterFactsPlaceholder"), onChange: (q) => set({ q }, { replace: true }) }),
           dateRange({ since: s.since, until: s.until, onChange: (range) => set(range) }),
-          selectFilter({ key: "sort", label: "Sort", value: s.sort, options: [{ value: "recent", label: "Newest first" }, { value: "oldest", label: "Oldest first" }, { value: "confidence", label: "Most confident" }], onChange: (sort) => set({ sort }) }),
+          selectFilter({ key: "sort", label: t("memory.sort"), value: s.sort, options: [{ value: "recent", label: t("memory.sortNewestFirst") }, { value: "oldest", label: t("memory.sortOldestFirst") }, { value: "confidence", label: t("memory.sortMostConfident") }], onChange: (sort) => set({ sort }) }),
         ],
         [
-          segmentFilter({ key: "status", label: "Status", value: s.status, options: [{ value: "current", label: "Current" }, { value: "history", label: "History" }, { value: "dismissed", label: "Dismissed" }], onChange: (status) => set({ status }) }),
-          chipFilter({ key: "scope", label: "Scope", options: [{ value: "", label: "Any scope" }, { value: "project", label: "Project" }, { value: "global", label: "Global" }], value: s.scope, onChange: (scope) => set({ scope }) }),
+          segmentFilter({ key: "status", label: t("memory.status"), value: s.status, options: [{ value: "current", label: t("memory.statusCurrent") }, { value: "history", label: t("memory.statusHistory") }, { value: "dismissed", label: t("memory.statusDismissed") }], onChange: (status) => set({ status }) }),
+          chipFilter({ key: "scope", label: t("memory.scope"), options: [{ value: "", label: t("memory.anyScope") }, { value: "project", label: t("memory.project") }, { value: "global", label: t("memory.global") }], value: s.scope, onChange: (scope) => set({ scope }) }),
         ],
       ]);
     },
@@ -87,16 +88,16 @@ export function dismissedView(ctx) {
   const defaults = { limit: 25, type: "" };
   let setRef = () => {};
   const list = pagedList({
-    defaults, label: "Dismissed items",
+    defaults, label: t("memory.dismissedItems"),
     fetchPage: (p) => api(`/api/hub/dismissed?${queryString({ limit: p.limit, offset: p.offset, project: state.project, type: p.type })}`),
     renderItem: (item) => dismissedCard(item, { onChanged: (opts) => ctx.changed(list, opts) }),
     skeleton: () => skeleton({ kind: "card", count: 3 }),
-    empty: () => emptyState({ title: "Nothing is dismissed", text: "When you hide a memory or a fact, it moves here. Hidden rows are left out of search and context but are never deleted. You can restore them at any time.", art: "review" }),
-    emptyFiltered: () => emptyFiltered("items", setRef, defaults),
+    empty: () => emptyState({ title: t("memory.nothingDismissed"), text: t("memory.nothingDismissedText"), art: "review" }),
+    emptyFiltered: () => emptyFiltered(t("memory.noItemsMatch"), setRef, defaults),
     onData: (data) => ctx.counts?.({ dismissed: data.total }),
     toolbar: ({ state: s, set }) => {
       setRef = set;
-      return filterBar([[chipFilter({ key: "type", label: "Type", options: [{ value: "", label: "All" }, { value: "memory", label: "Memories" }, { value: "fact", label: "Facts" }, { value: "observation", label: "Observations" }, { value: "episode", label: "Episodes" }], value: s.type, onChange: (type) => set({ type }) })]]);
+      return filterBar([[chipFilter({ key: "type", label: t("memory.type"), options: [{ value: "", label: t("memory.all") }, { value: "memory", label: t("memory.memories") }, { value: "fact", label: t("memory.facts") }, { value: "observation", label: t("memory.observations") }, { value: "episode", label: t("memory.episodes") }], value: s.type, onChange: (type) => set({ type }) })]]);
     },
   });
   return list;
@@ -106,10 +107,10 @@ export function dismissedView(ctx) {
 function memoryHit(hit, { query }, ctx) {
   return h("article", { class: "ui-card ui-item", "data-kind": "memory", "data-id": hit.id },
     h("div", { class: "ui-item-head" },
-      h("h3", { class: "ui-item-title", dir: "auto" }, hit.title || "(untitled)"),
-      h("div", { class: "ui-row" }, badge(hit.kind), hit.type && hit.type !== hit.kind ? badge(hit.type) : null, hit.pinned ? badge("pinned", "success") : null)),
+      h("h3", { class: "ui-item-title", dir: "auto" }, hit.title || t("memory.untitled")),
+      h("div", { class: "ui-row" }, badge(hit.kind), hit.type && hit.type !== hit.kind ? badge(hit.type) : null, hit.pinned ? badge(t("memory.pinnedBadge"), "success") : null)),
     h("div", { class: "ui-meta" }, h("span", {}, hit.project), h("span", {}, hit.tool), h("span", {}, `#${hit.id}`)),
-    h("div", { class: "ui-acts" }, button({ label: "Open", size: "sm", icon: "external", onClick: () => ctx.openMemory(hit) })));
+    h("div", { class: "ui-acts" }, button({ label: t("memory.open"), size: "sm", icon: "external", onClick: () => ctx.openMemory(hit) })));
 }
 
 export function searchView(ctx, route) {
@@ -118,7 +119,7 @@ export function searchView(ctx, route) {
   let extra = null;
   const summary = h("div", { class: "ui-search-summary", role: "status" });
   const list = pagedList({
-    defaults, label: "Search results",
+    defaults, label: t("memory.searchResults"),
     fetchPage: async (p) => {
       if (!p.q) return { items: [], total: 0, noQuery: true };
       const data = await api("/v1/search", { method: "POST", body: { query: p.q, project: state.project || undefined, limit: p.limit, offset: p.offset, paged: true, scope: p.scope === "all" ? "all" : undefined, includeHistory: p.history === "1", since: p.since || undefined, until: p.until || undefined, kind: p.kind || undefined } });
@@ -127,21 +128,21 @@ export function searchView(ctx, route) {
     },
     renderItem: (item, { query }) => (item.kind === "fact" ? factCard(item, { query, onChanged: (opts) => ctx.changed(list, opts), onOpen: (f) => ctx.openFact(f) }) : memoryHit(item, { query }, ctx)),
     skeleton: () => skeleton({ kind: "card", count: 4 }),
-    empty: () => emptyState({ title: "Search your memory", text: "Type words in the box above. Facts come first, then raw memories. Matches are highlighted.", art: "search" }),
+    empty: () => emptyState({ title: t("memory.searchEmptyTitle"), text: t("memory.searchEmptyText"), art: "search" }),
     emptyFiltered: (s) => emptyState({
-      title: "No results",
-      text: (extra && searchReasonText(extra.reason)) || "Nothing matched these words and filters.",
+      title: t("memory.noResults"),
+      text: (extra && searchReasonText(extra.reason)) || t("memory.noResultsText"),
       art: "search",
       actions: [
-        s.scope !== "all" && state.project ? button({ label: "Search all projects", onClick: () => setRef({ scope: "all" }) }) : null,
-        s.scope || s.history || s.since || s.until || s.kind ? button({ label: "Clear filters", onClick: () => setRef({ scope: "", history: "", since: "", until: "", kind: "" }) }) : null,
+        s.scope !== "all" && state.project ? button({ label: t("memory.searchAll"), onClick: () => setRef({ scope: "all" }) }) : null,
+        s.scope || s.history || s.since || s.until || s.kind ? button({ label: t("memory.clearFilters"), onClick: () => setRef({ scope: "", history: "", since: "", until: "", kind: "" }) }) : null,
       ].filter(Boolean),
     }),
     onData: (data, s) => {
       const info = data.data;
       summary.replaceChildren(...(info ? [
-        h("span", {}, `${info.total}${info.capped ? "+" : ""} result${info.total === 1 ? "" : "s"} for `), h("b", { dir: "auto" }, `“${s.q}”`),
-        h("span", { class: "ui-meta" }, `${info.totals.facts} facts, ${info.totals.memories} memories${info.capped ? " (the ranking pool is full; refine the words to see more)" : ""}`),
+        h("span", {}, t("memory.resultsFor", { count: info.total, shown: `${info.total}${info.capped ? "+" : ""}` })), h("b", { dir: "auto" }, `“${s.q}”`),
+        h("span", { class: "ui-meta" }, t(info.capped ? "memory.searchTotalsCapped" : "memory.searchTotals", { facts: info.totals.facts, memories: info.totals.memories })),
         ...channelLines(info.channels).map((line) => badge(line)),
         ...(info.channels?.notice ? [h("span", { class: "ui-meta", role: "note" }, info.channels.notice)] : []),
       ] : []));
@@ -150,13 +151,13 @@ export function searchView(ctx, route) {
       setRef = set;
       return filterBar([
         [
-          textFilter({ key: "q", value: s.q, label: "Search words", placeholder: "Search memory…", onChange: (q) => set({ q }, { replace: true }) }),
+          textFilter({ key: "q", value: s.q, label: t("memory.searchWordsAria"), placeholder: t("memory.searchPlaceholder"), onChange: (q) => set({ q }, { replace: true }) }),
           dateRange({ since: s.since, until: s.until, onChange: (range) => set(range) }),
         ],
         [
-          chipFilter({ key: "scope", label: "Where", options: [{ value: "", label: "This project" }, { value: "all", label: "All projects" }], value: s.scope, onChange: (scope) => set({ scope }) }),
-          chipFilter({ key: "history", label: "Facts", options: [{ value: "", label: "Current facts" }, { value: "1", label: "Include history" }], value: s.history, onChange: (history) => set({ history }) }),
-          chipFilter({ key: "kind", label: "Memory kind", options: KIND_OPTIONS, value: s.kind, onChange: (kind) => set({ kind }) }),
+          chipFilter({ key: "scope", label: t("memory.where"), options: [{ value: "", label: t("memory.thisProject") }, { value: "all", label: t("memory.allProjects") }], value: s.scope, onChange: (scope) => set({ scope }) }),
+          chipFilter({ key: "history", label: t("memory.facts"), options: [{ value: "", label: t("memory.currentFacts") }, { value: "1", label: t("memory.includeHistory") }], value: s.history, onChange: (history) => set({ history }) }),
+          chipFilter({ key: "kind", label: t("memory.memoryKind"), options: KIND_OPTIONS, value: s.kind, onChange: (kind) => set({ kind }) }),
         ],
       ]);
     },

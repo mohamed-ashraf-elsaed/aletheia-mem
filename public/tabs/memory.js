@@ -1,6 +1,7 @@
 // the Memory tab. One frame (title, counts, page links, New note, Import and export) and the
 // pages inside it: memories, facts, review, dismissed and search. The review queue is in ./review.js. The import
 // panel keeps the form that imports from the older claude-mem database (opened read-only).
+import { t } from "../ui-i18n.js";
 import { badge, button, drawer, emptyState, errorState, field, modal, progressBar, skeleton, statTile, tabs, toast } from "../ui-components.js";
 import { SUBVIEWS } from "../ui-core.js";
 import { api, byId, h, state, swap } from "../ui-dom.js";
@@ -57,7 +58,7 @@ function buildFrame() {
     load: loadStats,
     skeleton: () => skeleton({ kind: "stat", count: 5 }),
     isEmpty: () => false,
-    errorTitle: "Could not load the counts",
+    errorTitle: t("memory.countsError"),
     render: (d) => {
       data.overview = d.overview;
       syncGuide(d);
@@ -65,16 +66,16 @@ function buildFrame() {
       subnav.setCount("review", d.review.total);
       subnav.setCount("dismissed", d.dismissed.total);
       return h("div", { class: "ui-grid ui-stat-grid" },
-        statTile({ label: "Memories", value: d.memories, href: "#/memory/memories" }),
-        statTile({ label: "Facts", value: d.facts, href: "#/memory/facts" }),
-        statTile({ label: "Pinned", value: d.pinned, href: "#/memory/memories?pinned=1" }),
-        statTile({ label: "To review", value: d.review.total, href: "#/memory/review", tone: d.review.total ? "warning" : null }),
-        statTile({ label: "Hidden", value: d.dismissed.total, href: "#/memory/dismissed" }));
+        statTile({ label: t("memory.memories"), value: d.memories, href: "#/memory/memories" }),
+        statTile({ label: t("memory.facts"), value: d.facts, href: "#/memory/facts" }),
+        statTile({ label: t("memory.pinned"), value: d.pinned, href: "#/memory/memories?pinned=1" }),
+        statTile({ label: t("memory.statToReview"), value: d.review.total, href: "#/memory/review", tone: d.review.total ? "warning" : null }),
+        statTile({ label: t("memory.statHidden"), value: d.dismissed.total, href: "#/memory/dismissed" }));
     },
   });
 
   const subnav = tabs({
-    label: "Memory pages", className: "ui-subnav-tabs",
+    label: t("memory.pagesLabel"), className: "ui-subnav-tabs",
     items: SUBVIEWS.memory.map((item) => ({ id: item.id, label: item.label, href: `#/memory/${item.id}`, count: item.id === "review" || item.id === "dismissed" ? 0 : undefined })),
     active: "memories",
   });
@@ -89,19 +90,19 @@ function buildFrame() {
   };
 
   function newNote() {
-    const title = h("input", { type: "text", class: "ui-input", dir: "auto", "aria-label": "Title", placeholder: "A short title (optional)" });
-    const text = h("textarea", { class: "ui-input", dir: "auto", "aria-label": "Text", rows: "8", placeholder: "What should every tool remember? Markdown works." });
-    const project = h("input", { type: "text", class: "ui-input", value: state.project || "default", "aria-label": "Project" });
-    const type = h("select", { class: "ui-select", "aria-label": "Type" }, ...TYPE_OPTIONS.map((value) => h("option", { value, selected: value === "note" }, value)));
+    const title = h("input", { type: "text", class: "ui-input", dir: "auto", "aria-label": t("memory.noteTitle"), placeholder: t("memory.noteTitlePlaceholder") });
+    const text = h("textarea", { class: "ui-input", dir: "auto", "aria-label": t("memory.noteText"), rows: "8", placeholder: t("memory.noteTextPlaceholder") });
+    const project = h("input", { type: "text", class: "ui-input", value: state.project || "default", "aria-label": t("memory.project") });
+    const type = h("select", { class: "ui-select", "aria-label": t("memory.type") }, ...TYPE_OPTIONS.map((value) => h("option", { value, selected: value === "note" }, value)));
     const layer = modal({
-      title: "New note", size: "md",
-      body: h("div", {}, field({ label: "Title", control: title }), field({ label: "Text", control: text }), h("div", { class: "ui-inline" }, field({ label: "Project", control: project }), field({ label: "Type", control: type }))),
+      title: t("memory.newNote"), size: "md",
+      body: h("div", {}, field({ label: t("memory.noteTitle"), control: title }), field({ label: t("memory.noteText"), control: text }), h("div", { class: "ui-inline" }, field({ label: t("memory.project"), control: project }), field({ label: t("memory.type"), control: type }))),
       actions: [
-        button({ label: "Cancel", onClick: () => layer.close(false) }),
-        button({ label: "Save note", variant: "primary", onClick: async () => {
-          if (!title.value.trim() && !text.value.trim()) throw new Error("Write a title or some text first.");
+        button({ label: t("memory.cancel"), onClick: () => layer.close(false) }),
+        button({ label: t("memory.saveNote"), variant: "primary", onClick: async () => {
+          if (!title.value.trim() && !text.value.trim()) throw new Error(t("memory.noteEmpty"));
           await api("/api/hub/memories", { method: "POST", body: { title: title.value, text: text.value, project: project.value || "default", type: type.value } });
-          toast("Note saved", { tone: "success", duration: 2000 });
+          toast(t("memory.noteSaved"), { tone: "success", duration: 2000 });
           layer.close(true);
           ctx.changed(currentView?.list ?? currentView);
         } }),
@@ -111,8 +112,8 @@ function buildFrame() {
 
   swap(el,
     h("div", { class: "ui-page-head" },
-      h("div", {}, h("h1", { id: "ui-memory-title", tabindex: "-1" }, "Knowledge"), h("p", { class: "ui-page-lede" }, "Everything Aletheia has remembered, in one place that all your tools read. Search it, add a note, or hide what is wrong.")),
-      h("div", { class: "ui-row" }, button({ label: "Import and export", icon: "download", onClick: () => importExport(data) }), button({ label: "New note", variant: "primary", icon: "plus", onClick: () => newNote() }))),
+      h("div", {}, h("h1", { id: "ui-memory-title", tabindex: "-1" }, t("memory.heading")), h("p", { class: "ui-page-lede" }, t("memory.lede"))),
+      h("div", { class: "ui-row" }, button({ label: t("memory.importExport"), icon: "download", onClick: () => importExport(data) }), button({ label: t("memory.newNote"), variant: "primary", icon: "plus", onClick: () => newNote() }))),
     guideSlot,
     stats,
     h("div", { class: "ui-subnav" }, subnav),
@@ -126,7 +127,7 @@ function buildFrame() {
     ctx.counts = (next) => {
       if (next.memories != null && !state.project) subnav.setCount?.("memories", next.memories);
     };
-    const pageLabel = SUBVIEWS.memory.find((item) => item.id === route.sub)?.label ?? "Memories";
+    const pageLabel = SUBVIEWS.memory.find((item) => item.id === route.sub)?.label ?? t("memory.memories");
     swap(content, h("div", { class: "ui-memory-page", role: "region", "aria-label": pageLabel }, h("h2", { class: "ui-sr" }, pageLabel), currentView));
   }
   return { el, show, project: state.project, stats };
@@ -136,36 +137,36 @@ function buildFrame() {
 function importExport(data) {
   const overview = data.overview;
   const out = h("div", { class: "ui-longtask-slot" });
-  const file = h("input", { type: "file", accept: ".jsonl,.ndjson", class: "ui-input", "aria-label": "Bundle file" });
-  const oldPath = h("input", { type: "text", class: "ui-input", value: overview?.claudeMem?.path ?? "", "aria-label": "Path of the older database", dir: "ltr" });
+  const file = h("input", { type: "file", accept: ".jsonl,.ndjson", class: "ui-input", "aria-label": t("memory.bundleFile") });
+  const oldPath = h("input", { type: "text", class: "ui-input", value: overview?.claudeMem?.path ?? "", "aria-label": t("memory.oldDbPath"), dir: "ltr" });
   const claudeMemExists = overview?.claudeMem?.exists === true;
   const canCompress = overview && overview.provider !== "none";
   const body = h("div", { class: "ui-io" },
-    h("section", {}, h("h3", { class: "ui-detail-h" }, "Export"), h("p", { class: "ui-meta" }, "A bundle moves your memories and rules to another machine or tool. Secrets are already redacted."),
-      h("div", { class: "ui-row" }, button({ label: "Export bundle (.jsonl)", icon: "download", href: "/api/hub/export?format=jsonl" }), button({ label: "Export Markdown", icon: "download", href: "/api/hub/export?format=markdown" }))),
-    h("section", {}, h("h3", { class: "ui-detail-h" }, "Import a bundle"), field({ label: "A .jsonl file made by Export", control: file }),
-      h("div", { class: "ui-acts" }, button({ label: "Import bundle", icon: "upload", variant: "primary", onClick: async () => {
+    h("section", {}, h("h3", { class: "ui-detail-h" }, t("memory.exportHeading")), h("p", { class: "ui-meta" }, t("memory.exportHint")),
+      h("div", { class: "ui-row" }, button({ label: t("memory.exportBundle"), icon: "download", href: "/api/hub/export?format=jsonl" }), button({ label: t("memory.exportMarkdown"), icon: "download", href: "/api/hub/export?format=markdown" }))),
+    h("section", {}, h("h3", { class: "ui-detail-h" }, t("memory.importBundleHeading")), field({ label: t("memory.bundleFileLabel"), control: file }),
+      h("div", { class: "ui-acts" }, button({ label: t("memory.importBundle"), icon: "upload", variant: "primary", onClick: async () => {
         const chosen = file.files?.[0];
-        if (!chosen) throw new Error("Choose a file first.");
-        const result = await withProgress(out, { label: `Importing ${chosen.name}`, task: async () => api("/api/hub/import/bundle", { method: "POST", body: { bundle: await chosen.text() } }), summarize: (r) => `${r.memories.added} memories added, ${r.memories.skipped} skipped; ${r.rules.added} rules added` });
-        toast("Import finished", { tone: "success" });
+        if (!chosen) throw new Error(t("memory.chooseFile"));
+        const result = await withProgress(out, { label: t("memory.importing", { name: chosen.name }), task: async () => api("/api/hub/import/bundle", { method: "POST", body: { bundle: await chosen.text() } }), summarize: (r) => t("memory.importSummary", { memories: r.memories.added, skipped: r.memories.skipped, rules: r.rules.added }) });
+        toast(t("memory.importDone"), { tone: "success" });
         frame?.stats.reload({ soft: true });
         return result;
       } }))),
-    claudeMemExists ? h("section", {}, h("h3", { class: "ui-detail-h" }, "Import from claude-mem"), h("p", { class: "ui-meta" }, "Reads the older memory database. It is opened read-only and never changed."), field({ label: "Database path", control: oldPath }),
-      h("div", { class: "ui-acts" }, button({ label: "Import from claude-mem", icon: "upload", onClick: async () => {
-        await withProgress(out, { label: "Importing from claude-mem", task: () => api("/api/hub/import/claude-mem", { method: "POST", body: { path: oldPath.value } }), summarize: (r) => Object.entries(r).filter(([, v]) => typeof v === "number").map(([k, v]) => `${k} ${v}`).join(", ") || "Done" });
-        toast("Import finished", { tone: "success" });
+    claudeMemExists ? h("section", {}, h("h3", { class: "ui-detail-h" }, t("memory.importClaudeMem")), h("p", { class: "ui-meta" }, t("memory.claudeMemHint")), field({ label: t("memory.dbPath"), control: oldPath }),
+      h("div", { class: "ui-acts" }, button({ label: t("memory.importClaudeMem"), icon: "upload", onClick: async () => {
+        await withProgress(out, { label: t("memory.importingClaudeMem"), task: () => api("/api/hub/import/claude-mem", { method: "POST", body: { path: oldPath.value } }), summarize: (r) => Object.entries(r).filter(([, v]) => typeof v === "number").map(([k, v]) => `${k} ${v}`).join(", ") || t("memory.done") });
+        toast(t("memory.importDone"), { tone: "success" });
         frame?.stats.reload({ soft: true });
       } }))) : null,
-    h("section", {}, h("h3", { class: "ui-detail-h" }, "Turn raw events into observations"),
-      h("p", { class: "ui-meta" }, canCompress ? `Runs the extractor with the ${overview.provider} provider.` : "This needs a model provider. Set ALETHEIA_PROVIDER, then restart the server. Captured events are still searchable without it."),
-      h("div", { class: "ui-acts" }, button({ label: "Compress now", icon: "bolt", disabled: !canCompress, onClick: async () => {
-        await withProgress(out, { label: "Compressing events", task: () => api("/api/hub/compress", { method: "POST", body: {} }), summarize: (r) => JSON.stringify(r).slice(0, 160) });
+    h("section", {}, h("h3", { class: "ui-detail-h" }, t("memory.compressHeading")),
+      h("p", { class: "ui-meta" }, canCompress ? t("memory.compressWithProvider", { provider: overview.provider }) : t("memory.compressNeedsProvider")),
+      h("div", { class: "ui-acts" }, button({ label: t("memory.compressNow"), icon: "bolt", disabled: !canCompress, onClick: async () => {
+        await withProgress(out, { label: t("memory.compressing"), task: () => api("/api/hub/compress", { method: "POST", body: {} }), summarize: (r) => JSON.stringify(r).slice(0, 160) });
         frame?.stats.reload({ soft: true });
       } }))),
     out);
-  return drawer({ title: "Import and export", body, actions: [], size: "lg" });
+  return drawer({ title: t("memory.importExport"), body, actions: [], size: "lg" });
 }
 
 export async function renderMemory(route = { sub: "memories", params: {} }) {
