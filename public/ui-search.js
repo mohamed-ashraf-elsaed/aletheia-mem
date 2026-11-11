@@ -2,6 +2,7 @@
 // and the older one is dropped when a newer one starts. Arrow keys move through the list; Esc closes it.
 import { highlight, icon, spinner } from "./ui-components.js";
 import { api, h, later, state, swap } from "./ui-dom.js";
+import { t } from "./ui-i18n.js";
 import { buildHash } from "./ui-pure.js";
 import { openFactDetail, openMemoryDetail } from "./ui-detail.js";
 
@@ -48,26 +49,26 @@ export function mountSearch({ input, form, list, navigate = (hash) => { globalTh
     controller = typeof AbortController === "function" ? new AbortController() : null;
     const mine = (seq += 1);
     open();
-    swap(list, h("div", { class: "ui-search-status" }, spinner(), h("span", {}, "Searching…")));
+    swap(list, h("div", { class: "ui-search-status" }, spinner(), h("span", {}, t("search.searching"))));
     try {
       const data = await api("/v1/search", { method: "POST", body: { query, project: state.project || undefined, limit: 8, offset: 0, paged: true, mix: true } });
       if (mine !== seq) return;
       const rows = [];
-      data.facts.forEach((fact, index) => rows.push(row(`ui-sr-f${index}`, "fact", fact, [icon("bolt", { size: 14 }), h("span", { class: "ui-search-text" }, highlight(fact.title ?? fact.text, query)), h("span", { class: "ui-chip" }, "fact")])));
-      data.results.forEach((memory, index) => rows.push(row(`ui-sr-m${index}`, "memory", memory, [icon("layers", { size: 14 }), h("span", { class: "ui-search-text" }, highlight(memory.title || "(untitled)", query)), h("span", { class: "ui-chip" }, memory.kind ?? "memory")])));
+      data.facts.forEach((fact, index) => rows.push(row(`ui-sr-f${index}`, "fact", fact, [icon("bolt", { size: 14 }), h("span", { class: "ui-search-text" }, highlight(fact.title ?? fact.text, query)), h("span", { class: "ui-chip" }, t("search.factBadge"))])));
+      data.results.forEach((memory, index) => rows.push(row(`ui-sr-m${index}`, "memory", memory, [icon("layers", { size: 14 }), h("span", { class: "ui-search-text" }, highlight(memory.title || t("search.untitled"), query)), h("span", { class: "ui-chip" }, memory.kind ?? t("search.memoryBadge"))])));
       if (!rows.length) {
         items = [];
-        swap(list, h("div", { class: "ui-search-status" }, h("span", {}, "No match. Try fewer or different words.")));
+        swap(list, h("div", { class: "ui-search-status" }, h("span", {}, t("search.noMatch"))));
         return;
       }
-      const all = row("ui-sr-all", "all", null, [icon("search", { size: 14 }), h("span", { class: "ui-search-text" }, `See all ${data.total}${data.capped ? "+" : ""} results`)]);
+      const all = row("ui-sr-all", "all", null, [icon("search", { size: 14 }), h("span", { class: "ui-search-text" }, t("search.seeAll", { total: `${data.total}${data.capped ? "+" : ""}` }))]);
       items = [...rows, all];
       active = -1;
       swap(list, ...items.map((item) => item.el));
     } catch (error) {
       if (mine !== seq || error?.name === "AbortError") return;
       items = [];
-      swap(list, h("div", { class: "ui-search-status is-error" }, h("span", {}, `Search failed: ${error.message}`)));
+      swap(list, h("div", { class: "ui-search-status is-error" }, h("span", {}, t("search.failed", { message: error.message }))));
     }
   }
 

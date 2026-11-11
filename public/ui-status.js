@@ -2,6 +2,7 @@
 // hidden, and the /v1/live WebSocket when it is available. createStatusController() holds the logic and takes its
 // timers, network and socket as arguments so it can be tested; mountStatus() draws it. Every value comes from an API
 // answer (see ui-status-model.js).
+import { t } from "./ui-i18n.js";
 import { banner, copyText, iconButton, icon, popover, statusDot, toast } from "./ui-components.js";
 import { faviconHref } from "./ui-brand.js";
 import { healthView } from "./ui-core.js";
@@ -104,7 +105,7 @@ export function createStatusController(deps) {
     if (!light && healthR.status === "fulfilled" && healthR.value.data) data.health = healthR.value.data;
     if (workR.status === "fulfilled" && workR.value.ok) data.work = workR.value.data;
     if (syncR.status === "fulfilled") data.sync = syncR.value.ok ? syncR.value.data : { error: syncR.value.data?.error ?? `HTTP ${syncR.value.status}` };
-    else if (!light) data.sync = { error: "The sync status request failed." };
+    else if (!light) data.sync = { error: t("status.syncRequestFailed") };
     if (overviewR) {
       overviewAge = 0;
       if (overviewR.status === "fulfilled" && overviewR.value.ok) data.overview = overviewR.value.data;
@@ -220,14 +221,21 @@ export function createStatusController(deps) {
 
 // ---- the DOM ---------------------------------------------------------------------------------------------
 
-const STATE_WORD = { ok: "ok", working: "working", warn: "needs attention", error: "problem", idle: "idle", unknown: "checking" };
+const STATE_WORD = {
+  get ok() { return t("status.stateOk"); },
+  get working() { return t("status.stateWorking"); },
+  get warn() { return t("status.stateWarn"); },
+  get error() { return t("status.stateError"); },
+  get idle() { return t("status.stateIdle"); },
+  get unknown() { return t("status.stateUnknown"); },
+};
 
 function popoverContent(entry) {
   return h("div", { class: "ui-status-pop" },
     h("h3", {}, entry.label),
     h("p", { class: "ui-status-pop-sum" }, entry.summary),
     entry.details.length ? h("ul", { class: "ui-detail-list" }, ...entry.details.map((line) => h("li", {}, line))) : null,
-    entry.fix ? h("div", {}, h("div", { class: "ui-meta" }, "To fix or change this, run:"), h("div", { class: "ui-command" }, h("code", { class: "ui-mono" }, entry.fix), iconButton({ icon: "copy", label: "Copy command", onClick: () => copyText(entry.fix) }))) : null);
+    entry.fix ? h("div", {}, h("div", { class: "ui-meta" }, t("status.fixHint")), h("div", { class: "ui-command" }, h("code", { class: "ui-mono" }, entry.fix), iconButton({ icon: "copy", label: t("status.copyCommand"), onClick: () => copyText(entry.fix) }))) : null);
 }
 
 export function mountStatus({ el, healthEl, bannerSlot = globalThis.document?.getElementById?.("ui-banner-slot"), announce = () => {}, getProject = () => state.project, doc = globalThis.document, win = globalThis }) {
@@ -236,9 +244,9 @@ export function mountStatus({ el, healthEl, bannerSlot = globalThis.document?.ge
   let latest = { indicators: [], updatedAt: null, refreshing: false };
   let bannerEl = null;
 
-  const updatedLabel = h("span", { class: "ui-status-updated ui-meta", "aria-live": "off" }, "not yet updated");
+  const updatedLabel = h("span", { class: "ui-status-updated ui-meta", "aria-live": "off" }, t("status.notYetUpdated"));
   const spinIcon = icon("refresh", { size: 16 });
-  const refreshButton = h("button", { class: "ui-btn ui-btn-ghost ui-btn-sm ui-btn-icononly ui-status-refresh", type: "button", "aria-label": "Refresh the status now", title: "Refresh the status now" }, spinIcon);
+  const refreshButton = h("button", { class: "ui-btn ui-btn-ghost ui-btn-sm ui-btn-icononly ui-status-refresh", type: "button", "aria-label": t("status.refresh"), title: t("status.refresh") }, spinIcon);
   const right = h("div", { class: "ui-status-right" }, updatedLabel, refreshButton);
   const list = h("div", { class: "ui-status-list" });
   swap(el, list, right);
@@ -252,7 +260,7 @@ export function mountStatus({ el, healthEl, bannerSlot = globalThis.document?.ge
     const anchor = h("button", { class: "ui-status-item", type: "button", "data-status": entry.id }, dot, text, word);
     node = { anchor, dot, text, word };
     nodes.set(entry.id, node);
-    const pop = popover({ anchor, content: () => popoverContent(latest.indicators.find((candidate) => candidate.id === entry.id) ?? entry), label: `${entry.label} details`, placement: "bottom", toggleOnClick: false });
+    const pop = popover({ anchor, content: () => popoverContent(latest.indicators.find((candidate) => candidate.id === entry.id) ?? entry), label: t("status.details", { label: entry.label }), placement: "bottom", toggleOnClick: false });
     popovers.set(entry.id, pop);
     // Hover opens the details too; a click or Enter pins them open for keyboard and touch use.
     anchor.addEventListener("mouseenter", () => pop.open());
@@ -272,12 +280,12 @@ export function mountStatus({ el, healthEl, bannerSlot = globalThis.document?.ge
   function showBanner(info) {
     if (!bannerSlot) return;
     if (info.up) {
-      if (info.recovered) toast("Reconnected to the Aletheia server.", { tone: "success", duration: 2500 });
+      if (info.recovered) toast(t("status.reconnected"), { tone: "success", duration: 2500 });
       if (bannerEl) { const old = bannerEl; bannerEl = null; leave(old).then(() => old.remove?.()); }
       return;
     }
     if (!bannerEl) {
-      bannerEl = banner({ tone: "danger", text: info.text, action: { label: "Retry now", onClick: () => controller.refresh() } });
+      bannerEl = banner({ tone: "danger", text: info.text, action: { label: t("status.retryNow"), onClick: () => controller.refresh() } });
       bannerSlot.append(bannerEl);
       enter(bannerEl);
     } else bannerEl.setText(info.text);
@@ -300,14 +308,14 @@ export function mountStatus({ el, healthEl, bannerSlot = globalThis.document?.ge
         node.dot.className = `ui-dot is-${entry.state}`;
         node.text.textContent = entry.label;
         node.word.textContent = STATE_WORD[entry.state];
-        node.anchor.setAttribute("aria-label", `${entry.label}: ${STATE_WORD[entry.state]}`);
+        node.anchor.setAttribute("aria-label", t("status.itemAria", { label: entry.label, state: STATE_WORD[entry.state] }));
         popovers.get(entry.id)?.refresh();
       }
       list.classList.toggle("is-stale", snap.offline);
       refreshButton.classList.toggle("is-spinning", snap.refreshing);
       refreshButton.setAttribute("aria-busy", String(snap.refreshing));
-      for (const entry of snap.newErrors) { const node = nodes.get(entry.id); if (node) shake(node.anchor); announce(`${entry.label} has a problem. ${entry.summary}`); }
-      for (const entry of snap.recovered) announce(`${entry.label} is back to normal.`);
+      for (const entry of snap.newErrors) { const node = nodes.get(entry.id); if (node) shake(node.anchor); announce(t("status.announceProblem", { label: entry.label, summary: entry.summary })); }
+      for (const entry of snap.recovered) announce(t("status.announceRecovered", { label: entry.label }));
       const view = healthView(state.health);
       healthEl.className = `ui-health ${view.state} ui-sr`;
       healthEl.textContent = view.dot;
@@ -317,7 +325,7 @@ export function mountStatus({ el, healthEl, bannerSlot = globalThis.document?.ge
     },
   });
 
-  const tickUpdated = () => { updatedLabel.textContent = latest.updatedAt ? updatedAgo(latest.updatedAt) : latest.offline ? "offline" : "not yet updated"; };
+  const tickUpdated = () => { updatedLabel.textContent = latest.updatedAt ? updatedAgo(latest.updatedAt) : latest.offline ? t("status.offline") : t("status.notYetUpdated"); };
   const ticker = win.setInterval(() => { if (doc.visibilityState !== "hidden") tickUpdated(); }, 1000);
   refreshButton.addEventListener("click", () => controller.refresh());
   doc.addEventListener("visibilitychange", () => controller.visibilityChanged());

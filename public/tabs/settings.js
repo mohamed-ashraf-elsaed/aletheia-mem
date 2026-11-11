@@ -2,6 +2,7 @@
 // survive a restart. Only settings that backend code reads are listed (see src/hub/settings.mjs).
 import { button, emptyState, skeleton, toast } from "../ui-components.js";
 import { api, h } from "../ui-dom.js";
+import { t } from "../ui-i18n.js";
 import { region } from "../ui-region.js";
 
 function settingField(spec) {
@@ -24,11 +25,11 @@ export function settingsView() {
     load: async () => (await api("/api/hub/settings")).settings ?? [],
     skeleton: () => skeleton({ kind: "card", count: 3 }),
     isEmpty: (settings) => !settings.length,
-    empty: () => emptyState({ title: "No settings", text: "No editable settings are defined.", compact: true }),
-    errorTitle: "Could not load settings",
+    empty: () => emptyState({ title: t("settings.emptyTitle"), text: t("settings.emptyText"), compact: true }),
+    errorTitle: t("settings.errorTitle"),
     render: (settings) => {
       controls.clear();
-      const save = button({ label: "Save", variant: "primary", icon: "check", onClick: async () => {
+      const save = button({ label: t("settings.save"), variant: "primary", icon: "check", onClick: async () => {
         const patch = {};
         for (const spec of settings) {
           const control = controls.get(spec.key);
@@ -40,10 +41,10 @@ export function settingsView() {
         }
         try {
           await api("/api/hub/settings", { method: "PUT", body: patch });
-          toast("Settings saved.", { tone: "success" });
+          toast(t("settings.saved"), { tone: "success" });
           reg.reload({ soft: true });
         } catch (error) {
-          toast(error.message ?? "Could not save settings.", { tone: "danger" });
+          toast(error.message ?? t("settings.saveFailed"), { tone: "danger" });
         }
       } });
       const rows = settings.map((spec) => {
@@ -52,7 +53,7 @@ export function settingsView() {
         return field.row;
       });
       return h("div", {},
-        h("p", { class: "ui-meta" }, "Values are saved in the hub and survive a restart. The provider, fact budgets and excluded projects are set with environment variables, and redaction is always on."),
+        h("p", { class: "ui-meta" }, t("settings.intro")),
         h("div", { class: "ui-settings-form" }, ...rows),
         h("div", { class: "ui-acts" }, save));
     },

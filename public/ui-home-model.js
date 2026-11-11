@@ -1,5 +1,6 @@
 // DOM-free helpers for the Home page: plain titles, which projects to show, plain words for memory types and the
 // state of each tool. Nothing here touches the document, so a test can import it directly.
+import { t } from "./ui-i18n.js";
 
 const WORDS = /[\p{L}]/gu;
 
@@ -20,7 +21,7 @@ export function plainTitle(text, { max = 90 } = {}) {
   s = s.replace(/^\s*[-*•]\s+/, "").replace(/^\s*(session summary|summary)(\s+for\s+\S+(\s*\(\d+ fact\(s\)\))?)?\s*[:\-–]\s*/i, "");
   // Section labels such as "Request." or "Investigated." that summaries start with.
   s = s.replace(/^\s*(request|investigated|learned|completed|next steps?)\.\s+/i, "").replace(/^\s*[-*•]\s+/, "");
-  s = s.replace(/https?:\/\/\S+/g, "a link").replace(/\s+/g, " ").trim();
+  s = s.replace(/https?:\/\/\S+/g, t("home.aLink")).replace(/\s+/g, " ").trim();
   if (s.length < 3) return null;
   const letters = (s.match(WORDS) ?? []).length;
   if (letters / s.length < 0.5) return null;
@@ -53,11 +54,11 @@ export function realProjects(projects, { selected = "" } = {}) {
   return { main: main.sort(newest), other: other.sort(newest) };
 }
 
-const TYPE_WORDS = {
-  decision: "Decision", gotcha: "Watch out", bugfix: "Fix", feature: "Built", refactor: "Cleaned up", change: "Changed",
-  discovery: "Found out", note: "Note", summary: "Session summary", security_alert: "Security", security_note: "Security",
+const TYPE_KEYS = {
+  decision: "home.typeDecision", gotcha: "home.typeGotcha", bugfix: "home.typeBugfix", feature: "home.typeFeature", refactor: "home.typeRefactor", change: "home.typeChange",
+  discovery: "home.typeDiscovery", note: "home.typeNote", summary: "home.typeSummary", security_alert: "home.typeSecurity", security_note: "home.typeSecurity",
 };
-export const typeWord = (type, kind) => TYPE_WORDS[type] ?? (kind === "summary" ? TYPE_WORDS.summary : "Note");
+export const typeWord = (type, kind) => t(TYPE_KEYS[type] ?? (kind === "summary" ? TYPE_KEYS.summary : TYPE_KEYS.note));
 
 /** "today 17:20", "yesterday", "3 days ago", or a date. */
 export function whenText(epoch, now = Date.now()) {
@@ -66,10 +67,10 @@ export function whenText(epoch, now = Date.now()) {
   const diff = now - ms;
   const time = new Date(ms).toTimeString().slice(0, 5);
   const day = (value) => new Date(value).toDateString();
-  if (day(ms) === day(now)) return diff < 60_000 ? "just now" : `today ${time}`;
-  if (day(ms) === day(now - 86_400_000)) return `yesterday ${time}`;
+  if (day(ms) === day(now)) return diff < 60_000 ? t("home.justNow") : t("home.todayAt", { time });
+  if (day(ms) === day(now - 86_400_000)) return t("home.yesterdayAt", { time });
   const days = Math.floor(diff / 86_400_000);
-  if (days < 14) return `${days} day${days === 1 ? "" : "s"} ago`;
+  if (days < 14) return t("home.daysAgo", { count: days });
   return new Date(ms).toISOString().slice(0, 10);
 }
 
@@ -77,22 +78,21 @@ export function whenText(epoch, now = Date.now()) {
 export function toolState(tool) {
   const expected = Number(tool?.hooks?.expected ?? 0);
   const present = Number(tool?.hooks?.present ?? 0);
-  if (!tool?.installed) return { state: "missing", label: "Not installed on this computer", tone: "muted", ready: false };
-  if (expected === 0) return { state: "info", label: "Rules and tools only. This tool has no automatic memory.", tone: "info", ready: true };
-  if (present >= expected) return { state: "on", label: "Turned on: it remembers your sessions", tone: "success", ready: true };
-  if (present > 0) return { state: "partial", label: `Partly on (${present} of ${expected} parts)`, tone: "warning", ready: false };
-  return { state: "off", label: "Installed, but not turned on yet", tone: "warning", ready: false };
+  if (!tool?.installed) return { state: "missing", label: t("home.toolNotInstalled"), tone: "muted", ready: false };
+  if (expected === 0) return { state: "info", label: t("home.toolInfoOnly"), tone: "info", ready: true };
+  if (present >= expected) return { state: "on", label: t("home.toolOn"), tone: "success", ready: true };
+  if (present > 0) return { state: "partial", label: t("home.toolPartial", { present, expected }), tone: "warning", ready: false };
+  return { state: "off", label: t("home.toolOff"), tone: "warning", ready: false };
 }
 
 /** Rules that apply to a project: the ones for everywhere and the ones named for it. */
 export const rulesFor = (rules, project) => (Array.isArray(rules) ? rules : []).filter((rule) => rule.scopeTier === "everywhere" || (project && rule.scopeName === project));
 
 /** The sentence under a rule: when it applies. */
-export const ruleScopeText = (rule) => (rule.scopeTier === "everywhere" ? "Applies in every project" : `Only in ${rule.scopeName}`);
+export const ruleScopeText = (rule) => (rule.scopeTier === "everywhere" ? t("home.ruleScopeEverywhere") : t("home.ruleScopeProject", { name: rule.scopeName }));
 
-export const EXAMPLE_RULES = [
-  "Always run the tests before saying a task is done.",
-  "Ask me before deleting files or changing the database.",
-  "Keep answers short and show the commands I need to run.",
-  "Use the GitHub CLI for GitHub work instead of asking me to do it by hand.",
-];
+// An array whose items are read at access time, so the language is the current one.
+export const EXAMPLE_RULES = ["home.exampleRule1", "home.exampleRule2", "home.exampleRule3", "home.exampleRule4"].reduce((list, key, index) => {
+  Object.defineProperty(list, index, { get: () => t(key), enumerable: true });
+  return list;
+}, new Array(4));

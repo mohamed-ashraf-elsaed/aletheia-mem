@@ -1,5 +1,6 @@
 // Keyboard shortcuts, the shortcut sheet and the command palette. One keydown handler for the page. It never
 // reacts while the user types in a field, except for Ctrl+K and Esc, and it leaves the browser's own shortcuts alone.
+import { t } from "./ui-i18n.js";
 import { badge, icon, modal, spinner } from "./ui-components.js";
 import { SUBVIEWS, TABS } from "./ui-core.js";
 import { api, h, later, state, swap } from "./ui-dom.js";
@@ -8,42 +9,42 @@ import { openFactDetail, openMemoryDetail } from "./ui-detail.js";
 import { searchHash } from "./ui-search.js";
 
 export const SHORTCUTS = [
-  { keys: ["Ctrl", "K"], alt: ["⌘", "K"], what: "Open the command palette: jump to a page, search, open a session" },
-  { keys: ["/"], what: "Focus the search box" },
-  { keys: ["g", "w"], what: "Go to Work" },
-  { keys: ["g", "m"], what: "Go to Memory" },
-  { keys: ["g", "r"], what: "Go to Rules" },
-  { keys: ["g", "t"], what: "Go to Tools" },
-  { keys: ["["], what: "Previous page of a list" },
-  { keys: ["]"], what: "Next page of a list" },
-  { keys: ["←", "→"], what: "Move between tabs, switches and pager pages when one has focus" },
-  { keys: ["?"], what: "Show this list" },
-  { keys: ["Esc"], what: "Close a dialog, a panel or the search results" },
+  { keys: ["Ctrl", "K"], alt: ["⌘", "K"], get what() { return t("keys.shortcut.palette"); } },
+  { keys: ["/"], get what() { return t("keys.shortcut.focusSearch"); } },
+  { keys: ["g", "w"], get what() { return t("keys.shortcut.goWork"); } },
+  { keys: ["g", "m"], get what() { return t("keys.shortcut.goMemory"); } },
+  { keys: ["g", "r"], get what() { return t("keys.shortcut.goRules"); } },
+  { keys: ["g", "t"], get what() { return t("keys.shortcut.goTools"); } },
+  { keys: ["["], get what() { return t("keys.shortcut.prevPage"); } },
+  { keys: ["]"], get what() { return t("keys.shortcut.nextPage"); } },
+  { keys: ["←", "→"], get what() { return t("keys.shortcut.arrows"); } },
+  { keys: ["?"], get what() { return t("keys.shortcut.showList"); } },
+  { keys: ["Esc"], get what() { return t("keys.shortcut.esc"); } },
 ];
 
 export function openShortcuts() {
   const rows = SHORTCUTS.map((item) => h("tr", {},
-    h("td", { class: "ui-keys-cell" }, ...item.keys.flatMap((key, index) => [index ? h("span", { class: "ui-meta" }, " then ") : null, h("kbd", {}, key)])),
+    h("td", { class: "ui-keys-cell" }, ...item.keys.flatMap((key, index) => [index ? h("span", { class: "ui-meta" }, t("keys.then")) : null, h("kbd", {}, key)])),
     h("td", {}, item.what)));
-  return modal({ title: "Keyboard shortcuts", size: "md", body: h("div", { class: "ui-table-wrap" }, h("table", { class: "ui-table", "aria-label": "Shortcuts" }, h("tbody", {}, ...rows))), actions: [] });
+  return modal({ title: t("keys.shortcutsTitle"), size: "md", body: h("div", { class: "ui-table-wrap" }, h("table", { class: "ui-table", "aria-label": t("keys.shortcutsAria") }, h("tbody", {}, ...rows))), actions: [] });
 }
 
 /** Static commands: pages, the pages inside them, and a few actions. `ctx` supplies navigate, setTheme and refresh. */
 export function staticCommands(ctx) {
   const items = [];
   for (const tab of TABS) {
-    items.push({ id: `go-${tab.id}`, group: "Go to", label: `Go to ${tab.label}`, hint: `g ${tab.key}`, keywords: tab.hint, icon: tab.icon, run: () => ctx.navigate(tab.hash) });
+    items.push({ id: `go-${tab.id}`, group: t("keys.groupGoTo"), label: t("keys.goTo", { page: tab.label }), hint: `g ${tab.key}`, keywords: tab.hint, icon: tab.icon, run: () => ctx.navigate(tab.hash) });
     for (const sub of SUBVIEWS[tab.id] ?? []) {
       if (sub.id === (SUBVIEWS[tab.id][0]?.id)) continue;
-      items.push({ id: `go-${tab.id}-${sub.id}`, group: "Go to", label: `${tab.label}: ${sub.label}`, keywords: `${tab.id} ${sub.id}`, icon: tab.icon, run: () => ctx.navigate(buildHash([tab.id, sub.id])) });
+      items.push({ id: `go-${tab.id}-${sub.id}`, group: t("keys.groupGoTo"), label: t("keys.pageSub", { page: tab.label, sub: sub.label }), keywords: `${tab.id} ${sub.id}`, icon: tab.icon, run: () => ctx.navigate(buildHash([tab.id, sub.id])) });
     }
   }
   items.push(
-    { id: "theme-auto", group: "Actions", label: "Theme: follow the system", keywords: "auto appearance", icon: "auto", run: () => ctx.setTheme("auto") },
-    { id: "theme-dark", group: "Actions", label: "Theme: dark", keywords: "appearance night", icon: "moon", run: () => ctx.setTheme("dark") },
-    { id: "theme-light", group: "Actions", label: "Theme: light", keywords: "appearance day", icon: "sun", run: () => ctx.setTheme("light") },
-    { id: "refresh", group: "Actions", label: "Refresh the status now", keywords: "reload update", icon: "refresh", run: () => ctx.refresh?.() },
-    { id: "shortcuts", group: "Actions", label: "Show keyboard shortcuts", hint: "?", keywords: "help keys", icon: "keyboard", run: () => openShortcuts() },
+    { id: "theme-auto", group: t("keys.groupActions"), label: t("keys.themeAuto"), keywords: t("keys.kwThemeAuto"), icon: "auto", run: () => ctx.setTheme("auto") },
+    { id: "theme-dark", group: t("keys.groupActions"), label: t("keys.themeDark"), keywords: t("keys.kwThemeDark"), icon: "moon", run: () => ctx.setTheme("dark") },
+    { id: "theme-light", group: t("keys.groupActions"), label: t("keys.themeLight"), keywords: t("keys.kwThemeLight"), icon: "sun", run: () => ctx.setTheme("light") },
+    { id: "refresh", group: t("keys.groupActions"), label: t("keys.refresh"), keywords: t("keys.kwRefresh"), icon: "refresh", run: () => ctx.refresh?.() },
+    { id: "shortcuts", group: t("keys.groupActions"), label: t("keys.showShortcuts"), hint: "?", keywords: t("keys.kwShortcuts"), icon: "keyboard", run: () => openShortcuts() },
   );
   return items;
 }
@@ -53,8 +54,8 @@ export function staticCommands(ctx) {
  * server (debounced). Up and Down move, Enter runs, Esc closes. The input and list follow the combobox pattern.
  */
 export function openPalette(ctx) {
-  const input = h("input", { type: "text", class: "ui-input ui-palette-input", placeholder: "Type a command, a page or something to search…", role: "combobox", "aria-expanded": "true", "aria-controls": "ui-palette-list", "aria-autocomplete": "list", "aria-label": "Command palette", autocomplete: "off", spellcheck: "false" });
-  const list = h("div", { id: "ui-palette-list", class: "ui-palette-list", role: "listbox", "aria-label": "Commands" });
+  const input = h("input", { type: "text", class: "ui-input ui-palette-input", placeholder: t("keys.placeholder"), role: "combobox", "aria-expanded": "true", "aria-controls": "ui-palette-list", "aria-autocomplete": "list", "aria-label": t("keys.paletteTitle"), autocomplete: "off", spellcheck: "false" });
+  const list = h("div", { id: "ui-palette-list", class: "ui-palette-list", role: "listbox", "aria-label": t("keys.commandsAria") });
   const body = h("div", { class: "ui-palette" }, input, list);
   const statics = staticCommands(ctx);
   let dynamic = [];
@@ -74,7 +75,7 @@ export function openPalette(ctx) {
   const render = () => {
     const query = input.value.trim();
     const matches = rankCommands(statics, query).slice(0, 12);
-    const searchRow = query.length >= 2 ? [{ id: "search", group: "Search", label: `Search memory for “${query}”`, icon: "search", run: () => ctx.navigate(searchHash(query)) }] : [];
+    const searchRow = query.length >= 2 ? [{ id: "search", group: t("keys.groupSearch"), label: t("keys.searchFor", { query }), icon: "search", run: () => ctx.navigate(searchHash(query)) }] : [];
     // Commands that match the words come first; with no command match the search row leads.
     const all = [...matches.slice(0, 6), ...searchRow, ...dynamic, ...matches.slice(6)];
     rows = all.map((command, index) => {
@@ -94,7 +95,7 @@ export function openPalette(ctx) {
       if (row.command.group !== last) { last = row.command.group; groups.push(h("div", { class: "ui-palette-group", role: "presentation" }, last)); }
       groups.push(row.el);
     });
-    swap(list, rows.length ? groups : h("div", { class: "ui-search-status" }, h("span", {}, "No command matches.")), loading ? h("div", { class: "ui-search-status" }, spinner(), h("span", {}, "Searching memory…")) : null);
+    swap(list, rows.length ? groups : h("div", { class: "ui-search-status" }, h("span", {}, t("keys.noMatch"))), loading ? h("div", { class: "ui-search-status" }, spinner(), h("span", {}, t("keys.searchingMemory"))) : null);
     paint();
   };
 
@@ -109,9 +110,9 @@ export function openPalette(ctx) {
       ]);
       if (mine !== seq) return;
       dynamic = [
-        ...found.facts.map((fact) => ({ id: `fact-${fact.id}`, group: "Memory", label: fact.title ?? fact.text, icon: "bolt", badge: "fact", run: () => openFactDetail(fact) })),
-        ...found.results.map((memory) => ({ id: `mem-${memory.id}`, group: "Memory", label: memory.title || "(untitled)", icon: "layers", badge: memory.kind, run: () => openMemoryDetail({ id: memory.id, title: memory.title }) })),
-        ...sessions.items.map((session) => ({ id: `ses-${session.id}`, group: "Sessions", label: session.lastPrompt ? `${session.lastPrompt.slice(0, 80)}` : `Session ${session.id}`, icon: "clock", badge: session.project, run: () => ctx.navigate(session.href) })),
+        ...found.facts.map((fact) => ({ id: `fact-${fact.id}`, group: t("keys.groupMemory"), label: fact.title ?? fact.text, icon: "bolt", badge: t("keys.factBadge"), run: () => openFactDetail(fact) })),
+        ...found.results.map((memory) => ({ id: `mem-${memory.id}`, group: t("keys.groupMemory"), label: memory.title || t("keys.untitled"), icon: "layers", badge: memory.kind, run: () => openMemoryDetail({ id: memory.id, title: memory.title }) })),
+        ...sessions.items.map((session) => ({ id: `ses-${session.id}`, group: t("keys.groupSessions"), label: session.lastPrompt ? `${session.lastPrompt.slice(0, 80)}` : t("keys.session", { id: session.id }), icon: "clock", badge: session.project, run: () => ctx.navigate(session.href) })),
       ];
     } catch {
       if (mine === seq) dynamic = [];
@@ -137,7 +138,7 @@ export function openPalette(ctx) {
       if (rows[active]) run(rows[active].command);
     }
   });
-  layer = modal({ title: "Command palette", body, size: "lg", actions: [], initialFocus: () => input });
+  layer = modal({ title: t("keys.paletteTitle"), body, size: "lg", actions: [], initialFocus: () => input });
   layer.el.classList.add("ui-palette-panel");
   render();
   fetchDynamic("");

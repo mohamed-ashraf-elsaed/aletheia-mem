@@ -2,13 +2,14 @@
 // a test with no browser. The router, the tab list and the view models live here; one-ui.js only touches the DOM.
 
 import { parseHash } from "./ui-pure.js";
+import { t } from "./ui-i18n.js";
 
 export const TABS = [
-  { id: "home", label: "Home", hash: "#/home", key: "h", icon: "home", hint: "What Aletheia knows, your rules and your tools, project by project" },
-  { id: "work", label: "Activity", hash: "#/work", key: "w", icon: "layers", hint: "Every request and session your tools worked on" },
-  { id: "memory", label: "Knowledge", hash: "#/memory", key: "m", icon: "layers", hint: "Everything Aletheia remembered: memories, facts and what needs a look" },
-  { id: "rules", label: "Rules", hash: "#/rules", key: "r", icon: "rules", hint: "How you want every tool to work" },
-  { id: "tools", label: "Connections", hash: "#/tools", key: "t", icon: "tool", hint: "Connected tools, sync, devices and checks" },
+  { id: "home", get label() { return t("nav.home"); }, hash: "#/home", key: "h", icon: "home", get hint() { return t("nav.homeHint"); } },
+  { id: "work", get label() { return t("nav.work"); }, hash: "#/work", key: "w", icon: "layers", get hint() { return t("nav.workHint"); } },
+  { id: "memory", get label() { return t("nav.memory"); }, hash: "#/memory", key: "m", icon: "layers", get hint() { return t("nav.memoryHint"); } },
+  { id: "rules", get label() { return t("nav.rules"); }, hash: "#/rules", key: "r", icon: "rules", get hint() { return t("nav.rulesHint"); } },
+  { id: "tools", get label() { return t("nav.tools"); }, hash: "#/tools", key: "t", icon: "tool", get hint() { return t("nav.toolsHint"); } },
 ];
 
 /** The pages inside a tab. The first one is the default. */
@@ -16,30 +17,30 @@ export const SUBVIEWS = {
   home: [],
   work: [],
   memory: [
-    { id: "memories", label: "Memories" },
-    { id: "facts", label: "Facts" },
-    { id: "review", label: "Needs a look" },
-    { id: "dismissed", label: "Hidden" },
-    { id: "economics", label: "Savings" },
-    { id: "search", label: "Search" },
+    { id: "memories", get label() { return t("nav.sub.memory.memories"); } },
+    { id: "facts", get label() { return t("nav.sub.memory.facts"); } },
+    { id: "review", get label() { return t("nav.sub.memory.review"); } },
+    { id: "dismissed", get label() { return t("nav.sub.memory.dismissed"); } },
+    { id: "economics", get label() { return t("nav.sub.memory.economics"); } },
+    { id: "search", get label() { return t("nav.sub.memory.search"); } },
   ],
   rules: [
-    { id: "rules", label: "Rules" },
-    { id: "suggestions", label: "Suggestions", count: 0 },
-    { id: "sync", label: "Write to tools" },
-    { id: "import", label: "Import" },
+    { id: "rules", get label() { return t("nav.sub.rules.rules"); } },
+    { id: "suggestions", get label() { return t("nav.sub.rules.suggestions"); }, count: 0 },
+    { id: "sync", get label() { return t("nav.sub.rules.sync"); } },
+    { id: "import", get label() { return t("nav.sub.rules.import"); } },
   ],
   tools: [
-    { id: "tools", label: "Tools" },
-    { id: "devices", label: "Devices" },
-    { id: "access", label: "Remote access" },
-    { id: "alerts", label: "Alerts" },
-    { id: "team", label: "Team" },
-    { id: "data", label: "Data safety" },
-    { id: "checks", label: "Health checks" },
-    { id: "activity", label: "History" },
-    { id: "context", label: "What tools receive" },
-    { id: "settings", label: "Settings" },
+    { id: "tools", get label() { return t("nav.sub.tools.tools"); } },
+    { id: "devices", get label() { return t("nav.sub.tools.devices"); } },
+    { id: "access", get label() { return t("nav.sub.tools.access"); } },
+    { id: "alerts", get label() { return t("nav.sub.tools.alerts"); } },
+    { id: "team", get label() { return t("nav.sub.tools.team"); } },
+    { id: "data", get label() { return t("nav.sub.tools.data"); } },
+    { id: "checks", get label() { return t("nav.sub.tools.checks"); } },
+    { id: "activity", get label() { return t("nav.sub.tools.activity"); } },
+    { id: "context", get label() { return t("nav.sub.tools.context"); } },
+    { id: "settings", get label() { return t("nav.sub.tools.settings"); } },
   ],
 };
 
@@ -57,15 +58,15 @@ export function routeHash(id) {
 
 export function healthView(status) {
   const value = String(status ?? "");
-  if (value === "ok") return { state: "ok", label: "Server healthy", dot: "●" };
-  if (value === "down") return { state: "down", label: "Server not healthy", dot: "●" };
-  return { state: "checking", label: "Checking server health", dot: "○" };
+  if (value === "ok") return { state: "ok", label: t("shell.health.ok"), dot: "●" };
+  if (value === "down") return { state: "down", label: t("shell.health.down"), dot: "●" };
+  return { state: "checking", label: t("shell.health.checking"), dot: "○" };
 }
 
 const isoDay = (value) => {
-  if (!value) return "unknown";
+  if (!value) return t("shell.unknown");
   const ms = typeof value === "number" ? value : Date.parse(value);
-  return Number.isFinite(ms) ? new Date(ms).toISOString().replace("T", " ").slice(0, 16) : "unknown";
+  return Number.isFinite(ms) ? new Date(ms).toISOString().replace("T", " ").slice(0, 16) : t("shell.unknown");
 };
 
 export const formatWhen = isoDay;
@@ -76,7 +77,7 @@ export function factView(fact = {}) {
   const text = String(fact.text ?? "").trim();
   return {
     id: Number(fact.id),
-    text: text || "(empty fact)",
+    text: text || t("shell.emptyFact"),
     subject: fact.subject ?? "",
     predicate: fact.predicate ?? "",
     object: fact.object ?? "",
@@ -85,7 +86,7 @@ export function factView(fact = {}) {
     status: fact.status ?? "active",
     extractorMode: fact.extractorMode ?? fact.extractor_mode ?? "rules",
     importance,
-    importanceLabel: `${importance.toFixed(2)} (${fact.importanceSource ?? "confidence"})`,
+    importanceLabel: `${importance.toFixed(2)} (${fact.importanceSource ?? t("shell.confidence")})`,
     validAt: isoDay(fact.validAt ?? fact.validFrom ?? fact.valid_from_epoch),
     recordedAt: isoDay(fact.recordedAt ?? fact.recorded_at_epoch),
     sourceEpisode: Number(fact.source?.episodeId ?? fact.episode_id ?? 0) || null,
@@ -110,23 +111,23 @@ export function channelLines(channels) {
 
 export function searchReasonText(reason) {
   return {
-    no_terms: "The query had no searchable words.",
-    no_rows: "The store has no memories yet.",
-    filtered: "Rows exist, but the project or the query terms excluded all of them.",
+    no_terms: t("shell.reason.noTerms"),
+    no_rows: t("shell.reason.noRows"),
+    filtered: t("shell.reason.filtered"),
   }[String(reason ?? "")] ?? (reason ? String(reason) : "");
 }
 
 /** A review row's human label and what the item is. */
 export function reviewView(item = {}) {
   const type = String(item.type ?? item.item_type ?? "item");
-  const reasonLabels = { contradiction: "Two facts disagree", ambiguous_alias: "An alias may belong to two entities", rule_suggestion: "A rule was suggested" };
+  const reasonLabels = { contradiction: t("shell.review.contradiction"), ambiguous_alias: t("shell.review.alias"), rule_suggestion: t("shell.review.rule") };
   return {
     id: Number(item.id),
     type,
     reason: reasonLabels[item.reason] ?? String(item.reason ?? type),
     status: item.status ?? "pending",
     title: item.text ?? item.name ?? `${type} #${item.itemId ?? item.item_id ?? "?"}`,
-    detail: item.canonicalName ? `canonical: ${item.canonicalName}` : item.project ? `project: ${item.project}` : "",
+    detail: item.canonicalName ? t("shell.review.canonical", { name: item.canonicalName }) : item.project ? t("shell.review.project", { name: item.project }) : "",
     confidence: Number.isFinite(item.confidence) ? Number(item.confidence) : null,
     mergeable: type === "fact" || type === "observation",
   };
@@ -138,8 +139,8 @@ export function duplicateView(pair = {}) {
     key: pair.key ?? `${pair.a}:${pair.b}`,
     a: Number(pair.a),
     b: Number(pair.b),
-    aText: pair.aText ?? `observation #${pair.a}`,
-    bText: pair.bText ?? `observation #${pair.b}`,
+    aText: pair.aText ?? t("shell.observation", { id: pair.a }),
+    bText: pair.bText ?? t("shell.observation", { id: pair.b }),
     score,
     scoreLabel: Number.isFinite(score) ? score.toFixed(2) : "?",
     auto: !!pair.auto,

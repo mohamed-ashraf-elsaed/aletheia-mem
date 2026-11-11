@@ -5,6 +5,7 @@ import { classicViewerAvailable } from "../ui-core.js";
 import { button } from "../ui-components.js";
 import { byId, h, state, swap } from "../ui-dom.js";
 import { contextView } from "../ui-context.js";
+import { t } from "../ui-i18n.js";
 import { tabFrame } from "../ui-frame.js";
 import { settingsView } from "./settings.js";
 import { accessView, activityView, checksView, devicesView, toolsView } from "./tools-views.js";
@@ -17,17 +18,17 @@ let frame = null;
 function classicViewerCard(overview) {
   if (!classicViewerAvailable(overview)) return null;
   return h("section", { class: "ui-card ui-classic" },
-    h("h2", {}, "Classic claude-mem viewer (reads ~/.claude-mem, read-only)"),
-    h("p", { class: "ui-meta" }, "The optional legacy page reads the old database directly. It is not part of the Work tab."),
-    h("a", { class: "ui-button", href: "/work-view/work.html", target: "_blank", rel: "noreferrer" }, "Open the classic viewer"));
+    h("h2", {}, t("toolsPage.classicTitle")),
+    h("p", { class: "ui-meta" }, t("toolsPage.classicText")),
+    h("a", { class: "ui-button", href: "/work-view/work.html", target: "_blank", rel: "noreferrer" }, t("toolsPage.classicOpen")));
 }
 
 function build() {
   const ctx = { classic: classicViewerCard };
   const made = tabFrame({
     tab: "tools",
-    title: "Connections",
-    lede: "Which AI tools are connected to Aletheia, which devices share your memory, and a history of what changed.",
+    title: t("toolsPage.title"),
+    lede: t("toolsPage.lede"),
     build: (sub) => ({ tools: toolsView, devices: devicesView, access: accessView, alerts: alertsView, team: teamView, data: dataView, checks: checksView, activity: activityView, context: contextView, settings: settingsView }[sub] ?? toolsView)(ctx),
   });
   made.project = state.project;

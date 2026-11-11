@@ -1,6 +1,7 @@
 // Shared DOM helpers for the one UI. Views receive untrusted text and append it as text nodes; this module
 // never builds markup from strings. Tab modules import what they need from here.
 
+import { t } from "./ui-i18n.js";
 export const state = { project: "", query: "", health: "checking", factsHistory: false, loaded: {} };
 
 /** setTimeout that does nothing once the document is gone (a finished test, a torn-down window). */
@@ -117,11 +118,11 @@ export async function api(path, { method = "GET", body } = {}) {
   try {
     response = await authFetch(path, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
   } catch (error) {
-    throw new ApiError("The server is not reachable.", { status: 0, path });
+    throw new ApiError(t("ui.serverUnreachable"), { status: 0, path });
   }
   const type = response.headers.get("content-type") ?? "";
   const data = type.includes("json") ? await response.json().catch(() => ({})) : await response.text();
-  if (!response.ok) throw new ApiError((data && data.error) || `Request failed (${response.status})`, { status: response.status, path });
+  if (!response.ok) throw new ApiError((data && data.error) || t("ui.requestFailed", { status: response.status }), { status: response.status, path });
   return data;
 }
 
@@ -136,7 +137,7 @@ export async function run(fn, okMessage = null) {
   }
 }
 
-export const copy = (text) => navigator.clipboard?.writeText(text).then(() => toast("Copied"), () => toast("Copy failed"));
+export const copy = (text) => navigator.clipboard?.writeText(text).then(() => toast(t("ui.copied")), () => toast(t("ui.copyFailedShort")));
 export const qs = (project) => (project ? `project=${encodeURIComponent(project)}` : "");
 export const settledValue = (result, fallback) => (result.status === "fulfilled" ? result.value : fallback);
 export const errorText = (result, label) => (result.status === "rejected" ? `${label}: ${result.reason?.message ?? result.reason}` : null);
@@ -146,18 +147,18 @@ export const errorCard = (text) => (text ? h("div", { class: "ui-card" }, h("div
 export function activityDetails() {
   const out = h("div", {});
   return h("details", { class: "ui-card" },
-    h("summary", {}, "Activity"),
+    h("summary", {}, t("ui.activity")),
     h("div", { class: "ui-acts" }, h("button", { onclick: () => run(async () => {
       const { audit } = await api("/api/hub/audit?limit=50");
       swap(out, audit.length
         ? h("table", { class: "ui-table" },
-          h("thead", {}, h("tr", {}, ...["When", "Actor", "Action", "Detail"].map((label) => h("th", {}, label)))),
+          h("thead", {}, h("tr", {}, ...[t("ui.when"), t("ui.actor"), t("ui.action"), t("ui.detail")].map((label) => h("th", {}, label)))),
           h("tbody", {}, ...audit.map((row) => h("tr", {},
             h("td", {}, new Date(row.at_epoch).toISOString().replace("T", " ").slice(0, 16)),
             h("td", {}, row.actor),
             h("td", {}, row.action),
             h("td", {}, row.detail ? JSON.stringify(row.detail).slice(0, 140) : "")))))
-        : h("div", { class: "ui-empty" }, "No activity yet."));
-    }) }, "Load activity")),
+        : h("div", { class: "ui-empty" }, t("ui.noActivity")));
+    }) }, t("ui.loadActivity"))),
     out);
 }
