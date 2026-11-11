@@ -61,6 +61,7 @@ The `channels` line says which search channels ran:
 - `facts keys`: keyword search over the extra keys stored for facts, such as entity names.
 - `facts vectors`: embedding search over facts. It is `on` only when a query vector exists and at least one fact has a stored vector.
 - `episodes lexical` and `episodes vectors`: the same two channels over memories.
+- `cjk=on`: the Chinese, Japanese and Korean channel ran for facts or memories. It appears only when the query holds CJK text. See [Chinese, Japanese and Korean text](#chinese-japanese-and-korean-text).
 - `fusion=rrf`: how the fact list and the memory list are merged. See [How results are ranked](#how-results-are-ranked).
 
 When a search returns nothing, `--explain` adds a reason in parentheses: `no_terms` (the query had no searchable words), `no_rows` (the store has no rows at all) or `filtered` (rows exist, but your project, kind, type or tool filter, or the words in the query, excluded every one).
@@ -71,7 +72,7 @@ Keyword search over memories works like this:
 
 1. The query becomes content words. Stop words and one-letter words are dropped and duplicates are collapsed.
 2. A word found in more than 20% of all memories adds little signal, so it is dropped when a rarer word remains. At most 12 of the rarest words are kept. A query of one word is left as it is.
-3. Any remaining word may match. SQLite FTS5 ranks matches with BM25 over the title, subtitle, narrative, facts and concepts fields. The tokenizer is `porter unicode61 remove_diacritics 2`, so "retries" matches "retry" and accents are ignored.
+3. Any remaining word may match. SQLite FTS5 ranks matches with BM25 over the title, subtitle, narrative, facts and concepts fields. The tokenizer is `porter unicode61 remove_diacritics 2`, so "retries" matches "retry" and accents are ignored. Chinese, Japanese and Korean text takes an extra channel; see [Chinese, Japanese and Korean text](#chinese-japanese-and-korean-text).
 4. The CLI keeps the best 100 candidates and returns up to `--limit` of them.
 
 Filters apply before ranking: project and scope, kind, type, tool, file path, date range, and dismissed rows are excluded. A generated summary is hidden from default results once none of the facts it cites is active any more. `--history` brings it back.
@@ -79,6 +80,35 @@ Filters apply before ranking: project and scope, kind, type, tool, file path, da
 For memories, the ranking inputs are text relevance and, when you turn it on, embedding similarity. Recency, pins and importance scores do not change the order.
 
 Facts come from their own full-text index and the fact keys. By default only current facts qualify: active, already valid and not expired. They come back newest first rather than by relevance. The CLI then merges the fact list and the memory list with reciprocal rank fusion (RRF), with weight 1 for facts and 0.9 for memories. The REST and MCP routes do not fuse the two lists: they return facts first, then memories.
+
+## Chinese, Japanese and Korean text
+
+Chinese and Japanese put no space between words, and Korean attaches particles to words. The tokenizer above keeps a whole run of these characters as one token, so on its own it finds a CJK sentence only when you type the whole sentence. A query that holds CJK text therefore also runs a CJK channel:
+
+1. Each run of Chinese, Japanese or Korean characters is stored as overlapping two-character pieces (bigrams), plus the run's last character, in a separate index. Text is NFKC-normalised first, so half-width katakana match full-width katakana.
+2. A two-character word such as 迁移, 移行 or 서버 is one piece, so it is found inside any sentence. A longer word must appear with its pieces in order. A single character matches wherever it appears.
+3. Rows that contain the query text as written come first. When the query has a run of three or more characters, rows that share only some of its pieces follow, so a question typed without spaces still finds the rows that hold its words.
+4. The CJK list is fused with the keyword list by RRF, the same way semantic search is fused. The project, kind, type, tool and date filters apply to it.
+
+```bash
+aletheia save "我们在项目里使用数据库迁移工具" --project shop
+aletheia search 数据库 --project shop --explain
+```
+
+```
+#1 2026-11-11 [note] 我们在项目里使用数据库迁移工具 (shop, cli)
+channels: facts lexical=on keys=on vectors=off cjk=on; episodes lexical=on vectors=off cjk=on; fusion=rrf
+```
+
+Before this channel, the same two commands printed `No matches. (filtered)`.
+
+What to know:
+
+- A query without CJK text does not run the channel, so English ranking and the `--explain` line are unchanged.
+- The CJK index holds only rows that contain CJK text. Saving English text does no extra work.
+- A CJK query first indexes the rows saved or edited since the previous CJK query. After an upgrade, the first CJK query indexes every row stored before the channel existed. The upgrade adds tables and does not rewrite any row.
+- A Latin word written directly against CJK characters, as in 使用Postgres数据库, is one token for the keyword channel, so `postgres` does not find that row. 数据库 does. Put a space around the Latin word to make both work.
+- `aletheia search`, `POST /v1/search` and the MCP `search` tool use the CJK channel. The dashboard's memory list filter (`GET /api/hub/memories?q=`) and the `timeline` query lookup do not yet.
 
 ## Semantic and hybrid search
 
