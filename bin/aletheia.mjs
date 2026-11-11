@@ -27,6 +27,7 @@
 //   aletheia restore <snapshot file>                      replace hub.db with a snapshot (close AI tools and stop aletheia-server first; the current file is kept)
 //   aletheia doctor                                       check the server, hooks, spool and last capture
 //   aletheia compress [--project p] [--daemon]         drain the extraction queue (provider or rule-based)
+//   aletheia entities [--project p] [--limit n] [--json]
 //   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
 //   aletheia prune [--apply]                            report cold facts and old episodes; --apply changes them
 //   aletheia promote <type> <id>                        make a memory, episode, observation or fact global
@@ -762,6 +763,12 @@ async function main() {
         if (pos[0] !== "recompute") return die("Usage: aletheia importance recompute [--project p]");
         const { recomputeImportance } = await import("../src/hub/importance.mjs");
         return out(recomputeImportance(hub, { project: flags.project }));
+      }
+      case "entities": {
+        const { entityCounts } = await import("../src/hub/entities.mjs");
+        const rows = entityCounts(hub, { project: flags.project, limit: Number(flags.limit) || 500 });
+        if (flags.json) return out(rows);
+        return out(rows.length ? rows.map((e) => `#${e.id} ${e.name} [${e.type}] (${e.project}) ${e.facts} fact(s), ${e.memories} memory/memories`).join("\n") : "No entities.");
       }
       case "summarize": {
         const { buildEntitySummary, buildProjectSummary, buildSessionSummary, listSummaries } = await import("../src/hub/summaries.mjs");

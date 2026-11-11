@@ -2875,6 +2875,39 @@
         }
       }
     },
+    "/v1/entities": {
+      "get": {
+        "summary": "List entities with fact and memory counts",
+        "parameters": [
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "description": "project key",
+            "schema": {}
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "description": "entity type filter",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "maximum rows, default 100",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{entities: [{id, project, name, type, facts, memories}]}."
+          }
+        }
+      }
+    },
     "/v1/facts": {
       "get": {
         "summary": "Facts about one subject",

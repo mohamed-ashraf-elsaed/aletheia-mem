@@ -338,6 +338,7 @@ Hub routes are guarded local UI/admin routes. `/v1/sync/*` and `/v1/audit/export
 | `/v1/memories/:id` | GET | one memory, or `404` |
 | `/v1/timeline` | POST | `{anchor, query?, project?, before?=5, after?=5}`: memories around an anchor |
 | `/v1/observations/batch` | POST | `{ids: [...]}` returns `{observations}`; `400` when `ids` is not an array |
+| `/v1/entities` | GET | read-only; `project`, `type`, `limit` (default 100); returns `{entities: [{id, project, name, type, facts, memories}]}` |
 | `/v1/facts` | GET | `?subject=` (required, `400` without it); also `project`, `predicate`, `history=1`, `as_of` (ISO date or epoch ms) |
 | `/v1/events` | POST | one hook payload; `{stored, id}`; `{stored: false, reason}` for an excluded project or nothing to store |
 | `/v1/work` | GET | the work overview; `?project=`, `sessions`, `facts`, `review`, `activeMinutes`, `windowHours`, `dismissedHours`; adds `mode` |

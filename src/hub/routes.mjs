@@ -452,6 +452,11 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null, li
         need(Array.isArray(b.ids), "ids must be an array.");
         return h.json({ observations: hub.getMany(b.ids) });
       }
+      if (pathname === "/v1/entities" && method === "GET") {
+        const q = qs(url);
+        const { entityCounts } = await import("./entities.mjs");
+        return h.json({ entities: entityCounts(hub, { project: q.project || null, type: q.type || null, limit: Number(q.limit) || 100 }) });
+      }
       if (pathname === "/v1/facts" && method === "GET") {
         const q = qs(url);
         need(typeof q.subject === "string" && q.subject.trim(), "subject is required.");
