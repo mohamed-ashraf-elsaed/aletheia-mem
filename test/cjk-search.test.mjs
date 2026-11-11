@@ -4,8 +4,12 @@
 import { afterAll, describe, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
 import { join } from "node:path";
+import { loadConfig } from "../src/config.mjs";
+import { callTool } from "../src/hub/mcp.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 import { formatChannels, searchMemory } from "../src/hub/search.mjs";
+import { startServer } from "../src/server.mjs";
+import { makeFixture } from "./fixture.mjs";
 import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
 import { makeV2Store } from "./v2-fixture.mjs";
 
@@ -128,6 +132,32 @@ describe("CJK words inside stored sentences", () => {
     const b = add("Retry the webhook sender");
     expect(store.ranked({ query: "webhook retry", project: "shop" }).map((row) => row.id).sort()).toEqual([a, b].sort());
     store.close();
+  });
+
+  test("the MCP search tool finds a word inside a Japanese sentence", async () => {
+    const { store, add } = fresh();
+    add(JA);
+    const reply = await callTool("search", { query: "移行", project: "shop" }, { store, tool: "test", cwd: process.cwd() });
+    expect(reply.isError).toBeFalsy();
+    expect(reply.content[0].text).toContain(JA);
+    store.close();
+  });
+
+  test("POST /v1/search finds a word inside a Korean sentence", async () => {
+    const fx = makeFixture();
+    const cfg = loadConfig({ port: 0, sourceDb: fx.dbPath, dataDir: fx.makeDir("data"), overlayDb: join(fx.dir, "o.db"), reviewDb: join(fx.dir, "r.db"), hubDb: join(fx.dir, "hub.db"), ledgerDir: fx.makeDir("ledger"), humanCopyCache: join(fx.dir, "hc.json"), rulesFile: join(fx.dir, "R.md"), claudeInstructionsFile: join(fx.dir, "C.md"), provider: "none", extra: { home: fx.makeDir("home") } });
+    const app = startServer(cfg);
+    try {
+      const base = `http://127.0.0.1:${app.server.port}`;
+      const post = (path, body) => fetch(`${base}${path}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }).then((res) => res.json());
+      const saved = await post("/v1/memories", { project: "shop", title: KO, text: KO });
+      const plain = await post("/v1/search", { query: "서버", project: "shop" });
+      expect(plain.results.map((row) => row.id)).toEqual([saved.id]);
+      const paged = await post("/v1/search", { query: "서버", project: "shop", paged: true });
+      expect(paged.results.map((row) => row.id)).toEqual([saved.id]);
+    } finally {
+      app.stop();
+    }
   });
 
   test("the CLI finds a word inside a saved Chinese sentence", async () => {

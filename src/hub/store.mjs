@@ -10,6 +10,7 @@ import { sha256 } from "../lib/hash.mjs";
 import { ensureDirMode, secureDbFiles } from "./permissions.mjs";
 import { normalizeLanguage } from "./language.mjs";
 import { contentTerms, ftsAnyQuery, normalize, orExpr, packVector, rrf, topKByVector, unpackVector } from "./retrieval.mjs";
+import { CJK_GLOB, cjkGrams, cjkMatch, hasCjk } from "./search.mjs";
 import { epochOrIso } from "./paging.mjs";
 import { graphWalk } from "./graph.mjs";
 import { redact } from "./redact.mjs";
@@ -365,6 +366,39 @@ CREATE TABLE IF NOT EXISTS dismissals (
 CREATE INDEX IF NOT EXISTS idx_dismissals_time ON dismissals(at_epoch);
 `;
 
+// The CJK channel's index (see search.mjs). Each owner has its own FTS5 table of grams keyed by the owner's id. SQL
+// cannot build grams, so HubStore.syncCjk() builds them before a CJK query:
+//   - new rows: both owners use AUTOINCREMENT ids, so cjk_state keeps the highest id already scanned and a sync reads
+//     only the rows above it. There is no insert trigger, so saving English text costs nothing extra, and rows
+//     written by raw SQL or by an older build are still found.
+//   - edits and deletes: the triggers drop the row's grams at once and queue an edited row in cjk_pending.
+const CJK_OWNERS = {
+  memory: { owner: "memories", table: "memories_cjk", columns: ["title", "subtitle", "narrative", "facts", "concepts"] },
+  fact: { owner: "facts", table: "facts_cjk", columns: ["text", "subject", "predicate", "object"] },
+};
+const cjkText = (alias, columns) => columns.map((column) => `coalesce(${alias}.${column}, '')`).join(" || char(10) || ");
+// ASCII text is ruled out by comparing its character and byte lengths before the GLOB runs. Over 50,000 English rows
+// of 300 characters the length test took 35 ms, where a GLOB over all fourteen CJK_RANGES took 1.7 s.
+const cjkHas = (alias, columns) => {
+  const text = `(${cjkText(alias, columns)})`;
+  return `(length(${text}) <> length(CAST(${text} AS BLOB)) AND ${text} GLOB '${CJK_GLOB}')`;
+};
+const CJK_SCHEMA = `
+CREATE TABLE IF NOT EXISTS cjk_state (owner_type TEXT PRIMARY KEY, indexed_id INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS cjk_pending (owner_type TEXT NOT NULL, owner_id INTEGER NOT NULL, PRIMARY KEY(owner_type, owner_id)) WITHOUT ROWID;
+${Object.entries(CJK_OWNERS).map(([type, { owner, table, columns }]) => `
+INSERT OR IGNORE INTO cjk_state (owner_type, indexed_id) VALUES ('${type}', 0);
+CREATE VIRTUAL TABLE IF NOT EXISTS ${table} USING fts5(grams, tokenize='unicode61 remove_diacritics 0');
+CREATE TRIGGER IF NOT EXISTS ${table}_au AFTER UPDATE OF ${columns.join(", ")} ON ${owner} WHEN ${cjkHas("old", columns)} OR ${cjkHas("new", columns)} BEGIN
+  DELETE FROM ${table} WHERE rowid = old.id;
+  INSERT OR IGNORE INTO cjk_pending (owner_type, owner_id) VALUES ('${type}', new.id);
+END;
+CREATE TRIGGER IF NOT EXISTS ${table}_ad AFTER DELETE ON ${owner} BEGIN
+  DELETE FROM ${table} WHERE rowid = old.id;
+  DELETE FROM cjk_pending WHERE owner_type = '${type}' AND owner_id = old.id;
+END;`).join("\n")}
+`;
+
 export const targetSchemaVersion = SCHEMA_VERSION;
 
 /** Read-only view of a database before migrating. Used by `aletheia migrate --dry-run`. */
@@ -449,6 +483,84 @@ export class HubStore {
     this.ensureSessionEnd();
     this.ensureMemoryFiles();
     this.ensureSearchIndexes();
+    this.ensureCjkIndex();
+  }
+
+  /**
+   * Add the CJK channel's tables and triggers to databases created before they existed. Additive and recorded once:
+   * no row is rewritten and user_version stays at 3, so an older build still opens the file. The scan mark starts at 0,
+   * so the first CJK query indexes the rows already stored.
+   */
+  ensureCjkIndex() {
+    if (this.setting("schema.cjk", false)) return false;
+    this.db.exec(CJK_SCHEMA);
+    this.setSetting("schema.cjk", true);
+    return true;
+  }
+
+  /**
+   * Bring the CJK grams up to date: index rows above each owner's scan mark, then rows an edit queued. Returns how many
+   * rows it indexed. Reads only, and cheaply, when there is nothing to do.
+   */
+  syncCjk() {
+    const owners = Object.entries(CJK_OWNERS);
+    const mark = this.db.prepare("SELECT indexed_id AS id FROM cjk_state WHERE owner_type = ?");
+    const queued = this.db.prepare("SELECT owner_id AS id FROM cjk_pending WHERE owner_type = ?");
+    const top = (owner) => this.db.prepare(`SELECT coalesce(max(id), 0) AS id FROM ${owner}`).get().id;
+    const stale = () => owners.some(([type, { owner }]) => top(owner) > (mark.get(type)?.id ?? 0) || queued.get(type));
+    if (!stale()) return 0;
+    const own = !this.db.inTransaction;
+    if (own) this.db.exec("BEGIN IMMEDIATE");
+    let indexed = 0;
+    try {
+      for (const [type, { owner, table, columns }] of owners) {
+        const clear = this.db.prepare(`DELETE FROM ${table} WHERE rowid = ?`);
+        const write = this.db.prepare(`INSERT INTO ${table} (rowid, grams) VALUES (?, ?)`);
+        const index = (id, text) => {
+          clear.run(id);
+          const grams = cjkGrams(text);
+          if (grams) { write.run(id, grams); indexed += 1; }
+        };
+        // Read inside the write transaction: no other writer can hold an uncommitted row at or below `to`.
+        const from = mark.get(type)?.id ?? 0;
+        const to = top(owner);
+        if (to > from) {
+          const rows = this.db.prepare(`SELECT id, ${cjkText("row", columns)} AS text FROM ${owner} AS row WHERE id > ? AND id <= ? AND ${cjkHas("row", columns)}`).all(from, to);
+          for (const row of rows) index(row.id, row.text);
+          this.db.prepare("INSERT INTO cjk_state (owner_type, indexed_id) VALUES (?, ?) ON CONFLICT(owner_type) DO UPDATE SET indexed_id = excluded.indexed_id").run(type, to);
+        }
+        const edited = queued.all(type).map((row) => row.id);
+        if (edited.length) {
+          const read = this.db.prepare(`SELECT ${cjkText("row", columns)} AS text FROM ${owner} AS row WHERE id = ?`);
+          for (const id of edited) index(id, read.get(id)?.text);
+          this.db.prepare("DELETE FROM cjk_pending WHERE owner_type = ?").run(type);
+        }
+      }
+      if (own) this.db.exec("COMMIT");
+    } catch (error) {
+      if (own) try { this.db.exec("ROLLBACK"); } catch { /* ignore */ }
+      throw error;
+    }
+    return indexed;
+  }
+
+  /**
+   * The CJK channel for one owner table: ids of rows that contain a query run as written, best BM25 first, then rows
+   * that share any bigram with it. `where` and `params` are the caller's filters on `alias`. [] when the query has no CJK.
+   */
+  cjkIds({ type, alias, query, where = "", params = [], pool = 100 }) {
+    const match = cjkMatch(query);
+    if (!match) return [];
+    try {
+      this.syncCjk();
+    } catch {
+      // A busy or read-only file still answers from the grams already built.
+    }
+    const { owner, table } = CJK_OWNERS[type];
+    const stmt = this.db.prepare(`SELECT ${alias}.id FROM ${table} CROSS JOIN ${owner} ${alias} ON ${alias}.id = ${table}.rowid WHERE ${table} MATCH ? ${where} ORDER BY bm25(${table}) LIMIT ?`);
+    const ids = new Set(stmt.all(match.exact, ...params, pool).map((row) => row.id));
+    if (match.loose && ids.size < pool) for (const row of stmt.all(match.loose, ...params, pool)) ids.add(row.id);
+    return [...ids].slice(0, pool);
   }
 
   /** Add the rule-replacement history columns to databases created before they existed. Idempotent. */
@@ -1194,7 +1306,7 @@ export class HubStore {
    */
   searchFacts({ query, project, limit = 20, includeHistory = false, asOf = null, queryVec = null, pool = 100, scope = "current", cap = 200, since = null, until = null } = {}) {
     const expr = ftsAnyQuery(query);
-    if (!expr) return [];
+    if (!expr && !hasCjk(query)) return [];
     const now = Date.now();
     const asOfEpoch = asOf == null ? null : epochOrIso(asOf);
     const at = Number.isFinite(asOfEpoch) ? asOfEpoch : null;
@@ -1215,15 +1327,16 @@ export class HubStore {
       params.push(now, now, now);
     }
     const clause = where.length ? `AND ${where.join(" AND ")}` : "";
-    const lexical = this.db
+    const lexical = expr ? this.db
       .prepare(`SELECT f.id FROM facts_fts CROSS JOIN facts f ON f.id = facts_fts.rowid WHERE facts_fts MATCH ? ${clause} ORDER BY bm25(facts_fts) LIMIT ?`)
       .all(expr, ...params, pool)
-      .map((row) => row.id);
-    const keyed = this.db
+      .map((row) => row.id) : [];
+    const keyed = expr ? this.db
       .prepare("SELECT k.owner_id AS id FROM memory_keys_fts JOIN memory_keys k ON k.id = memory_keys_fts.rowid WHERE memory_keys_fts MATCH ? AND k.owner_type = 'fact' LIMIT ?")
       .all(expr, pool)
-      .map((row) => row.id);
-    let ids = [...new Set([...lexical, ...keyed])];
+      .map((row) => row.id) : [];
+    const cjk = this.cjkIds({ type: "fact", alias: "f", query, where: clause, params, pool });
+    let ids = [...new Set([...lexical, ...keyed, ...cjk])];
     if (queryVec) {
       const vecRows = this.db.prepare("SELECT fact_id AS id, vec FROM fact_vectors").all().map((row) => ({ id: row.id, vec: unpackVector(row.vec) }));
       if (vecRows.length) ids = rrf([ids, topKByVector(queryVec, vecRows, pool).map((row) => row.id)]).map((row) => row.id);
@@ -1513,12 +1626,14 @@ export class HubStore {
       // index table once per memory row (measured: 267 ms vs 2 ms on 600 rows).
       ? this.db.prepare(`SELECT m.id FROM memories_fts CROSS JOIN memories m ON m.id = memories_fts.rowid WHERE memories_fts MATCH ? ${where} ORDER BY bm25(memories_fts) LIMIT ?`).all(expr, ...params, pool).map((r) => r.id)
       : [];
+    const cjk = this.cjkIds({ type: "memory", alias: "m", query, where, params, pool });
     const lists = [lexical];
+    if (cjk.length) lists.push(cjk); // only a query with CJK text adds this list, so English ranking is unchanged
     if (queryVec) {
       lists.push(topKByVector(queryVec, this.vectorRows({ project, kind, type, tool, scope }), pool).map((r) => r.id));
     }
     if (graph && project) {
-      const walked = graphWalk(this, { seeds: lexical.slice(0, 20), project, ...graphOptions });
+      const walked = graphWalk(this, { seeds: (lexical.length ? lexical : cjk).slice(0, 20), project, ...graphOptions });
       this.graphTrace = walked.trace;
       if (walked.ids.length) lists.push(walked.ids);
     }
@@ -1536,7 +1651,7 @@ export class HubStore {
   searchDetailed({ query, project, kind, type, tool, limit = 20, queryVec = null, includeHistory = false, scope = "current" } = {}) {
     const items = this.ranked({ query, project, kind, type, tool, limit, queryVec, includeHistory, scope });
     if (items.length) return { items, reason: null };
-    if (!contentTerms(query).length) return { items, reason: "no_terms" };
+    if (!contentTerms(query).length && !hasCjk(query)) return { items, reason: "no_terms" };
     const where = [];
     const params = [];
     const filtered = Boolean(project || kind || type || tool);
