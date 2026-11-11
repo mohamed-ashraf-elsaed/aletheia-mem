@@ -85,7 +85,9 @@ Connections shows which tools are connected and how your memory is shared. Pages
 - **Tools.** One card per host with "detected" or "not detected", the hook count (installed over expected), the last capture time, and how many items wait in the spool. It lists copyable commands to install, uninstall, check, add the MCP server and run each hook. Install and uninstall stay on the command line. The card shows the commands. It does not run them.
 - **Devices.** Paired devices for sync, a pairing code and a revoke button.
 - **Remote access.** Private MCP links with a scope, and a revoke button.
-- **Alerts** and **Team.** Alert rules and their deliveries, and team mode.
+- **Alerts.** Alert rules and their deliveries.
+- **Team.** Create a team, share projects, add and revoke members, change a member's shared projects, pin notes and record decisions on the board, read the brief, search, leave the team, and read the team audit (owners only). A new member's token is shown once. A viewer sees the write buttons disabled. See [Team mode](../31-team.md).
+- **Data safety.** Two irreversible tools, each with a preview first. **Erase memory** takes a project, ids or a date, shows how many rows would go, and only then unlocks **Erase these rows…**, which asks you to type `ERASE`. It writes a pre-erase export and a signed receipt, and the same page can **verify** a receipt. **Merge two projects** shows the dry-run plan (rows moved and duplicates dropped, per table) before **Merge these projects…**, which asks you to type the source project's name.
 - **Health checks.** The same checks as `aletheia doctor`, with a **Run again** button.
 - **History.** An audit log of every change made from the dashboard, the command line or a tool.
 - **What tools receive.** The exact session-start block for the selected project, as plain text. It is the block described in [Session-start context](../concepts/session-context.md).

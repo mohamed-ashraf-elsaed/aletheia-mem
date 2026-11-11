@@ -3738,6 +3738,58 @@
           }
         }
       }
+    },
+    "/api/hub/projects/merge-plan": {
+      "get": {
+        "summary": "Plan a project merge without writing",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "into",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Per-table moved and dropped counts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "from",
+                    "into",
+                    "moved",
+                    "dropped",
+                    "tables"
+                  ],
+                  "properties": {
+                    "from": {},
+                    "into": {},
+                    "moved": {},
+                    "dropped": {},
+                    "tables": {}
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Two different project names are required."
+          }
+        }
+      }
     }
   }
 }

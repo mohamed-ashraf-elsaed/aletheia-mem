@@ -31,6 +31,7 @@ import { earlierOf, epochOrIso, olderThanCutoff, pageInfo, pagingOf, slicePage, 
 import { auditPage, dismissedPage, reviewRows, ruleSuggestionsPage, searchPage, sessionsPage } from "./lists.mjs";
 import { AlertStore, deliverDue, extractionFailures, queueDepth } from "./alerts.mjs";
 import { applyErase, erasePlan, loadEraseKey, receiptId, signReceipt, verifyReceipt, writePreEraseExport, writeReceipt } from "./erasure.mjs";
+import { planProjectMerge } from "./projects.mjs";
 import { teamRequest } from "./team-api.mjs";
 import { TeamStore } from "./team.mjs";
 import { readSettings, writeSettings } from "./settings.mjs";
@@ -532,6 +533,10 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null, li
       if (method === "DELETE") return hub.remove(id) ? h.json({ deleted: true }) : h.json({ error: "No memory has that id." }, 404);
     }
     if (pathname === "/api/hub/projects" && method === "GET") return h.json({ projects: hub.projects() });
+    if (pathname === "/api/hub/projects/merge-plan" && method === "GET") {
+      const q = qs(url);
+      try { return h.json(planProjectMerge(hub, q.from, q.into)); } catch (error) { if (error instanceof RangeError) throw new BadRequest(error.message); throw error; }
+    }
     if (pathname === "/api/hub/projects/merge" && method === "POST") {
       const b = await readJson(request);
       return h.json(hub.mergeProjects(b.from, b.into));
