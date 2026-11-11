@@ -85,15 +85,15 @@ describe("choosing the language", () => {
     expect(await initLang({ languages: ["de"], storage, load: async () => ({}) })).toBe("de");
   });
   test("Arabic sets dir=rtl and lang on the document; the others are ltr", () => {
-    const dom = installFakeDom();
-    const root = dom.document.documentElement;
-    applyLang("ar", dom.document);
+    const doc = installFakeDom();
+    const root = doc.documentElement;
+    applyLang("ar", doc);
     expect(root.getAttribute("dir")).toBe("rtl");
     expect(root.getAttribute("lang")).toBe("ar");
-    applyLang("de", dom.document);
+    applyLang("de", doc);
     expect(root.getAttribute("dir")).toBe("ltr");
     expect(root.getAttribute("lang")).toBe("de");
-    applyLang("pt-br", dom.document);
+    applyLang("pt-br", doc);
     expect(root.getAttribute("lang")).toBe("pt-BR");
   });
   test("the languages are English plus every README translation", () => {
@@ -149,7 +149,7 @@ describe("no English text outside the catalogue", () => {
       'const a = h("p", { class: "ui-meta" }, "Nothing to show here");',
       'const b = h("button", { "aria-label": "Close" }, "x");',
       'const c = t("home.title");',
-      'const d = `Saved ${n} items`;',
+      'const msg = `Saved ${n} items`;',
       "const e = h('div', { id: 'ui-main' });",
       'const f = fetch("/api/hub/settings");',
       "// a comment with some words",
