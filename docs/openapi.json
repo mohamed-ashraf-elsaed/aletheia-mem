@@ -2653,6 +2653,23 @@
         }
       }
     },
+    "/v1/live/ticket": {
+      "post": {
+        "summary": "One-time ticket for the /v1/live WebSocket",
+        "description": "For a browser that holds ALETHEIA_API_KEY but cannot set Authorization on a WebSocket. Offer the ticket as the subprotocol `aletheia.ticket.<ticket>` next to `aletheia.live`. A ticket works once and expires after 30 seconds.",
+        "responses": {
+          "200": {
+            "description": "{ticket, protocol, expiresInMs}."
+          },
+          "401": {
+            "description": "A valid bearer key is required (when an API key is set)."
+          },
+          "403": {
+            "description": "The request did not come from this computer, or was not a same-origin JSON POST."
+          }
+        }
+      }
+    },
     "/v1/work": {
       "get": {
         "summary": "Work overview: sessions, facts and review",
