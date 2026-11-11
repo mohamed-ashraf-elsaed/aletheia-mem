@@ -14,6 +14,9 @@ export const SETTINGS_SCHEMA = [
   { key: "backup.enabled", kind: "boolean", label: "Scheduled local backups", default: false, secret: false },
   { key: "backup.intervalHours", kind: "int", label: "Backup interval (hours)", min: 1, max: 720, default: 24, secret: false },
   { key: "backup.keep", kind: "int", label: "Backups kept", min: 1, max: 365, default: 7, secret: false },
+  // Read by `aletheia search` (bin/aletheia.mjs): reorders the top 30 hits with a cross-encoder. Needs the optional
+  // @huggingface/transformers package and the cached model; without them search keeps the fused order.
+  { key: "search.rerank", kind: "boolean", label: "Rerank search results (cross-encoder, optional package)", default: false, secret: false },
   { key: "rules.reviewDays", kind: "int", label: "Rule review window (days)", min: 7, max: 730, default: 90, secret: false },
 ];
 

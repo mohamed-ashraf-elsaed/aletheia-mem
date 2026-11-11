@@ -31,3 +31,22 @@ export async function createReranker({ model = DEFAULT_RERANKER, cacheDir = join
     },
   };
 }
+
+export const RERANK_TOP_N = 30; // the bench reorders the top 30 first-stage candidates; so does product search
+export const RERANK_BUDGET_MS = 3000; // model load plus scoring; past this, search keeps the fused order
+
+/** Reorder the first `topN` items by cross-encoder score (higher first, ties keep fused order); the tail keeps its order. Items are {text, ...}. */
+export async function rerankCandidates(reranker, query, items, { topN = RERANK_TOP_N } = {}) {
+  const head = items.slice(0, topN);
+  const scores = await reranker.score(query, head.map((item) => item.text));
+  if (!Array.isArray(scores) || scores.length !== head.length || scores.some((s) => !Number.isFinite(s))) throw new Error("reranker returned a wrong score list");
+  const order = head.map((item, i) => ({ item, i, s: scores[i] })).sort((a, b) => b.s - a.s || a.i - b.i);
+  return [...order.map((o) => o.item), ...items.slice(topN)];
+}
+
+let shared = null; // lazy, one per process; a failed load is not cached so a later call may retry
+/** The default cross-encoder, loaded on first use only. */
+export function sharedReranker() {
+  if (!shared) shared = createReranker().catch((error) => { shared = null; throw error; });
+  return shared;
+}

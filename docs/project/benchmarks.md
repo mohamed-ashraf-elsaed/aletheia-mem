@@ -101,8 +101,8 @@ All Aletheia rows are from `bench/results/2026-10-26/`, generated on 2026-10-26.
 | Raw turns, hybrid | 1,536 | 57.4% | 0.497 | 3.72 |
 | Dataset facts, all 10 | 1,536 | 64.8% | 0.591 | 5.53 |
 | Dataset facts, 3 conversations | 383 | 67.4% | 0.620 | 5.80 |
-| Dataset facts, 3 conversations, + rerank | 383 | 73.9% | 0.686 | 251.16 |
-| Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
+| Dataset facts, 3 conversations, + rerank (bench only) | 383 | 73.9% | 0.686 | 251.16 |
+| Dataset facts, all 10, + rerank (bench only) | 1,536 | 72.3% | 0.680 | 646.19 |
 | Rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
 Notes on the table:
@@ -113,6 +113,8 @@ Notes on the table:
 - Latest claude-mem release on 2026-11-11 is v15.17.0 (`gh api repos/thedotmack/claude-mem/releases/latest`). The 15.2.0 and 15.17.0 rows differ in version and in recorded conditions, so the gain from 36.0% to 43.5% cannot be assigned to the version alone.
 - claude-mem is built to ingest through its language-model observer. Raw saves are the closest model-free equivalent, so the baseline does not show how claude-mem does through its normal path.
 - The hybrid and rerank rows need the optional embeddings package. A default install without it searches by keyword only.
+- **The "+ rerank (bench only)" rows are not what `aletheia search` does by default.** They rerank the top 30 candidates of the benchmark's own hybrid search over dataset-supplied facts, with `bench/locomo-retrieval.mjs --rerank`. Product search has the same cross-encoder as an opt-in step (setting `search.rerank`, or `aletheia search --rerank`), off by default. It reorders the fused list of your own facts and memories, which is not the benchmark's candidate set, so these numbers do not transfer to it as they stand. See [Search](../concepts/search.md#optional-rerank).
+- Check of the product step, 2026-11-11, one conversation: `bun bench/locomo-retrieval.mjs --data bench/data/locomo10.json --limit 1 --facts dataset --rerank` (conv-26, 150 questions) gave Recall@5 62.2% for `hybrid+facts` and 70.3% with the rerank step, at 272.69 ms per question for the cross-encoder, measured on a busy machine. This runs the bench harness, not `aletheia search`; the product step uses the same `src/hub/rerank.mjs` scorer. It is one conversation and is not added to the table.
 - Dataset facts are an experiment, not a feature. They show what good facts could add: about 7 points of Recall@5 over raw turns.
 
 Compare the claude-mem row with the raw-turns rows only. They are the only rows where both systems store the same raw text. The speed columns are not like for like: one is an in-process call and the other is an HTTP request to a worker.
