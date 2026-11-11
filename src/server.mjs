@@ -29,6 +29,17 @@ const BASE_HEADERS = { "Content-Security-Policy": "frame-ancestors 'self'", "X-F
 // no inline script, no inline style attribute, no plugin, no form posting elsewhere.
 const APP_CSP = "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'";
 
+/** Remote mode: a browser socket must come from a page this server served (Origin host equals Host), or carry no Origin. */
+const sameHostOrigin = (request) => {
+  const origin = request.headers.get("origin");
+  if (!origin) return true;
+  try {
+    return new URL(origin).host === (request.headers.get("host") ?? "");
+  } catch {
+    return false;
+  }
+};
+
 const json = (body, status = 200, extra = {}) =>
   new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...BASE_HEADERS, ...extra } });
 const text = (body, status = 200) => new Response(body, { status, headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" } });
@@ -146,8 +157,15 @@ export function startServer(config, {
       }
     }
 
-    // ---- MCP over Streamable HTTP (its own bearer auth and Origin rules)
-    if (pathname === "/mcp") return await mcpHttp(request);
+    // ---- MCP over Streamable HTTP (its own bearer auth and Origin rules). On loopback with no key, /mcp answers only
+    // this computer, like /v1: behind a reverse proxy or tunnel it would otherwise answer anyone.
+    if (pathname === "/mcp") {
+      if (!remoteMode && !config.apiKey) {
+        const denied = guarded(request, server);
+        if (denied) return denied;
+      }
+      return await mcpHttp(request);
+    }
 
     // ---- login sessions (remote mode): /api/login, /api/logout, and the 401/403 gates
     const loginResponse = await login.handle(request, { server });
@@ -158,7 +176,7 @@ export function startServer(config, {
     if (pathname === "/v1/live" && method === "GET") {
       const denied = guarded(request, server);
       if (denied) return denied;
-      if (isCrossOrigin(request)) return json({ error: "This origin is not allowed." }, 403);
+      if (remoteMode ? !sameHostOrigin(request) : isCrossOrigin(request)) return json({ error: "This origin is not allowed." }, 403);
       if (config.apiKey && !bearerMatches(request, config.apiKey) && !liveTickets.redeem(request)) return json({ error: KEY_REQUIRED }, 401, KEY_CHALLENGE);
       const project = new URL(request.url).searchParams.get("project") || null;
       if (server.upgrade(request, { data: { project }, headers: liveUpgradeHeaders(request) })) return undefined;

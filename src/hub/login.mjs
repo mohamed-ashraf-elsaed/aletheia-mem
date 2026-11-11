@@ -91,6 +91,12 @@ export function createLoginGuard({
     return !!header && !!expected && safeEqual(header, expected);
   };
 
+  // One Set-Cookie header per cookie: browsers do not split a comma-joined header, so a joined pair loses the second cookie.
+  const withCookies = (response, cookies) => {
+    for (const value of cookies) response.headers.append("Set-Cookie", value);
+    return response;
+  };
+
   const json = (body, status = 200, headers = {}) =>
     new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store", ...headers } });
 
@@ -127,8 +133,7 @@ export function createLoginGuard({
       const sessionToken = randomToken(32);
       const csrfToken = randomToken(16);
       sessions.set(sessionToken, { expiresAt: Date.now() + sessionTtlMs, createdAt: Date.now() });
-      const setCookie = [cookie(COOKIE_SESSION, sessionToken, { httpOnly: true }), cookie(COOKIE_CSRF, csrfToken)].join(", ");
-      return json({ ok: true }, 200, { "Set-Cookie": setCookie });
+      return withCookies(json({ ok: true }, 200), [cookie(COOKIE_SESSION, sessionToken, { httpOnly: true }), cookie(COOKIE_CSRF, csrfToken)]);
     }
 
     if (pathname === "/api/logout" && method === "POST") {
@@ -137,8 +142,7 @@ export function createLoginGuard({
       if (!sessionToken) return json({ error: "No session." }, 401);
       if (!csrfOk(request)) return json({ error: "CSRF token missing or wrong." }, 403);
       sessions.delete(sessionToken);
-      const setCookie = [cookie(COOKIE_SESSION, "", { httpOnly: true, maxAgeSeconds: 0 }), cookie(COOKIE_CSRF, "", { maxAgeSeconds: 0 })].join(", ");
-      return json({ ok: true }, 200, { "Set-Cookie": setCookie });
+      return withCookies(json({ ok: true }, 200), [cookie(COOKIE_SESSION, "", { httpOnly: true, maxAgeSeconds: 0 }), cookie(COOKIE_CSRF, "", { maxAgeSeconds: 0 })]);
     }
 
     if (!requireLogin) return null;

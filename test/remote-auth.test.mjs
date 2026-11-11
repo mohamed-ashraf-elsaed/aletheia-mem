@@ -30,8 +30,8 @@ function adminToken(cfg) {
   return token;
 }
 
-const cookieHeader = (response) => (response.headers.get("set-cookie") ?? "")
-  .split(/,(?=\s*aletheia_)/).map((part) => part.trim().split(";")[0]).filter(Boolean).join("; ");
+// Browsers keep one cookie per Set-Cookie header and do not split a comma-joined one, so read them the same way.
+const cookieHeader = (response) => response.headers.getSetCookie().map((part) => part.split(";")[0]).join("; ");
 const csrfOf = (cookies) => decodeURIComponent((/aletheia_csrf=([^;]+)/.exec(cookies) ?? [])[1] ?? "");
 
 async function loginCookies(base, token) {
@@ -110,6 +110,47 @@ describe("remote mode without an API key", () => {
   });
 });
 
+describe("login cookies", () => {
+  test("login sends the session and CSRF cookies as two Set-Cookie headers", async () => {
+    const response = await fetch(`${remoteNoKey.base}/api/login`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ token: remoteNoKey.token }) });
+    const cookies = response.headers.getSetCookie();
+    expect(cookies.length).toBe(2);
+    expect(cookies.some((c) => c.startsWith("aletheia_session=") && c.includes("HttpOnly"))).toBe(true);
+    expect(cookies.some((c) => c.startsWith("aletheia_csrf="))).toBe(true);
+  });
+
+  test("logout with the CSRF header ends the session", async () => {
+    const cookies = await loginCookies(remoteNoKey.base, remoteNoKey.token);
+    const out = await fetch(`${remoteNoKey.base}/api/logout`, { method: "POST", headers: { Cookie: cookies, "X-CSRF-Token": csrfOf(cookies) } });
+    expect(out.status).toBe(200);
+    expect(out.headers.getSetCookie().length).toBe(2);
+    expect((await fetch(`${remoteNoKey.base}/v1/info`, { headers: { Cookie: cookies } })).status).toBe(401);
+  });
+});
+
+describe("the remote live socket", () => {
+  const open = (base, headers) => new Promise((resolve) => {
+    const socket = new WebSocket(`${base.replace("http", "ws")}/v1/live`, { headers });
+    socket.onopen = () => { socket.close(); resolve("open"); };
+    socket.onerror = () => resolve("refused");
+    setTimeout(() => resolve("timeout"), 3000);
+  });
+
+  test("opens with a session from a page on the same host, and refuses another origin", async () => {
+    const cookies = await loginCookies(remoteNoKey.base, remoteNoKey.token);
+    const host = new URL(remoteNoKey.base).host;
+    expect(await open(remoteNoKey.base, { Cookie: cookies, Origin: `http://${host}` })).toBe("open");
+    expect(await open(remoteNoKey.base, { Cookie: cookies, Origin: "https://evil.example" })).toBe("refused");
+    expect(await open(remoteNoKey.base, { Origin: `http://${host}` })).toBe("refused");
+  });
+
+  test("opens for a dashboard served under a non-loopback host name", async () => {
+    const cookies = await loginCookies(remoteNoKey.base, remoteNoKey.token);
+    expect(await open(remoteNoKey.base, { Cookie: cookies, Host: "memory.example.com", Origin: "https://memory.example.com" })).toBe("open");
+    expect(await open(remoteNoKey.base, { Cookie: cookies, Host: "memory.example.com", Origin: "https://other.example.com" })).toBe("refused");
+  });
+});
+
 describe("the remote login page", () => {
   test("its Content-Security-Policy lets the page call its own /api/login", async () => {
     const page = await fetch(`${remoteNoKey.base}/`);
@@ -143,5 +184,11 @@ describe("loopback mode is unchanged", () => {
   test("loopback without a key answers /v1 and /mcp with no login", async () => {
     expect((await fetch(`${loopbackNoKey.base}/v1/info`)).status).toBe(200);
     expect((await mcpInit(loopbackNoKey.base)).status).toBe(200);
+  });
+
+  test("loopback without a key refuses /mcp through a proxy, like /v1", async () => {
+    const proxied = { Host: "memory.example.com", "X-Forwarded-For": "203.0.113.9" };
+    expect((await fetch(`${loopbackNoKey.base}/v1/info`, { headers: proxied })).status).toBe(403);
+    expect((await mcpInit(loopbackNoKey.base, proxied)).status).toBe(403);
   });
 });

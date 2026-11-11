@@ -55,6 +55,11 @@ export function createSyncRoutes({ store, team = null, alerts = null, getPeer = 
     return entry.count > 5;
   }
 
+  function pairingLocked(accountId) {
+    const entry = joinFailures.get(accountId);
+    return !!entry && entry.reset >= Date.now() && entry.count > 5;
+  }
+
   function clearFailures(accountId) {
     joinFailures.delete(accountId);
   }
@@ -71,6 +76,8 @@ export function createSyncRoutes({ store, team = null, alerts = null, getPeer = 
     if (pathname === "/v1/sync/join" && method === "POST") {
       const body = await readJson(request);
       if (!body || typeof body.code !== "string" || typeof body.device_id !== "string") return json({ error: "code and device_id are required." }, 400);
+      // The lockout is checked before the code: a correct guess must not succeed while the account is locked out.
+      if (pairingLocked(accountId)) return json({ error: "Too many pairing attempts; wait a minute." }, 429);
       const result = store.redeemPairCode(accountId, body.code, { deviceId: body.device_id, name: body.name ?? body.device_id });
       if (!result.ok) {
         if (recordFailure(accountId)) return json({ error: "Too many pairing attempts; wait a minute." }, 429);
