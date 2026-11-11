@@ -77,6 +77,7 @@ Dismissed memory #2. Restore with: aletheia restore memory:2
 - `aletheia export [--format jsonl|markdown] [--project p] [--events] [--out file]` - write a portable bundle. Events (tool calls) are left out unless `--events`.
 - `aletheia import bundle <file.jsonl>` - restore an export. Rows already present are skipped.
 - `aletheia import claude-mem [--path db] [--no-prompts] [--project p]` - copy memories from a claude-mem database. The source opens read-only. `--path` defaults to `CLAUDE_MEM_DB`.
+- `aletheia import claude-memory [--path p] [--project key] [--dry-run]` - copy the notes Claude Code writes itself (auto memory). It reads `<home>/.claude/projects/<project>/memory/*.md`, or `--path` (a projects folder or one memory folder). `MEMORY.md`, the index, is skipped; each other file becomes one memory per `## ` section. Secrets are redacted and `<private>` blocks dropped. The source is read-only and a re-run adds nothing. The project key follows the worktree rule in `src/lib/project-key.mjs`; a folder whose path no longer exists is skipped and listed unless you pass `--project`. `--dry-run` prints each memory it would add.
 - `aletheia import transcripts <claude-code|command-code|codex> [--since DATE] [--dry-run] [--limit n]` - back-fill from local session files, read-only.
 - `aletheia watch [--once] [--interval ms] [--batch n] [--tool a,b]` - poll those transcript folders and import new lines. Runs at nice 10.
 
