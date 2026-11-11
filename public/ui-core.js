@@ -35,6 +35,7 @@ export const SUBVIEWS = {
     { id: "access", label: "Remote access" },
     { id: "alerts", label: "Alerts" },
     { id: "team", label: "Team" },
+    { id: "data", label: "Data safety" },
     { id: "checks", label: "Health checks" },
     { id: "activity", label: "History" },
     { id: "context", label: "What tools receive" },

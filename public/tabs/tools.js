@@ -1,5 +1,5 @@
-// the Tools tab. Seven pages: the tools and the commands to set each up, paired devices, remote access
-// links, alert rules and their deliveries, teams, the doctor's checks and the activity log. Install, uninstall and connect stay on the command line. The old
+// the Tools tab. Pages: the tools and the commands to set each up, paired devices, remote access
+// links, alert rules and their deliveries, teams, data safety (erasure and project merge), the doctor's checks and the activity log. Install, uninstall and connect stay on the command line. The old
 // viewer is offered only when its database exists.
 import { classicViewerAvailable } from "../ui-core.js";
 import { button } from "../ui-components.js";
@@ -9,6 +9,7 @@ import { tabFrame } from "../ui-frame.js";
 import { settingsView } from "./settings.js";
 import { accessView, activityView, checksView, devicesView, toolsView } from "./tools-views.js";
 import { alertsView, teamView } from "./tools-team.js";
+import { dataView } from "./tools-data.js";
 
 let frame = null;
 
@@ -27,7 +28,7 @@ function build() {
     tab: "tools",
     title: "Connections",
     lede: "Which AI tools are connected to Aletheia, which devices share your memory, and a history of what changed.",
-    build: (sub) => ({ tools: toolsView, devices: devicesView, access: accessView, alerts: alertsView, team: teamView, checks: checksView, activity: activityView, context: contextView, settings: settingsView }[sub] ?? toolsView)(ctx),
+    build: (sub) => ({ tools: toolsView, devices: devicesView, access: accessView, alerts: alertsView, team: teamView, data: dataView, checks: checksView, activity: activityView, context: contextView, settings: settingsView }[sub] ?? toolsView)(ctx),
   });
   made.project = state.project;
   frame = made;

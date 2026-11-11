@@ -6,6 +6,7 @@ import { api, h, swap } from "../ui-dom.js";
 import { pagedList, region } from "../ui-region.js";
 import { buildHash, parseHash } from "../ui-pure.js";
 import { queryString } from "./memory-views.js";
+import { addMemberDialog, auditPanel, boardDialog, leaveTeam, revokeMember, sharesDialog } from "./tools-team-actions.js";
 
 export const ALERT_EVENTS = ["device.paired", "token.revoked", "quota.hit", "sync.error", "extraction.failed", "queue.depth"];
 
@@ -133,6 +134,8 @@ export function teamView() {
     if (detail === `${team.id}:${project}`) return;
     detail = `${team.id}:${project}`;
     const viewer = team.role === "viewer";
+    const noWrite = viewer ? "A viewer can read but not write." : undefined;
+    const refresh = () => { detail = null; reg.reload({ soft: true }); };
     const p = project ? `&project=${encodeURIComponent(project)}` : "";
     const panel = region({
       load: async () => { const [members, board, brief] = await Promise.all([api(`/api/hub/team/members?team_id=${team.id}`), api(`/api/hub/team/board?team_id=${team.id}${p}`), project ? api(`/api/hub/team/brief?team_id=${team.id}&project=${encodeURIComponent(project)}`) : Promise.resolve(null)]); return { members: members.members, board: board.entries, brief }; },
@@ -153,12 +156,13 @@ export function teamView() {
           h("div", { class: "ui-grid ui-stat-grid" }, statTile({ label: "Members", value: members.length }), statTile({ label: "Shared projects", value: team.projects.length }), statTile({ label: "Board entries", value: board.length })),
           h("div", { class: "ui-section-head" }, h("h2", {}, "Projects"), button({ label: "Share a project", icon: "plus", disabled: viewer, title: viewer ? "A viewer can read but not write." : undefined, onClick: () => nameDialog({ title: "Share a project", label: "Project name", confirmLabel: "Share project", onSave: async (value) => { await api("/api/hub/team/projects", { method: "POST", body: { team_id: team.id, project: value } }); setTeamState({ project: value }); toast("Project shared.", { tone: "success" }); detail = null; reg.reload({ soft: true }); } }) })),
           h("div", { class: "ui-row" }, ...(team.projects.length ? team.projects.map((name) => button({ label: name, size: "sm", pressed: name === project, onClick: () => { setTeamState({ project: name }); detail = null; openTeam(team, name); } })) : [h("span", { class: "ui-meta" }, "No project is shared yet.")])),
-          h("div", { class: "ui-section-head" }, h("h2", {}, "Members")),
-          members.length ? h("div", { class: "ui-table-wrap" }, h("table", { class: "ui-table", "aria-label": "Members" }, h("thead", {}, h("tr", {}, ...["Name", "Role", "Projects", "State"].map((label) => h("th", {}, label)))), h("tbody", {}, ...members.map((m) => h("tr", {}, h("td", { dir: "auto" }, m.name), h("td", {}, m.role), h("td", { dir: "auto" }, m.projects.join(", ") || "none"), h("td", {}, m.revoked ? badge("revoked", "danger") : badge("active", "success"))))))) : emptyState({ title: "No members", compact: true }),
-          h("p", { class: "ui-meta" }, "Add members from the command line: ", mono("aletheia team add-member <team> --name n --role editor --projects a,b")),
-          h("div", { class: "ui-section-head" }, h("h2", {}, "Board")),
+          h("div", { class: "ui-section-head" }, h("h2", {}, "Members"), button({ label: "Add a member", icon: "plus", disabled: viewer, title: noWrite, onClick: () => addMemberDialog({ team, onDone: refresh }) })),
+          members.length ? h("div", { class: "ui-table-wrap" }, h("table", { class: "ui-table", "aria-label": "Members" }, h("thead", {}, h("tr", {}, ...["Name", "Role", "Projects", "State", "Actions"].map((label) => h("th", {}, label)))), h("tbody", {}, ...members.map((m) => h("tr", {}, h("td", { dir: "auto" }, m.name), h("td", {}, m.role), h("td", { dir: "auto" }, m.projects.join(", ") || "none"), h("td", {}, m.revoked ? badge("revoked", "danger") : badge("active", "success")), h("td", {}, m.revoked ? null : h("div", { class: "ui-row" }, button({ label: "Change shares", size: "sm", disabled: viewer, title: noWrite, onClick: () => sharesDialog({ team, member: m, onDone: refresh }) }), button({ label: "Revoke", size: "sm", variant: "danger", disabled: viewer, title: noWrite, onClick: () => revokeMember({ team, member: m, onDone: refresh }) })))))))) : emptyState({ title: "No members", compact: true }),
+          h("div", { class: "ui-section-head" }, h("h2", {}, "Board"), h("div", { class: "ui-row" }, button({ label: "Pin a note", icon: "plus", disabled: viewer || !project, title: viewer ? noWrite : project ? undefined : "Share and pick a project first.", onClick: () => boardDialog({ team, project, kind: "pin", onDone: refresh }) }), button({ label: "Record a decision", icon: "plus", disabled: viewer || !project, title: viewer ? noWrite : project ? undefined : "Share and pick a project first.", onClick: () => boardDialog({ team, project, kind: "decision", onDone: refresh }) }))),
           board.length ? h("div", { class: "ui-list-rows" }, ...board.map((entry) => h("article", { class: "ui-card ui-item" }, h("div", { class: "ui-item-head" }, h("p", { class: "ui-item-title", dir: "auto" }, entry.text), badge(entry.kind, entry.kind === "decision" ? "success" : "neutral")), h("div", { class: "ui-meta" }, h("span", { dir: "auto" }, entry.author.name), timeEl(entry.at))))) : emptyState({ title: "Nothing pinned or decided", text: "Pinned memories and decisions of this project show up here.", art: "review", compact: true }),
           brief ? h("div", {}, h("div", { class: "ui-section-head" }, h("h2", {}, "Brief")), h("div", { class: "ui-card" }, markdownView(brief.text))) : null,
+          auditPanel(team),
+          h("div", { class: "ui-section-head" }, h("h2", {}, "Leave"), button({ label: "Leave this team", variant: "danger", icon: "trash", onClick: () => leaveTeam({ team, onDone: () => { detail = null; reg.reload({ soft: true }); } }) })),
           h("div", { class: "ui-section-head" }, h("h2", {}, "Search shared memory")),
           h("div", { class: "ui-row" }, h("div", { class: "ui-filter ui-filter-grow" }, query), button({ label: "Search", icon: "search", onClick: run })),
           results);
