@@ -25,3 +25,10 @@ that you place in front of the sync hub.
   were not affected. Fix: upgrade. Until then, bind to `127.0.0.1`, or set `ALETHEIA_API_KEY`, or put an
   authenticating proxy in front. The same release also fixes the remote login page, whose Content-Security-Policy
   blocked its own login request.
+- **Loopback `/mcp` behind a proxy (fixed after 0.1.13).** On a loopback bind with no `ALETHEIA_API_KEY`, `/mcp` did not
+  apply the local-only check that `/v1` applies. A reverse proxy or tunnel in front of the port exposed MCP read and
+  write. It now answers only requests from this computer, unless the key is set.
+- **Sync pairing lockout (fixed after 0.1.13).** The sync hub checked a pairing code before its lockout, so a correct
+  guess still succeeded while the account was locked out. The lockout is now checked first.
+- **Remote login cookies (fixed after 0.1.13).** The session and CSRF cookies were sent in one `Set-Cookie` header, so
+  browsers kept only the first. Remote writes and logout failed; this failed closed.
