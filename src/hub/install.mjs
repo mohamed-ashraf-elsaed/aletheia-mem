@@ -972,3 +972,18 @@ export function claudeDesktopPath({ home, platform = process.platform, env = pro
 export function planClaudeDesktop(env) {
   return planMcp({ file: claudeDesktopPath(env), entry: { command: env.bun, args: [env.mcpScript], env: {} } });
 }
+
+/** A full plan for `aletheia install claude-desktop`. MCP only: Claude Desktop has no hook or rules file. */
+export function claudeDesktopInstallPlan(env) {
+  return {
+    tool: "claude-desktop",
+    name: "Claude Desktop",
+    capabilities: "mcp-only",
+    capture: "no",
+    context: "no",
+    verification: "from-docs-only",
+    env: { ...env, hookScript: undefined, hookRunner: undefined },
+    notes: ["MCP entry only. Config written from docs, not tested on a real Claude Desktop install. Quit and reopen Claude Desktop after writing."],
+    steps: [planClaudeDesktop(env)],
+  };
+}

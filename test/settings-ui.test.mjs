@@ -4,6 +4,7 @@
 import { afterAll, beforeEach, describe, expect, test } from "bun:test";
 import { join } from "node:path";
 import { HubStore } from "../src/hub/store.mjs";
+import { retentionSettings } from "../src/hub/retention.mjs";
 import { readSettings, validateSetting, writeSettings } from "../src/hub/settings.mjs";
 import { installFakeDom, restoreGlobals } from "./support/fake-dom.mjs";
 import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
@@ -31,6 +32,20 @@ describe("settings store", () => {
     expect(settings.find((s) => s.key === "context.facts").value).toBe("on");
     expect(settings.find((s) => s.key === "rules.reviewDays").value).toBe(30);
     reopened.close();
+  });
+
+  test("context.format and the retention windows are written by the form and read by the code that uses them", () => {
+    const store = new HubStore(":memory:");
+    expect(retentionSettings(store)).toMatchObject({ retentionDays: 90, coldDays: 180 });
+    const before = store.context({ project: "p" });
+    const result = writeSettings(store, { "context.format": "classic", "retention.retentionDays": 30, "retention.coldDays": 60 });
+    expect(result.errors).toEqual([]);
+    expect(retentionSettings(store)).toMatchObject({ retentionDays: 30, coldDays: 60 });
+    expect(store.context({ project: "p" })).toBe(store.context({ project: "p", format: "classic" }));
+    expect(store.context({ project: "p" })).not.toBe(before);
+    expect(writeSettings(store, { "context.format": "bogus" }).errors[0].error).toMatch(/one of index, classic/);
+    expect(writeSettings(store, { "retention.coldDays": 2 }).errors[0].error).toMatch(/between 7 and 3650/);
+    store.close();
   });
 
   test("an invalid value is rejected with a message", () => {
@@ -68,7 +83,7 @@ describe("settings store", () => {
 
   test("only settings that backend code reads are listed", () => {
     const keys = readSettings(new HubStore(":memory:")).map((spec) => spec.key).sort();
-    expect(keys).toEqual(["backup.enabled", "backup.intervalHours", "backup.keep", "context.facts", "facts.minConfidence", "graph.enabled", "project.worktrees", "readGate.enabled", "rules.reviewDays", "search.rerank"]);
+    expect(keys).toEqual(["backup.enabled", "backup.intervalHours", "backup.keep", "context.facts", "context.format", "facts.minConfidence", "graph.enabled", "project.worktrees", "readGate.enabled", "retention.coldDays", "retention.retentionDays", "rules.reviewDays", "search.rerank"]);
     for (const gone of ["provider", "providers", "factBudget.maxEpisodes", "factBudget.maxChars", "redaction", "excludedProjects", "apiKey"]) {
       expect(validateSetting(gone, "x").ok).toBe(false);
     }

@@ -25,6 +25,7 @@
 //   aletheia tools                                        detected tools and how to connect each
 //   aletheia connect <tool> [--write] [--remove] [--dir d]  preview (default) or write the MCP config for a tool; --remove undoes it
 //   aletheia install <tool> [--write] [--dry-run]         preview (default) or write MCP, hooks and rules in one go
+//   aletheia install claude-desktop [--write]             merge the MCP entry into Claude Desktop's config (dry run by default)
 //   aletheia install --list                               capability level, verification and detection per tool
 //   aletheia install [<tool>] --verify                    report whether the recorded install still matches (no writes)
 //   aletheia uninstall <tool> [--write] [--force]         remove only the entries the install manifest lists
@@ -76,7 +77,7 @@ import { dirname, join, relative, resolve } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { normalizeHook, redact } from "../src/hub/capture.mjs";
 import { importClaudeMem } from "../src/hub/importers.mjs";
-import { applyInstall, applyUninstall, doctor, formatInstallerList, formatPlan, formatUninstall, formatVerify, installerFor, installerIds, planUninstall, verifyInstall } from "../src/hub/install.mjs";
+import { applyInstall, applyUninstall, claudeDesktopInstallPlan, claudeDesktopPath, doctor, formatInstallerList, formatPlan, formatUninstall, formatVerify, installerFor, installerIds, planUninstall, verifyInstall } from "../src/hub/install.mjs";
 import { describeRules } from "../src/hub/rule-evidence.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "../src/hub/rules-sync.mjs";
 import { HubStore, inspectMigration, targetSchemaVersion } from "../src/hub/store.mjs";
@@ -148,10 +149,11 @@ async function handleInstall(command, flags, pos) {
     return;
   }
   const id = pos[0];
-  if (!id) return die(`Usage: aletheia ${command} <tool>\nTools: ${installerIds().join(", ")}`);
+  if (!id) return die(`Usage: aletheia ${command} <tool>\nTools: ${[...installerIds(), "claude-desktop"].join(", ")}`);
+  if (command === "uninstall" && id === "claude-desktop") return die(`Uninstall is not supported for claude-desktop. Remove mcpServers.aletheia from ${claudeDesktopPath({ home: config.home })} by hand.`);
   let installer;
   try {
-    installer = installerFor(id);
+    installer = id === "claude-desktop" ? { plan: claudeDesktopInstallPlan } : installerFor(id);
   } catch (error) {
     return die(error.message);
   }

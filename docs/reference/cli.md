@@ -118,6 +118,7 @@ All compared tools are in sync.
 - `aletheia tools` - list known tools, whether each is detected in your home folder, and where its rules file lives.
 - `aletheia connect <tool> [--write]` - preview, or with `--write` apply, only the MCP entry for a tool. A backup is kept.
 - `aletheia install <tool> [--write] [--dry-run]` - preview or apply the MCP entry, hooks and rules block in one step. Tools: `claude-code`, `command-code`, `cursor`, `codex`, `gemini-cli`, `windsurf`, `opencode`.
+- `aletheia install claude-desktop [--write]` - merge the `aletheia` MCP entry into Claude Desktop's `claude_desktop_config.json`. A dry run unless `--write`. Other keys are kept, and a changed file gets a `.aletheia-bak-<timestamp>` copy first. MCP only: no hooks and no rules file. Written from docs, not tested on a real Claude Desktop install. `uninstall` does not handle it; see [Claude Desktop](../claude-desktop.md).
 - `aletheia install --list` - show capability, verification and detection per tool.
 - `aletheia install [<tool>] --verify` - compare the files on disk with the install manifest. Never writes.
 - `aletheia uninstall <tool> [--write] [--force]` - remove only the entries the manifest lists.

@@ -120,9 +120,12 @@ Runtime settings live in the `settings` table of `hub.db`, under the key `ui.set
 | `project.worktrees` | enum | `main` | `main`, `separate` | The project key of a session in a git worktree. `main` uses the main repository's key, so the worktree shares its memory. `separate` uses `<repo>/<worktree>`. Submodules keep `<repo>/<path>` either way. See [Git worktrees](../concepts/memory-model.md#git-worktrees). |
 | `facts.minConfidence` | number | `0.4` | 0.3 to 0.9 | Facts below this confidence are rejected when stored and by `aletheia facts clean`. |
 | `context.facts` | enum | `auto` | `auto`, `on`, `off` | Facts in the session-start context. `off` lists none. `on` lists up to 10 active facts. `auto` lists a fact only if it came from a provider, has confidence 0.6 or more, or comes from a pinned observation. |
+| `context.format` | enum | `index` | `index`, `classic` | The shape of the context block every host receives. `classic` is the earlier flat list of recent memories. |
+| `retention.retentionDays` | integer | `90` | 7 to 3650 | `aletheia prune` shortens episode text older than this many days to a head, a tail and a pointer. Nothing is deleted. |
+| `retention.coldDays` | integer | `180` | 7 to 3650 | `aletheia prune` marks a weak active fact cold after this many days. |
 | `rules.reviewDays` | integer | `90` | 7 to 730 | Days after which an unconfirmed rule gets a re-check flag. |
 
-These four are the only runtime settings. Version 0.1.10 also showed `provider`, `providers`, `factBudget.maxEpisodes`, `factBudget.maxChars`, `redaction`, `excludedProjects` and `apiKey` in the form, but no code read them, so they were removed. The provider, its chain and key, the fact budgets and the excluded projects are environment variables (see above), and redaction always runs. A value saved under one of the removed keys stays in the table and does nothing.
+The Settings form also has switches for backups, graph retrieval, rerank and the read gate; `src/hub/settings.mjs` is the full list. Version 0.1.10 also showed `provider`, `providers`, `factBudget.maxEpisodes`, `factBudget.maxChars`, `redaction`, `excludedProjects` and `apiKey` in the form, but no code read them, so they were removed. The provider, its chain and key, the fact budgets and the excluded projects are environment variables (see above), and redaction always runs. A value saved under one of the removed keys stays in the table and does nothing.
 
 ```
 $ curl -s -X PUT http://127.0.0.1:37790/api/hub/settings -H "Content-Type: application/json" \

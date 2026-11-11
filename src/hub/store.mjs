@@ -1773,7 +1773,7 @@ export class HubStore {
 
   /** Markdown a session-start hook can inject into ANY tool: pinned and recent memories, then the rules. */
   context({ project, limit = 20, maxChars = 6000, tool, scope = "current", format } = {}) {
-    return (format ?? this.setting("context.format", "index")) === "classic"
+    return (format ?? this.setting("ui.settings.context.format", this.setting("context.format", "index"))) === "classic"
       ? this.classicContext({ project, limit, maxChars, tool, scope })
       : this.indexContext({ project, limit, maxChars, tool, scope });
   }
