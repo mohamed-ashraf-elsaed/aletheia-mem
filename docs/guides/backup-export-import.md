@@ -50,6 +50,18 @@ aletheia export --format markdown --out memory.md
 
 The file starts with your enabled rules, then one section per project, newest first. It skips events and prompts and lists at most 500 items per project. It is for reading and pasting. It is not an import format.
 
+## Import Claude Code auto memory
+
+Claude Code writes notes about your corrections and preferences by itself. Its docs ([memory](https://code.claude.com/docs/en/memory), read 2026-11-11) say they live in `~/.claude/projects/<project>/memory/`: a `MEMORY.md` index plus one markdown file per memory, with a `type` field (user, feedback, project or reference) and a `modified` timestamp in the frontmatter. A different folder is possible through the `autoMemoryDirectory` setting; pass it with `--path`.
+
+```bash
+aletheia import claude-memory --dry-run     # list what would be added
+aletheia import claude-memory               # import
+aletheia import claude-memory --path ~/my-custom-memory-dir --project shop
+```
+
+The importer opens the files read-only and never changes them. It skips `MEMORY.md`, splits a file at `## ` headings, redacts secrets and drops `<private>` blocks before storing. A second run adds 0 rows. The folder name under `projects/` is the project path with separators replaced by `-`. The Claude Code docs do not state that encoding, so the importer decodes it by looking for the folder on disk and applies the same worktree rule as the hooks. A folder it cannot find is skipped and named in the output; rerun with `--project <key>`.
+
 ## Import a bundle
 
 ```bash
