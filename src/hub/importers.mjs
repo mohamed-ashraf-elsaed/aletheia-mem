@@ -1,7 +1,11 @@
 // Importers: bring memory from another system into the hub. Idempotent (the store de-duplicates by content).
 import { Database } from "bun:sqlite";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { join, sep } from "node:path";
 import { safeAll } from "../lib/util.mjs";
+import { sha256 } from "../lib/hash.mjs";
+import { redact } from "./redact.mjs";
+import { projectKeyForHook } from "./hooks/shared.mjs";
 
 const TYPE_MAP = { bugfix: "bugfix", feature: "feature", refactor: "refactor", change: "change", discovery: "discovery", decision: "decision" };
 
@@ -102,4 +106,127 @@ function tryJson(v) {
   } catch {
     return null;
   }
+}
+
+// ---- Claude Code auto memory: <projects>/<project>/memory/*.md (https://code.claude.com/docs/en/memory, 2026-11-11) ----
+
+/** Split a memory file into frontmatter fields and body. Frontmatter is flat `key: value` lines between --- markers. */
+export function parseMemoryFile(text) {
+  const match = String(text).replace(/^\uFEFF/, "").match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  if (!match) return { meta: {}, body: String(text) };
+  const meta = {};
+  for (const line of match[1].split(/\r?\n/)) {
+    const kv = line.match(/^([A-Za-z_][\w-]*):\s*(.*)$/);
+    if (kv) meta[kv[1]] = kv[2].trim().replace(/^["']|["']$/g, "");
+  }
+  return { meta, body: match[2] };
+}
+
+/** Body -> [{ heading, text }]: one section per `## ` heading, or the whole body when there is none. */
+function sectionsOf(body) {
+  const parts = body.split(/^(?=##\s)/m).map((part) => part.trim()).filter(Boolean);
+  if (parts.length <= 1 && !/^##\s/.test(parts[0] ?? "")) return parts.length ? [{ heading: "", text: parts[0] }] : [];
+  return parts.map((part) => {
+    const heading = part.match(/^##\s+(.*)$/m);
+    return /^##\s/.test(part) ? { heading: heading[1].trim(), text: part.replace(/^##\s+.*\n?/, "").trim() || heading[1].trim() } : { heading: "", text: part };
+  });
+}
+
+/** Claude Code names a project folder after the project path with separators turned into "-". Walk the disk to undo it. */
+export function decodeProjectFolder(name) {
+  const parts = name.replace(/^-/, "").split("-");
+  const walk = (base, i) => {
+    if (i >= parts.length) return base;
+    for (let j = parts.length; j > i; j--) {
+      const next = join(base, parts.slice(i, j).join("-"));
+      try {
+        if (!statSync(next).isDirectory()) continue;
+      } catch {
+        continue;
+      }
+      const found = walk(next, j);
+      if (found) return found;
+    }
+    return null;
+  };
+  return walk(sep, 0);
+}
+
+function memoryFolders(path, home) {
+  const root = path ?? join(home, ".claude", "projects");
+  if (!existsSync(root)) throw new RangeError(`No auto-memory folder at ${root}.`);
+  const own = readdirSync(root).filter((f) => f.endsWith(".md"));
+  if (own.length) return [{ folder: root, name: root.split(sep).slice(-2, -1)[0] ?? "", mdFiles: own }];
+  const out = [];
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const dir = join(root, entry.name, "memory");
+    if (existsSync(dir)) out.push({ folder: dir, name: entry.name, mdFiles: readdirSync(dir).filter((f) => f.endsWith(".md")) });
+  }
+  return out;
+}
+
+/**
+ * Claude Code auto-memory files -> hub. Read-only on the source. MEMORY.md is the index and is skipped; every other
+ * .md file becomes one memory per `## ` section (or one for the file). Text is redacted and <private> dropped before
+ * storage; the store de-duplicates by content, so a re-run adds nothing.
+ * options: { path, home, project, dryRun }
+ */
+export function importClaudeMemory(store, { path = null, home, project = null, dryRun = false } = {}) {
+  const result = { folders: 0, files: 0, sections: 0, added: 0, skipped: 0, unmapped: [], dryRun, items: [] };
+  const pending = [];
+  for (const { folder, name, mdFiles } of memoryFolders(path, home)) {
+    let key = project;
+    if (!key) {
+      const root = decodeProjectFolder(name);
+      key = root ? projectKeyForHook(root) : null;
+    }
+    if (!key) {
+      result.unmapped.push(name);
+      continue;
+    }
+    result.folders++;
+    for (const file of mdFiles.sort()) {
+      if (file === "MEMORY.md") continue;
+      const full = join(folder, file);
+      const { meta, body } = parseMemoryFile(readFileSync(full, "utf8"));
+      const modified = Date.parse(meta.modified ?? "");
+      const at = Number.isFinite(modified) ? modified : statSync(full).mtimeMs;
+      const label = meta.name || file.replace(/\.md$/, "");
+      result.files++;
+      for (const section of sectionsOf(body)) {
+        const text = redact(section.text).trim();
+        if (text.length < 3) continue;
+        const title = (section.heading ? `${label}: ${section.heading}` : label).slice(0, 120);
+        const hash = sha256(`claude-memory\n${key}\n${file}\n${section.heading}\n${text}`).slice(0, 16);
+        pending.push({ project: key, kind: "note", type: "note", title: redact(title), narrative: text, concepts: meta.type ? [meta.type] : undefined, tool: "claude-code", origin: `claude-memory:${file}#${hash}`, createdAtEpoch: at });
+        result.sections++;
+      }
+    }
+  }
+  if (dryRun) {
+    for (const item of pending) {
+      const exists = store.db.prepare("SELECT 1 FROM memories WHERE origin = ?").get(item.origin);
+      result[exists ? "skipped" : "added"]++;
+      result.items.push(`${item.project}: ${item.title}`);
+    }
+    return result;
+  }
+  store.db.exec("BEGIN");
+  try {
+    for (const item of pending) {
+      const exists = store.db.prepare("SELECT 1 FROM memories WHERE origin = ?").get(item.origin);
+      if (exists) {
+        result.skipped++;
+        continue;
+      }
+      result[store.add(item, { actor: "import" }).created ? "added" : "skipped"]++;
+    }
+    store.audit("import", "claude-memory.import", { folders: result.folders, files: result.files, added: result.added, skipped: result.skipped });
+    store.db.exec("COMMIT");
+  } catch (error) {
+    store.db.exec("ROLLBACK");
+    throw error;
+  }
+  return result;
 }
