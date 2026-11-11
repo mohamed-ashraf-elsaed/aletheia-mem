@@ -23,6 +23,25 @@ function secure(path, mode) {
 }
 
 /** Write one snapshot of the open store, then prune. Returns {path, bytes, pruned}. */
+const fsBusy = (error) => error?.code === "EBUSY" || error?.code === "EPERM";
+
+/**
+ * Retry a file operation that Windows refuses while a handle is open. bun:sqlite closes a connection only once its
+ * statements are collected, so a store closed a moment ago in this process can still hold the file; a GC releases it.
+ * A handle held by another process stays, and the error is passed on.
+ */
+export function retryBusy(operation, attempts = 10) {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return operation();
+    } catch (error) {
+      if (!fsBusy(error) || attempt >= attempts) throw error;
+      Bun.gc(true);
+      Bun.sleepSync(50);
+    }
+  }
+}
+
 /** Run one statement and finalize it: bun:sqlite defers close() while a statement is open, and Windows then refuses to
  * rename or remove the file. */
 const one = (db, sql, ...args) => {
@@ -51,7 +70,7 @@ export function runBackup(store, { dataDir, keep = 7, now = new Date() } = {}) {
     } finally {
       check.close();
     }
-    renameSync(partial, final);
+    retryBusy(() => renameSync(partial, final));
   } catch (error) {
     rmSync(partial, { force: true });
     throw error;
@@ -195,9 +214,16 @@ export async function restoreBackup(file, { dataDir, dbPath, port, now = new Dat
     throw error;
   }
   // Hold the lock until here, then release it and swap at once.
+  try { live?.exec("ROLLBACK"); } catch { /* no transaction open */ }
   try { live?.close(); } catch { /* already closed */ }
-  for (const suffix of ["-wal", "-shm"]) rmSync(`${dbPath}${suffix}`, { force: true });
-  renameSync(staged, dbPath);
+  try {
+    for (const suffix of ["-wal", "-shm"]) retryBusy(() => rmSync(`${dbPath}${suffix}`, { force: true }));
+    retryBusy(() => renameSync(staged, dbPath));
+  } catch (error) {
+    rmSync(staged, { force: true });
+    if (fsBusy(error)) throw new Error(`hub.db is in use by another process. ${HOLDERS}`);
+    throw error;
+  }
   secure(dbPath, 0o600);
   return { restoredFrom: source, safetyCopy, dbPath, snapshot: basename(source) };
 }

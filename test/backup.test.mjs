@@ -3,7 +3,7 @@ import { afterAll, describe, expect, test } from "bun:test";
 import { Database } from "bun:sqlite";
 import { existsSync, readdirSync, statSync, utimesSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { backupDir, backupStatus, backupTick, listBackups, pruneBackups, restoreBackup, runBackup } from "../src/hub/backup.mjs";
+import { backupDir, backupStatus, backupTick, listBackups, pruneBackups, restoreBackup, runBackup, retryBusy } from "../src/hub/backup.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 import { readSettings, validateSetting, writeSettings } from "../src/hub/settings.mjs";
 import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
@@ -281,6 +281,9 @@ describe("CLI", () => {
     const more = new HubStore(dbPath);
     more.add({ project: "shop", kind: "note", type: "note", title: "Later", narrative: "After." });
     more.close();
+    // On Windows a closed bun:sqlite connection keeps the file open until its statements are collected; release it
+    // before another process restores, the way a finished CLI process would.
+    Bun.gc(true);
     const restored = run(dataDir, ["restore", items[0].path]);
     expect(restored.code).toBe(0);
     expect(count(dbPath)).toBe(3);
@@ -306,5 +309,22 @@ describe("CLI", () => {
     const result = run(dataDir, ["restore"]);
     expect(result.code).toBe(1);
     expect(result.err).toContain("Usage");
+  });
+});
+
+describe("retryBusy (Windows file locks)", () => {
+  const busy = () => Object.assign(new Error("EBUSY: resource busy or locked"), { code: "EBUSY" });
+  test("retries a busy file operation and returns once it succeeds", () => {
+    let calls = 0;
+    expect(retryBusy(() => { calls += 1; if (calls < 3) throw busy(); return "done"; })).toBe("done");
+    expect(calls).toBe(3);
+  });
+  test("gives up after the attempts and passes the busy error on; other errors are not retried", () => {
+    let calls = 0;
+    expect(() => retryBusy(() => { calls += 1; throw busy(); }, 3)).toThrow(/EBUSY/);
+    expect(calls).toBe(3);
+    calls = 0;
+    expect(() => retryBusy(() => { calls += 1; throw new Error("ENOENT"); })).toThrow(/ENOENT/);
+    expect(calls).toBe(1);
   });
 });
