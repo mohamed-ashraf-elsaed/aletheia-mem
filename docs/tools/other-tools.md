@@ -147,7 +147,7 @@ $ curl -s -X POST http://127.0.0.1:37998/v1/search \
 {"results":[{"id":1,"kind":"observation","type":"note","title":"Use bun test","project":"myproject","tool":"my-script","pinned":false,"at":"2026-10-29T19:46:46.100Z"}],"facts":[],"reason":null,"channels":{...}}
 ```
 
-The `channels` field says this route answers from keyword channels only. For vector results, use the CLI with `--semantic`.
+The `channels` field says which channels ran. With the optional embedding package and stored vectors, `channels.dense.status` is `on` and the ranking is hybrid; otherwise the reply is keyword results and `channels.notice` says why.
 
 `GET /v1/info` returns the version and counts:
 

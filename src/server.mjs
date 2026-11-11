@@ -14,6 +14,7 @@ import { createLiveHub } from "./hub/live.mjs";
 import { createMcpHttpHandler } from "./hub/mcp-http.mjs";
 import { createLoginGuard } from "./hub/login.mjs";
 import { SyncStore } from "./hub/sync/store.mjs";
+import { workerEmbedder } from "./hub/dense.mjs";
 import { startBackgroundWorker } from "./hub/queue.mjs";
 import { backupTick } from "./hub/backup.mjs";
 import { HubStore } from "./hub/store.mjs";
@@ -59,6 +60,7 @@ export function startServer(config, {
   loginMaxFailures = 5,
   authMaxFailures = 10,
   authWindowMs = 60_000,
+  embedder = undefined,
 } = {}) {
   const remoteMode = requireLogin ?? !["127.0.0.1", "localhost", "::1"].includes(config.host);
   if (remoteMode) assertKeyLength(config.apiKey);
@@ -103,7 +105,7 @@ export function startServer(config, {
     ask = null;
   }
   const alerts = new AlertStore(config.alertsDb);
-  const worker = config.extractionWorker ? startBackgroundWorker({ store: hub, ask, config, alerts, onTick: (result) => {
+  const worker = config.extractionWorker ? startBackgroundWorker({ store: hub, ask, config, alerts, embedder: workerEmbedder(embedder), onTick: (result) => {
     const project = result.last?.project ?? null;
     for (const id of result.last?.factIds ?? []) liveHub.broadcast({ kind: "fact", id, project });
   } }) : null;
@@ -121,10 +123,11 @@ export function startServer(config, {
   backupFirst.unref?.();
   const liveHub = createLiveHub(hub);
   const liveTickets = createLiveTickets();
-  const hubRoutes = createHubRoutes({ hub, config, liveHub, alerts, liveTickets });
+  const hubRoutes = createHubRoutes({ hub, config, liveHub, alerts, liveTickets, embedder });
   // MCP over Streamable HTTP on the main (loopback) server. Optional bearer key, same one as /v1.
   const mcpHttp = createMcpHttpHandler({
     store: hub,
+    embedder,
     authorize: config.apiKey
       ? async (request) => (bearerMatches(request, config.apiKey) ? { token: { scope: "local" }, projects: null } : { status: 401, error: KEY_REQUIRED })
       : null,

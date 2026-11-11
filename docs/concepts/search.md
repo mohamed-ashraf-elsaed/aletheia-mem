@@ -145,9 +145,11 @@ What to know about the runtime:
 
 - The default model is `Xenova/bge-small-en-v1.5`, quantised, 384 dimensions. It runs on your machine.
 - The first use downloads the model once. In a fresh home directory the model folder was 34 MB after the first `aletheia embed`.
-- When the package is missing, the code prints an error and stops `--semantic` and `aletheia embed`. Plain keyword search keeps working.
+- When the package is missing, the code prints an error and stops `--semantic` and `aletheia embed`. Plain keyword search keeps working, and so do the REST and MCP surfaces, with a note.
 - `aletheia embed` embeds memories that have no vector yet and skips events. `aletheia compress` embeds new facts only when `ALETHEIA_EMBED_FACTS=1` is set, because the first embedding downloads a model.
-- `POST /v1/search` and the MCP `search` tool answer from the keyword channels only, and the REST reply says so in its `channels.note`. Semantic search is a CLI feature.
+- `POST /v1/search` (also the dashboard search, which sends `paged: true`) and the MCP `search` tool use the same hybrid ranking when the package is installed and at least one stored vector exists. The embedding runtime loads on the first search, once per process, and each query has a 1500 ms budget (`ALETHEIA_DENSE_BUDGET_MS`). `ALETHEIA_DENSE=0` turns the dense channel off.
+- When the dense channel does not run, the reply is keyword results plus a sentence saying why: the package is missing (the sentence names `@huggingface/transformers`), the model is still loading, the query went over budget, or no vectors are stored yet. REST puts it in `channels.notice` and the machine-readable state in `channels.dense` (`status` `on`, `off` or `fallback`, with a `reason`). MCP adds it as a second text part that starts with `Note:`. The dashboard shows it under the result count. `POST /v1/search` reads no query-vector field: the server embeds the query text itself.
+- The server's extraction worker embeds new facts after each job when the package is installed, so `ALETHEIA_EMBED_FACTS=1` is only needed for `aletheia compress`. Memories (not facts) still get vectors from `aletheia embed`.
 - The benchmark rows marked "+ rerank (bench only)" use a cross-encoder in the benchmark script. `aletheia search` does not rerank unless you turn it on (next section).
 
 ## Optional rerank
@@ -158,7 +160,7 @@ A cross-encoder reads the question and one candidate together and scores how wel
 - It needs the optional `@huggingface/transformers` package, the same one as semantic search, and the model `Xenova/ms-marco-MiniLM-L-6-v2`. Nothing loads until the first reranked search. Without the package, search keeps the fused order.
 - Time budget: 3 seconds for model load plus scoring. If that passes, or the scorer fails, search returns the fused order. A load that is still running is kept for later calls in the same process.
 - Cost, measured on 2026-11-11 on a busy machine with 40 short rows: the first call in a process took about 0.55 s (model load), later calls about 0.1 s. A run on one LoCoMo conversation took 273 ms per question with the cross-encoder. `aletheia search` starts a new process each time, so every CLI call pays the load.
-- Only `aletheia search` uses it. `POST /v1/search`, the MCP `search` tool and the context hooks answer from the keyword channels and never rerank.
+- Only `aletheia search` uses it. `POST /v1/search`, the MCP `search` tool and the context hooks never rerank.
 - `--explain` shows what happened, for example `rerank=on (Xenova/ms-marco-MiniLM-L-6-v2, top 30, 154 ms)`, or `rerank=fallback (needs the optional package @huggingface/transformers, kept the fused order)`. With rerank off, the line has no rerank part.
 
 ## Search from an agent: search, timeline, get_observations
