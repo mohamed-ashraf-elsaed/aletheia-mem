@@ -9,16 +9,15 @@ Aletheia (aletheia-mem) ships a command line named `aletheia` that reads and wri
 
 - Output blocks were produced on 2026-10-29 by version 0.1.10 in a temporary home and data directory. Paths are shortened with `...`, and `...` also marks cut text. JSON output is shown on one line here; the real output is indented over several lines.
 - I did not run these: `import claude-mem` (no claude-mem database here), `rules confirm`, `compress --daemon`, `facts clean --apply`, `sync join` (it failed, no hub), `sync pull`, `run`, `revoke`, `import` and the encryption commands other than `enable-e2ee`, `mcp-link revoke`, `team revoke-member`, `share`, `leave`, `pin` and `memory`, `service install --write` and `uninstall`, `audit export`, `alerts enable` and `bin/ledger.mjs`. Their syntax comes from [bin/aletheia.mjs](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/bin/aletheia.mjs) and the modules it calls.
-- A flag marked "not in --help" exists in the code but the usage text does not list it.
 
 ## Entry points and basics
 
 The package `aletheia-mem` declares four command names in its `package.json`: `aletheia`, `aletheia-mem` (the same file as `aletheia`), `aletheia-server` and `aletheia-mcp`. All four run on Bun. From a source checkout run `bun bin/aletheia.mjs <command>`.
 
 - `aletheia --version`, `-v` and `version` print the version (`0.1.10`).
-- There is no `--help` flag. `aletheia --help`, and any unknown word, print the usage to stderr and exit 1.
+- `aletheia help`, `--help` and `-h` print the usage to stdout and exit 0. They open no database and create no file. An unknown command prints the same usage to stderr and exits 1.
 - Flags are long only: `--name value` or a bare `--name`. A value that starts with `--` is read as the next flag.
-- Most commands open `hub.db` in the data directory and create it if missing. `version`, `doctor`, `migrate`, `uninstall` and `install` without `--write` do not create it. `hook` opens it only when it has something to store.
+- Most commands open `hub.db` in the data directory and create it if missing. `help`, `version`, `doctor`, `migrate`, `uninstall` and `install` without `--write` do not create it. `hook` opens it only when it has something to store.
 - `--project` defaults to the project key of the current directory, which is the repository folder name.
 - The data directory is `~/.aletheia` unless `ALETHEIA_DATA_DIR` is set. See [Configuration](configuration.md).
 
@@ -26,14 +25,14 @@ Exit codes:
 
 - `0` on success.
 - `1` when a command prints a usage or error message, when `doctor` has a `FAIL` line, when `install --verify` finds a missing or changed file, when `uninstall` is refused, when `rules lint` has findings, and when `erase verify` fails.
-- `1` with a Bun stack trace when an error is not caught, for example `aletheia team members nosuch` or `aletheia import claude-mem` without a database.
+- `1` with one line on stderr for a known user error, for example `aletheia team members nosuch` ("That team does not exist.") or `aletheia import claude-mem` without a database. An unexpected error still prints a stack trace. Add `--debug` or set `ALETHEIA_DEBUG=1` to get the stack trace for known errors too.
 - `aletheia hook` always exits `0`. `aletheia capture` exits `0` when stdin is not JSON.
 
 ## Capture and context
 
 - `aletheia hook <tool> <event>` - the entry point a host runs at a session event. See [Hooks reference](hooks.md).
 - `aletheia capture --tool <name> [--project p]` - store one JSON payload from stdin as a memory, secrets redacted. For tools without an installer.
-- `aletheia context [--project p] [--tool t] [--limit n] [--scope all]` - print the session-start context. `--limit` and `--scope` are not in --help.
+- `aletheia context [--project p] [--tool t] [--limit n] [--scope all]` - print the session-start context.
 - `aletheia context economics [--project p] [--limit n]` - print JSON with the estimated tokens to read each memory (characters divided by 4).
 
 ```
@@ -101,7 +100,7 @@ A rule is a standing instruction. See [Rules](../concepts/rules.md).
 - `aletheia rules lint [--dir path] [--tools a,b] [--json]` - find conflicts between the rules and those files. Exits 1 when there are findings.
 - `aletheia rules sync [--tools a,b] [--dir path | --global] [--write]` - write the managed rules block into each tool's file. Dry run unless `--write`.
 - `aletheia rules import --tool <id> [--dir path | --global]` - read rules from a tool's instruction file.
-- `aletheia rules suggest [--project p]` and `aletheia rules suggestions [--project p] [--status s]` - propose and list rule suggestions. Neither is in --help.
+- `aletheia rules suggest [--project p]` and `aletheia rules suggestions [--project p] [--status s]` - propose and list rule suggestions.
 
 ```
 $ aletheia rules add "Run the tests before you commit" --when "you are about to commit"
@@ -122,7 +121,7 @@ All compared tools are in sync.
 - `aletheia install --list` - show capability, verification and detection per tool.
 - `aletheia install [<tool>] --verify` - compare the files on disk with the install manifest. Never writes.
 - `aletheia uninstall <tool> [--write] [--force]` - remove only the entries the manifest lists.
-- `aletheia doctor [--json]` - check the server, hooks, spool, permissions and last capture. `--json` is not in --help.
+- `aletheia doctor [--json]` - check the server, hooks, spool, permissions and last capture.
 
 ```
 $ aletheia connect claude-code
@@ -143,7 +142,7 @@ Dry run: nothing was written. Add --write to apply.
 
 ## Maintenance
 
-- `aletheia compress [--daemon] [--interval ms]` - drain the extraction queue once, or keep running with `--daemon`. It uses the provider in `ALETHEIA_PROVIDER`, or the rule-based extractor when none is set. `--project` is in --help but the code does not read it. It creates no embeddings unless `ALETHEIA_EMBED_FACTS=1` is set, so it downloads no model by default.
+- `aletheia compress [--daemon] [--interval ms]` - drain the extraction queue once, or keep running with `--daemon`. It uses the provider in `ALETHEIA_PROVIDER`, or the rule-based extractor when none is set.  `compress` drains the whole queue and has no `--project` filter. It creates no embeddings unless `ALETHEIA_EMBED_FACTS=1` is set, so it downloads no model by default.
 - `aletheia entities [--project p] [--limit n] [--json]` - list entity ids, names, types and how many facts and memories point at each. Use the id with `aletheia summarize --scope entity --entity <id>`.
 - `aletheia summarize [--scope session|project|entity|list] [--project p] [--session s] [--entity id] [--days n] [--limit n]` - build a summary. `list` shows existing ones.
 - `aletheia prune [--apply]` - report cold facts and old episodes; `--apply` changes them. Dismissed items are deleted with `--apply`.
@@ -152,7 +151,7 @@ Dry run: nothing was written. Add --write to apply.
 - `aletheia optimize` - rebuild the full-text index after a large import.
 - `aletheia scrub [--apply]` - count the stored memories that redaction would change; with `--apply`, redact them in place. Use it once after upgrading from a version that stored some text unredacted (notes written through REST or the dashboard, edits, imports). Back up `hub.db` first.
 - `aletheia importance recompute [--project p]` - recompute the importance score.
-- `aletheia migrate [--db path] [--dry-run] [--backup path]` - upgrade the database schema after copying it. Not in --help.
+- `aletheia migrate [--db path] [--dry-run] [--backup path]` - upgrade the database schema after copying it.
 
 ```
 $ aletheia compress
@@ -221,7 +220,7 @@ These commands use the sync hub. See [Sync](../29-sync.md) and [Remote MCP](../3
 - `aletheia sync compact [--retention-days n]`, `purge <entity_id>` - hub-side clean-up.
 - `aletheia sync export <dir>` and `import <dir>` - move the replica through a folder.
 - `aletheia sync enable-e2ee | unlock-e2ee | rotate-key | change-passphrase | upgrade-kdf | export-recovery-key --out <file> | purge-plaintext [--apply]` - optional end-to-end encryption. The passphrase comes from `--passphrase` or `ALETHEIA_SYNC_PASSPHRASE`. `unlock-e2ee` also takes `--recovery-file`; `change-passphrase` takes `--old` and `--new`.
-- `aletheia mcp-link create [--projects a,b] [--scope mcp|sync|admin] [--name n] [--url u]`, `list`, `revoke <id>` - manage tokens for the HTTP `/mcp` endpoint. `--scope` and `--name` are not in --help.
+- `aletheia mcp-link create [--projects a,b] [--scope mcp|sync|admin] [--name n] [--url u]`, `list`, `revoke <id>` - manage tokens for the HTTP `/mcp` endpoint.
 
 ```
 $ aletheia sync pair
@@ -291,7 +290,7 @@ ok .../erasure-receipts/dc99716ff1ee8649.json
 
 `aletheia alerts` manages rules that deliver an event to a webhook or a file. Events: `device.paired`, `token.revoked`, `quota.hit`, `sync.error`, `extraction.failed`, `queue.depth`.
 
-- `aletheia alerts add --event E --target webhook|file [--url u | --path p] [--name n] [--secret s] [--allow-private] [--count n] [--min-value n] [--window s] [--rate-limit s] [--disabled]` - `--name`, `--count`, `--min-value`, `--window`, `--rate-limit` and `--disabled` are not in --help.
+- `aletheia alerts add --event E --target webhook|file [--url u | --path p] [--name n] [--secret s] [--allow-private] [--count n] [--min-value n] [--window s] [--rate-limit s] [--disabled]`
 - `aletheia alerts list`, `remove <id>`, `enable <id>`, `disable <id>`, `test <id>`
 - `aletheia alerts run` (deliver due items), `feed [--limit n]` (recent deliveries), `check` (emit `queue.depth` and `extraction.failed` from the current queue), `emit <event> [--value n]`
 
@@ -317,7 +316,7 @@ There is no `aletheia settings` command. Runtime settings such as `facts.minConf
 
 ## Other executables
 
-- `aletheia-server [--host addr] [--behind-tls]` starts the dashboard and API on `ALETHEIA_PORT` (default 37790) and the extraction worker. It reads only those two flags. **Known limitation:** `aletheia-server --help` is not a help command. It ignores `--help` and starts the server; on 2026-10-29 it printed `aletheia-mem listening on ...` and kept running until it was stopped.
+- `aletheia-server [--host addr] [--behind-tls]` starts the dashboard and API on `ALETHEIA_PORT` (default 37790) and the extraction worker. It reads only those two flags. `aletheia-server --help` (or `-h`) prints the usage and exits 0 without starting the server.
 - `aletheia-mcp` runs the MCP server over stdio, the same as `aletheia mcp`. It takes no flags. See [MCP tools reference](mcp-tools.md).
 - `bun bin/aletheia-sync.mjs [--host h] [--port p] [--db path] [--hub-db path] [--name n] [--behind-tls] [--mcp-origins a,b]` runs the sync hub. It has no npm command name.
 - `bun bin/ledger.mjs <candidates|apply|pending|show|...>` runs the ledger commands the refresh uses.
