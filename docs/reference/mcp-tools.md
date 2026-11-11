@@ -1,9 +1,9 @@
-# MCP tools reference: the 13 Aletheia MCP tools and their inputs
+# MCP tools reference: the 14 Aletheia MCP tools and their inputs
 
-<!-- description: The 13 tools the Aletheia MCP server lists, with input schemas, read or write access, example calls and results, plus stdio and HTTP setup. -->
+<!-- description: The 14 tools the Aletheia MCP server lists, with input schemas, read or write access, example calls and results, plus stdio and HTTP setup. -->
 <!-- keywords: aletheia mcp tools, mcp memory server tools, aletheia search tool, save_memory mcp, aletheia mcp stdio, aletheia remote mcp, session_start_context -->
 
-Aletheia (aletheia-mem) runs an MCP server that gives any MCP client 13 tools to search, read and write the shared memory and rules. The same tool handlers run over stdio and over HTTP.
+Aletheia (aletheia-mem) runs an MCP server that gives any MCP client 14 tools to search, read and write the shared memory and rules. The same tool handlers run over stdio and over HTTP.
 
 Examples on this page were run on 2026-10-29 against version 0.1.10 in a temporary data directory. Results are trimmed with `...`. The schemas come from [src/hub/mcp-tools.mjs](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/src/hub/mcp-tools.mjs) and the handlers from [src/hub/mcp.mjs](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/src/hub/mcp.mjs).
 
@@ -18,6 +18,7 @@ Examples on this page were run on 2026-10-29 against version 0.1.10 in a tempora
 | `fact_history` | read | `subject` |
 | `list_rules` | read | none |
 | `work_state_read` | read | `list` |
+| `file_outline` | read | `file` |
 | `save_memory` | write | `text` |
 | `add_rule` | write | `then` |
 | `confirm_rule` | write | `id` |
@@ -27,7 +28,7 @@ Examples on this page were run on 2026-10-29 against version 0.1.10 in a tempora
 
 The intended order is `session_start_context`, then `search`, `timeline` and `get_observations`. Every write tool declares `idempotentHint: true` and `destructiveHint: false`, except `work_state_write`, which declares `destructiveHint: true`. Recalled text is wrapped in an `<aletheia-memory>` block that tells the model to treat it as data.
 
-Two more read-only tools, `team_brief` and `team_search`, are listed only when the caller belongs to a team. Without a team `tools/list` returns exactly the 13 tools above. See [Team tools](#team-tools).
+Two more read-only tools, `team_brief` and `team_search`, are listed only when the caller belongs to a team. Without a team `tools/list` returns exactly the 14 tools above. See [Team tools](#team-tools).
 
 ## Connect over stdio
 
@@ -277,9 +278,16 @@ Read a list written by `work_state_write`. Read-only.
 
 An unknown list returns `No list named "<name>".`
 
+## file_outline
+
+Return a cheap outline of one file (markdown headings and code symbols, with line numbers) and the titles of earlier memories that touched it. Read-only. The file must be inside the working directory of a local server; over a remote connection the call is refused. Recalled titles are wrapped in an `<aletheia-memory>` block. The Claude Code file-read gate uses the same outline.
+
+- `file` (string, required): absolute path, or relative to the working directory.
+- `project` (string): default is the working directory's project.
+
 ## Team tools
 
-`team_brief` and `team_search` read the shared team memory from [team mode](../31-team.md). They are not part of the 13 core tools. `tools/list` adds them only when the caller belongs to a team; with no team the list is unchanged and a call returns `This device does not belong to a team.`
+`team_brief` and `team_search` read the shared team memory from [team mode](../31-team.md). They are not part of the 14 core tools. `tools/list` adds them only when the caller belongs to a team; with no team the list is unchanged and a call returns `This device does not belong to a team.`
 
 - **stdio.** The local device counts as the team operator, the same as `aletheia team ...` without `--token-id`. The tools appear when `team.db` and `sync.db` exist in the data directory and hold at least one team. The server reads that at startup, so restart it after the first `aletheia team create`.
 - **HTTP.** `createMcpHttpHandler` takes a `team(token)` option that returns the token's team context, and the sync hub sets it. A token that is a team member sees the tools; any other token sees 13. Token scope works as for `search`: both tools are read tools, so `mcp`, `read`, `sync` and `admin` tokens may call them, and a token limited to projects is refused other projects and never sees their rows.

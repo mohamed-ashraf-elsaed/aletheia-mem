@@ -9,6 +9,8 @@ const PREFIX = "ui.settings.";
 export const SETTINGS_SCHEMA = [
   // Read by every project key (src/lib/project-key.mjs). ALETHEIA_WORKTREE_PROJECTS overrides it.
   { key: "project.worktrees", kind: "enum", label: "Git worktree memory", options: ["main", "separate"], default: "main", secret: false },
+  // Read by the Claude Code PreToolUse hook (src/hub/smart-file.mjs readGateEnabled). Off until the gate is measured.
+  { key: "readGate.enabled", kind: "boolean", label: "Gate whole-file reads of large files with history (Claude Code)", default: false, secret: false },
   { key: "facts.minConfidence", kind: "number", label: "Fact confidence floor", min: 0.3, max: 0.9, default: 0.4, secret: false },
   { key: "context.facts", kind: "enum", label: "Facts in context", options: ["auto", "on", "off"], default: "auto", secret: false },
   { key: "backup.enabled", kind: "boolean", label: "Scheduled local backups", default: false, secret: false },

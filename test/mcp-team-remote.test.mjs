@@ -1,5 +1,5 @@
 // The remote sync hub lists team_brief and team_search for a team member's token and keeps them inside that
-// token's projects. A token that is not a team member still sees the 13 core tools.
+// token's projects. A token that is not a team member still sees the 14 core tools.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -50,14 +50,14 @@ describe("remote hub team tools", () => {
   test("a team member's token lists both tools", async () => {
     const session = await open(owner.token);
     const tools = (await rpc(owner.token, { jsonrpc: "2.0", id: 2, method: "tools/list" }, session)).body.result.tools;
-    expect(tools).toHaveLength(15);
+    expect(tools).toHaveLength(16);
     expect(tools.map((t) => t.name)).toEqual(expect.arrayContaining(["team_brief", "team_search"]));
   });
 
-  test("a token that is not a team member sees 13 tools and cannot call them", async () => {
+  test("a token that is not a team member sees 14 tools and cannot call them", async () => {
     const session = await open(outsider.token);
     const tools = (await rpc(outsider.token, { jsonrpc: "2.0", id: 2, method: "tools/list" }, session)).body.result.tools;
-    expect(tools).toHaveLength(13);
+    expect(tools).toHaveLength(14);
     expect((await tool(outsider.token, session, "team_search", { query: "pnpm" })).isError).toBe(true);
   });
 

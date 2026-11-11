@@ -61,23 +61,23 @@ const call = (ctx, name, args) => callTool(name, args, ctx);
 const body = (result) => result.content[0].text;
 
 describe("tools/list", () => {
-  test("no team: the list is the 13 tools, unchanged", () => {
+  test("no team: the list is the 14 tools, unchanged", () => {
     const expected = TOOL_DEFS.map((tool) => tool.name);
-    expect(expected).toHaveLength(13);
+    expect(expected).toHaveLength(14);
     expect(list({ store: hub, tool: "test", cwd: "/" }).map((tool) => tool.name)).toEqual(expected);
   });
 
   test("a team store the caller does not belong to adds nothing", () => {
-    expect(list(member(outsider))).toHaveLength(13);
-    expect(list({ store: hub, tool: "test", cwd: "/", team: { store: team, accountId: account.id + 99, operator: true } })).toHaveLength(13);
+    expect(list(member(outsider))).toHaveLength(14);
+    expect(list({ store: hub, tool: "test", cwd: "/", team: { store: team, accountId: account.id + 99, operator: true } })).toHaveLength(14);
   });
 
   test("a revoked member loses the tools", () => {
     const token = sync.mintToken(account.id, { scope: "sync", name: "temp" }).id;
     const added = team.addMember(account.id, alpha.id, owner, { name: "temp", role: "viewer", projects: ["site"], memberTokenId: token });
-    expect(list(member(token))).toHaveLength(15);
+    expect(list(member(token))).toHaveLength(16);
     team.revokeMember(account.id, alpha.id, owner, added.id);
-    expect(list(member(token))).toHaveLength(13);
+    expect(list(member(token))).toHaveLength(14);
   });
 
   test("a member sees both tools, with read-only annotations", () => {
@@ -95,7 +95,7 @@ describe("tools/list", () => {
 
   test("the local operator with a team sees both tools", () => {
     const ctx = { store: hub, tool: "test", cwd: "/", team: { store: team, accountId: account.id, operator: true } };
-    expect(list(ctx)).toHaveLength(15);
+    expect(list(ctx)).toHaveLength(16);
   });
 
   test("calling a team tool without a team is an error", () => {
@@ -246,10 +246,10 @@ describe("remote MCP over HTTP", () => {
     expect(denied.isError).toBe(true);
   });
 
-  test("a token that is not a team member sees 13 tools", async () => {
+  test("a token that is not a team member sees 14 tools", async () => {
     const session = await open("out-token");
     const tools = (await rpc("out-token", { jsonrpc: "2.0", id: 2, method: "tools/list" }, session)).body.result.tools;
-    expect(tools).toHaveLength(13);
+    expect(tools).toHaveLength(14);
   });
 
   test("a project-limited token is refused other projects", async () => {

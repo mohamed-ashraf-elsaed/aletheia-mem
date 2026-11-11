@@ -212,7 +212,7 @@ function planRules({ tool, home, rules }) {
   return { kind: "rules", title: `rules in ${file}`, file, before, after, changed: before !== after, rules: count, markers: [MARK_BEGIN, MARK_END] };
 }
 
-const claudeEvents = { SessionStart: "startup|clear|compact", UserPromptSubmit: null, PostToolUse: "*", PostToolUseFailure: "*", Stop: null, SubagentStop: null, SessionEnd: null };
+const claudeEvents = { SessionStart: "startup|clear|compact", UserPromptSubmit: null, PreToolUse: "Read", PostToolUse: "*", PostToolUseFailure: "*", Stop: null, SubagentStop: null, SessionEnd: null };
 
 function defineInstaller(spec) {
   const capabilities = spec.capabilities ?? "full";
@@ -251,7 +251,7 @@ export const INSTALLERS = [
     evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); MCP server listed by Claude Code 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine",
     detection: [".claude"],
     notes: ["The hook shape was checked against a real installed plugin; hooks ran in real Claude Code sessions over two days of use; one user on one machine."],
-    events: ["SessionStart", "UserPromptSubmit", "PostToolUse", "PostToolUseFailure", "Stop", "SubagentStop", "SessionEnd"],
+    events: ["SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure", "Stop", "SubagentStop", "SessionEnd"],
     plan(env) {
       const settingsFile = join(env.home, ".claude", "settings.json");
       const mcpFile = join(env.home, ".claude.json");

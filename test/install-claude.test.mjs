@@ -57,7 +57,7 @@ describe("install: Claude Code", () => {
   test("apply merges the user's hooks and servers, backs up both files, and records a manifest", async () => {
     const { home, dataDir, env } = setup();
     mkdirSync(join(home, ".claude"), { recursive: true });
-    const userSettings = JSON.stringify({ model: "sonnet", hooks: { PostToolUse: [{ matcher: "Write", hooks: [{ type: "command", command: "echo user-hook" }] }], PostToolUseFailure: [{ matcher: "Bash", hooks: [{ type: "command", command: "echo user-failure" }] }] } }, null, 2);
+    const userSettings = JSON.stringify({ model: "sonnet", hooks: { PreToolUse: [{ matcher: "Bash", hooks: [{ type: "command", command: "echo user-pre" }] }], PostToolUse: [{ matcher: "Write", hooks: [{ type: "command", command: "echo user-hook" }] }], PostToolUseFailure: [{ matcher: "Bash", hooks: [{ type: "command", command: "echo user-failure" }] }] } }, null, 2);
     const userClaudeJson = JSON.stringify({ numStartups: 7, mcpServers: { other: { type: "stdio", command: "x", args: [] } } }, null, 2);
     writeFileSync(settingsPath(home), userSettings);
     writeFileSync(claudeJsonPath(home), userClaudeJson);
@@ -70,7 +70,8 @@ describe("install: Claude Code", () => {
     expect(settings.model).toBe("sonnet");
     expect(settings.hooks.PostToolUse[0].hooks[0].command).toBe("echo user-hook"); // the user's own hook survived
     expect(settings.hooks.PostToolUseFailure[0].hooks[0].command).toBe("echo user-failure");
-    for (const event of ["SessionStart", "UserPromptSubmit", "PostToolUse", "PostToolUseFailure", "Stop", "SubagentStop", "SessionEnd"]) {
+    expect(settings.hooks.PreToolUse[0].hooks[0].command).toBe("echo user-pre");
+    for (const event of ["SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure", "Stop", "SubagentStop", "SessionEnd"]) {
       const commands = settings.hooks[event].flatMap((definition) => definition.hooks.map((hook) => hook.command));
       const ours = commands.filter((command) => command.includes("aletheia-managed"));
       expect(ours.length).toBe(1);
@@ -82,6 +83,7 @@ describe("install: Claude Code", () => {
     const matcherOf = (event) => settings.hooks[event].find((definition) => definition.hooks.some((hook) => hook.command.includes("aletheia-managed"))).matcher;
     expect(matcherOf("PostToolUseFailure")).toBe("*");
     expect(matcherOf("SubagentStop")).toBeUndefined();
+    expect(matcherOf("PreToolUse")).toBe("Read");
 
     const claude = JSON.parse(readFileSync(claudeJsonPath(home), "utf8"));
     expect(claude.numStartups).toBe(7);
@@ -152,7 +154,7 @@ describe("install: Claude Code", () => {
   test("uninstall removes only our entries and restores the user's own text", async () => {
     const { home, dataDir, env } = setup();
     mkdirSync(join(home, ".claude"), { recursive: true });
-    writeFileSync(settingsPath(home), JSON.stringify({ model: "sonnet", hooks: { PostToolUse: [{ matcher: "Write", hooks: [{ type: "command", command: "echo user-hook" }] }], SubagentStop: [{ hooks: [{ type: "command", command: "echo user-subagent" }] }] } }));
+    writeFileSync(settingsPath(home), JSON.stringify({ model: "sonnet", hooks: { PostToolUse: [{ matcher: "Write", hooks: [{ type: "command", command: "echo user-hook" }] }], SubagentStop: [{ hooks: [{ type: "command", command: "echo user-subagent" }] }], PreToolUse: [{ matcher: "Bash", hooks: [{ type: "command", command: "echo user-pre" }] }] } }));
     writeFileSync(claudeJsonPath(home), JSON.stringify({ mcpServers: { other: { type: "stdio", command: "x" } } }));
     writeFileSync(join(home, ".claude/CLAUDE.md"), "# Mine\n\nHand-written notes.\n");
 
@@ -168,6 +170,7 @@ describe("install: Claude Code", () => {
     expect(settings.model).toBe("sonnet");
     expect(settings.hooks.PostToolUse).toEqual([{ matcher: "Write", hooks: [{ type: "command", command: "echo user-hook" }] }]);
     expect(settings.hooks.SubagentStop).toEqual([{ hooks: [{ type: "command", command: "echo user-subagent" }] }]);
+    expect(settings.hooks.PreToolUse).toEqual([{ matcher: "Bash", hooks: [{ type: "command", command: "echo user-pre" }] }]);
     expect(settings.hooks.PostToolUseFailure).toBeUndefined();
     expect(settings.hooks.SessionStart).toBeUndefined();
     expect(settings.hooks.SessionEnd).toBeUndefined();
@@ -189,7 +192,7 @@ describe("install: Claude Code", () => {
     const checks = await doctor(env());
     const hooks = checks.find((check) => check.name === "hooks claude-code");
     expect(hooks.ok).toBe(true);
-    expect(hooks.detail).toContain("7/7");
+    expect(hooks.detail).toContain("8/8");
     expect(checks.find((check) => check.name === "spool").ok).toBe(true);
     expect(checks.find((check) => check.name === "last capture").detail).toBe("no capture yet");
     expect(checks.find((check) => check.name === "server").ok).toBe(false);
