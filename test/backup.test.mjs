@@ -212,6 +212,9 @@ describe("restoreBackup", () => {
     expect(count(dbPath)).toBe(3);
     expect(existsSync(result.safetyCopy)).toBe(true);
     expect(count(result.safetyCopy)).toBe(4);
+    // A raw copy of a WAL-mode file cannot be opened read-only without a -shm on macOS; the copy is in rollback mode.
+    const copy = new Database(result.safetyCopy, { readonly: true });
+    try { expect(copy.prepare("PRAGMA journal_mode").get().journal_mode).toBe("delete"); } finally { copy.close(); }
     expect(existsSync(`${dbPath}-wal`)).toBe(false);
     const reopened = new HubStore(dbPath);
     expect(reopened.db.prepare("PRAGMA integrity_check").get().integrity_check).toBe("ok");

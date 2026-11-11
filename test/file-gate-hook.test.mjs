@@ -1,6 +1,6 @@
 // The Claude Code PreToolUse hook for the Read tool asks the file-read gate. Off by default, fails open.
 import { describe, expect, test } from "bun:test";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdirSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { runHook } from "../src/hub/hooks/run.mjs";
 import { callTool, TOOL_DEFS } from "../src/hub/mcp.mjs";
@@ -112,6 +112,20 @@ describe("file_outline MCP tool", () => {
     expect(text).toContain("<aletheia-memory>");
     expect(text).toContain("alpha");
     expect(text).toContain("big.mjs gotcha");
+    store.close();
+  });
+
+  test("finds the history recorded under a symlinked path (macOS /var is /private/var)", () => {
+    if (process.platform === "win32") return;
+    const { fx, proj, file, config } = setup({ history: false });
+    const link = join(fx.dir, "shop-link");
+    symlinkSync(proj, link);
+    const viaLink = join(link, "src", "big.mjs");
+    const store = new HubStore(config.hubDb);
+    store.add({ project: basename(proj), kind: "note", type: "gotcha", title: "linked gotcha", narrative: "via the link", files: [viaLink] }, { actor: "import" });
+    const text = callTool("file_outline", { file: viaLink }, ctxFor(store, proj)).content[0].text;
+    expect(text).toContain("linked gotcha");
+    expect(text).toContain(realpathSync(file));
     store.close();
   });
 

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { applyInstall, claudeDesktopInstallPlan, claudeDesktopPath, planClaudeDesktop } from "../src/hub/install.mjs";
 import { makeFixture } from "./fixture.mjs";
 
@@ -70,18 +70,20 @@ describe("Claude Desktop MCP config", () => {
 
   test("the CLI is a dry run by default, and --write merges with a backup and is idempotent", async () => {
     const { home, dataDir } = setup();
-    const file = claudeDesktopPath({ home, platform: "linux" });
-    mkdirSync(join(home, ".config/Claude"), { recursive: true });
+    // The CLI writes the path for this platform; on Windows that follows APPDATA, which the spawned CLI gets inside HOME.
+    const appData = join(home, "AppData", "Roaming");
+    const file = claudeDesktopPath({ home, platform: process.platform, env: { APPDATA: appData } });
+    mkdirSync(dirname(file), { recursive: true });
     const user = { preferences: { sidebarMode: "dark" }, mcpServers: { other: { command: "npx", args: ["x"] } } };
     writeFileSync(file, JSON.stringify(user));
     const run = async (...args) => {
       const proc = Bun.spawn([process.execPath, join(root, "bin/aletheia.mjs"), "install", "claude-desktop", ...args], {
-        stdin: "ignore", stdout: "pipe", stderr: "pipe", cwd: root, env: { ...process.env, HOME: home, ALETHEIA_DATA_DIR: dataDir, ALETHEIA_HUB_DB: join(dataDir, "hub.db") },
+        stdin: "ignore", stdout: "pipe", stderr: "pipe", cwd: root, env: { ...process.env, HOME: home, USERPROFILE: home, APPDATA: appData, ALETHEIA_DATA_DIR: dataDir, ALETHEIA_HUB_DB: join(dataDir, "hub.db") },
       });
       const [stdout, exitCode] = await Promise.all([new Response(proc.stdout).text(), proc.exited]);
       return { stdout, exitCode };
     };
-    const backups = () => readdirSync(join(home, ".config/Claude")).filter((name) => name.includes(".aletheia-bak-"));
+    const backups = () => readdirSync(dirname(file)).filter((name) => name.includes(".aletheia-bak-"));
 
     const dry = await run();
     expect(dry.exitCode).toBe(0);

@@ -3,7 +3,7 @@
 // The gate is off by default until it has been measured; a file with no history is never gated.
 import { Database } from "bun:sqlite";
 import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
-import { isAbsolute, relative } from "node:path";
+import { isAbsolute, relative, resolve } from "node:path";
 import { wrapUntrusted } from "./untrusted.mjs";
 
 export const DEFAULT_GATE_BYTES = 32 * 1024;
@@ -161,6 +161,11 @@ export function fileOutline(store, { file, root, project }) {
   const stat = statSync(target);
   if (!stat.isFile()) throw new Error("file must be a regular file.");
   const body = readFileSync(target, "utf8").slice(0, OUTLINE_READ_BYTES);
-  const history = historyOf(store, { project, file: target });
+  // Memories record the path the tool used, which can differ from the real path through a symlink (macOS /var is
+  // /private/var), so look up both and keep each memory once.
+  const given = resolve(file.trim());
+  const seen = new Set();
+  const history = [...historyOf(store, { project, file: given }), ...(given === target ? [] : historyOf(store, { project, file: target }))]
+    .filter((item) => !seen.has(item.id) && seen.add(item.id));
   return outlineText({ file: target, bytes: stat.size, outline: outlineOf(body), history });
 }

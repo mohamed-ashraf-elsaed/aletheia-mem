@@ -171,6 +171,10 @@ export async function restoreBackup(file, { dataDir, dbPath, port, now = new Dat
     safetyCopy = `${dbPath}.pre-restore-${now.toISOString().replace(/[:.]/g, "-")}`;
     copyFileSync(dbPath, safetyCopy);
     secure(safetyCopy, 0o600);
+    // A copied WAL-mode file needs a -shm beside it to open read-only, which macOS refuses to create; switch the copy
+    // to rollback journal mode so it opens anywhere.
+    const copy = new Database(safetyCopy);
+    try { copy.exec("PRAGMA journal_mode = DELETE"); } finally { copy.close(); }
   }
 
   mkdirSync(dirname(dbPath), { recursive: true });
