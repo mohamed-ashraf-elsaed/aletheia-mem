@@ -5,7 +5,7 @@
 import { banner, copyText, iconButton, icon, popover, statusDot, toast } from "./ui-components.js";
 import { faviconHref } from "./ui-brand.js";
 import { healthView } from "./ui-core.js";
-import { h, state, swap } from "./ui-dom.js";
+import { api, authFetch, h, state, storedKey, swap } from "./ui-dom.js";
 import { enter, leave, shake } from "./ui-motion.js";
 import { nextPollDelay, updatedAgo } from "./ui-pure.js";
 import { bannerText, buildIndicators, frameKind, newErrors, overallState, recovered, retryDelaySeconds } from "./ui-status-model.js";
@@ -22,9 +22,34 @@ export function setFaviconState(kind, doc = globalThis.document) {
 
 /** A request that resolves { ok, status, data } for any HTTP answer and rejects only when the network fails. */
 export async function rawJson(path, fetchImpl = globalThis.fetch) {
-  const response = await fetchImpl(path, { headers: { Accept: "application/json" } });
+  const response = await authFetch(path, { headers: { Accept: "application/json" } }, fetchImpl);
   const data = await response.json().catch(() => ({}));
   return { ok: response.ok, status: response.status, data };
+}
+
+const LIVE_PROTOCOL = "aletheia.live";
+
+/**
+ * Open the /v1/live socket. With an API key stored, trade it for a one-time ticket first and offer the ticket as a
+ * subprotocol: a browser cannot set Authorization on a WebSocket, and the key must never go in the URL. The returned
+ * object takes the same on* handlers and close() as a WebSocket, so the controller does not see the difference.
+ */
+export function openLiveSocket(win, project, { ticket = () => api("/v1/live/ticket", { method: "POST", body: {} }) } = {}) {
+  const url = `${win.location.protocol === "https:" ? "wss" : "ws"}://${win.location.host}/v1/live${project ? `?project=${encodeURIComponent(project)}` : ""}`;
+  if (!storedKey()) return new win.WebSocket(url);
+  const proxy = { socket: null, closed: false, onopen: null, onmessage: null, onclose: null, onerror: null,
+    close() { this.closed = true; this.socket?.close?.(); } };
+  const ended = () => proxy.onclose?.({ code: 1006 });
+  Promise.resolve().then(ticket).then((issued) => {
+    if (proxy.closed) return ended();
+    const socket = new win.WebSocket(url, [LIVE_PROTOCOL, `aletheia.ticket.${issued.ticket}`]);
+    proxy.socket = socket;
+    socket.onopen = (event) => proxy.onopen?.(event);
+    socket.onmessage = (event) => proxy.onmessage?.(event);
+    socket.onclose = (event) => proxy.onclose?.(event);
+    socket.onerror = (event) => proxy.onerror?.(event);
+  }).catch(ended);
+  return proxy;
 }
 
 /**
@@ -263,7 +288,7 @@ export function mountStatus({ el, healthEl, bannerSlot = globalThis.document?.ge
     now: () => Date.now(),
     isHidden: () => doc.visibilityState === "hidden",
     project: getProject,
-    openSocket: typeof win.WebSocket === "function" ? (project) => new win.WebSocket(`${win.location.protocol === "https:" ? "wss" : "ws"}://${win.location.host}/v1/live${project ? `?project=${encodeURIComponent(project)}` : ""}`) : null,
+    openSocket: typeof win.WebSocket === "function" ? (project) => openLiveSocket(win, project) : null,
     timers: { set: (fn, ms) => win.setTimeout(fn, ms), clear: (id) => win.clearTimeout(id) },
     onConnection: showBanner,
     // Views that want to refresh when something changes listen for this event instead of opening their own socket.

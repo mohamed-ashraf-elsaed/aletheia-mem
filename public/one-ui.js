@@ -3,8 +3,8 @@
 // ./tabs/ loaded on first visit, so the shell stays small. Nothing here builds markup from strings.
 import { SUBVIEWS, TABS, isDemo, parseRoute, routeOf } from "./ui-core.js";
 import { brainMark } from "./ui-brand.js";
-import { banner, errorState, segmented, startClock, tabs, toast } from "./ui-components.js";
-import { byId, h, state, swap } from "./ui-dom.js";
+import { apiKeyDialog, banner, errorState, segmented, startClock, tabs, toast } from "./ui-components.js";
+import { api, byId, h, setKeyPrompt, state, swap } from "./ui-dom.js";
 import { installKeys, openPalette, openShortcuts } from "./ui-keys.js";
 import { enter, watchVisibility } from "./ui-motion.js";
 import { parseHash } from "./ui-pure.js";
@@ -34,7 +34,7 @@ function storeProject(value) {
 
 async function loadProjects() {
   try {
-    const data = await fetch("/api/hub/projects").then((response) => response.json());
+    const data = await api("/api/hub/projects");
     const select = byId("ui-project");
     const names = data.projects.map((project) => project.name);
     if (state.project && !names.includes(state.project)) state.project = "";
@@ -135,6 +135,8 @@ function boot() {
     document.documentElement.setAttribute("data-demo", "1");
   }
   state.project = storedProject();
+  // A server with ALETHEIA_API_KEY answers 401 with a Bearer challenge; the first one opens this dialog.
+  setKeyPrompt(apiKeyDialog);
   swap(byId("ui-brand-mark"), brainMark({ size: 30 }));
 
   nav = tabs({ label: "Sections", active: routeOf(globalThis.location.hash).tab, className: "ui-nav-tabs", items: TABS.map((tab) => ({ id: tab.id, label: tab.label, href: tab.hash, icon: tab.icon })) });

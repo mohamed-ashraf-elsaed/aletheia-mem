@@ -293,6 +293,28 @@ export function promptDialog({ title, label, value = "", confirmLabel = "Save", 
   return layer.result;
 }
 
+/**
+ * Ask for the server's API key (ALETHEIA_API_KEY). `retry` says the last key was refused. Resolves the trimmed key, or
+ * null when cancelled. The field is a password field; the caller keeps the key for this browser tab only.
+ */
+export function apiKeyDialog({ retry = false } = {}) {
+  const input = h("input", { type: "password", class: "ui-input", autocomplete: "off", spellcheck: "false", "aria-label": "API key", "aria-describedby": "ui-key-help" });
+  const submit = () => layer.close(input.value.trim() || null);
+  input.addEventListener("keydown", (event) => { if (event.key === "Enter") { event.preventDefault(); submit(); } });
+  const help = retry
+    ? "The server did not accept that key. Check the value of ALETHEIA_API_KEY and try again."
+    : "This server has ALETHEIA_API_KEY set, so every request that reads or changes memory needs the key. This tab keeps it until you close the tab.";
+  const layer = openLayer({
+    title: "Enter the API key",
+    body: [h("p", { id: "ui-key-help", class: "ui-layer-text" }, help), h("label", { class: "ui-field" }, h("span", { class: "ui-field-label" }, "API key"), input)],
+    actions: [button({ label: "Cancel", onClick: () => layer.close(null) }), button({ label: "Unlock", variant: "primary", onClick: submit })],
+    size: "sm",
+    closeOnBackdrop: false,
+    initialFocus: () => input,
+  });
+  return layer.result;
+}
+
 // ---- tabs, segmented control, toggle ---------------------------------------------------------------------
 
 /** Move a sliding indicator under the active item. It is a 1 px bar moved and stretched with transform only, so it stays on the GPU. */
