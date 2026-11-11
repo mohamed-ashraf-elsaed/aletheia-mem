@@ -1,6 +1,7 @@
 // Paged list queries for the UI. Each function takes the store and returns { rows or items, total } for one
 // page. Orders always end with a unique id so consecutive pages never overlap or skip a row. Nothing here writes.
 import { slicePage } from "./paging.mjs";
+import { expandQuery, timeFilter } from "./query.mjs";
 import { ruleStrength } from "./rule-suggest.mjs";
 
 const iso = (epoch) => (Number.isFinite(epoch) ? new Date(epoch).toISOString() : null);
@@ -166,6 +167,7 @@ const SEARCH_CAP = 300;
  * ranking pool was full, so more may exist than the total shows.
  */
 export function searchPage(hub, { query, project, kind, type, tool, scope = "current", includeHistory = false, asOf = null, since = null, until = null, order = "relevance", limit, offset, mix = false, queryVec = null } = {}) {
+  if (since == null && until == null) ({ since = null, until = null } = timeFilter(expandQuery(query)) ?? {});
   const inRange = (item) => {
     const at = Date.parse(item.at);
     return (!Number.isFinite(since) || at >= since) && (!Number.isFinite(until) || at <= until);

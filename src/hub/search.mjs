@@ -2,6 +2,7 @@
 // because a dense query needs an embedding call; when no runtime is present the same function answers from keyword
 // channels alone and says so in `channels`.
 import { RERANK_BUDGET_MS, RERANK_TOP_N, rerankCandidates, sharedReranker } from "./rerank.mjs";
+import { expandQuery, timeFilter } from "./query.mjs";
 import { rrf, topKByVector, unpackVector } from "./retrieval.mjs";
 
 export const FUSION = { factWeight: 1, episodeWeight: 0.9 };
@@ -122,7 +123,10 @@ export async function embedMissingFacts(store, embedder, { limit = 5000, batch =
  * term, vector only when a query vector was produced and at least one row has a vector. `explain` is part of every
  * result so a caller can state why a hit appeared.
  */
-export async function searchMemory({ store, query, project, limit = 20, scope = "current", includeHistory = false, asOf = null, embedder = null, rerank = false, reranker = null, rerankBudgetMs = RERANK_BUDGET_MS } = {}) {
+export async function searchMemory({ store, query, project, limit = 20, scope = "current", includeHistory = false, asOf = null, embedder = null, rerank = false, reranker = null, rerankBudgetMs = RERANK_BUDGET_MS, since = null, until = null } = {}) {
+  // A time expression in the query ("last week", "yesterday") narrows the range unless the caller gave one.
+  const parsed = since == null && until == null ? timeFilter(expandQuery(query)) : null;
+  if (parsed) ({ since, until } = parsed);
   let queryVec = null;
   if (embedder) {
     try {
@@ -134,8 +138,8 @@ export async function searchMemory({ store, query, project, limit = 20, scope = 
   const factVectors = queryVec ? factVectorRows(store).length : 0;
   const episodeVectors = queryVec ? store.vectorRows({ project, scope }).length : 0;
   const pool = rerank ? Math.max(Number(limit) || 20, RERANK_TOP_N) : limit; // rerank needs a pool to reorder, not only the page asked for
-  const facts = store.searchFacts({ query, project, limit: pool, includeHistory, asOf, queryVec, scope });
-  const episodes = store.ranked({ query, project, limit: pool, queryVec, includeHistory, scope });
+  const facts = store.searchFacts({ query, project, limit: pool, includeHistory, asOf, queryVec, scope, since, until });
+  const episodes = store.ranked({ query, project, limit: pool, queryVec, includeHistory, scope, since, until });
   const channels = {
     facts: { lexical: true, keys: true, vector: factVectors > 0 },
     episodes: { lexical: true, vector: episodeVectors > 0 },
@@ -150,6 +154,7 @@ export async function searchMemory({ store, query, project, limit = 20, scope = 
   if (includeHistory) channels.history = true;
   if (asOf != null) channels.asOf = asOf;
   if (scope === "all") channels.scope = "all";
+  if (parsed) channels.time = { since: parsed.since, until: parsed.until };
 
   const fused = rrf([
     facts.map((fact) => `fact:${fact.id}`),
@@ -212,6 +217,7 @@ export const formatChannels = (channels) => {
     const r = channels.rerank;
     parts.push(r.status === "on" ? `rerank=on (${r.model ?? "cross-encoder"}, top ${r.candidates}, ${r.ms} ms)` : `rerank=fallback (${r.reason})`);
   }
+  if (channels.time) parts.push(`time=${new Date(channels.time.since).toISOString().slice(0, 10)}..${channels.time.until == null ? "now" : new Date(channels.time.until).toISOString().slice(0, 10)}`);
   if (channels.history) parts.push("history=on");
   if (channels.scope) parts.push(`scope=${channels.scope}`);
   return `channels: ${parts.join("; ")}`;
