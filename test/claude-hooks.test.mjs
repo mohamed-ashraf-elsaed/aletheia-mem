@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { existsSync, readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { runHook } from "../src/hub/hooks/run.mjs";
-import { spoolPath, spoolRead } from "../src/hub/hooks/shared.mjs";
+import { compressionQueue, spoolPath, spoolRead } from "../src/hub/hooks/shared.mjs";
 import { HubStore } from "../src/hub/store.mjs";
 import { makeFixture } from "./fixture.mjs";
 
@@ -133,7 +133,7 @@ describe("Claude Code hooks", () => {
     expect(rows[0].narrative).not.toContain("ghp_abcdef");
     expect(rows[0].concepts).toEqual(expect.arrayContaining(["subagent", "Explore"]));
     expect(store.list({ project, kind: "summary" }).total).toBe(0);
-    expect(store.setting("compress.queue", [])).toEqual([]);
+    expect(compressionQueue(store)).toEqual([]);
     store.close();
     // Claude Code's own internal agents report an empty agent_type and no useful result.
     expect((await hook("claude-code", "SubagentStop", { ...payload, agent_type: "", last_assistant_message: "suggestion text here" }, config)).stored).toBe(false);
@@ -180,7 +180,7 @@ describe("Claude Code hooks", () => {
     const summary = store.list({ project, kind: "summary" }).items;
     expect(summary.length).toBe(1);
     expect(summary[0].narrative).toContain("retry button");
-    expect(store.setting("compress.queue", [])).toEqual([{ project, sessionId: "s1", at: expect.any(Number) }]);
+    expect(compressionQueue(store)).toEqual([{ project, sessionId: "s1", at: expect.any(Number) }]);
     store.close();
   });
 
@@ -229,7 +229,7 @@ describe("Claude Code hooks", () => {
     expect(events.length).toBe(1);
     expect(events[0]).toMatchObject({ tool: "command-code", title: "SHELL: ls -la" });
     expect(after.list({ project, kind: "prompt" }).total).toBe(0);
-    expect(after.setting("compress.queue", [])).toHaveLength(1);
+    expect(compressionQueue(after)).toHaveLength(1);
     after.close();
 
     const startup = await hook("command-code", "SessionStart", { hook_event_name: "SessionStart", source: "startup", cwd: proj, session_id: "cc" }, config);

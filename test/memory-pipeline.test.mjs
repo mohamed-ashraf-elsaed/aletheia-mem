@@ -2,6 +2,7 @@
 // worker with a fake provider, then prove facts carry sources and time, a later fact supersedes the earlier one,
 // history still returns it, and `aletheia search` finds a fact by a word only the extracted key contains.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { compressionQueue } from "../src/hub/hooks/shared.mjs";
 import { readFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
@@ -91,7 +92,7 @@ describe.skipIf(process.platform === "win32")("memory pipeline (needs a POSIX sh
     expect((await runShell(commands.Stop, event("Stop", { last_assistant_message: "The checkout retry service uses exponential backoff." }))).exitCode).toBe(0);
 
     let store = new HubStore(dbPath);
-    expect(store.setting("compress.queue", []).some((item) => item.sessionId === "pipeline-session")).toBe(true);
+    expect(compressionQueue(store).some((item) => item.sessionId === "pipeline-session")).toBe(true);
     const firstRun = await runWorker({ store, ask: Object.assign(fakeAsk, { modelFor: () => "fake-small" }), config: { ...config, factBudget: { maxEpisodes: 10, maxChars: 12_000 } }, batchSize: 10 });
     expect(firstRun.failed).toBe(0);
     expect(firstRun.processed).toBe(1);

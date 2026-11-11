@@ -7,8 +7,9 @@ import { buildProjectSummary, buildSessionSummary } from "./summaries.mjs";
 import { embedMissingFacts } from "./search.mjs";
 import { modelFor } from "../refresh/providers.mjs";
 import { pricesFrom } from "./usage.mjs";
+import { COMPRESS_JOB_TYPE } from "./hooks/shared.mjs";
 
-export const JOB_TYPE = "extract_session";
+export const JOB_TYPE = COMPRESS_JOB_TYPE;
 export const LEASE_MS = 60_000;
 export const MAX_ATTEMPTS = 5;
 export const MAX_MEMORIES_PER_JOB = 400;

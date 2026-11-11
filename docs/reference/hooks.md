@@ -22,6 +22,15 @@ The examples on this page were run on 2026-10-29 against version 0.1.10 in a tem
 
 A hook makes no network call and no model call. Compression only queues a job. A worker started by `aletheia-server` or `aletheia compress` runs it later.
 
+## Compression queue
+
+Each finished session becomes one row in the `jobs` table (type `extract_session`). The hook does one `UPDATE` and one `INSERT`, with no model call and no extraction code loaded.
+
+- No cap. Rows stay until a worker completes them, so a machine with no worker running for any number of sessions loses none. Older versions kept the last 200 in the `compress.queue` setting and dropped the rest; that setting is now only read to migrate entries those versions left behind.
+- A second Stop or SessionEnd for a session whose job is still pending refreshes that job and keeps its place. If the job already ran, the session gets a new job.
+- The worker claims jobs oldest first by row id. After a restart it recovers jobs whose lease expired, then drains the rest in the same order. Entries migrated from the old setting are added after jobs already queued.
+- `aletheia doctor` and `/v1/health` report `queue.pending`, `running`, `failed`, `dropped` and `oldestPendingEpoch`. `dropped` is always 0 because nothing is discarded.
+
 ## Verification status
 
 - MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0, OpenCode 1.18.33.
@@ -195,12 +204,12 @@ ok   verify cursor        verified: verified 2026-10-26 — Cursor docs fetched 
 ok   spool                empty
 ok   permissions          data dir 0700, db 0600
 ok   last capture         no capture yet
-ok   queue                0 pending, 0 running, 0 failed
+ok   queue                0 pending, 0 running, 0 failed, 0 dropped
 ```
 
 - `server` calls `/healthz` on `ALETHEIA_PORT`. It fails when the server is not running, which does not stop hooks from working.
 - `verify <tool>` says `verified` when a verification date is recorded and is under 180 days old. It is not proof that a real tool ran a hook. Read the text after the dash for what was checked.
-- `spool` fails when items wait. `permissions`, `database`, `fts`, `queue` and `last capture` report the store. `--json` prints the checks as JSON.
+- `spool` fails when items wait. `permissions`, `database`, `fts`, `queue` and `last capture` report the store. `queue` includes a `dropped` count, which stays 0. `--json` prints the checks as JSON.
 - The exit status is 1 when any line is `FAIL`.
 
 ## Verify, uninstall and the manifest
