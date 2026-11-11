@@ -1297,6 +1297,33 @@
             }
           }
         }
+      },
+      "post": {
+        "summary": "Add a rule",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "A rule.",
+                "properties": {
+                  "then": {},
+                  "when": {},
+                  "scopeTier": {},
+                  "scopeName": {},
+                  "tools": {},
+                  "evidence": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created: the new rule with `rule` (its description). 200 when it already existed."
+          }
+        }
       }
     },
     "/api/hub/rules/diff": {
@@ -1432,6 +1459,33 @@
                 }
               }
             }
+          }
+        }
+      },
+      "post": {
+        "summary": "Add a note from the Hub UI",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "A memory. The text is `narrative` or `text`; the kind is always `note`.",
+                "properties": {
+                  "text": {},
+                  "narrative": {},
+                  "project": {},
+                  "tool": {},
+                  "session_id": {},
+                  "sessionId": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created: {id, created, memory}. 200 when the memory already existed."
           }
         }
       }
@@ -1623,6 +1677,2047 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/hub/memories/{id}": {
+      "get": {
+        "summary": "One memory by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "memory id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The memory."
+          },
+          "404": {
+            "description": "{\"error\":\"No memory has that id.\"}"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update one memory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "memory id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Fields to change; passed to the store's update.",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated memory."
+          },
+          "404": {
+            "description": "No memory has that id."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete one memory",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "memory id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"deleted\":true}"
+          },
+          "404": {
+            "description": "No memory has that id."
+          }
+        }
+      }
+    },
+    "/api/hub/projects": {
+      "get": {
+        "summary": "Projects with their memory counts",
+        "responses": {
+          "200": {
+            "description": "{\"projects\": [...]}"
+          }
+        }
+      }
+    },
+    "/api/hub/projects/merge": {
+      "post": {
+        "summary": "Merge one project into another",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Merge request.",
+                "properties": {
+                  "from": {},
+                  "into": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The merge result."
+          }
+        }
+      }
+    },
+    "/api/hub/rules/{id}": {
+      "patch": {
+        "summary": "Update one rule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "rule id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Fields to change; passed to the rule store's update.",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated rule."
+          },
+          "404": {
+            "description": "That rule does not exist."
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete one rule",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "rule id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{\"deleted\":true}"
+          },
+          "404": {
+            "description": "That rule does not exist."
+          }
+        }
+      }
+    },
+    "/api/hub/rules/preview": {
+      "post": {
+        "summary": "Preview the rule files each tool would get",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Preview request.",
+                "properties": {
+                  "scope": {},
+                  "projectDir": {},
+                  "tools": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{results}: one entry per tool; nothing is written."
+          }
+        }
+      }
+    },
+    "/api/hub/rules/sync": {
+      "post": {
+        "summary": "Write the rule files for each tool",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Sync request. `confirm: true` is required.",
+                "properties": {
+                  "scope": {},
+                  "projectDir": {},
+                  "tools": {},
+                  "confirm": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{results}: one entry per tool, with `written` paths."
+          },
+          "400": {
+            "description": "confirm is not true."
+          }
+        }
+      }
+    },
+    "/api/hub/rules/import": {
+      "post": {
+        "summary": "Import rules from a file",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Either an absolute `path`, or `tool` with `scope` and `projectDir` to find the tool's file.",
+                "properties": {
+                  "path": {},
+                  "tool": {},
+                  "scope": {},
+                  "projectDir": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{found, added, skipped}."
+          },
+          "400": {
+            "description": "The path is not an absolute path to an existing file."
+          }
+        }
+      }
+    },
+    "/api/hub/tools/{id}/connect": {
+      "post": {
+        "summary": "Connect a tool to aletheia-mem (plan or apply)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "tool id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Without `apply` the response is only the plan. With `apply: true` and `confirm: true` the tool's config is written.",
+                "properties": {
+                  "apply": {},
+                  "confirm": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Without `apply`: {plan}. With `apply`: the write result and `tool`."
+          },
+          "400": {
+            "description": "apply is set but confirm is not true."
+          },
+          "404": {
+            "description": "Unknown tool."
+          }
+        }
+      }
+    },
+    "/api/hub/tools": {
+      "get": {
+        "summary": "Known tools and whether each is connected",
+        "responses": {
+          "200": {
+            "description": "{\"tools\": [...]}"
+          }
+        }
+      }
+    },
+    "/api/hub/overview": {
+      "get": {
+        "summary": "Hub overview: stats, projects, tools and the MCP command",
+        "responses": {
+          "200": {
+            "description": "{stats, projects, tools, claudeMem, dataDir, provider, apiKeyRequired, mcp}."
+          }
+        }
+      }
+    },
+    "/api/hub/settings": {
+      "get": {
+        "summary": "Hub settings",
+        "responses": {
+          "200": {
+            "description": "{settings}."
+          }
+        }
+      },
+      "put": {
+        "summary": "Save Hub settings",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Settings object.",
+                "properties": {}
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{settings, saved}."
+          },
+          "400": {
+            "description": "{error}: the settings did not validate."
+          }
+        }
+      }
+    },
+    "/api/hub/context": {
+      "get": {
+        "summary": "Context text for a project, not wrapped",
+        "parameters": [
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "description": "project key",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "memories, default 20",
+            "schema": {}
+          },
+          {
+            "name": "tool",
+            "in": "query",
+            "required": false,
+            "description": "tool name",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{context}: markdown text."
+          }
+        }
+      }
+    },
+    "/api/hub/doctor": {
+      "get": {
+        "summary": "Installer and health checks",
+        "responses": {
+          "200": {
+            "description": "The doctor report."
+          }
+        }
+      }
+    },
+    "/api/hub/export": {
+      "get": {
+        "summary": "Export the memory store",
+        "parameters": [
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "description": "project key",
+            "schema": {}
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "description": "`markdown` for markdown, otherwise a JSONL bundle",
+            "schema": {}
+          },
+          {
+            "name": "events",
+            "in": "query",
+            "required": false,
+            "description": "`1` to include raw events",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An attachment: JSONL (application/x-ndjson) or markdown (text/markdown)."
+          }
+        }
+      }
+    },
+    "/api/hub/import/bundle": {
+      "post": {
+        "summary": "Import an exported JSONL bundle",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Bundle text.",
+                "properties": {
+                  "bundle": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The import result."
+          },
+          "400": {
+            "description": "bundle is missing or empty."
+          }
+        }
+      }
+    },
+    "/api/hub/import/claude-mem": {
+      "post": {
+        "summary": "Import a claude-mem database (read only)",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Import options; `path` must be absolute and defaults to the configured claude-mem database.",
+                "properties": {
+                  "path": {},
+                  "includePrompts": {},
+                  "project": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The import result."
+          },
+          "400": {
+            "description": "path is not absolute."
+          }
+        }
+      }
+    },
+    "/api/hub/compress": {
+      "post": {
+        "summary": "Compress recent events into observations",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Compression options.",
+                "properties": {
+                  "project": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The compression result."
+          },
+          "409": {
+            "description": "No extraction provider is set."
+          }
+        }
+      }
+    },
+    "/api/hub/dismiss": {
+      "post": {
+        "summary": "Dismiss a memory, fact or other item (reversible)",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Dismiss request.",
+                "properties": {
+                  "id": {},
+                  "type": {},
+                  "reason": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The dismiss result."
+          },
+          "400": {
+            "description": "id is required."
+          }
+        }
+      }
+    },
+    "/api/hub/restore": {
+      "post": {
+        "summary": "Restore a dismissed item",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Restore request.",
+                "properties": {
+                  "id": {},
+                  "type": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The restore result."
+          },
+          "400": {
+            "description": "id is required."
+          }
+        }
+      }
+    },
+    "/api/hub/goals/{id}": {
+      "post": {
+        "summary": "Act on an owner goal",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "16 hex characters",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Goal action (pin or dismiss).",
+                "properties": {
+                  "action": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The goal action result."
+          },
+          "400": {
+            "description": "The action is not valid."
+          }
+        }
+      }
+    },
+    "/api/hub/review/pairs": {
+      "post": {
+        "summary": "Decide a near-duplicate pair",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Pair decision.",
+                "properties": {
+                  "a": {},
+                  "b": {},
+                  "action": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The merge result, or {action, key, dismissed} for distinct and restore."
+          },
+          "400": {
+            "description": "action must be merge, distinct or restore."
+          }
+        }
+      }
+    },
+    "/api/hub/review/{id}": {
+      "post": {
+        "summary": "Decide one review item",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "review item id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Review decision.",
+                "properties": {
+                  "action": {},
+                  "into": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{item}: the updated review item."
+          },
+          "404": {
+            "description": "That review item does not exist."
+          }
+        }
+      }
+    },
+    "/api/hub/mcp-links": {
+      "get": {
+        "summary": "List private MCP links (tokens without their secret)",
+        "responses": {
+          "200": {
+            "description": "{\"links\": [...]}"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a private MCP link",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Link options. `scope` is mcp (default), sync or admin.",
+                "properties": {
+                  "name": {},
+                  "scope": {},
+                  "projects": {},
+                  "url": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "{id, scope, projects, token, url, claudeCode, claudeDesktop}. The token is shown only here."
+          }
+        }
+      }
+    },
+    "/api/hub/mcp-links/revoke": {
+      "post": {
+        "summary": "Revoke a private MCP link",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Revoke request.",
+                "properties": {
+                  "id": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{revoked}."
+          }
+        }
+      }
+    },
+    "/api/hub/sync/pair": {
+      "post": {
+        "summary": "Create a sync pairing code",
+        "responses": {
+          "200": {
+            "description": "{code, url}."
+          }
+        }
+      }
+    },
+    "/api/hub/sync/revoke": {
+      "post": {
+        "summary": "Revoke a sync device",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Revoke request.",
+                "properties": {
+                  "device_id": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{revoked}."
+          },
+          "400": {
+            "description": "device_id is required."
+          }
+        }
+      }
+    },
+    "/api/login": {
+      "post": {
+        "summary": "Sign in to the Hub with the admin token (remote mode)",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Admin token.",
+                "properties": {
+                  "token": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{\"ok\":true}; sets the session and CSRF cookies."
+          },
+          "401": {
+            "description": "{\"error\":\"The admin token is not valid.\"}"
+          },
+          "429": {
+            "description": "Too many failed logins; a Retry-After header gives the wait."
+          }
+        }
+      }
+    },
+    "/api/logout": {
+      "post": {
+        "summary": "Sign out (remote mode)",
+        "responses": {
+          "200": {
+            "description": "{\"ok\":true}; clears the session and CSRF cookies."
+          },
+          "401": {
+            "description": "No session."
+          },
+          "403": {
+            "description": "CSRF token missing or wrong."
+          }
+        }
+      }
+    },
+    "/api/work-state": {
+      "get": {
+        "summary": "Work state (not served by this clone)",
+        "responses": {
+          "403": {
+            "description": "Refused by the local-only guard."
+          },
+          "501": {
+            "description": "Plain text: the clone does not read work state through this route. Use /api/work-view."
+          }
+        }
+      }
+    },
+    "/healthz": {
+      "get": {
+        "summary": "Health report for load balancers and scripts",
+        "responses": {
+          "200": {
+            "description": "The health report: `status` is `ok` or `error`."
+          },
+          "503": {
+            "description": "The health report when status is not ok."
+          }
+        }
+      }
+    },
+    "/mcp": {
+      "post": {
+        "summary": "MCP over Streamable HTTP: send one JSON-RPC message",
+        "parameters": [
+          {
+            "name": "Mcp-Session-Id",
+            "in": "header",
+            "required": false,
+            "description": "Session id returned by initialize.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "A JSON-RPC 2.0 message.",
+                "properties": {
+                  "jsonrpc": {},
+                  "id": {},
+                  "method": {},
+                  "params": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The JSON-RPC response."
+          },
+          "403": {
+            "description": "{\"error\":\"This origin is not allowed.\"}"
+          },
+          "405": {
+            "description": "Only POST and DELETE."
+          }
+        }
+      },
+      "get": {
+        "summary": "MCP stream (not offered)",
+        "responses": {
+          "405": {
+            "description": "Method Not Allowed: this server sends no server-initiated messages."
+          }
+        }
+      },
+      "delete": {
+        "summary": "End an MCP session",
+        "parameters": [
+          {
+            "name": "Mcp-Session-Id",
+            "in": "header",
+            "required": true,
+            "description": "Session to end.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{}"
+          },
+          "400": {
+            "description": "Mcp-Session-Id is required."
+          },
+          "404": {
+            "description": "Session not found."
+          }
+        }
+      }
+    },
+    "/v1/health": {
+      "get": {
+        "summary": "Health report for the v1 API",
+        "responses": {
+          "200": {
+            "description": "The health report plus `ok`."
+          },
+          "503": {
+            "description": "The health report plus `ok: false`."
+          }
+        }
+      }
+    },
+    "/v1/info": {
+      "get": {
+        "summary": "Name, version and store counts",
+        "responses": {
+          "200": {
+            "description": "{name, version, api, stats}."
+          }
+        }
+      }
+    },
+    "/v1/live": {
+      "get": {
+        "summary": "Live WebSocket for session and review events",
+        "parameters": [
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "description": "only events for this project key",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "101": {
+            "description": "WebSocket upgrade."
+          },
+          "400": {
+            "description": "WebSocket upgrade failed."
+          },
+          "401": {
+            "description": "A valid bearer key is required (when an API key is set)."
+          },
+          "403": {
+            "description": "This origin is not allowed."
+          }
+        }
+      }
+    },
+    "/v1/work": {
+      "get": {
+        "summary": "Work overview: sessions, facts and review",
+        "parameters": [
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "description": "project key",
+            "schema": {}
+          },
+          {
+            "name": "sessions",
+            "in": "query",
+            "required": false,
+            "description": "session limit",
+            "schema": {}
+          },
+          {
+            "name": "facts",
+            "in": "query",
+            "required": false,
+            "description": "fact limit",
+            "schema": {}
+          },
+          {
+            "name": "review",
+            "in": "query",
+            "required": false,
+            "description": "review limit",
+            "schema": {}
+          },
+          {
+            "name": "activeMinutes",
+            "in": "query",
+            "required": false,
+            "description": "activity window",
+            "schema": {}
+          },
+          {
+            "name": "windowHours",
+            "in": "query",
+            "required": false,
+            "description": "time window",
+            "schema": {}
+          },
+          {
+            "name": "dismissedHours",
+            "in": "query",
+            "required": false,
+            "description": "dismissed window",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The work overview plus `mode`."
+          }
+        }
+      }
+    },
+    "/v1/work/session/{id}": {
+      "get": {
+        "summary": "One session by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "session id (URL-encoded)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "description": "project key",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{session}."
+          },
+          "404": {
+            "description": "No session has that id."
+          }
+        }
+      }
+    },
+    "/v1/memories": {
+      "post": {
+        "summary": "Store one memory",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "A memory. The text is `narrative` or `text`; `tool` defaults to the X-Tool header or `api`.",
+                "properties": {
+                  "text": {},
+                  "narrative": {},
+                  "project": {},
+                  "kind": {},
+                  "tool": {},
+                  "session_id": {},
+                  "sessionId": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{id, created}: the memory already existed."
+          },
+          "201": {
+            "description": "{id, created}."
+          }
+        }
+      }
+    },
+    "/v1/memories/{id}": {
+      "get": {
+        "summary": "One memory by id",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "memory id",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The memory."
+          },
+          "404": {
+            "description": "No memory has that id."
+          }
+        }
+      }
+    },
+    "/v1/timeline": {
+      "post": {
+        "summary": "Memories around an anchor",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Timeline request.",
+                "properties": {
+                  "anchor": {},
+                  "query": {},
+                  "project": {},
+                  "before": {},
+                  "after": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The timeline result. `before` and `after` default to 5."
+          }
+        }
+      }
+    },
+    "/v1/observations/batch": {
+      "post": {
+        "summary": "Read several observations by id",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Batch request.",
+                "properties": {
+                  "ids": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{observations}."
+          },
+          "400": {
+            "description": "ids must be an array."
+          }
+        }
+      }
+    },
+    "/v1/facts": {
+      "get": {
+        "summary": "Facts about one subject",
+        "parameters": [
+          {
+            "name": "subject",
+            "in": "query",
+            "required": false,
+            "description": "required subject",
+            "schema": {}
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "description": "project key",
+            "schema": {}
+          },
+          {
+            "name": "predicate",
+            "in": "query",
+            "required": false,
+            "description": "predicate filter",
+            "schema": {}
+          },
+          {
+            "name": "history",
+            "in": "query",
+            "required": false,
+            "description": "`1` or `true` for all versions",
+            "schema": {}
+          },
+          {
+            "name": "include_superseded",
+            "in": "query",
+            "required": false,
+            "description": "same as history",
+            "schema": {}
+          },
+          {
+            "name": "as_of",
+            "in": "query",
+            "required": false,
+            "description": "ISO date or epoch ms: facts valid at that time",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{subject, project, predicate, asOf, history, total, reason, items}."
+          },
+          "400": {
+            "description": "subject is required, or as_of is not a date."
+          }
+        }
+      }
+    },
+    "/v1/context": {
+      "post": {
+        "summary": "Session context for a project, wrapped as untrusted memory",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Context request.",
+                "properties": {
+                  "project": {},
+                  "limit": {},
+                  "maxChars": {},
+                  "tool": {},
+                  "scope": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{context}: the text inside an <aletheia-memory> wrapper."
+          }
+        }
+      }
+    },
+    "/v1/events": {
+      "post": {
+        "summary": "Store one hook event",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "A hook payload. `payload` (or the body itself) is normalised; `cwd` or `payload.cwd` sets the project.",
+                "properties": {
+                  "project": {},
+                  "cwd": {},
+                  "tool": {},
+                  "payload": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{stored, id}: already stored."
+          },
+          "201": {
+            "description": "{stored: true, id}."
+          },
+          "400": {
+            "description": "{\"stored\":false,\"reason\":\"...\"} when the project is excluded or nothing is stored."
+          }
+        }
+      }
+    },
+    "/v1/audit/export": {
+      "get": {
+        "summary": "Export the audit log (admin token)",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "description": "epoch ms or ISO date",
+            "schema": {}
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "description": "epoch ms or ISO date",
+            "schema": {}
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "description": "`jsonl` (default) or `csv`",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "An attachment with the audit rows."
+          },
+          "400": {
+            "description": "from, to or format is not valid."
+          },
+          "401": {
+            "description": "A valid token is required."
+          }
+        }
+      }
+    },
+    "/v1/sync/join": {
+      "post": {
+        "summary": "Join with a pairing code",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Pairing request.",
+                "properties": {
+                  "code": {},
+                  "device_id": {},
+                  "name": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{token, device_id}."
+          },
+          "400": {
+            "description": "code and device_id are required."
+          },
+          "429": {
+            "description": "Too many pairing attempts; wait a minute."
+          }
+        }
+      }
+    },
+    "/v1/sync/push": {
+      "post": {
+        "summary": "Push local operations",
+        "parameters": [
+          {
+            "name": "X-Device-Id",
+            "in": "header",
+            "required": false,
+            "description": "Device id; defaults to the token's device.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Sync-Cursor",
+            "in": "header",
+            "required": false,
+            "description": "Last applied sequence number.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Operations to push.",
+                "properties": {
+                  "ops": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{results, head_seq, epoch}."
+          },
+          "400": {
+            "description": "ops must be an array."
+          },
+          "401": {
+            "description": "A sync or admin token is required."
+          },
+          "402": {
+            "description": "The token's quota is exhausted."
+          }
+        }
+      }
+    },
+    "/v1/sync/pull": {
+      "get": {
+        "summary": "Pull operations after a sequence number",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "description": "sequence number to start after, default 0",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "operations per page, default 500",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The pull result, including head_seq."
+          },
+          "401": {
+            "description": "A valid token is required."
+          }
+        }
+      }
+    },
+    "/v1/sync/status": {
+      "get": {
+        "summary": "Sync status",
+        "responses": {
+          "200": {
+            "description": "The status: head_seq, epoch, devices."
+          },
+          "401": {
+            "description": "A valid token is required."
+          }
+        }
+      }
+    },
+    "/v1/sync/e2ee": {
+      "get": {
+        "summary": "End-to-end encryption status and wrapped keys",
+        "responses": {
+          "200": {
+            "description": "{enabled, currentKid}."
+          },
+          "401": {
+            "description": "A valid token is required."
+          }
+        }
+      }
+    },
+    "/v1/sync/snapshot": {
+      "get": {
+        "summary": "Account snapshot for a new device",
+        "responses": {
+          "200": {
+            "description": "The snapshot."
+          },
+          "401": {
+            "description": "A valid token is required."
+          }
+        }
+      }
+    },
+    "/v1/sync/devices": {
+      "get": {
+        "summary": "List devices (admin token)",
+        "responses": {
+          "200": {
+            "description": "{devices}."
+          },
+          "401": {
+            "description": "An admin token is required."
+          }
+        }
+      }
+    },
+    "/v1/sync/revoke": {
+      "post": {
+        "summary": "Revoke a device (admin token)",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Revoke request.",
+                "properties": {
+                  "device_id": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "{revoked}."
+          },
+          "400": {
+            "description": "device_id is required."
+          }
+        }
+      }
+    },
+    "/v1/sync/tokens": {
+      "get": {
+        "summary": "List tokens (admin token)",
+        "responses": {
+          "200": {
+            "description": "{tokens}."
+          },
+          "401": {
+            "description": "An admin token is required."
+          }
+        }
+      },
+      "post": {
+        "summary": "Mint a token (admin token)",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Token options. `scope` defaults to sync.",
+                "properties": {
+                  "scope": {},
+                  "device_id": {},
+                  "name": {},
+                  "projects": {},
+                  "ops_per_day": {},
+                  "bytes_per_day": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "{id, token, scope, device_id, projects}. The token is shown only here."
+          }
+        }
+      }
+    },
+    "/v1/sync/audit": {
+      "get": {
+        "summary": "Sync audit log (admin token)",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "rows, default 100",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{audit}."
+          },
+          "401": {
+            "description": "An admin token is required."
+          }
+        }
+      }
+    },
+    "/v1/sync/compact": {
+      "post": {
+        "summary": "Compact the operation log (admin token)",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Compact options.",
+                "properties": {
+                  "retention_ms": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The compaction result."
+          },
+          "401": {
+            "description": "An admin token is required."
+          }
+        }
+      }
+    },
+    "/v1/sync/purge": {
+      "post": {
+        "summary": "Purge one entity (admin token)",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Purge request.",
+                "properties": {
+                  "entity_id": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The purge result."
+          },
+          "400": {
+            "description": "entity_id is required."
+          }
+        }
+      }
+    },
+    "/v1/team": {
+      "get": {
+        "summary": "List teams",
+        "responses": {
+          "200": {
+            "description": "{teams}."
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a team",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Team.",
+                "properties": {
+                  "name": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new team."
+          },
+          "400": {
+            "description": "name is required."
+          }
+        }
+      }
+    },
+    "/v1/team/projects": {
+      "get": {
+        "summary": "Projects in a team",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "query",
+            "required": false,
+            "description": "team id (or in the body)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{projects}."
+          }
+        }
+      },
+      "post": {
+        "summary": "Add a project to a team",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Project.",
+                "properties": {
+                  "team_id": {},
+                  "project": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The updated project list."
+          },
+          "400": {
+            "description": "project is required."
+          }
+        }
+      }
+    },
+    "/v1/team/members": {
+      "get": {
+        "summary": "Members of a team",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "query",
+            "required": false,
+            "description": "team id (or in the body)",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{members}."
+          }
+        }
+      },
+      "post": {
+        "summary": "Add a member to a team",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Member. Without `token_id` a sync token is minted (needs the sync store).",
+                "properties": {
+                  "team_id": {},
+                  "name": {},
+                  "role": {},
+                  "projects": {},
+                  "project": {},
+                  "token_id": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "{member, token}. `token` is set only when one was minted here."
+          },
+          "400": {
+            "description": "name is required, or no token_id and no sync store."
+          }
+        }
+      }
+    },
+    "/v1/team/members/revoke": {
+      "post": {
+        "summary": "Revoke a member; their device token stops working",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Revoke request.",
+                "properties": {
+                  "team_id": {},
+                  "member_id": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The revoked member."
+          },
+          "400": {
+            "description": "member_id is required."
+          }
+        }
+      }
+    },
+    "/v1/team/shares": {
+      "post": {
+        "summary": "Set which projects a member can see",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Share request.",
+                "properties": {
+                  "team_id": {},
+                  "member_id": {},
+                  "projects": {},
+                  "project": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The updated shares."
+          },
+          "400": {
+            "description": "member_id is required."
+          }
+        }
+      }
+    },
+    "/v1/team/board": {
+      "get": {
+        "summary": "Team board entries",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "query",
+            "required": false,
+            "description": "team id (or in the body)",
+            "schema": {}
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "description": "project filter",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{entries}."
+          }
+        }
+      },
+      "post": {
+        "summary": "Pin or record a decision on the board",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Board entry. `kind` is pin or decision.",
+                "properties": {
+                  "team_id": {},
+                  "kind": {},
+                  "text": {},
+                  "project": {},
+                  "source_type": {},
+                  "source_id": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new entry."
+          },
+          "400": {
+            "description": "kind, text or project is not valid."
+          }
+        }
+      }
+    },
+    "/v1/team/memory": {
+      "post": {
+        "summary": "Add a team memory",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Team memory.",
+                "properties": {
+                  "team_id": {},
+                  "project": {},
+                  "text": {},
+                  "kind": {},
+                  "title": {},
+                  "source_type": {},
+                  "source_id": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The new entry."
+          },
+          "400": {
+            "description": "project or text is required."
+          }
+        }
+      }
+    },
+    "/v1/team/brief": {
+      "get": {
+        "summary": "Team brief for a project",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "query",
+            "required": false,
+            "description": "team id (or in the body)",
+            "schema": {}
+          },
+          {
+            "name": "project",
+            "in": "query",
+            "required": false,
+            "description": "required project",
+            "schema": {}
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "look-back in days",
+            "schema": {}
+          },
+          {
+            "name": "maxChars",
+            "in": "query",
+            "required": false,
+            "description": "size limit",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The brief."
+          },
+          "400": {
+            "description": "project is required."
+          }
+        }
+      }
+    },
+    "/v1/team/search": {
+      "post": {
+        "summary": "Search team memory",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Search request.",
+                "properties": {
+                  "team_id": {},
+                  "query": {},
+                  "project": {},
+                  "limit": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The search result."
+          },
+          "400": {
+            "description": "query is required."
+          }
+        }
+      }
+    },
+    "/v1/team/leave": {
+      "post": {
+        "summary": "Leave a team; this token stops working",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "Leave request.",
+                "properties": {
+                  "team_id": {}
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The result of leaving."
+          }
+        }
+      }
+    },
+    "/v1/team/audit": {
+      "get": {
+        "summary": "Team audit log (manage permission)",
+        "parameters": [
+          {
+            "name": "team_id",
+            "in": "query",
+            "required": false,
+            "description": "team id (or in the body)",
+            "schema": {}
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "rows, default 100",
+            "schema": {}
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "{audit}."
           }
         }
       }
