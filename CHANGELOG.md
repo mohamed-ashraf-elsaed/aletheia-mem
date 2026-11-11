@@ -6,6 +6,8 @@ history.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-12
+
 ### Security
 
 - Remote mode (a non-loopback bind) served `/v1/*`, the `/v1/live` socket and `/mcp` to anyone who could reach the port when `ALETHEIA_API_KEY` was not set; the login covered only `/` and `/api/*`. In remote mode `/v1` now needs a login session or the key, `/mcp` needs the key, and the server warns at startup when no key is set. Loopback installs, the default, were not affected.
