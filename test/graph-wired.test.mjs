@@ -1,4 +1,4 @@
-// T-241: the graph channel is wired into search. The dashboard setting turns it on, storing a fact writes the
+// The graph channel is wired into search. The dashboard setting turns it on, storing a fact writes the
 // memory-to-entity edge the walk reads, and `aletheia entities` / GET /v1/entities list the entity ids.
 import { afterAll, describe, expect, test } from "bun:test";
 import { join } from "node:path";

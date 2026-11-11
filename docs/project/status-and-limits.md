@@ -58,7 +58,7 @@ In those sessions prompts and tool events were captured, secrets were redacted a
 - Sync and end-to-end encryption are tested with temporary data directories and a loopback hub. No real tunnel and no second host were used. See [Sync](../29-sync.md).
 - End-to-end encryption covers payloads, not metadata such as device id, operation kind, entity id, timing or ciphertext size.
 - Remote MCP delegates TLS to a reverse proxy or tunnel. OAuth is not built. See [Remote MCP](../30-remote-mcp.md).
-- The graph retrieval channel is off by default. It was tested on a synthetic set and not on real data.
+- The graph retrieval channel is off by default. Turn it on with the `graph.enabled` setting (dashboard Settings). When on, `ranked()` adds a list of memories that share an entity with the top keyword hits. Edges are written when facts are stored, from the memory the fact's episode came from. On a synthetic set of 200 seed/answer pairs, Recall@5 went from 0.0% to 100.0% (`bun bench/graph-recall.mjs`). The synthetic gate (`bun bench/gate.mjs`) has no entity edges, so its Recall@5 stays at 0.9000 with the setting on or off, and p95 rose by a few ms with it on on a busy machine. It has not been measured on real data, so it stays off by default. Find entity ids with `aletheia entities`.
 - The ten README translations are machine-translated. No native speaker has reviewed them.
 - At 50,000 synthetic rows, keyword search p95 is 32.7 ms for one project and 58.6 ms across all projects. These numbers are synthetic and come from one Linux machine.
 
