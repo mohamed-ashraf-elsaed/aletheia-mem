@@ -6,9 +6,12 @@ import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
 
 const root = join(import.meta.dir, "..", "bench", "results");
+const isRun = (path) => { try { return Boolean(JSON.parse(readFileSync(path, "utf8")).results); } catch { return false; } };
+const hasRuns = (dir) => readdirSync(dir).some((name) => name.endsWith(".json") && isRun(join(dir, name)));
+const dateDirs = () => (existsSync(root) ? readdirSync(root).filter((name) => statSync(join(root, name)).isDirectory()).sort() : []);
+// The newest dated folder that holds Aletheia runs; a folder with only a claude-mem baseline file does not count.
 const latest = () => {
-  if (!existsSync(root)) return null;
-  const dirs = readdirSync(root).filter((name) => statSync(join(root, name)).isDirectory()).sort();
+  const dirs = dateDirs().filter((name) => hasRuns(join(root, name)));
   return dirs.at(-1) ? join(root, dirs.at(-1)) : null;
 };
 const dir = process.argv[2] ?? latest();
@@ -18,15 +21,12 @@ if (!dir || !existsSync(dir)) {
 }
 
 const files = readdirSync(dir).filter((name) => name.endsWith(".json")).sort();
-if (!files.length) {
+if (!files.some((name) => isRun(join(dir, name)))) {
   console.error(`No .json result files in ${dir}.`);
   process.exit(1);
 }
 
-const runs = files.map((file) => {
-  const doc = JSON.parse(readFileSync(join(dir, file), "utf8"));
-  return { file, ...doc };
-});
+const runs = files.map((file) => ({ file, ...JSON.parse(readFileSync(join(dir, file), "utf8")) })).filter((run) => run.results);
 
 const pct = (value) => (typeof value === "number" ? `${(value * 100).toFixed(1)}%` : "n/a");
 const ratio = (result, count, key) => (result && count ? (result[key] ?? 0) / count : null);
@@ -83,4 +83,15 @@ if (ruleRun) {
   const n = facts?.n ?? ruleRun.questions;
   console.log("");
   console.log(`Our rule extractor: hybrid ${pct(ratio(hybrid, n, "R@5"))} -> hybrid+facts ${pct(ratio(facts, n, "R@5"))} (${ruleRun.questions} questions).`);
+}
+
+// claude-mem baselines written by bench/claude-mem-baseline.mjs: top-level counters, one file per version and date.
+const baselines = dateDirs().flatMap((day) => readdirSync(join(root, day)).filter((name) => /^claude-mem-.*\.json$/.test(name)).map((name) => ({ day, name, doc: JSON.parse(readFileSync(join(root, day, name), "utf8")) }))).filter((b) => b.doc.n && !b.doc.results);
+if (baselines.length) {
+  console.log("");
+  console.log("| claude-mem baseline | n | R@1 | R@3 | R@5 | R@10 | MRR | ms/q | empty |");
+  console.log("|---|---:|---:|---:|---:|---:|---:|---:|---:|");
+  for (const { day, name, doc } of baselines) {
+    console.log(`| ${day}/${name} | ${doc.n} | ${pct(doc["R@1"] / doc.n)} | ${pct(doc["R@3"] / doc.n)} | ${pct(doc["R@5"] / doc.n)} | ${pct(doc["R@10"] / doc.n)} | ${(doc.mrr / doc.n).toFixed(3)} | ${(doc.ms / doc.n).toFixed(0)} | ${doc.empty} |`);
+  }
 }

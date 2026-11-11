@@ -117,12 +117,13 @@ _Generated from src/hub/install.mjs via `aletheia install --list`. A row says MC
 
 ## Measured numbers
 
-On LoCoMo, claude-mem 15.2.0 as shipped vs this project. **These are retrieval numbers, not answer accuracy.**
+On LoCoMo, claude-mem (15.2.0 and 15.17.0, as shipped) vs this project. **These are retrieval numbers, not answer accuracy.**
 
 <!-- gen:bench -->
 | Run | Questions | Recall@5 | MRR | ms/query |
 |---|---|---|---|---|
 | claude-mem 15.2.0 (as shipped), raw turns — measured-by-us | 1,536 | 36.0% | 0.285 | p50 1,699 ms, p95 2,824 ms (idle, 40 queries) |
+| claude-mem 15.17.0 (as shipped), raw turns — measured-by-us | 1,536 | 43.5% | 0.377 | mean 1,079 ms (HTTP) |
 | Raw turns, all 10 conversations | 1,536 | 57.4% | 0.497 | 3.72 |
 | Dataset facts, all 10 | 1,536 | 64.8% | 0.591 | 5.53 |
 | Dataset facts, 3 conversations | 383 | 67.4% | 0.620 | 5.80 |
@@ -130,7 +131,7 @@ On LoCoMo, claude-mem 15.2.0 as shipped vs this project. **These are retrieval n
 | Dataset facts, all 10, + rerank | 1,536 | 72.3% | 0.680 | 646.19 |
 | Our rule-extracted facts, all 10 | 1,536 | 57.7% | 0.492 | 4.94 |
 
-_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
+_Retrieval only: Recall@5 asks whether the gold evidence is in the top five results. It is not answer accuracy. Every row is measured-by-us on the same LoCoMo questions; no vendor-claimed benchmark number is in this table. Generated from bench/results/2026-10-26/ (bench/claude-mem-baseline.mjs, bench/results/2026-11-11/claude-mem-15.17.0.json, raw-turns.json (hybrid), dataset-facts.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts), dataset-facts-3-rerank.json (hybrid+facts+rerank), dataset-facts-rerank.json (hybrid+facts+rerank), our-facts-rules.json (hybrid+facts)); re-run with `bun scripts/compare-bench.mjs`._
 <!-- /gen:bench -->
 
 Read the table this way:
