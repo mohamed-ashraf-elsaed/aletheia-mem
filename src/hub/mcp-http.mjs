@@ -33,6 +33,7 @@ const json = (body, status = 200, headers = {}) =>
  * - path: the endpoint path; other paths return null so the caller's own routing answers.
  * - authorize(request): returns { token, projects } or { status, error }. Omit for no auth.
  * - toolAllowed(token, name): false denies one tool (used for scope-limited tokens).
+ * - team(token): returns { store, accountId, tokenId, operator } for the team tools, or null when the token has no team.
  * - allowedOrigins(origin): origin allow-list; defaults to loopback only.
  * - onCall({ token, tool, project, ok }): per tools/call audit hook. No payloads pass through it.
  * - rateLimit({ request, token, projects }): return { status, error, retryAfter } to refuse, or null.
@@ -43,6 +44,7 @@ export function createMcpHttpHandler({
   path = "/mcp",
   authorize = null,
   toolAllowed = null,
+  team = null,
   allowedOrigins = loopbackOriginsOnly,
   onCall = null,
   rateLimit = null,
@@ -133,13 +135,13 @@ export function createMcpHttpHandler({
     const hasInit = messages.some(isInitialize);
     let ctx;
     if (hasInit) {
-      ctx = { store, tool: null, cwd: null, token, projects };
+      ctx = { store, tool: null, cwd: null, token, projects, team: team ? team(token) : null };
     } else {
       const id = request.headers.get("mcp-session-id");
       if (!id) return json({ error: "Mcp-Session-Id is required before initialization." }, 400);
       const session = sessions.get(id);
       if (!session) return json({ error: "Session not found." }, 404);
-      ctx = { ...session.ctx, token, projects };
+      ctx = { ...session.ctx, token, projects, team: team ? team(token) : null };
     }
 
     const responses = messages.map((msg) => processOne(msg, ctx)).filter((response) => response !== null && response !== undefined);
