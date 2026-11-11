@@ -1,4 +1,4 @@
-// T-265: the low findings of the 2026-11-11 review of remote mode. One group per item.
+// Server hardening: the low findings of the 2026-11-11 review of remote mode. One group per item.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { createConnection } from "node:net";
