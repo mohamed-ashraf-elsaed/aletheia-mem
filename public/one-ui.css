@@ -303,6 +303,19 @@ a.ui-home-row-title:hover { text-decoration: underline; color: var(--ui-accent);
 .ui-lang { flex: 0 1 auto; max-width: 150px; }
 .ui-i18n-note { margin: 0; padding: var(--ui-space-3) var(--ui-space-4); text-align: center; border-top: 1px solid var(--ui-border); }
 @media (max-width: 960px) {
-  .ui-lang { order: 3; max-width: 120px; }
+  .ui-lang { order: 3; flex: 0 1 92px; min-width: 0; padding-inline: 6px; font-size: var(--ui-text-sm); text-overflow: ellipsis; }
   .ui-i18n-note { padding-inline: var(--ui-space-3); }
+}
+@media (max-width: 420px) {
+  /* The brand mark alone leaves room for the language switch and the theme switch on one row. */
+  .ui-brand-word { display: none; }
+}
+
+/* A narrow screen scrolls the tab row and the status row inside themselves, so the page never gets wider than the
+   screen (a wider page would clip the start of the line in a right-to-left language). */
+@media (max-width: 960px) {
+  .ui-nav { flex: 1 1 100%; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .ui-nav::-webkit-scrollbar { display: none; }
+  .ui-nav .ui-tab { white-space: nowrap; flex: 1 0 auto; }
+  .ui-statusbar { overflow-x: auto; max-width: 100vw; }
 }
