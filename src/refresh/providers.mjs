@@ -8,6 +8,20 @@
 //   fake        : test-only canned answers, no network
 import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
+import { redact } from "../hub/redact.mjs";
+
+/**
+ * The one choke point for text that leaves the machine. Every provider built here redacts its prompt first, and
+ * `<private>` blocks are dropped. A provider written elsewhere (a test double, a caller's own function) goes through
+ * guardProvider, which wraps it the same way and keeps its `kind` and `modelFor`.
+ */
+export function guardProvider(ask) {
+  if (typeof ask !== "function" || ask.redacts) return ask;
+  const guarded = (prompt, options) => ask(redact(String(prompt ?? "")), options);
+  for (const key of Object.keys(ask)) guarded[key] = ask[key];
+  guarded.redacts = true;
+  return guarded;
+}
 
 /** Model per stage. Extraction uses the small model; summaries use the larger one. */
 export const STAGE_MODELS = {
@@ -68,7 +82,8 @@ function run(command, args, { input, cwd, env, timeoutMs }) {
 }
 
 export function claudeCliProvider({ bin = "claude", cwd = process.cwd(), timeoutMs = 5 * 60_000, models = null } = {}) {
-  const ask = async (prompt, { stage } = {}) => {
+  const ask = async (rawPrompt, { stage } = {}) => {
+    const prompt = redact(String(rawPrompt ?? ""));
     const model = models?.[stage] || STAGE_MODELS["claude-cli"][stage];
     const args = ["-p", "--output-format", "json", "--no-session-persistence", "--tools", "", "--setting-sources", "", ...(model ? ["--model", model] : [])];
     // CLAUDE_MEM_INTERNAL=1 tells claude-mem's hooks not to record this run as user work.
@@ -84,13 +99,15 @@ export function claudeCliProvider({ bin = "claude", cwd = process.cwd(), timeout
     if (parsed.is_error || parsed.subtype !== "success") throw new Error(`Claude run failed (${parsed.subtype ?? "error"}): ${String(parsed.result ?? "").slice(0, 300)}`);
     return String(parsed.result ?? "");
   };
+  ask.redacts = true;
   ask.kind = "claude-cli";
   ask.modelFor = (stage) => models?.[stage] || STAGE_MODELS["claude-cli"][stage] || null;
   return ask;
 }
 
 export function openAiProvider({ url, apiKey = "", model = "", models = null, fetchImpl = fetch, timeoutMs = 5 * 60_000, provider = "openai", jsonMode = true } = {}) {
-  const ask = async (prompt, { stage } = {}) => {
+  const ask = async (rawPrompt, { stage } = {}) => {
+    const prompt = redact(String(rawPrompt ?? ""));
     const chosen = models?.[stage] || model;
     if (!chosen) throw new Error(`${provider}: no model configured for stage "${stage ?? "default"}".`);
     const headers = { "Content-Type": "application/json" };
@@ -110,6 +127,7 @@ export function openAiProvider({ url, apiKey = "", model = "", models = null, fe
     if (!text.trim()) throw new Error(`${provider}: no answer text (finish: ${body.choices?.[0]?.finish_reason || "unknown"}).`);
     return text;
   };
+  ask.redacts = true;
   ask.kind = provider;
   ask.modelFor = (stage) => models?.[stage] || model || null;
   return ask;
@@ -142,11 +160,13 @@ export function fakeProvider({ response = null, responses = null, file = null, d
     if (process.env.ALETHEIA_FAKE_RESPONSE) return process.env.ALETHEIA_FAKE_RESPONSE;
     throw new Error("fake provider has no response configured (ALETHEIA_FAKE_RESPONSE or ALETHEIA_FAKE_FILE).");
   };
-  const ask = async (prompt, { stage } = {}) => {
+  const ask = async (rawPrompt, { stage } = {}) => {
+    const prompt = redact(String(rawPrompt ?? ""));
     const wait = Number(delayMs) || Number(process.env.ALETHEIA_FAKE_DELAY_MS) || 0;
     if (wait > 0) await new Promise((resolve) => setTimeout(resolve, wait));
     return pick(prompt, stage);
   };
+  ask.redacts = true;
   ask.kind = "fake";
   ask.modelFor = () => "fake-model";
   return ask;
@@ -183,7 +203,8 @@ export function createFallbackProvider({ specs = [], timeoutMs = 5 * 60_000, max
       : openAiProvider({ url: spec.url, apiKey: spec.apiKey ?? "", models: spec.models, provider: spec.name, jsonMode: spec.kind !== "local", fetchImpl, timeoutMs: spec.timeoutMs ?? timeoutMs }),
   );
   const available = () => specs.map((_, i) => i).filter((i) => (failedUntil.get(i) ?? 0) <= now());
-  const ask = async (prompt, { stage } = {}) => {
+  const ask = async (rawPrompt, { stage } = {}) => {
+    const prompt = redact(String(rawPrompt ?? ""));
     const order = available();
     if (!order.length) throw new Error(`Every provider is cooling down after a quota or service error (${[...failures.keys()].map((i) => specs[i].name).join(", ")}).`);
     const errors = [];
@@ -210,6 +231,7 @@ export function createFallbackProvider({ specs = [], timeoutMs = 5 * 60_000, max
     ask.lastError = errors;
     throw new Error(`All providers failed: ${errors.join("; ")}`);
   };
+  ask.redacts = true;
   ask.kind = "chain";
   ask.modelFor = (stage) => asks[0]?.modelFor?.(stage) ?? specs[0]?.models?.[stage] ?? null;
   ask.providers = () => specs.map((spec) => ({ name: spec.name, kind: spec.kind, url: spec.url ?? null, model: spec.models?.["extract"] ?? null, coolingDown: (failedUntil.get(specs.indexOf(spec)) ?? 0) > now() }));

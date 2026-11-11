@@ -3,6 +3,7 @@
 // humanCopy.state = "unavailable" and the UI shows the raw request text. Port of human-copy(.worker).mjs.
 import { mkdir, readFile, rename, writeFile, appendFile } from "node:fs/promises";
 import { dirname, join } from "node:path";
+import { redactDeep } from "./hub/redact.mjs";
 import { sha256 } from "./lib/util.mjs";
 
 const INPUT_BUDGET_CHARS = 18_000;
@@ -149,7 +150,7 @@ export function openAiCompatibleProvider({ url, apiKey, model, fetchImpl = fetch
       body: JSON.stringify({
         model, stream: false, temperature: 0.15, max_tokens: 5000,
         response_format: { type: "json_object" },
-        messages: [{ role: "system", content: `${SYSTEM_PROMPT}\n${STYLE_PROMPT}` }, { role: "user", content: JSON.stringify(input) }],
+        messages: [{ role: "system", content: `${SYSTEM_PROMPT}\n${STYLE_PROMPT}` }, { role: "user", content: JSON.stringify(redactDeep(input)) }],
       }),
     });
     if (!res.ok) throw new Error(`Summary request returned ${res.status}.`);
@@ -278,7 +279,7 @@ export class HumanCopy {
     this.lastAttempt.set(job.id, this.now());
     try {
       if (typeof this.provider !== "function") throw new Error("No summary provider is configured.");
-      const result = await this.provider(job.input);
+      const result = await this.provider(redactDeep(job.input));
       if (this.cachePath) {
         await mkdir(dirname(this.cachePath), { recursive: true });
         await appendFile(join(dirname(this.cachePath), "human-copy-usage.jsonl"), `${JSON.stringify({ at: this.now(), requestId: job.id, fingerprint: job.fingerprint, model: result.model ?? null, usage: result.usage ?? null })}\n`, { mode: 0o600 });

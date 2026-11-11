@@ -2,6 +2,7 @@
 // Raw capture is cheap and noisy; this is the step that makes memory worth reading. Optional, explicit, and
 // provider-agnostic (the same providers as the refresh).
 import { extractJson } from "../refresh/orchestrator.mjs";
+import { guardProvider } from "../refresh/providers.mjs";
 
 const OBSERVATION_TYPES = ["bugfix", "feature", "refactor", "change", "discovery", "decision", "gotcha"];
 
@@ -32,7 +33,8 @@ export function validateObservations(answer) {
  * Compress events of `project` newer than the last compression watermark. Returns {read, added, watermark}.
  * ask: async (prompt, {stage}) => text
  */
-export async function compressRecent(store, ask, { project, maxEvents = 120 } = {}) {
+export async function compressRecent(store, rawAsk, { project, maxEvents = 120 } = {}) {
+  const ask = guardProvider(rawAsk);
   const key = `compress.watermark.${project ?? "*"}`;
   const watermark = store.setting(key, 0);
   const rows = store.db

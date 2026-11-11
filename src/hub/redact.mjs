@@ -30,3 +30,11 @@ export function redact(text) {
   for (const [re, sub] of REDACTIONS) out = out.replace(re, sub);
   return out;
 }
+
+/** Redact every string inside a JSON-like value (object keys are kept). Used for structured model input. */
+export function redactDeep(value) {
+  if (typeof value === "string") return redact(value);
+  if (Array.isArray(value)) return value.map(redactDeep);
+  if (value && typeof value === "object") return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, redactDeep(item)]));
+  return value;
+}
