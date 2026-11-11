@@ -14,7 +14,7 @@ export const MANIFEST_FILE = "install-manifest.json";
 export const MANIFEST_VERSION = 2;
 export const HOOK_MARKER = "aletheia-managed";
 export const SERVER_NAME = "aletheia";
-export const CAPABILITIES = ["full", "mcp+rules", "rules-only"];
+export const CAPABILITIES = ["full", "capture-only", "mcp+rules", "rules-only"];
 export const VERIFICATION = ["tested-on-real-install", "from-docs-only", "mcp-verified"];
 
 const quote = (value) => (/^[A-Za-z0-9_./:@%+=-]+$/.test(value) ? value : `'${String(value).replace(/'/g, `'\\''`)}'`);
@@ -214,24 +214,35 @@ function planRules({ tool, home, rules }) {
 
 const claudeEvents = { SessionStart: "startup|clear|compact", UserPromptSubmit: null, PreToolUse: "Read", PostToolUse: "*", PostToolUseFailure: "*", Stop: null, SubagentStop: null, SessionEnd: null };
 
+/**
+ * Two facts, not one label. capture: the host has at least one hook event that records activity. context: one of
+ * those events (contextEvent) lets the hook inject memory. `capabilities` is derived from them, so it cannot claim
+ * context that the hooks do not inject.
+ */
 function defineInstaller(spec) {
-  const capabilities = spec.capabilities ?? "full";
   const verification = spec.verification ?? "from-docs-only";
-  if (!CAPABILITIES.includes(capabilities)) throw new RangeError(`Unknown capability: ${capabilities}`);
   if (!VERIFICATION.includes(verification)) throw new RangeError(`Unknown verification: ${verification}`);
+  const events = spec.events ?? [];
+  const capture = events.length ? "yes" : "no";
+  const context = spec.contextEvent && events.includes(spec.contextEvent) ? "yes" : "no";
+  const capabilities = capture === "no" ? "mcp+rules" : context === "yes" ? "full" : "capture-only";
+  if (!CAPABILITIES.includes(capabilities)) throw new RangeError(`Unknown capability: ${capabilities}`);
   const installer = {
-    capabilities,
     verification,
     evidence: spec.evidence ?? "",
     detection: spec.detection ?? [],
     notes: spec.notes ?? [],
-    events: spec.events ?? [],
+    testOnlyEvents: [],
     ...spec,
+    events,
+    capture,
+    context,
+    capabilities,
   };
   const originalPlan = spec.plan;
   installer.plan = (env) => {
     const plan = originalPlan.call(installer, env);
-    return { capabilities, verification, evidence: installer.evidence, ...plan };
+    return { capabilities, capture, context, verification, evidence: installer.evidence, ...plan };
   };
   installer.apply = spec.apply ?? ((plan, opts) => applyInstall(plan, opts));
   installer.uninstall = spec.uninstall ?? ((env, opts) => applyUninstall(planUninstall(installer.id, env, opts), opts));
@@ -243,15 +254,16 @@ export const INSTALLERS = [
   defineInstaller({
     id: "claude-code",
     name: "Claude Code",
-    capabilities: "full",
     verification: "mcp-verified",
     toolVersion: "2.1.312",
     verifiedOn: "2026-10-27",
-    hookNote: "hooks ran in real sessions over two days of use; one user on one machine",
-    evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); MCP server listed by Claude Code 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine",
+    hookNote: "hooks ran in real sessions over two days of use; PostToolUseFailure and SubagentStop have run in tests only; one user on one machine",
+    evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); MCP server listed by Claude Code 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use, except PostToolUseFailure and SubagentStop, which have run in tests only; one user on one machine",
     detection: [".claude"],
     notes: ["The hook shape was checked against a real installed plugin; hooks ran in real Claude Code sessions over two days of use; one user on one machine."],
     events: ["SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure", "Stop", "SubagentStop", "SessionEnd"],
+    contextEvent: "SessionStart",
+    testOnlyEvents: ["PostToolUseFailure", "SubagentStop"],
     plan(env) {
       const settingsFile = join(env.home, ".claude", "settings.json");
       const mcpFile = join(env.home, ".claude.json");
@@ -269,7 +281,6 @@ export const INSTALLERS = [
   defineInstaller({
     id: "command-code",
     name: "Command Code",
-    capabilities: "full",
     verification: "mcp-verified",
     toolVersion: "1.88.1",
     verifiedOn: "2026-10-27",
@@ -282,6 +293,7 @@ export const INSTALLERS = [
       "Command Code SessionStart reports startup, resume or clear only; there is no compact source.",
     ],
     events: ["SessionStart", "PostToolUse", "Stop"],
+    contextEvent: "SessionStart",
     plan(env) {
       const settingsFile = join(env.home, ".commandcode", "settings.json");
       const mcpFile = join(env.home, ".commandcode", "mcp.json");
@@ -303,7 +315,6 @@ export const INSTALLERS = [
   defineInstaller({
     id: "cursor",
     name: "Cursor",
-    capabilities: "full",
     verification: "from-docs-only",
     evidence: "https://cursor.com/docs/agent/hooks, /docs/context/mcp and /docs/context/rules fetched 2026-10-26; Cursor is not installed on this machine",
     detection: [".cursor"],
@@ -313,6 +324,7 @@ export const INSTALLERS = [
       "Cursor has no global rules file. Use `aletheia rules sync --tools cursor --dir <project> --write` for .cursor/rules/aletheia.mdc.",
     ],
     events: ["sessionStart", "beforeSubmitPrompt", "postToolUse", "afterAgentResponse", "stop", "sessionEnd"],
+    contextEvent: "sessionStart",
     plan(env) {
       const hooks = { sessionStart: null, beforeSubmitPrompt: null, postToolUse: null, afterAgentResponse: null, stop: null, sessionEnd: null };
       const steps = [
@@ -333,7 +345,6 @@ export const INSTALLERS = [
   defineInstaller({
     id: "codex",
     name: "Codex CLI",
-    capabilities: "full",
     verification: "mcp-verified",
     toolVersion: "0.165.0",
     verifiedOn: "2026-10-29",
@@ -346,6 +357,7 @@ export const INSTALLERS = [
       "The MCP block is written to ~/.codex/config.toml; hooks go to ~/.codex/hooks.json.",
     ],
     events: ["SessionStart", "UserPromptSubmit", "PostToolUse", "Stop", "SessionEnd"],
+    contextEvent: "SessionStart",
     plan(env) {
       const events = { SessionStart: "startup|clear|compact|fork", UserPromptSubmit: null, PostToolUse: null, Stop: null, SessionEnd: null };
       const steps = [
@@ -367,7 +379,6 @@ export const INSTALLERS = [
   defineInstaller({
     id: "gemini-cli",
     name: "Gemini CLI",
-    capabilities: "full",
     verification: "from-docs-only",
     evidence: "https://raw.githubusercontent.com/google-gemini/gemini-cli/main/docs/hooks/reference.md, docs/tools/mcp-server.md and docs/cli/gemini-md.md fetched 2026-10-26; Gemini 0.37.0 present, no hook run",
     detection: [".gemini"],
@@ -377,6 +388,7 @@ export const INSTALLERS = [
       "No real Gemini hook has run here.",
     ],
     events: ["SessionStart", "BeforeAgent", "AfterTool", "AfterAgent", "SessionEnd"],
+    contextEvent: "SessionStart",
     plan(env) {
       const file = join(env.home, ".gemini", "settings.json");
       const events = { SessionStart: null, BeforeAgent: null, AfterTool: null, AfterAgent: null, SessionEnd: null };
@@ -417,7 +429,6 @@ export const INSTALLERS = [
   defineInstaller({
     id: "windsurf",
     name: "Windsurf",
-    capabilities: "full",
     verification: "from-docs-only",
     evidence: "https://docs.windsurf.com/windsurf/cascade/hooks, /cascade/mcp and /cascade/memories fetched 2026-10-26; no working Windsurf/Devin install here",
     detection: [".codeium/windsurf", ".windsurf", ".config/devin"],
@@ -450,7 +461,6 @@ export const INSTALLERS = [
   defineInstaller({
     id: "opencode",
     name: "OpenCode",
-    capabilities: "mcp+rules",
     verification: "mcp-verified",
     toolVersion: "1.18.33",
     verifiedOn: "2026-10-27",
@@ -493,10 +503,13 @@ export function listInstallers(env = {}) {
     id: installer.id,
     name: installer.name,
     capabilities: installer.capabilities,
+    capture: installer.capture,
+    context: installer.context,
     verification: installer.verification,
     evidence: installer.evidence,
     installed: env.home ? installer.detect(env.home) : null,
     events: installer.events,
+    testOnlyEvents: installer.testOnlyEvents,
     notes: installer.notes,
   }));
 }
@@ -504,11 +517,13 @@ export function listInstallers(env = {}) {
 export function formatInstallerList(env = {}) {
   const rows = listInstallers(env);
   const width = Math.max(...rows.map((row) => row.id.length));
-  const lines = ["tool".padEnd(width) + "  capability   verification     detected  events"];
+  const lines = ["tool".padEnd(width) + "  capture  context  verification     detected  events"];
   for (const row of rows) {
-    lines.push(`${row.id.padEnd(width)}  ${row.capabilities.padEnd(11)}  ${row.verification.padEnd(16)}  ${row.installed == null ? "?" : row.installed ? "yes     " : "no      "}  ${row.events.join(", ") || "none"}`);
+    const events = row.events.map((event) => (row.testOnlyEvents.includes(event) ? `${event} (tests only)` : event)).join(", ") || "none";
+    lines.push(`${row.id.padEnd(width)}  ${row.capture.padEnd(7)}  ${row.context.padEnd(7)}  ${row.verification.padEnd(16)}  ${row.installed == null ? "?" : row.installed ? "yes     " : "no      "}  ${events}`);
   }
   for (const row of rows) lines.push(`note  ${row.id}: ${row.evidence || "no evidence recorded"}`);
+  for (const row of rows.filter((candidate) => candidate.testOnlyEvents.length)) lines.push(`note  ${row.id}: events marked (tests only) have not run in a real session.`);
   return lines.join("\n");
 }
 
@@ -776,7 +791,7 @@ export function applyUninstall(plan, { dataDir } = {}) {
 
 /** Readable lines for the CLI. */
 export function formatPlan(plan) {
-  const lines = [`${plan.name} (${plan.tool}) — ${plan.capabilities ?? "full"}, ${plan.verification ?? "from-docs-only"}`];
+  const lines = [`${plan.name} (${plan.tool}) — capture ${plan.capture ?? "?"}, context ${plan.context ?? "?"}, ${plan.verification ?? "from-docs-only"}`];
   for (const step of plan.steps) {
     const state = step.kind === "rules" ? `${step.rules} rule${step.rules === 1 ? "" : "s"}` : step.kind === "hooks" ? Object.keys(step.commands ?? {}).join(", ") : step.kind === "settings" ? "MCP + hooks" : step.file.endsWith(".toml") ? "[mcp_servers.aletheia]" : `${step.key ?? "mcpServers"}.aletheia`;
     lines.push(`  ${step.changed ? "write " : "done  "} ${step.kind.padEnd(8)} ${step.file}${state ? `  (${state})` : ""}`);
@@ -806,6 +821,13 @@ function hookCommandsIn(doc) {
     }
   }
   return out;
+}
+
+/** What the hooks of a host are evidenced by, for the doctor verify line. Rules evidence is a separate claim. */
+function hooksLabel(id) {
+  const installer = INSTALLERS.find((candidate) => candidate.id === id);
+  if (!installer || !installer.events.length) return "hooks: none";
+  return installer.hookNote ? "hooks: ran in a real session" : "hooks: from docs only";
 }
 
 /** Health checks a user can run after install: server, every installer's hooks, spool and last capture. */
@@ -868,7 +890,8 @@ export async function doctor(env) {
   for (const tool of TOOLS) {
     const status = verificationStatus(tool);
     const evidence = tool.rules.evidence ? ` — ${tool.rules.evidence}` : "";
-    checks.push({ name: `verify ${tool.id}`, ok: status.status !== "stale", detail: `${status.label}: ${status.reason}${evidence}` });
+    const rules = status.label === "verified" ? `rules format ${status.reason}` : `rules format ${status.label}: ${status.reason}`;
+    checks.push({ name: `verify ${tool.id}`, ok: status.status !== "stale", detail: `${rules}; ${hooksLabel(tool.id)}${evidence}` });
   }
 
   const spooled = spoolRead(env.dataDir).length;

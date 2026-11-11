@@ -64,19 +64,20 @@ const note = (format, text) =>
   format === "html" ? `<p class="note">${inlineHtml(text)}</p>` : `_${text}_`;
 
 export function renderTools(format = "md", installers = INSTALLERS) {
-  const headers = ["Tool", "Level", "Verification", "Hook events installed"];
+  const headers = ["Tool", "Capture", "Context", "Verification", "Hook events installed"];
   const rows = installers.map((installer) => [
     installer.id,
-    installer.capabilities,
+    installer.capture,
+    installer.context,
     installer.verification === "mcp-verified"
       ? `MCP connection ${installer.toolVersion} on ${installer.verifiedOn}; ${installer.hookNote ?? "hooks not run"}`
       : installer.verification === "tested-on-real-install"
         ? "tested on a real install"
         : "config written from docs, not tested on a real install",
-    installer.events?.length ? installer.events.join(", ") : "none (MCP and rules only)",
+    installer.events?.length ? installer.events.map((event) => (installer.testOnlyEvents?.includes(event) ? `${event} (tests only)` : event)).join(", ") : "none (MCP and rules only)",
   ]);
   const lines = [table(format, headers, rows)];
-  lines.push(note(format, "Generated from src/hub/install.mjs via `aletheia install --list`. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run."));
+  lines.push(note(format, "Generated from src/hub/install.mjs via `aletheia install --list`. Capture means a hook event records activity; context means a hook injects memory at session start. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run."));
   return lines.join("\n\n");
 }
 

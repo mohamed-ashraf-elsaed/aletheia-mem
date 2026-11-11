@@ -55,7 +55,9 @@ describe("Windsurf installer and hooks", () => {
   test("a dry run plans the current MCP path, hooks and global rules", () => {
     const ctx = setup();
     const plan = installerFor("windsurf").plan(ctx.env);
-    expect(plan.capabilities).toBe("full");
+    expect(plan.capabilities).toBe("capture-only");
+    expect(plan.capture).toBe("yes");
+    expect(plan.context).toBe("no");
     expect(plan.verification).toBe("from-docs-only");
     expect(plan.steps.map((step) => step.kind)).toEqual(["mcp", "hooks", "rules"]);
     expect(plan.steps.find((step) => step.kind === "mcp").file).toBe(currentMcpPath(ctx.home));

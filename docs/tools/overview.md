@@ -7,45 +7,47 @@ Aletheia (aletheia-mem) connects to each AI coding tool, called a host, in up to
 
 ## All hosts at a glance
 
-The table matches the generated table in the project README. The `aletheia install --list` command prints the same data from the code.
+The table matches the generated table in the project README. The `aletheia install --list` command prints the same data from the code. Capture means at least one hook event records activity. Context means a hook event injects recalled memory at session start. A host can capture without context: Windsurf does, because Cascade has no session-start event.
 
-| Host | Level | Verification | Hook events installed |
-|---|---|---|---|
-| [Claude Code](claude-code.md) | full | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| [Command Code](command-code.md) | full | MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine | SessionStart, PostToolUse, Stop |
-| [Cursor](cursor.md) | full | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
-| [Codex CLI](codex.md) | full | MCP connection 0.130.0 on 2026-10-27; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
-| [Gemini CLI](gemini-cli.md) | full | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
-| [Windsurf](windsurf.md) | full | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
-| [OpenCode](opencode.md) | mcp+rules | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |
+| Host | Capture | Context | Verification | Hook events installed |
+|---|---|---|---|---|
+| [Claude Code](claude-code.md) | yes | yes | MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; PostToolUseFailure and SubagentStop have run in tests only; one user on one machine | SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure (tests only), Stop, SubagentStop (tests only), SessionEnd |
+| [Command Code](command-code.md) | yes | yes | MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine | SessionStart, PostToolUse, Stop |
+| [Cursor](cursor.md) | yes | yes | config written from docs, not tested on a real install | sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd |
+| [Codex CLI](codex.md) | yes | yes | MCP connection 0.130.0 on 2026-10-27; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine | SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd |
+| [Gemini CLI](gemini-cli.md) | yes | yes | config written from docs, not tested on a real install | SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd |
+| [Windsurf](windsurf.md) | yes | no | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
+| [OpenCode](opencode.md) | no | no | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |
 
 Claude Desktop has an MCP entry only. It has no hooks and no rules file. See [Claude Desktop](../claude-desktop.md). GitHub Copilot, Aider and any other MCP client are covered in [Other tools](other-tools.md). The same page covers three hosts that get an MCP entry only, through `aletheia connect`: GitHub Copilot CLI (`copilot-cli`), Goose (`goose`) and Roo Code (`roo-code`). Their status is config written from docs, not tested on a real install. Warp is not written: its docs do not show the file format (UNVERIFIED). They are not in the table above because they have no `aletheia install` entry.
 
 Real output from `aletheia install --list` in a temporary home folder (the `detected` column says no because that folder is empty):
 
 ```
-tool          capability   verification     detected  events
-claude-code   full         mcp-verified      no        SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd
-command-code  full         mcp-verified      no        SessionStart, PostToolUse, Stop
-cursor        full         from-docs-only    no        sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd
-codex         full         mcp-verified      no        SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd
-gemini-cli    full         from-docs-only    no        SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd
-windsurf      full         from-docs-only    no        pre_user_prompt, post_run_command, post_write_code, post_cascade_response
-opencode      mcp+rules    mcp-verified      no        none
+tool          capture  context  verification     detected  events
+claude-code   yes      yes      mcp-verified      no        SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure (tests only), Stop, SubagentStop (tests only), SessionEnd
+command-code  yes      yes      mcp-verified      no        SessionStart, PostToolUse, Stop
+cursor        yes      yes      from-docs-only    no        sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd
+codex         yes      yes      mcp-verified      no        SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd
+gemini-cli    yes      yes      from-docs-only    no        SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd
+windsurf      yes      no       from-docs-only    no        pre_user_prompt, post_run_command, post_write_code, post_cascade_response
+opencode      no       no       mcp-verified      no        none
 ...
 ```
 
-## What "full" and "mcp+rules" mean
+## What "capture" and "context" mean
 
-A host at level `full` gets three things from `aletheia install <tool> --write`:
+Each host has two facts, shown as separate columns. `capture` is yes when a hook event records prompts, tool calls or summaries. `context` is yes when a session-start hook injects recalled memory back into the host. There is no single level word any more: `full` used to promise context, which Windsurf does not get. In `aletheia install --list` and `aletheia doctor`, a host with capture and context shows `full`, a host with capture only shows `capture-only`, and a host with neither shows `mcp+rules`. Windsurf is `capture-only`. OpenCode is `mcp+rules`.
+
+A host with capture and context gets three things from `aletheia install <tool> --write`:
 
 - **MCP.** One server entry named `aletheia` in the host's MCP config. The host can then call Aletheia tools such as `search`, `save_memory` and `session_start_context`. The server runs on stdio and opens the local store directly.
-- **Hooks.** Entries in the host's hook file that run `aletheia hook <tool> <event>`. The host runs them on its own, so Aletheia captures prompts, tool calls and summaries without the model having to ask. Hooks also inject recalled memory at session start where the host has a session-start event.
+- **Hooks.** Entries in the host's hook file that run `aletheia hook <tool> <event>`. The host runs them on its own, so Aletheia captures prompts, tool calls and summaries without the model having to ask. Hooks also inject recalled memory at session start where the host has a session-start event. Windsurf gets the capture hooks only, so it receives no recalled memory at session start.
 - **Rules.** A managed block in the instruction file the host reads. Your rules go there. Cursor is the exception: it has no global rules file, so `install` writes no rules for it and you run `aletheia rules sync` per project.
 
-A host at level `mcp+rules` gets the MCP entry and the rules block, and nothing else. Nothing is captured automatically. A memory is stored only when the model calls an MCP tool such as `save_memory`, or when you save one with the CLI. OpenCode is the only host at this level.
+A host with neither capture nor context gets the MCP entry and the rules block, and nothing else. Nothing is captured automatically. A memory is stored only when the model calls an MCP tool such as `save_memory`, or when you save one with the CLI. OpenCode is the only host at this level.
 
-Each host does not get every event. The host decides which events exist. Command Code has no prompt hook, and Windsurf has no session-start hook. Each host page lists what is and is not captured.
+Each host does not get every event. The host decides which events exist. Command Code has no prompt hook and no session-end hook, and Windsurf has no session-start hook. Each host page lists what is and is not captured. Claude Code's `PostToolUseFailure` and `SubagentStop` hooks are covered by tests only; no real session has run them yet.
 
 ## Install runs as a dry run first
 
@@ -74,14 +76,14 @@ Hooks run the hook command from the data dir (`<bun> <data dir>/aletheia.bundle.
 - **from-docs-only.** The config format came from the host's official documentation, fetched on 2026-10-26. The installer was tested against fixtures. The host was not run with this config.
 - **tested-on-real-install.** The code defines this value. No host has it.
 
-`aletheia doctor` prints a `verify <tool>` line for each host. The word `verified` on those lines means only that the recorded evidence date is under 180 days old. It does not mean the host was tested on a real install. Read the evidence text on the same line. Copilot, Aider and the generic AGENTS.md target print `unverified: no verifiedOn recorded`.
+`aletheia doctor` prints a `verify <tool>` line for each host. The line names the evidence type. `rules format verified <date>` means the rules-file format was recorded on that date and is under 180 days old. It is not a hook check. The `hooks:` part says what the hooks rest on: `hooks: ran in a real session`, `hooks: from docs only` or `hooks: none`. Example: `rules format verified 2026-10-26; hooks: from docs only`. Read the evidence text after the dash too. Copilot, Aider and the generic AGENTS.md target print `rules format unverified: no verifiedOn recorded; hooks: none`.
 
 ## Honest status
 
 These sentences are the fixed wording for every page in this section.
 
 - The MCP server was listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0, OpenCode 1.18.33.
-- Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine.
+- Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine. Claude Code's `PostToolUseFailure` and `SubagentStop` hooks have run in tests only.
 - Cursor, Gemini CLI and Windsurf: config written from docs, not tested on a real install. No hook ran in Cursor, Gemini CLI, Windsurf or OpenCode.
 - Answer accuracy is not measured. Benchmarks are retrieval only.
 
