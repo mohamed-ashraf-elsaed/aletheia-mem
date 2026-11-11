@@ -13,6 +13,11 @@ export const SETTINGS_SCHEMA = [
   { key: "readGate.enabled", kind: "boolean", label: "Gate whole-file reads of large files with history (Claude Code)", default: false, secret: false },
   { key: "facts.minConfidence", kind: "number", label: "Fact confidence floor", min: 0.3, max: 0.9, default: 0.4, secret: false },
   { key: "context.facts", kind: "enum", label: "Facts in context", options: ["auto", "on", "off"], default: "auto", secret: false },
+  // Read by HubStore.context() (src/hub/store.mjs): the shape of the context block every host receives.
+  { key: "context.format", kind: "enum", label: "Context block format", options: ["index", "classic"], default: "index", secret: false },
+  // Read by `aletheia prune` (src/hub/retention.mjs retentionSettings): when old episode text is shortened and when a weak fact goes cold.
+  { key: "retention.retentionDays", kind: "int", label: "Shorten episode text older than (days)", min: 7, max: 3650, default: 90, secret: false },
+  { key: "retention.coldDays", kind: "int", label: "Move weak facts to cold after (days)", min: 7, max: 3650, default: 180, secret: false },
   { key: "backup.enabled", kind: "boolean", label: "Scheduled local backups", default: false, secret: false },
   { key: "backup.intervalHours", kind: "int", label: "Backup interval (hours)", min: 1, max: 720, default: 24, secret: false },
   { key: "backup.keep", kind: "int", label: "Backups kept", min: 1, max: 365, default: 7, secret: false },

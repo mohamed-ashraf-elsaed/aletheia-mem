@@ -17,10 +17,12 @@ export const DEFAULT_RETENTION = { retentionDays: 90, coldDays: 180, coldConfide
 export const TRUNCATION_MARK = "[aletheia:truncated";
 
 export function retentionSettings(store) {
+  // The dashboard writes ui.settings.retention.*; the older single "retention" object is still read.
   const saved = store.setting("retention", {});
+  const pick = (name) => store.setting(`ui.settings.retention.${name}`, saved?.[name] ?? DEFAULT_RETENTION[name]);
   return {
-    retentionDays: Number(saved?.retentionDays ?? DEFAULT_RETENTION.retentionDays),
-    coldDays: Number(saved?.coldDays ?? DEFAULT_RETENTION.coldDays),
+    retentionDays: Number(pick("retentionDays")),
+    coldDays: Number(pick("coldDays")),
     coldConfidence: Number(saved?.coldConfidence ?? DEFAULT_RETENTION.coldConfidence),
     highImportance: Number(saved?.highImportance ?? DEFAULT_RETENTION.highImportance),
   };
