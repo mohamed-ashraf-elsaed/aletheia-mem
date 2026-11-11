@@ -53,6 +53,10 @@ store gets `401 token_revoked`; the wrong project gets `403 project_forbidden`.
 operator. The full table is in [03-http-api.md](03-http-api.md#34-team-mode). The CLI mirrors it under
 `aletheia team ...`; `--token-id <id>` acts as that member, and the default is the local operator.
 
+## 31.4a MCP tools
+
+`team_brief` and `team_search` expose the brief and the shared search to MCP clients. They are listed in `tools/list` only when the caller belongs to a team, so a device without a team still sees the 13 core tools. They call `TeamStore.brief` and `TeamStore.search`, the same methods as the REST routes, so `authorize()` decides access: a member never gets rows from a project they cannot read, and asking for one is an error. Over stdio the local device acts as the operator, like the CLI. Over the sync hub's `/mcp` endpoint a token acts as its own member, and a token limited to projects stays inside them. Details: [MCP tools reference](reference/mcp-tools.md#team-tools). Covered by `test/mcp-team-tools.test.mjs` and `test/mcp-team-remote.test.mjs`.
+
 ## 31.5 Threat list and what is not covered
 
 | Threat | Covered |

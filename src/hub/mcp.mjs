@@ -9,8 +9,8 @@ import { searchPage } from "./lists.mjs";
 import { earlierOf, epochOrIso, olderThanCutoff, pagingOf, whenOf } from "./paging.mjs";
 import { checkEvidenceInput, describeRules, provenanceLine, recheckMarker } from "./rule-evidence.mjs";
 import { readWorkStateList, writeWorkStateList } from "./work-state.mjs";
-import { TOOL_DEFS } from "./mcp-tools.mjs";
-export { TOOL_DEFS };
+import { TEAM_TOOL_DEFS, TOOL_DEFS } from "./mcp-tools.mjs";
+export { TEAM_TOOL_DEFS, TOOL_DEFS };
 
 // Newest first. Per the spec: answer with the client's version if supported, else with our latest.
 export const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
@@ -34,6 +34,38 @@ function fmtFull(m) {
   const source = [m.tool, m.session_id ? `session ${m.session_id}` : null, m.origin ? `origin ${m.origin}` : null].filter(Boolean).join(", ");
   return [`#${m.id} [${m.type}] ${m.title}`, `${m.project} · ${new Date(m.created_at_epoch).toISOString()} · source: ${source}`, m.subtitle ?? "", m.narrative ?? "", m.facts.length ? `Facts: ${m.facts.join("; ")}` : "", m.files.length ? `Files: ${m.files.join(", ")}` : ""].filter(Boolean).join("\n");
 }
+
+// ---- team tools --------------------------------------------------------------------------------
+// ctx.team = { store (TeamStore), accountId, tokenId, operator }. The local stdio device acts as the operator,
+// like the CLI; a remote token acts as its own member. Both tools call the same TeamStore methods as the REST routes.
+function teamMemberships(ctx) {
+  const t = ctx.team;
+  if (!t?.store) return [];
+  if (!t.operator && !(Number.isSafeInteger(Number(t.tokenId)) && Number(t.tokenId) > 0)) return [];
+  try {
+    return t.store.listTeams(t.accountId, t.tokenId ?? null, { operator: !!t.operator });
+  } catch {
+    return [];
+  }
+}
+
+/** The tools tools/list shows for this caller: the 13 core tools, plus the two team tools for a team member. */
+export function toolsFor(ctx) {
+  return teamMemberships(ctx).length ? [...TOOL_DEFS, ...TEAM_TOOL_DEFS] : TOOL_DEFS;
+}
+
+function pickTeam(ctx, requested) {
+  const memberships = teamMemberships(ctx);
+  if (!memberships.length) throw new Error("This device does not belong to a team.");
+  if (requested != null && String(requested).trim()) return String(requested).trim();
+  if (memberships.length > 1) throw new Error(`This device belongs to several teams (${memberships.map((m) => m.name).join(", ")}). Pass team.`);
+  return String(memberships[0].id);
+}
+
+const oneLine = (value, max = 400) => {
+  const flat = String(value ?? "").replace(/\s+/g, " ").trim();
+  return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat;
+};
 
 /** Run one tool. `ctx`: { store, tool (the calling client), cwd, projects (allowed projects, null = all) }.
  *  Never throws: errors come back as isError results. */
@@ -106,6 +138,28 @@ export function callTool(name, args = {}, ctx) {
         }
         if (!rows.length) return text(`No facts found for subject "${subject}".`);
         return recalled(rows.map((fact) => `#${fact.id} [${fact.status}] ${fact.text}${fact.validFrom || fact.validTo ? ` (${(fact.validFrom ?? "?").slice(0, 10)} → ${(fact.validTo ?? "now").slice(0, 10)})` : ""}`).join("\n"));
+      }
+      case "team_brief": {
+        if (typeof args.project !== "string" || !args.project.trim()) return fail("project is required.");
+        const denied = scopedProject(args.project);
+        if (denied) return denied;
+        const t = ctx.team;
+        const teamId = pickTeam(ctx, args.team);
+        const brief = t.store.brief(t.accountId, teamId, t.tokenId ?? null, { project: args.project.trim(), days: args.days ?? undefined, maxChars: args.max_chars ?? undefined }, { operator: !!t.operator });
+        return recalled(brief.text);
+      }
+      case "team_search": {
+        if (typeof args.query !== "string" || !args.query.trim()) return fail("query is required.");
+        if (args.project != null) {
+          const denied = scopedProject(args.project);
+          if (denied) return denied;
+        }
+        const t = ctx.team;
+        const teamId = pickTeam(ctx, args.team);
+        const found = t.store.search(t.accountId, teamId, t.tokenId ?? null, { query: args.query, project: args.project ?? null, limit: args.limit ?? 20 }, { operator: !!t.operator });
+        const rows = found.results.filter((row) => !allowed || allowed(row.project));
+        if (!rows.length) return text(found.reason === "no_terms" ? "No matches. The query had no searchable words." : "No matches.");
+        return recalled(rows.map((row) => `${row.source} ${row.at.slice(0, 10)} [${row.kind}] ${oneLine(row.title ? `${row.title}: ${row.text}` : row.text)}  (${row.project}, ${row.author.name})`).join("\n"));
       }
       case "save_memory": {
         if (typeof args.text !== "string" || !args.text.trim()) return fail("text is required.");
@@ -192,7 +246,7 @@ export function handleMessage(msg, ctx) {
       return reply({ protocolVersion: PROTOCOL_VERSIONS.includes(wanted) ? wanted : PROTOCOL_VERSIONS[0], capabilities: { tools: { listChanged: false } }, serverInfo: { name: "aletheia", version: VERSION }, instructions: "Shared, tool-neutral memory. Start with session_start_context, then search -> timeline -> get_observations. Use save_memory for decisions and gotchas worth keeping." });
     }
     case "ping": return reply({});
-    case "tools/list": return reply({ tools: TOOL_DEFS });
+    case "tools/list": return reply({ tools: toolsFor(ctx) });
     case "tools/call": {
       if (!params?.name) return error(-32602, "Missing tool name");
       return reply(callTool(params.name, params.arguments ?? {}, ctx));
@@ -201,9 +255,32 @@ export function handleMessage(msg, ctx) {
   }
 }
 
+/** The local device's team, for stdio: the team store next to the sync store, acting as the local operator
+ *  (what `aletheia team ...` does without --token-id). Null when no team was ever created here. */
+async function openLocalTeam() {
+  try {
+    const [{ existsSync }, { loadConfig }] = await Promise.all([import("node:fs"), import("../config.mjs")]);
+    const config = loadConfig();
+    if (!existsSync(config.teamDb) || !existsSync(config.syncDb)) return null;
+    const [{ TeamStore }, { SyncStore }] = await Promise.all([import("./team.mjs"), import("./sync/store.mjs")]);
+    const sync = new SyncStore(config.syncDb);
+    const accountId = sync.ensureAccount().id;
+    const teamStore = new TeamStore(config.teamDb, {
+      tokenActive: (id) => {
+        const row = sync.db.prepare("SELECT revoked_at, expires_at FROM sync_token WHERE id = ?").get(Number(id));
+        return !!row && !row.revoked_at && !(row.expires_at && row.expires_at < Date.now());
+      },
+    });
+    return { store: teamStore, accountId, tokenId: null, operator: true };
+  } catch {
+    return null;
+  }
+}
+
 /** Newline-delimited JSON-RPC over a readable/writable pair. */
-export async function serveStdio({ store, input = process.stdin, output = process.stdout, tool = process.env.ALETHEIA_TOOL, cwd = process.env.ALETHEIA_CWD ?? process.cwd() }) {
-  const ctx = { store, tool, cwd };
+export async function serveStdio({ store, input = process.stdin, output = process.stdout, tool = process.env.ALETHEIA_TOOL, cwd = process.env.ALETHEIA_CWD ?? process.cwd(), team = undefined }) {
+  const local = team === undefined ? await openLocalTeam() : team;
+  const ctx = { store, tool, cwd, team: local?.store ? local : null };
   let buffer = "";
   input.setEncoding("utf8");
   for await (const chunk of input) {

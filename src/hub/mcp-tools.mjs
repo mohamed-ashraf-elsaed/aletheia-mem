@@ -212,3 +212,42 @@ export const TOOL_DEFS = [
     },
   },
 ];
+
+const TEAM_ARG = str("Team name or id. Optional when this device belongs to exactly one team; required when it belongs to several.");
+
+// Listed by tools/list only when the caller belongs to a team (see toolsFor in mcp.mjs). They read the team
+// store through the same access check as the REST routes, so a member only ever gets the projects shared with them.
+export const TEAM_TOOL_DEFS = [
+  {
+    name: "team_brief",
+    title: "Read a team project brief",
+    description: `Return the team's short brief for one project: board decisions first, then facts teammates shared in the last 14 days, each with the id of the team entry and its author. Built by a fixed rule, no model involved. Read-only. Refused with an error when you are not allowed to read that project. ${UNTRUSTED}`,
+    annotations: annotate("Read a team project brief", { readOnly: true, idempotent: true }),
+    inputSchema: {
+      type: "object",
+      properties: {
+        project: str("Team project to brief. Required, and must be a project shared with you."),
+        team: TEAM_ARG,
+        days: num("How many days of shared facts to include. Default 14."),
+        max_chars: num("Cut the brief at this many characters. Default 2000."),
+      },
+      required: ["project"],
+    },
+  },
+  {
+    name: "team_search",
+    title: "Search team shared memory",
+    description: `Search what teammates shared with the team and return one line per hit: team entry id, date, kind, text, project and author. It covers only projects you may read, so another team's rows and projects not shared with you never appear. Read-only. Returns "No matches." when nothing is found. This is separate from search, which reads only this device's own memory. ${UNTRUSTED}`,
+    annotations: annotate("Search team shared memory", { readOnly: true, idempotent: true }),
+    inputSchema: {
+      type: "object",
+      properties: {
+        query: str("Words to search for. Required."),
+        project: str("Limit to one team project. Omitted: every project you may read. A project you cannot read is refused."),
+        team: TEAM_ARG,
+        limit: num("Maximum hits. Default 20, at most 200."),
+      },
+      required: ["query"],
+    },
+  },
+];

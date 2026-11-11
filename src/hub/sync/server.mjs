@@ -279,6 +279,7 @@ export function startSyncServer({ syncDb, host = "127.0.0.1", port = 0, name = "
           return { token, projects: token.projects?.length ? token.projects : null };
         },
         toolAllowed: (token, toolName) => (WRITE_TOOLS.has(toolName) ? !!token && ["sync", "admin"].includes(token.scope) : true),
+        team: (token) => (token?.id ? { store: team, accountId: account.id, tokenId: token.id, operator: false } : null),
         allowedOrigins: (origin) => loopbackOriginsOnly(origin) || (mcpOrigins ?? []).includes(origin),
         rateLimit: ({ token }) => {
           if (!token?.id) return null;
