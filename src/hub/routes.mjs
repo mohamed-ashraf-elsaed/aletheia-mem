@@ -35,6 +35,7 @@ import { planProjectMerge } from "./projects.mjs";
 import { teamRequest } from "./team-api.mjs";
 import { TeamStore } from "./team.mjs";
 import { readSettings, writeSettings } from "./settings.mjs";
+import { denseChannels, denseQuery } from "./dense.mjs";
 import { KEY_CHALLENGE, KEY_REQUIRED, bearerMatches } from "./api-key.mjs";
 
 const MAX_BODY = 8 * 1024 * 1024;
@@ -51,7 +52,7 @@ function absDir(p, what = "projectDir") {
   return resolve(p);
 }
 
-export function createHubRoutes({ hub, config, liveHub = null, alerts = null, liveTickets = null }) {
+export function createHubRoutes({ hub, config, liveHub = null, alerts = null, liveTickets = null, embedder = undefined }) {
   const mcpScript = join(import.meta.dir, "..", "..", "bin", "mcp.mjs");
   const argv = () => mcpCommand({ bun: process.execPath, script: mcpScript });
   const qs = (url) => Object.fromEntries(url.searchParams);
@@ -415,33 +416,26 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null, li
         const b = await readJson(request);
         need(typeof b.query === "string" && b.query.trim(), "query is required.");
         const scope = b.scope === "all" ? "all" : "current";
+        // Hybrid ranking when the optional embedding package and stored vectors exist; otherwise keywords plus a note.
+        const { queryVec, dense, notice } = await denseQuery({ store: hub, query: b.query, embedder });
+        const channels = denseChannels(dense, { notice });
         if (b.offset != null || b.paged === true || b.older_than_days != null) {
           const paging = pagingOf(b);
-          const page = searchPage(hub, { query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, scope, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, since: whenOf(b.since), until: earlierOf(whenOf(b.until, { end: true }), olderThanCutoff(b.older_than_days)), order: b.order, mix: b.mix === true, ...paging });
-          const detail = page.total === 0 ? hub.searchDetailed({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: 1, scope }) : { reason: null };
+          const page = searchPage(hub, { query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, scope, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, since: whenOf(b.since), until: earlierOf(whenOf(b.until, { end: true }), olderThanCutoff(b.older_than_days)), order: b.order, mix: b.mix === true, queryVec, ...paging });
+          const detail = page.total === 0 ? hub.searchDetailed({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: 1, scope, queryVec }) : { reason: null };
           return h.json({
             ...page,
             ...pageInfo({ total: page.total, ...paging, count: page.facts.length + page.results.length }),
             reason: detail.reason,
-            channels: {
-              facts: { lexical: true, keys: true, vector: false },
-              episodes: { lexical: true, vector: false },
-              fused: "none",
-              note: "This route answers from keyword channels only. Use the CLI with --semantic, or POST a query vector, for dense results.",
-            },
+            channels,
           });
         }
-        const detailed = hub.searchDetailed({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope });
+        const detailed = hub.searchDetailed({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope, queryVec });
         return h.json({
-          results: hub.search({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope }),
-          facts: hub.searchFacts({ query: b.query, project: b.project, limit: b.limit ?? 20, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, scope }),
+          results: hub.search({ query: b.query, project: b.project, kind: b.kind, type: b.type, tool: b.tool, limit: b.limit ?? 20, scope, queryVec }),
+          facts: hub.searchFacts({ query: b.query, project: b.project, limit: b.limit ?? 20, includeHistory: b.includeHistory === true, asOf: b.asOf ?? null, scope, queryVec }),
           reason: detailed.reason,
-          channels: {
-            facts: { lexical: true, keys: true, vector: false },
-            episodes: { lexical: true, vector: false },
-            fused: "none",
-            note: "This route answers from keyword channels only. Use the CLI with --semantic, or POST a query vector, for dense results.",
-          },
+          channels,
         });
       }
       if (pathname === "/v1/timeline" && method === "POST") {

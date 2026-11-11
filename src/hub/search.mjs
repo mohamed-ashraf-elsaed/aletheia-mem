@@ -87,12 +87,21 @@ export function factVectorRows(store) {
   return store.db.prepare("SELECT fact_id AS id, vec FROM fact_vectors").all().map((row) => ({ id: row.id, vec: unpackVector(row.vec) }));
 }
 
-/** Embed facts that have no `fact_vectors` row yet. `embedder` = {model, embedDocs}. Returns how many were written. */
+/**
+ * Embed facts that have no `fact_vectors` row yet. `embedder` = {model, embedDocs}, or a function that returns one (or
+ * null): the function runs only when there is something to embed, so a lazy embedder is not loaded for nothing.
+ * Returns how many were written.
+ */
 export async function embedMissingFacts(store, embedder, { limit = 5000, batch = 64 } = {}) {
   if (!embedder) return 0;
   const todo = store.db
     .prepare("SELECT f.id, f.text FROM facts f LEFT JOIN fact_vectors v ON v.fact_id = f.id WHERE v.fact_id IS NULL ORDER BY f.id LIMIT ?")
     .all(Math.min(Number(limit) || 5000, 50_000));
+  if (!todo.length) return 0;
+  if (typeof embedder === "function") {
+    embedder = await embedder();
+    if (!embedder) return 0;
+  }
   for (let i = 0; i < todo.length; i += batch) {
     const part = todo.slice(i, i + batch);
     const vecs = await embedder.embedDocs(part.map((fact) => fact.text));

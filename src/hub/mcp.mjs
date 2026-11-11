@@ -9,6 +9,7 @@ import { fileOutline } from "./smart-file.mjs";
 import { wrapUntrusted } from "./untrusted.mjs";
 import { redact } from "./capture.mjs";
 import { searchPage } from "./lists.mjs";
+import { denseQuery } from "./dense.mjs";
 import { earlierOf, epochOrIso, olderThanCutoff, pagingOf, whenOf } from "./paging.mjs";
 import { checkEvidenceInput, describeRules, provenanceLine, recheckMarker } from "./rule-evidence.mjs";
 import { readWorkStateList, writeWorkStateList } from "./work-state.mjs";
@@ -21,6 +22,8 @@ export const PROTOCOL_VERSIONS = ["2025-11-25", "2025-06-18", "2025-03-26", "202
 
 const recalled = (t) => text(wrapUntrusted(t));
 const text = (t) => ({ content: [{ type: "text", text: t }] });
+// The dense-channel note rides as its own content part, outside the wrapped memory text.
+const withNotice = (result, notice) => (notice ? { ...result, content: [...result.content, { type: "text", text: `Note: ${notice}` }] } : result);
 const fail = (t) => ({ content: [{ type: "text", text: t }], isError: true });
 
 const REASON = {
@@ -96,17 +99,17 @@ export function callTool(name, args = {}, ctx) {
         const since = whenOf(args.since);
         const until = earlierOf(whenOf(args.until, { end: true }), olderThanCutoff(args.older_than_days));
         const pickProject = allowed ? (args.project ?? (ctx.projects.length === 1 ? ctx.projects[0] : undefined)) : args.project;
-        const page = searchPage(store, { query: args.query, project: pickProject, type: args.type, kind: args.kind, order, since, until, ...paging, scope: "current" });
+        const page = searchPage(store, { query: args.query, project: pickProject, type: args.type, kind: args.kind, order, since, until, ...paging, scope: "current", queryVec: ctx.dense?.queryVec ?? null });
         const facts = page.facts.filter((fact) => !allowed || allowed(fact.project));
         const index = page.results.filter((row) => !allowed || allowed(row.project));
         const factLines = facts.map((fact) => `fact #${fact.id} ${fact.text}${fact.source?.episodeId ? ` (episode #${fact.source.episodeId})` : ""}`);
         const memoryIndex = fmtIndex(index);
         if (!factLines.length && !index.length) {
-          const detailed = store.searchDetailed({ query: args.query, project: pickProject, type: args.type, kind: args.kind, limit: paging.limit });
+          const detailed = store.searchDetailed({ query: args.query, project: pickProject, type: args.type, kind: args.kind, limit: paging.limit, queryVec: ctx.dense?.queryVec ?? null });
           const reason = detailed.reason ? (REASON[detailed.reason] ?? "filtered") : (allowed ? "filtered" : "");
-          return text(`No matches. ${reason}`.trim());
+          return withNotice(text(`No matches. ${reason}`.trim()), ctx.dense?.notice);
         }
-        return recalled([...factLines, memoryIndex].filter(Boolean).join("\n"));
+        return withNotice(recalled([...factLines, memoryIndex].filter(Boolean).join("\n")), ctx.dense?.notice);
       }
       case "timeline": {
         const denied = scopedProject(args.project);
@@ -264,6 +267,19 @@ export function handleMessage(msg, ctx) {
   }
 }
 
+/**
+ * handleMessage for the transports: a `search` call first embeds its query (lazy, under a time budget) so the sync
+ * handler can use the hybrid ranking. `ctx.embedder` is an embedder, a function that returns one, or undefined for
+ * the shared optional runtime. Every other message goes straight to handleMessage.
+ */
+export async function handleMessageAsync(msg, ctx) {
+  const call = msg?.method === "tools/call" && msg.id !== undefined ? msg.params : null;
+  const query = call?.name === "search" ? call.arguments?.query : null;
+  if (typeof query !== "string" || !query.trim() || (typeof call.arguments?.file === "string" && call.arguments.file.trim())) return handleMessage(msg, ctx);
+  const dense = await denseQuery({ store: ctx.store, query, embedder: ctx.embedder });
+  return handleMessage(msg, { ...ctx, dense });
+}
+
 /** The local device's team, for stdio: the team store next to the sync store, acting as the local operator
  *  (what `aletheia team ...` does without --token-id). Null when no team was ever created here. */
 async function openLocalTeam() {
@@ -287,9 +303,9 @@ async function openLocalTeam() {
 }
 
 /** Newline-delimited JSON-RPC over a readable/writable pair. */
-export async function serveStdio({ store, input = process.stdin, output = process.stdout, tool = process.env.ALETHEIA_TOOL, cwd = process.env.ALETHEIA_CWD ?? process.cwd(), team = undefined }) {
+export async function serveStdio({ store, input = process.stdin, output = process.stdout, tool = process.env.ALETHEIA_TOOL, cwd = process.env.ALETHEIA_CWD ?? process.cwd(), team = undefined, embedder = undefined }) {
   const local = team === undefined ? await openLocalTeam() : team;
-  const ctx = { store, tool, cwd, team: local?.store ? local : null };
+  const ctx = { store, tool, cwd, team: local?.store ? local : null, embedder };
   // The default project for a call follows this hub's `project.worktrees` setting for the life of the process.
   useWorktreeSetting(() => store.setting(WORKTREE_SETTING_KEY, null));
   let buffer = "";
@@ -303,7 +319,7 @@ export async function serveStdio({ store, input = process.stdin, output = proces
       if (!line) continue;
       let msg;
       try { msg = JSON.parse(line); } catch { output.write(`${JSON.stringify({ jsonrpc: "2.0", id: null, error: { code: -32700, message: "Parse error" } })}\n`); continue; }
-      const responses = Array.isArray(msg) ? msg.map((m) => handleMessage(m, ctx)).filter(Boolean) : [handleMessage(msg, ctx)].filter(Boolean);
+      const responses = (Array.isArray(msg) ? await Promise.all(msg.map((m) => handleMessageAsync(m, ctx))) : [await handleMessageAsync(msg, ctx)]).filter(Boolean);
       for (const r of responses) output.write(`${JSON.stringify(r)}\n`);
     }
   }

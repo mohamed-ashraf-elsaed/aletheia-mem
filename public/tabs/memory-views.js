@@ -143,6 +143,7 @@ export function searchView(ctx, route) {
         h("span", {}, `${info.total}${info.capped ? "+" : ""} result${info.total === 1 ? "" : "s"} for `), h("b", { dir: "auto" }, `“${s.q}”`),
         h("span", { class: "ui-meta" }, `${info.totals.facts} facts, ${info.totals.memories} memories${info.capped ? " (the ranking pool is full; refine the words to see more)" : ""}`),
         ...channelLines(info.channels).map((line) => badge(line)),
+        ...(info.channels?.notice ? [h("span", { class: "ui-meta", role: "note" }, info.channels.notice)] : []),
       ] : []));
     },
     toolbar: ({ state: s, set }) => {
