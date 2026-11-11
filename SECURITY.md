@@ -35,7 +35,7 @@ that you place in front of the sync hub.
 - **Low findings from the remote-mode review (fixed after 0.1.13).** None gave access without a login. (1) A `Host`
   header with `/ ? # @ \` or whitespace changed the routed path; the server now answers 400. (2) A malformed `%` in a
   cookie, a static file path or a hub UI path gave `500`; it is now `401` or `404`. (3) `/healthz`, open to anyone, ran
-  `PRAGMA quick_check` on every call; the result is cached for 30 seconds. (4) The CSRF token was a cookie compared to a
+  `PRAGMA quick_check` on every call; the result is cached for 30 seconds, warmed at startup and refreshed after a response, so `/healthz` stays fast on a large database (`aletheia doctor` now waits 3 s and reports a late answer as slow). (4) The CSRF token was a cookie compared to a
   header, not tied to the session; it is now stored in the session record, and behind `--behind-tls` the cookie is
   `__Host-aletheia_csrf`. (5) Remote mode refuses an `ALETHEIA_API_KEY` shorter than 32 characters, and a peer that
   sends 10 wrong credentials in a minute to `/v1` or `/mcp` gets `429`. (6) The login lockout map is pruned and

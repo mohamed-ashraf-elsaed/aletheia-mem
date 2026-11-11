@@ -57,6 +57,9 @@ export function createHubRoutes({ hub, config, liveHub = null, alerts = null, li
   const qs = (url) => Object.fromEntries(url.searchParams);
   const live = (frame) => liveHub?.broadcast(frame);
   const cachedHealth = createHealthCache();
+  // Warm the cache right after startup so the first /healthz does not pay for the integrity check.
+  const warm = setTimeout(() => { try { cachedHealth(hub); } catch { /* the hub was closed first */ } }, 0);
+  warm.unref?.();
   let syncStore = null;
   const getSyncStore = () => syncStore ?? (syncStore = new SyncStore(config.syncDb));
   let teamStore = null;

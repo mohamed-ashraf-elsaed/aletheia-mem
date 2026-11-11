@@ -7,6 +7,8 @@ import { join } from "node:path";
 import { loadConfig } from "../src/config.mjs";
 import { startServer } from "../src/server.mjs";
 import { createLoginGuard } from "../src/hub/login.mjs";
+import { createHealthCache } from "../src/hub/health.mjs";
+import { doctor } from "../src/hub/install.mjs";
 import { SyncStore } from "../src/hub/sync/store.mjs";
 import { removeDir } from "./temp-dirs.mjs";
 
@@ -273,5 +275,57 @@ describe("item 7: logout and expiry end live streams", () => {
     const { closed } = await openSocket(short, cookies);
     expect(await streamEnds(reader, 4000)).toBe(true);
     expect(await Promise.race([closed, sleep(2000).then(() => false)])).toBe(true);
+  });
+});
+
+describe("item 8: /healthz answers fast and doctor waits for it", () => {
+  test("a stale cache is served at once and refreshed after the response", async () => {
+    let t = 0;
+    let runs = 0;
+    const store = { db: { prepare: (sql) => { if (/quick_check/i.test(sql)) runs += 1; return { all: () => [{ quick_check: "ok" }], get: () => ({ n: 0, at: null }) }; } }, setting: () => [] };
+    const cached = createHealthCache({ ttlMs: 30_000, now: () => t });
+    cached(store);
+    expect(runs).toBe(1);
+    t = 31_000;
+    cached(store); // stale: answers from the cache, does not check inline
+    expect(runs).toBe(1);
+    await sleep(50); // the refresh runs after the caller has its answer
+    expect(runs).toBe(2);
+  });
+  test("the check is warmed at startup, so the first /healthz does not run it", async () => {
+    const app = start("warm");
+    const db = app.app.hub.db;
+    const original = db.prepare.bind(db);
+    let checks = 0;
+    db.prepare = (sql, ...rest) => { if (/quick_check/i.test(String(sql))) checks += 1; return original(sql, ...rest); };
+    try {
+      await sleep(100);
+      const before = checks;
+      await fetch(`${app.base}/healthz`);
+      expect(checks).toBe(before);
+    } finally {
+      db.prepare = original;
+    }
+  });
+  const stub = (delayMs) => Bun.serve({ port: 0, hostname: "127.0.0.1", async fetch() { await sleep(delayMs); return Response.json({ status: "ok" }); } });
+  const doctorServerCheck = async (port) => {
+    const home = join(temp, "doctor-home");
+    const checks = await doctor({ home, dataDir: join(temp, "doctor-data"), dbPath: join(temp, "doctor-data", "hub.db"), port, host: "127.0.0.1", provider: "none", mode: "code", rules: [], bun: process.execPath, hookScript: "x", hookRunner: "x", mcpScript: "x" });
+    return checks.find((check) => check.name === "server");
+  };
+  test("doctor reports a 900 ms answer as slow, not unreachable", async () => {
+    const slow = stub(900);
+    try {
+      const check = await doctorServerCheck(slow.port);
+      expect(check.ok).toBe(true);
+      expect(check.detail).toMatch(/slow \(\d+ ms\)/);
+    } finally {
+      slow.stop(true);
+    }
+  });
+  test("doctor still says not reachable when nothing listens", async () => {
+    const check = await doctorServerCheck(1);
+    expect(check.ok).toBe(false);
+    expect(check.detail).toContain("not reachable");
   });
 });
