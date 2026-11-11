@@ -30,7 +30,7 @@ A fixture test proves the file is well formed. It does not prove the real tool a
 
 These sentences are the only claims made about real tools:
 
-- MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0, OpenCode 1.18.33.
+- MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0 (listed again by Codex 0.165.0 on 2026-10-29), OpenCode 1.18.33.
 - Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine. Claude Code's `PreToolUse` (read gate, off by default), `PostToolUseFailure` and `SubagentStop` hooks have run in tests only.
 - Cursor, Gemini CLI and Windsurf: config written from docs, not tested on a real install. No hook ran in Cursor, Gemini CLI, Windsurf or OpenCode.
 
@@ -88,7 +88,7 @@ The README gives a shorter summary of these skips. This page follows the test fi
 
 ## Roadmap
 
-No roadmap is published in the repository. The `[Unreleased]` section of the [CHANGELOG](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md) was empty on 2026-10-29. Open work is in the [issue tracker](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues). The gaps listed above are known gaps, not promises.
+No roadmap is published in the repository. The `[Unreleased]` section of the [CHANGELOG](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/CHANGELOG.md) was empty on 2026-10-29; it now lists changes. Open work is in the [issue tracker](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/issues). The gaps listed above are known gaps, not promises.
 
 ## Report from a real install
 

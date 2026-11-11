@@ -40,7 +40,7 @@ Cursor: config written from docs, not tested on a real install. No hook ran in C
 
 ### Can I use Aletheia with Codex CLI?
 
-The real CLI listed the Aletheia MCP server on 2026-10-27 for Codex 0.130.0. Hooks ran in one interactive session of Codex CLI, one user on one machine. See [Codex CLI](../tools/codex.md).
+The real CLI listed the Aletheia MCP server on 2026-10-27 for Codex 0.130.0 and again for Codex 0.165.0 on 2026-10-29. Hooks ran in one interactive session of Codex CLI, one user on one machine. See [Codex CLI](../tools/codex.md).
 
 ### Can I use Aletheia with Gemini CLI?
 

@@ -72,7 +72,7 @@ Covered by `test/ui-team-actions.test.mjs`.
 
 ## 31.4a MCP tools
 
-`team_brief` and `team_search` expose the brief and the shared search to MCP clients. They are listed in `tools/list` only when the caller belongs to a team, so a device without a team still sees the 13 core tools. They call `TeamStore.brief` and `TeamStore.search`, the same methods as the REST routes, so `authorize()` decides access: a member never gets rows from a project they cannot read, and asking for one is an error. Over stdio the local device acts as the operator, like the CLI. Over the sync hub's `/mcp` endpoint a token acts as its own member, and a token limited to projects stays inside them. Details: [MCP tools reference](reference/mcp-tools.md#team-tools). Covered by `test/mcp-team-tools.test.mjs` and `test/mcp-team-remote.test.mjs`.
+`team_brief` and `team_search` expose the brief and the shared search to MCP clients. They are listed in `tools/list` only when the caller belongs to a team, so a device without a team still sees the 14 core tools. They call `TeamStore.brief` and `TeamStore.search`, the same methods as the REST routes, so `authorize()` decides access: a member never gets rows from a project they cannot read, and asking for one is an error. Over stdio the local device acts as the operator, like the CLI. Over the sync hub's `/mcp` endpoint a token acts as its own member, and a token limited to projects stays inside them. Details: [MCP tools reference](reference/mcp-tools.md#team-tools). Covered by `test/mcp-team-tools.test.mjs` and `test/mcp-team-remote.test.mjs`.
 
 ## 31.5 Threat list and what is not covered
 
@@ -89,7 +89,7 @@ Covered by `test/ui-team-actions.test.mjs`.
 | A stolen device token reads its assigned projects | **NOT covered**: the token is the identity. Revoke it |
 | E2EE team memory | **NOT covered**: a shared brief and shared search need server-readable text. Team mode runs on a plaintext sync account |
 | A removed member's offline replica | **NOT covered**: the device keeps its local copy. Revoke the token and wipe the device |
-| SSO, SCIM, compliance, audit export | **NOT built** and no certificate is claimed |
+| SSO, SCIM, compliance certification | **NOT built** and no certificate is claimed. The sync audit log can be exported (`aletheia audit export`, `GET /v1/audit/export`, see [Sync](29-sync.md)); there is no separate team audit export |
 
 ## 31.6 Failure modes
 

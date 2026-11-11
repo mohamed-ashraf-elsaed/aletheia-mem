@@ -35,6 +35,8 @@ aletheia --version
 0.1.10
 ```
 
+That output is from 2026-10-29. The current package version is in `package.json`.
+
 The package has no runtime dependencies. It puts four commands on your `PATH`: `aletheia` (the command line), `aletheia-mem` (the same command), `aletheia-server` (the server and dashboard) and `aletheia-mcp` (the MCP server over stdio). The version above was the latest on the npm registry on 2026-10-29.
 
 ## Install from git
@@ -116,6 +118,17 @@ aletheia install claude-code --write  # apply
 ```
 
 The [Tools overview](../tools/overview.md) says what has been checked for each tool on a real install.
+
+## Install as a Claude Code plugin
+
+The repository also carries a Claude Code plugin in `.claude-plugin/`. `marketplace.json` lists one plugin, `aletheia-mem`, with the repository root as its source. `plugin.json` declares the `aletheia` MCP server (`bun ${CLAUDE_PLUGIN_ROOT}/bin/mcp.mjs`) and five hooks (`SessionStart`, `UserPromptSubmit`, `PostToolUse`, `Stop`, `SessionEnd`). Inside Claude Code, add the repository as a marketplace and install the plugin:
+
+```text
+/plugin marketplace add mohamed-ashraf-elsaed/aletheia-mem
+/plugin install aletheia-mem@aletheia-mem
+```
+
+The plugin needs Bun 1.1 or newer on your `PATH`, like every other install path. I did not run these two commands in a real Claude Code, and the manifest carries `"x-aletheia-verification": "from-docs-only"`. The manifest declares no step that writes rules to `CLAUDE.md` and no read gate hook; for rules sync use `aletheia rules sync`, and for the full hook set use `aletheia install claude-code --write`. I did not test using both routes together. The manifest versions are bumped with the package by `scripts/release.mjs`. Plugin background: https://code.claude.com/docs/en/plugins (fetched 2026-10-29).
 
 ## Start the server automatically
 
