@@ -1,4 +1,4 @@
-// T-240: the hybrid ranking on every surface. REST /v1/search, the dashboard's paged search and MCP `search` answer a
+// The hybrid ranking on every surface. REST /v1/search, the dashboard's paged search and MCP `search` answer a
 // query that only the dense channel can find, and with no embedding package they answer from keywords and say so.
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
