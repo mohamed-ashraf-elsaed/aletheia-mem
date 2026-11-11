@@ -19,7 +19,7 @@ The table matches the generated table in the project README. The `aletheia insta
 | [Windsurf](windsurf.md) | full | config written from docs, not tested on a real install | pre_user_prompt, post_run_command, post_write_code, post_cascade_response |
 | [OpenCode](opencode.md) | mcp+rules | MCP connection 1.18.33 on 2026-10-27; hooks not run | none (MCP and rules only) |
 
-Claude Desktop has an MCP entry only. It has no hooks and no rules file. See [Claude Desktop](../claude-desktop.md). GitHub Copilot, Aider and any other MCP client are covered in [Other tools](other-tools.md).
+Claude Desktop has an MCP entry only. It has no hooks and no rules file. See [Claude Desktop](../claude-desktop.md). GitHub Copilot, Aider and any other MCP client are covered in [Other tools](other-tools.md). The same page covers three hosts that get an MCP entry only, through `aletheia connect`: GitHub Copilot CLI (`copilot-cli`), Goose (`goose`) and Roo Code (`roo-code`). Their status is config written from docs, not tested on a real install. Warp is not written: its docs do not show the file format (UNVERIFIED). They are not in the table above because they have no `aletheia install` entry.
 
 Real output from `aletheia install --list` in a temporary home folder (the `detected` column says no because that folder is empty):
 
