@@ -1,7 +1,7 @@
 # Aletheia configuration reference: environment variables, settings and data directory
 
 <!-- description: Every Aletheia environment variable with its default, the runtime settings and where they are stored, and the files in the data directory. -->
-<!-- keywords: aletheia configuration, aletheia environment variables, ALETHEIA_DATA_DIR, aletheia settings, facts.minConfidence, context.facts, aletheia data directory -->
+<!-- keywords: aletheia configuration, aletheia environment variables, ALETHEIA_DATA_DIR, aletheia settings, facts.minConfidence, context.facts, project.worktrees, ALETHEIA_WORKTREE_PROJECTS, aletheia data directory -->
 
 Aletheia (aletheia-mem) is configured in two ways: environment variables read at start-up, and a small set of runtime settings stored in the hub database. This page lists both, and the files that appear in the data directory.
 
@@ -51,6 +51,7 @@ $ ALETHEIA_DATA_DIR=/srv/aletheia ALETHEIA_PORT=37800 aletheia-server
 | Variable | Default | Meaning |
 |---|---|---|
 | `ALETHEIA_EXCLUDED_PROJECTS` | empty | Comma-separated project keys that are never captured. Matching is exact and case-insensitive. `*` excludes every project. |
+| `ALETHEIA_WORKTREE_PROJECTS` | unset | `main` or `separate`. Overrides the `project.worktrees` setting below for the process that reads it: set it where the hooks, the server and the CLI run. Any other value is ignored. |
 | `ALETHEIA_TOOL` | unset | MCP stdio only. Names the caller in saved memories. |
 | `ALETHEIA_CWD` | the working directory | MCP stdio only. Sets the default project. |
 
@@ -101,11 +102,12 @@ Runtime settings live in the `settings` table of `hub.db`, under the key `ui.set
 
 | Key | Type | Default | Allowed | Effect |
 |---|---|---|---|---|
+| `project.worktrees` | enum | `main` | `main`, `separate` | The project key of a session in a git worktree. `main` uses the main repository's key, so the worktree shares its memory. `separate` uses `<repo>/<worktree>`. Submodules keep `<repo>/<path>` either way. See [Git worktrees](../concepts/memory-model.md#git-worktrees). |
 | `facts.minConfidence` | number | `0.4` | 0.3 to 0.9 | Facts below this confidence are rejected when stored and by `aletheia facts clean`. |
 | `context.facts` | enum | `auto` | `auto`, `on`, `off` | Facts in the session-start context. `off` lists none. `on` lists up to 10 active facts. `auto` lists a fact only if it came from a provider, has confidence 0.6 or more, or comes from a pinned observation. |
 | `rules.reviewDays` | integer | `90` | 7 to 730 | Days after which an unconfirmed rule gets a re-check flag. |
 
-These three are the only runtime settings. Version 0.1.10 also showed `provider`, `providers`, `factBudget.maxEpisodes`, `factBudget.maxChars`, `redaction`, `excludedProjects` and `apiKey` in the form, but no code read them, so they were removed. The provider, its chain and key, the fact budgets and the excluded projects are environment variables (see above), and redaction always runs. A value saved under one of the removed keys stays in the table and does nothing.
+These four are the only runtime settings. Version 0.1.10 also showed `provider`, `providers`, `factBudget.maxEpisodes`, `factBudget.maxChars`, `redaction`, `excludedProjects` and `apiKey` in the form, but no code read them, so they were removed. The provider, its chain and key, the fact budgets and the excluded projects are environment variables (see above), and redaction always runs. A value saved under one of the removed keys stays in the table and does nothing.
 
 ```
 $ curl -s -X PUT http://127.0.0.1:37790/api/hub/settings -H "Content-Type: application/json" \
@@ -117,6 +119,8 @@ HTTP/1.1 400 Bad Request
 ```
 
 Both calls ran against a temporary server on another port. The rows were stored as `ui.settings.context.facts = "on"`, `ui.settings.facts.minConfidence = 0.6` and `ui.settings.rules.reviewDays = 30`.
+
+A hook reads `project.worktrees` straight from `hub.db` once per event, which took about 1 ms on a test store on 2026-11-11 (measured-by-us (a scratch script timing `new Database(path, { readonly: true })` plus one `SELECT`)). When `ALETHEIA_WORKTREE_PROJECTS` is set, the hook skips that read. The server, the MCP server and the CLI read the setting from the store they opened, so a value saved in the dashboard applies to them at once.
 
 ## The data directory
 
