@@ -140,6 +140,32 @@ export function baselineRow(root = DEFAULT_ROOT) {
   };
 }
 
+// Rows from committed claude-mem baseline files (bench/results/<date>/claude-mem-<version>.json).
+export function baselineFileRows(root = DEFAULT_ROOT) {
+  const base = join(root, "bench/results");
+  if (!existsSync(base)) return [];
+  const rows = [];
+  for (const day of readdirSync(base).sort()) {
+    const dir = join(base, day);
+    if (!statSync(dir).isDirectory()) continue;
+    for (const name of readdirSync(dir).sort()) {
+      const match = name.match(/^claude-mem-(.+)\.json$/);
+      if (!match) continue;
+      const doc = JSON.parse(readFileSync(join(dir, name), "utf8"));
+      if (!doc.n || doc.results) continue;
+      rows.push({
+        label: `claude-mem ${match[1]} (as shipped), raw turns — measured-by-us`,
+        questions: withCommas(doc.n),
+        recall: `${((100 * doc["R@5"]) / doc.n).toFixed(1)}%`,
+        mrr: (doc.mrr / doc.n).toFixed(3),
+        latency: `mean ${withCommas(Math.round(doc.ms / doc.n))} ms (HTTP)`,
+        source: `bench/results/${day}/${name}`,
+      });
+    }
+  }
+  return rows;
+}
+
 export function renderBench(format = "md", resultsDir = latestResultsDir(join(DEFAULT_ROOT, "bench/results")), root = DEFAULT_ROOT) {
   if (!resultsDir || !existsSync(resultsDir)) {
     return note(format, "No benchmark results found. Run `bun run bench:locomo` and write JSON under bench/results/<date>/ first.");
@@ -151,6 +177,10 @@ export function renderBench(format = "md", resultsDir = latestResultsDir(join(DE
   if (baseline) {
     rows.push([baseline.label, baseline.questions, baseline.recall, baseline.mrr, baseline.latency]);
     sources.push(baseline.source);
+  }
+  for (const row of baselineFileRows(root)) {
+    rows.push([row.label, row.questions, row.recall, row.mrr, row.latency]);
+    sources.push(row.source);
   }
   for (const spec of RUNS) {
     const run = loadRun(resultsDir, spec.file);

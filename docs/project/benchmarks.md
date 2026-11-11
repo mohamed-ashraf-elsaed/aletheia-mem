@@ -17,7 +17,7 @@ Not measured:
 
 - Whether a model gave a correct answer. There is no published reader-and-judge run.
 - Retrieval on your own memories, in other languages, or in long real sessions.
-- The claude-mem Chroma index, unless it was running during the claude-mem baseline. The committed files do not say.
+- How complete claude-mem's Chroma index was when each question ran. It was running for the 15.17.0 baseline. For 15.2.0 the committed files do not say whether it was.
 - Sync, remote MCP and team mode.
 
 Every number below is `measured-by-us`, with the command. None is a vendor claim.
@@ -91,11 +91,12 @@ The method is in [`bench/locomo-retrieval.mjs`](https://github.com/mohamed-ashra
 
 ## Results
 
-All rows are from `bench/results/2026-10-26/`, generated on 2026-10-26. The result files do not record the machine, the Bun version or the operating system, so latency columns cannot be compared across machines.
+All Aletheia rows are from `bench/results/2026-10-26/`, generated on 2026-10-26. The claude-mem 15.17.0 row is from `bench/results/2026-11-11/`. The result files do not record the machine, the Bun version or the operating system, so latency columns cannot be compared across machines.
 
 | Run | Questions | Recall@5 | MRR | ms/query |
 |---|---|---|---|---|
 | claude-mem 15.2.0 (as shipped), raw turns | 1,536 | 36.0% | 0.285 | p50 1,699 ms, p95 2,824 ms (idle, 40 queries) |
+| claude-mem 15.17.0 (as shipped, Chroma on), raw turns | 1,536 | 43.5% | 0.377 | mean 1,079 ms (HTTP, all 1,536 queries) |
 | Raw turns, keyword (BM25) | 1,536 | 55.3% | 0.482 | 2.00 |
 | Raw turns, hybrid | 1,536 | 57.4% | 0.497 | 3.72 |
 | Dataset facts, all 10 | 1,536 | 64.8% | 0.591 | 5.53 |
@@ -107,8 +108,9 @@ All rows are from `bench/results/2026-10-26/`, generated on 2026-10-26. The resu
 Notes on the table:
 
 - The Aletheia rows come from `bun scripts/compare-bench.mjs`. The BM25 row was added from the same output.
-- The claude-mem row comes from the project README. The raw output of that run is not committed in `bench/results/`. It was produced by [`bench/claude-mem-baseline.mjs`](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/bench/claude-mem-baseline.mjs), which saves each turn through claude-mem's save endpoint and queries its search endpoint with a limit of 10. The date of that run is not recorded in a committed file.
-- Latest claude-mem release on 2026-10-29 is v15.6.0 (`gh api repos/thedotmack/claude-mem/releases/latest`). The baseline used 15.2.0 and was not re-run.
+- The claude-mem 15.2.0 row comes from the project README. The raw output of that run is not committed. The date of that run, and whether Chroma was running, are not recorded in a committed file.
+- The claude-mem 15.17.0 row is `measured-by-us (bun bench/claude-mem-baseline.mjs --data bench/data/locomo10.json --port 37795 --out bench/results/2026-11-11/claude-mem-15.17.0.json)`, run on 2026-11-11. The raw output is committed. The harness is [`bench/claude-mem-baseline.mjs`](https://github.com/mohamed-ashraf-elsaed/aletheia-mem/blob/main/bench/claude-mem-baseline.mjs): it saves each turn through `POST /api/memory/save` and queries `GET /api/search` with a limit of 10. Both endpoints still exist in 15.17.0 and the harness did not change. The worker ran isolated (temporary `HOME`, own data directory, port 37795, telemetry and auto-update off) with its Chroma vector index running. Chroma indexes saved turns in the background and the harness waits a fixed 15 seconds per conversation, so some turns may not have been in the vector index when their questions ran. This was not measured. Mean latency (1,079 ms) was measured on a busy machine while Chroma was embedding.
+- Latest claude-mem release on 2026-11-11 is v15.17.0 (`gh api repos/thedotmack/claude-mem/releases/latest`). The 15.2.0 and 15.17.0 rows differ in version and in recorded conditions, so the gain from 36.0% to 43.5% cannot be assigned to the version alone.
 - claude-mem is built to ingest through its language-model observer. Raw saves are the closest model-free equivalent, so the baseline does not show how claude-mem does through its normal path.
 - The hybrid and rerank rows need the optional embeddings package. A default install without it searches by keyword only.
 - Dataset facts are an experiment, not a feature. They show what good facts could add: about 7 points of Recall@5 over raw turns.
