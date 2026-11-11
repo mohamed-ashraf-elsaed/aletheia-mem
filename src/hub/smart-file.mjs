@@ -1,9 +1,17 @@
 // File-read gate and smart outline. A large file that already has observations is gated: a whole-file read
 // is refused and the caller gets a symbol outline plus an observation timeline, then reads only the offsets it wants.
 // The gate is off by default until it has been measured; a file with no history is never gated.
-import { readFileSync } from "node:fs";
+import { Database } from "bun:sqlite";
+import { existsSync, readFileSync, realpathSync, statSync } from "node:fs";
+import { isAbsolute, relative } from "node:path";
+import { wrapUntrusted } from "./untrusted.mjs";
 
 export const DEFAULT_GATE_BYTES = 32 * 1024;
+// The hub settings table stores the dashboard setting `readGate.enabled` under the editable-settings prefix.
+export const READ_GATE_SETTING_KEY = "ui.settings.readGate.enabled";
+const OUTLINE_READ_BYTES = 2 * 1024 * 1024;
+const REASON_OUTLINE_ROWS = 60;
+const REASON_HISTORY_ROWS = 10;
 
 const HEADING = /^(#{1,6})\s+(.+?)\s*#*\s*$/;
 const SYMBOL = /^(?:export\s+)?(?:default\s+)?(?:async\s+)?(?:function|class|const|let|var)\s+([A-Za-z_$][\w$]*)/;
@@ -70,4 +78,89 @@ export function smartFileRead(store, { project, file, text = null, size = null, 
     return { ...decision, size: bytes, outline: outlineOf(body), history, text: null };
   }
   return { ...decision, size: bytes, outline: outlineOf(body), history, text: body };
+}
+
+/** The gate switch, read straight from a hub file without opening the store. false when unset or unreadable. */
+export function readGateEnabled(dbPath) {
+  if (!dbPath || dbPath === ":memory:" || !existsSync(dbPath)) return false;
+  let db = null;
+  try {
+    db = new Database(dbPath, { readonly: true });
+    const row = db.prepare("SELECT value FROM settings WHERE key = ?").get(READ_GATE_SETTING_KEY);
+    return row ? JSON.parse(row.value) === true : false;
+  } catch {
+    return false;
+  } finally {
+    try {
+      db?.close();
+    } catch {
+      // ignore
+    }
+  }
+}
+
+/** The outline and history as text for a model: the outline is file text, the history is recalled memory (wrapped). */
+export function outlineText({ file, bytes, outline, history }) {
+  const rows = outline.slice(0, REASON_OUTLINE_ROWS).map((row) => `  line ${row.line} ${row.kind}: ${row.text}`);
+  const more = outline.length > REASON_OUTLINE_ROWS ? [`  ... ${outline.length - REASON_OUTLINE_ROWS} more`] : [];
+  const lines = [`${file} (${bytes} bytes)`, "Outline:", ...(rows.length ? rows : ["  (no symbols or headings found)"]), ...more];
+  if (history.length) {
+    lines.push("", wrapUntrusted(["Earlier memories that touched this file:", ...history.slice(0, REASON_HISTORY_ROWS).map((item) => `#${item.id} [${item.type}] ${item.title}`)].join("\n")));
+  }
+  return lines.join("\n");
+}
+
+/**
+ * The PreToolUse answer for one Read call, as hook stdout: a deny JSON, or "" to allow. Allows whenever the gate is
+ * off, the call is not a whole-file Read, the file is small or has no history, or anything at all goes wrong.
+ * `open()` returns a HubStore and is only called once the cheap checks pass.
+ */
+export function readGateOutput(payload, { dbPath, project, open, thresholdBytes = DEFAULT_GATE_BYTES } = {}) {
+  try {
+    if (payload?.tool_name !== "Read") return "";
+    const input = payload.tool_input ?? {};
+    const file = input.file_path;
+    if (typeof file !== "string" || !isAbsolute(file)) return "";
+    if (input.offset != null || input.limit != null) return "";
+    if (!readGateEnabled(dbPath)) return "";
+    const stat = statSync(file);
+    if (!stat.isFile() || stat.size < thresholdBytes) return "";
+    const store = open();
+    try {
+      const history = historyOf(store, { project, file });
+      if (!gateFileRead({ size: stat.size, historyCount: history.length, enabled: true, thresholdBytes }).gated) return "";
+      const body = readFileSync(file, "utf8").slice(0, OUTLINE_READ_BYTES);
+      const reason = [
+        `Aletheia file-read gate: this whole-file read was skipped because the file is large and has earlier memories.`,
+        outlineText({ file, bytes: stat.size, outline: outlineOf(body), history }),
+        "",
+        `Read the part you need instead: call Read again with offset (first line, 0-based) and limit (number of lines), using the line numbers above. A read with offset or limit is never gated.`,
+      ].join("\n");
+      return JSON.stringify({ hookSpecificOutput: { hookEventName: "PreToolUse", permissionDecision: "deny", permissionDecisionReason: reason } });
+    } finally {
+      try {
+        store.close();
+      } catch {
+        // ignore
+      }
+    }
+  } catch {
+    return "";
+  }
+}
+
+/** The outline of one file for the file_outline MCP tool. Refuses a path outside `root`; throws a plain Error. */
+export function fileOutline(store, { file, root, project }) {
+  if (typeof file !== "string" || !file.trim()) throw new Error("file is required.");
+  if (!root) throw new Error("file_outline needs a local working directory and is not available over a remote connection.");
+  const real = (path) => { try { return realpathSync(path); } catch { throw new Error(`Cannot read ${path}.`); } };
+  const target = real(file.trim());
+  const base = real(root);
+  const rel = relative(base, target);
+  if (rel.startsWith("..") || isAbsolute(rel)) throw new Error("file must be inside the project working directory.");
+  const stat = statSync(target);
+  if (!stat.isFile()) throw new Error("file must be a regular file.");
+  const body = readFileSync(target, "utf8").slice(0, OUTLINE_READ_BYTES);
+  const history = historyOf(store, { project, file: target });
+  return outlineText({ file: target, bytes: stat.size, outline: outlineOf(body), history });
 }

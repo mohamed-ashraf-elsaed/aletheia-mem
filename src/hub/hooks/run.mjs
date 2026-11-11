@@ -11,6 +11,7 @@ import cursor from "./cursor.mjs";
 import geminiCli from "./gemini-cli.mjs";
 import windsurf from "./windsurf.mjs";
 import { enqueueCompression, flushSpool, projectOf, readPayload, spoolAppend } from "./shared.mjs";
+import { readGateOutput } from "../smart-file.mjs";
 import { readWorktreeSetting, useWorktreeSetting } from "../../lib/project-key.mjs";
 
 export const ADAPTERS = { "claude-code": claudeCode, "command-code": commandCode, codex, cursor, "gemini-cli": geminiCli, windsurf };
@@ -56,6 +57,12 @@ async function runHookEvent({ tool, event, stdin, config, dataDir } = {}) {
   const project = adapter.project ? adapter.project(payload) : projectOf(payload);
   if (isProjectExcluded(project, cfg.excludedProjects ?? [])) {
     return { ...fallback, stored: false, queued: false, reason: "excluded_project", project };
+  }
+
+  // PreToolUse is the read gate: it stores nothing and answers allow (empty stdout) unless the gate says deny.
+  if (adapter === claudeCode && /^pretooluse$/i.test(name)) {
+    const stdout = readGateOutput(payload, { dbPath: cfg.hubDb, project, open: () => { const gate = new HubStore(cfg.hubDb); gate.db.exec("PRAGMA busy_timeout = 50"); return gate; } });
+    return { ...fallback, stdout, stored: false, queued: false };
   }
 
   let item = empty();

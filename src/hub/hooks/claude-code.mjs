@@ -2,10 +2,11 @@
 // Claude Code documents; both were checked against a real installed plugin hook file on 2026-10-26:
 // ~/.claude/plugins/marketplaces/thedotmack/plugin/hooks/hooks.json and the Claude Code adapter in claude-mem.
 // PostToolUseFailure (`error`, `is_interrupt`) and SubagentStop (`agent_type`, `agent_id`, `last_assistant_message`)
-// fields were read from https://code.claude.com/docs/en/hooks on 2026-11-11.
+// fields were read from https://code.claude.com/docs/en/hooks on 2026-11-11. PreToolUse (tool_name, tool_input, and the
+// hookSpecificOutput permissionDecision/permissionDecisionReason deny shape) was read from the same page on 2026-11-11.
 import { projectOf, promptMemory, sessionContext, sessionStartOutput, subagentMemory, summaryMemory, toolFailureMemory, toolMemory } from "./shared.mjs";
 
-export const EVENTS = ["SessionStart", "UserPromptSubmit", "PostToolUse", "PostToolUseFailure", "Stop", "SubagentStop", "SessionEnd"];
+export const EVENTS = ["SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure", "Stop", "SubagentStop", "SessionEnd"];
 export const MISSING_EVENTS = [];
 
 const CANONICAL = new Map(EVENTS.map((event) => [event.toLowerCase(), event]));
