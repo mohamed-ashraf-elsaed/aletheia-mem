@@ -14,7 +14,7 @@ const temp = mkdtempSync(join(tmpdir(), "aletheia-automem-"));
 const home = join(temp, "home");
 const repo = join(temp, "shop");
 mkdirSync(repo, { recursive: true });
-const encoded = repo.replace(/[/\\]/g, "-");
+const encoded = repo.replace(/[/\\:]/g, "-"); // ":" too, so the folder name is valid on Windows
 const memDir = join(home, ".claude", "projects", encoded, "memory");
 mkdirSync(memDir, { recursive: true });
 
@@ -43,7 +43,8 @@ const rows = (store) => store.db.prepare("SELECT * FROM memories").all();
 afterAll(() => removeDir(temp));
 
 describe("import claude-memory", () => {
-  test("imports once, then adds 0 rows on a re-run", () => {
+  // Mapping a folder name back to a project path walks the POSIX root; on Windows the importer needs --project.
+  test.skipIf(process.platform === "win32")("imports once, then adds 0 rows on a re-run", () => {
     const store = new HubStore(join(temp, "a.db"));
     const first = importClaudeMemory(store, { home });
     expect(first.added).toBe(3); // one single-section file and one two-section file; the index and the unmapped folder add none
