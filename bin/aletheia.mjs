@@ -1,5 +1,8 @@
 #!/usr/bin/env bun
 // aletheia: the command line for the shared memory hub. Works without the server running.
+//   aletheia help | --help | -h                           print this text (touches no data)
+//   aletheia version | --version | -v                     print the version
+//   aletheia migrate [--db path] [--dry-run] [--backup path]   upgrade the database schema after copying it
 //   aletheia capture --tool <name> [--project p]          read one hook payload (JSON) on stdin, store it (secrets redacted)
 //   aletheia context [--project p] [--tool t]             print session-start context for any tool
 //   aletheia context economics [--project p] [--limit n]   per-observation read and work tokens
@@ -16,6 +19,8 @@
 //   aletheia export [--format jsonl|markdown] [--project p] [--events] [--out file]
 //   aletheia folder-context <dir> [--project p] [--write]  preview (default) or write a managed CLAUDE.md block per folder with memories; never run from a hook
 //   aletheia rules list [--stale] [--older-than N] | add <text> [--when w] | confirm <id> | retire <id> | diff [--dir path] [--tools a,b] [--json] | lint [--dir path] [--tools a,b] [--json] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
+//   aletheia rules suggest [--project p]                  propose rules from stored memory
+//   aletheia rules suggestions [--project p] [--status s] list the proposals
 //   aletheia mcp                                          run the MCP server over stdio (same as aletheia-mcp)
 //   aletheia tools                                        detected tools and how to connect each
 //   aletheia connect <tool> [--write] [--remove] [--dir d]  preview (default) or write the MCP config for a tool; --remove undoes it
@@ -27,9 +32,10 @@
 //   aletheia backup run | list | status [--json]        local snapshots of hub.db in <data dir>/backups (settings: backup.enabled, backup.intervalHours, backup.keep)
 //   aletheia restore <snapshot file>                      replace hub.db with a snapshot (close AI tools and stop aletheia-server first; the current file is kept)
 //   aletheia doctor                                       check the server, hooks, spool and last capture
-//   aletheia compress [--project p] [--daemon]         drain the extraction queue (provider or rule-based)
+//   aletheia compress [--daemon] [--interval ms]       drain the extraction queue (provider or rule-based)
 //   aletheia entities [--project p] [--limit n] [--json]
-//   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id]
+//   aletheia summarize [--scope session|project|entity] [--project p] [--session s] [--entity id] [--days n]
+//   aletheia summarize --scope list [--project p] [--limit n]   list stored summaries
 //   aletheia prune [--apply]                            report cold facts and old episodes; --apply changes them
 //   aletheia promote <type> <id>                        make a memory, episode, observation or fact global
 //   aletheia projects [--json]                          project keys with their row count in each table
@@ -97,6 +103,13 @@ function parseArgs(args) {
 }
 const out = (v) => console.log(typeof v === "string" ? v : JSON.stringify(v, null, 2));
 const die = (m) => { console.error(m); process.exit(1); };
+
+/** The usage text is the header comment block above. */
+function helpText() {
+  const lines = readFileSync(new URL(import.meta.url), "utf8").split("\n").slice(1);
+  const end = lines.findIndex((l) => !l.startsWith("//"));
+  return lines.slice(0, end).map((l) => l.slice(3)).join("\n");
+}
 
 /** `12` means memory #12; `fact:12` names another dismissible type. */
 function dismissTarget(value) {
@@ -324,6 +337,7 @@ async function runAlertsCommand(flags, pos, hub) {
 }
 
 async function main() {
+  if (cmd === "help" || cmd === "--help" || cmd === "-h") return out(helpText());
   if (cmd === "--version" || cmd === "-v" || cmd === "version") {
     return out(JSON.parse(readFileSync(join(import.meta.dir, "..", "package.json"), "utf8")).version);
   }
@@ -880,10 +894,22 @@ async function main() {
         return out(`Extraction mode: ${mode}${embedder ? `; embeddings ${embedder.model}` : "; keyword only"}\nqueue: ${JSON.stringify(result.counts)}${last}`);
       }
       default:
-        return die(readFileSync(new URL(import.meta.url), "utf8").split("\n").filter((l) => l.startsWith("//")).map((l) => l.slice(3)).join("\n"));
+        return die(helpText());
     }
   } finally {
     hub.close();
   }
 }
-await main();
+
+// A known user error is one line. Anything else keeps its stack, and --debug or ALETHEIA_DEBUG=1 keeps it for all.
+const USER_ERRORS = new Set(["TeamAccessError", "RangeError", "EraseError", "ValidationError", "BadRequest"]);
+try {
+  await main();
+} catch (error) {
+  const debug = process.argv.includes("--debug") || process.env.ALETHEIA_DEBUG === "1";
+  if (!debug && error && USER_ERRORS.has(error.name)) {
+    console.error(String(error.message).split("\n")[0]);
+    process.exit(1);
+  }
+  throw error;
+}
