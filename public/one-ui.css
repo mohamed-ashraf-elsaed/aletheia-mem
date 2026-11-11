@@ -298,3 +298,11 @@ a.ui-home-row-title:hover { text-decoration: underline; color: var(--ui-accent);
 .ui-project { flex: 0 1 180px; }
 .ui-home-textarea::placeholder, .ui-home-add input::placeholder { color: var(--ui-muted); opacity: 1; font-weight: 400; }
 .ui-home-textarea, .ui-home-add .ui-input { font-weight: 400; }
+
+/* ---- language switch and the machine-translation note ---- */
+.ui-lang { flex: 0 1 auto; max-width: 150px; }
+.ui-i18n-note { margin: 0; padding: var(--ui-space-3) var(--ui-space-4); text-align: center; border-top: 1px solid var(--ui-border); }
+@media (max-width: 960px) {
+  .ui-lang { order: 3; max-width: 120px; }
+  .ui-i18n-note { padding-inline: var(--ui-space-3); }
+}

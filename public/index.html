@@ -17,46 +17,48 @@
     <div id="ui-app" class="ui-app">
       <div id="ui-banner-slot" class="ui-banner-slot"></div>
       <header class="ui-top">
-        <a class="ui-brand" href="#/home" aria-label="Aletheia, home">
+        <a class="ui-brand" href="#/home" aria-label="Aletheia, home" data-i18n-attr="aria-label:shell.brandHome">
           <span id="ui-brand-mark" class="ui-brand-mark" aria-hidden="true"></span>
           <span class="ui-brand-word">Aletheia</span>
         </a>
-        <nav id="ui-tabs" class="ui-nav" aria-label="Sections"></nav>
+        <nav id="ui-tabs" class="ui-nav" aria-label="Sections" data-i18n-attr="aria-label:shell.sections"></nav>
         <span class="ui-spacer"></span>
         <label class="ui-sr" for="ui-project">Project</label>
-        <select id="ui-project" class="ui-select ui-project" aria-label="Project">
-          <option value="">All projects</option>
+        <select id="ui-project" class="ui-select ui-project" aria-label="Project" data-i18n-attr="aria-label:shell.project">
+          <option value="" data-i18n="shell.allProjects">All projects</option>
         </select>
         <form id="ui-search-form" class="ui-search" role="search">
           <label class="ui-sr" for="ui-search">Search memory</label>
           <div class="ui-search-box">
-            <input id="ui-search" type="search" placeholder="Search memory…" aria-label="Search memory" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ui-search-list" aria-autocomplete="list" />
+            <input id="ui-search" type="search" placeholder="Search memory…" aria-label="Search memory" data-i18n-attr="placeholder:shell.searchPlaceholder,aria-label:shell.searchMemory" autocomplete="off" role="combobox" aria-expanded="false" aria-controls="ui-search-list" aria-autocomplete="list" />
             <kbd class="ui-search-key" aria-hidden="true">/</kbd>
-            <div id="ui-search-list" class="ui-search-list" role="listbox" aria-label="Search results" hidden></div>
+            <div id="ui-search-list" class="ui-search-list" role="listbox" aria-label="Search results" data-i18n-attr="aria-label:shell.searchResults" hidden></div>
           </div>
         </form>
+        <select id="ui-lang" class="ui-select ui-lang" aria-label="Language" data-i18n-attr="aria-label:shell.language"></select>
         <div id="ui-theme" class="ui-theme-slot"></div>
-        <span id="ui-health" class="ui-health checking ui-sr" role="status" aria-live="polite" aria-label="Checking server health">○</span>
+        <span id="ui-health" class="ui-health checking ui-sr" role="status" aria-live="polite" aria-label="Checking server health" data-i18n-attr="aria-label:shell.health.checking">○</span>
       </header>
-      <div id="ui-status" class="ui-statusbar" role="region" aria-label="System status"></div>
+      <div id="ui-status" class="ui-statusbar" role="region" aria-label="System status" data-i18n-attr="aria-label:shell.systemStatus"></div>
 
       <main id="ui-main" class="ui-main" tabindex="-1">
-        <section id="tab-home" class="ui-page" data-tab="home" role="tabpanel" aria-label="Home">
+        <section id="tab-home" class="ui-page" data-tab="home" role="tabpanel" aria-label="Home" data-i18n-attr="aria-label:nav.home">
           <div id="ui-home"></div>
         </section>
-        <section id="tab-work" class="ui-page ui-page-work" data-tab="work" role="tabpanel" aria-label="Activity" hidden>
+        <section id="tab-work" class="ui-page ui-page-work" data-tab="work" role="tabpanel" aria-label="Activity" data-i18n-attr="aria-label:nav.work" hidden>
           <div id="ui-work"></div>
         </section>
-        <section id="tab-memory" class="ui-page" data-tab="memory" role="tabpanel" aria-label="Knowledge" hidden>
+        <section id="tab-memory" class="ui-page" data-tab="memory" role="tabpanel" aria-label="Knowledge" data-i18n-attr="aria-label:nav.memory" hidden>
           <div id="ui-memory"></div>
         </section>
-        <section id="tab-rules" class="ui-page" data-tab="rules" role="tabpanel" aria-label="Rules" hidden>
+        <section id="tab-rules" class="ui-page" data-tab="rules" role="tabpanel" aria-label="Rules" data-i18n-attr="aria-label:nav.rules" hidden>
           <div id="ui-rules"></div>
         </section>
-        <section id="tab-tools" class="ui-page" data-tab="tools" role="tabpanel" aria-label="Connections" hidden>
+        <section id="tab-tools" class="ui-page" data-tab="tools" role="tabpanel" aria-label="Connections" data-i18n-attr="aria-label:nav.tools" hidden>
           <div id="ui-tools"></div>
         </section>
       </main>
+      <p id="ui-i18n-note" class="ui-i18n-note ui-meta" data-i18n="shell.machineNote" hidden></p>
     </div>
 
     <div id="ui-toast" class="ui-sr" role="status"></div>
