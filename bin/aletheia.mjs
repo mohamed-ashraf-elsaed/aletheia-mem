@@ -17,7 +17,7 @@
 //   aletheia rules list [--stale] [--older-than N] | add <text> [--when w] | confirm <id> | retire <id> | diff [--dir path] [--tools a,b] [--json] | lint [--dir path] [--tools a,b] [--json] | sync --tools a,b [--dir path | --global] [--write] | import --tool t --dir path
 //   aletheia mcp                                          run the MCP server over stdio (same as aletheia-mcp)
 //   aletheia tools                                        detected tools and how to connect each
-//   aletheia connect <tool> [--write]                     preview (default) or write the MCP config for a tool
+//   aletheia connect <tool> [--write] [--remove] [--dir d]  preview (default) or write the MCP config for a tool; --remove undoes it
 //   aletheia install <tool> [--write] [--dry-run]         preview (default) or write MCP, hooks and rules in one go
 //   aletheia install --list                               capability level, verification and detection per tool
 //   aletheia install [<tool>] --verify                    report whether the recorded install still matches (no writes)
@@ -71,7 +71,7 @@ import { applyInstall, applyUninstall, doctor, formatInstallerList, formatPlan, 
 import { describeRules } from "../src/hub/rule-evidence.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "../src/hub/rules-sync.mjs";
 import { HubStore, inspectMigration, targetSchemaVersion } from "../src/hub/store.mjs";
-import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "../src/hub/tools.mjs";
+import { MCP_ONLY_HOSTS, TOOLS, applyMcp, applyMcpOnly, detectTools, mcpCommand, mcpOnlyHost, mcpOnlyPlan, mcpPlan, removeMcpOnly, toolById } from "../src/hub/tools.mjs";
 import { WORKTREE_SETTING_KEY, useWorktreeSetting } from "../src/lib/project-key.mjs";
 import { projectKeyForPath } from "../src/readmodel/project.mjs";
 import { makeProvider } from "../src/refresh/providers.mjs";
@@ -751,7 +751,20 @@ async function main() {
       }
       case "tools": return out(detectTools(config.home).map((t) => `${t.installed ? "✔" : "·"} ${t.id.padEnd(12)} ${t.name}  rules: ${t.rulesProject}${t.rulesGlobal ? ` | ~/${t.rulesGlobal}` : ""}${t.canConnect ? "  mcp: yes" : ""}`).join("\n"));
       case "connect": {
-        const tool = toolById(pos[0] ?? "") ?? die(`Unknown tool. Try: ${TOOLS.filter((t) => t.mcp).map((t) => t.id).join(", ")}`);
+        const mcpOnly = mcpOnlyHost(pos[0] ?? "");
+        if (mcpOnly) {
+          const ctx = { home: config.home, project: typeof flags.dir === "string" ? resolve(flags.dir) : process.cwd(), argv, env: process.env };
+          const head = `${mcpOnly.name}: ${mcpOnly.status}\nSource: ${mcpOnly.source} (fetched ${mcpOnly.fetchedOn})`;
+          if (flags.remove) {
+            const plan = mcpOnlyPlan(mcpOnly, ctx);
+            if (!flags.write) return out(`${head}\nWould remove the aletheia entry from ${plan.path}${plan.connected ? "" : ` (nothing to remove: ${plan.foreign ? "the aletheia entry is not ours" : "no aletheia entry"})`}.\nAdd --write to apply (a backup is kept).`);
+            return out(removeMcpOnly(mcpOnly, ctx));
+          }
+          const plan = mcpOnlyPlan(mcpOnly, ctx);
+          if (!flags.write) return out(`${head}\n${plan.notes.join("\n")}\n${plan.connected ? "Already connected.\n" : ""}${plan.foreign ? "An aletheia entry that is not ours exists; it will not be changed.\n" : ""}Would write to ${plan.path}:\n${plan.snippet}\nAdd --write to apply (a backup is kept). Add --remove to undo.`);
+          return out(applyMcpOnly(mcpOnly, ctx));
+        }
+        const tool = toolById(pos[0] ?? "") ?? die(`Unknown tool. Try: ${[...TOOLS.filter((t) => t.mcp).map((t) => t.id), ...MCP_ONLY_HOSTS.map((h) => h.id)].join(", ")}`);
         const plan = mcpPlan(tool, config.home, argv);
         if (!plan.supported) return die(`${tool.name} has no MCP configuration in the registry.`);
         if (plan.kind === "command") return out(`Run this:\n  ${plan.command}`);
