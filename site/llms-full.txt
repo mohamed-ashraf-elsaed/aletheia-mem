@@ -4911,7 +4911,7 @@ aletheia import claude-memory               # import
 aletheia import claude-memory --path ~/my-custom-memory-dir --project shop
 ```
 
-The importer opens the files read-only and never changes them. It skips `MEMORY.md`, splits a file at `## ` headings, redacts secrets and drops `<private>` blocks before storing. A second run adds 0 rows. The folder name under `projects/` is the project path with separators replaced by `-`. The Claude Code docs do not state that encoding, so the importer decodes it by looking for the folder on disk and applies the same worktree rule as the hooks. A folder it cannot find is skipped and named in the output; rerun with `--project <key>`.
+The importer opens the files read-only and never changes them. It skips `MEMORY.md`, splits a file at `## ` headings, redacts secrets and drops `<private>` blocks before storing. A second run adds 0 rows. The folder name under `projects/` is the project path with separators replaced by `-`. The Claude Code docs do not state that encoding, so the importer decodes it by looking for the folder on disk and applies the same worktree rule as the hooks. A folder it cannot find is skipped and named in the output; rerun with `--project <key>`. The decoding walks from the file system root, so on Windows every folder is reported this way and needs `--project`; how Claude Code names these folders on Windows is not stated in its docs.
 
 ## Import a bundle
 
