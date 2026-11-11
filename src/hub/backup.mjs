@@ -23,6 +23,13 @@ function secure(path, mode) {
 }
 
 /** Write one snapshot of the open store, then prune. Returns {path, bytes, pruned}. */
+/** Run one statement and finalize it: bun:sqlite defers close() while a statement is open, and Windows then refuses to
+ * rename or remove the file. */
+const one = (db, sql, ...args) => {
+  const statement = db.prepare(sql);
+  try { return statement.get(...args); } finally { statement.finalize(); }
+};
+
 export function runBackup(store, { dataDir, keep = 7, now = new Date() } = {}) {
   const dir = backupDir(dataDir);
   mkdirSync(dir, { recursive: true });
@@ -35,11 +42,11 @@ export function runBackup(store, { dataDir, keep = 7, now = new Date() } = {}) {
   rmSync(partial, { force: true });
   store.db.exec("PRAGMA busy_timeout = 10000");
   try {
-    store.db.prepare("VACUUM INTO ?").run(partial);
+    { const vacuum = store.db.prepare("VACUUM INTO ?"); try { vacuum.run(partial); } finally { vacuum.finalize(); } }
     secure(partial, 0o600);
     const check = new Database(partial, { readonly: true });
     try {
-      const result = check.prepare("PRAGMA integrity_check").get().integrity_check;
+      const result = one(check, "PRAGMA integrity_check").integrity_check;
       if (result !== "ok") throw new Error(`Snapshot failed integrity_check: ${result}`);
     } finally {
       check.close();
@@ -124,10 +131,10 @@ function inspectSnapshot(path) {
   let db;
   try {
     db = new Database(path, { readonly: true });
-    const integrity = db.prepare("PRAGMA integrity_check").get().integrity_check;
+    const integrity = one(db, "PRAGMA integrity_check").integrity_check;
     if (integrity !== "ok") throw new Error(`integrity_check says: ${integrity}`);
-    if (!db.prepare("SELECT 1 FROM sqlite_master WHERE name = 'memories'").get()) throw new Error("no memories table");
-    const version = db.prepare("PRAGMA user_version").get().user_version;
+    if (!one(db, "SELECT 1 FROM sqlite_master WHERE name = 'memories'")) throw new Error("no memories table");
+    const version = one(db, "PRAGMA user_version").user_version;
     if (version > targetSchemaVersion) throw new RangeError(`This snapshot is schema v${version}; this build understands up to v${targetSchemaVersion}.`);
     return version;
   } catch (error) {
@@ -159,7 +166,7 @@ export async function restoreBackup(file, { dataDir, dbPath, port, now = new Dat
       live = new Database(dbPath);
       live.exec("PRAGMA busy_timeout = 0");
       // Fold the WAL into hub.db and empty it. A reader or writer in another process makes this report busy.
-      const checkpoint = live.prepare("PRAGMA wal_checkpoint(TRUNCATE)").get();
+      const checkpoint = one(live, "PRAGMA wal_checkpoint(TRUNCATE)");
       if (checkpoint && checkpoint.busy) throw new Error("database is busy");
       live.exec("BEGIN EXCLUSIVE");
     } catch (error) {

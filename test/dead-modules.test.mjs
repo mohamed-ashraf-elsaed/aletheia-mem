@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, relative, resolve, sep } from "node:path";
 
 const root = join(import.meta.dir, "..");
 
@@ -45,7 +45,7 @@ describe("dead module check", () => {
     const seen = reachable();
     const dead = walk(join(root, "src"))
       .map((f) => relative(root, f))
-      .filter((rel) => !seen.has(join(root, rel)) && !(rel in ALLOWED))
+      .filter((rel) => !seen.has(join(root, rel)) && !(rel.split(sep).join("/") in ALLOWED))
       .sort();
     expect(dead).toEqual([]);
   });

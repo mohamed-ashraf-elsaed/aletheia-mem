@@ -3,7 +3,7 @@
 // Warp is not covered: its docs name the file but not its JSON shape, so it stays UNVERIFIED.
 import { afterAll, describe, expect, test } from "bun:test";
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { MCP_ONLY_HOSTS, applyMcpOnly, mcpOnlyHost, mcpOnlyPlan, removeMcpOnly } from "../src/hub/tools.mjs";
 import { cleanupTempDirs, tempDir } from "./temp-dirs.mjs";
 
@@ -18,7 +18,7 @@ function ctx() {
   mkdirSync(project, { recursive: true });
   return { home, project, argv, env: {} };
 }
-const backups = (file) => readdirSync(dirname(file)).filter((name) => name.startsWith(`${file.split("/").pop()}.aletheia-`) && name.endsWith(".bak"));
+const backups = (file) => readdirSync(dirname(file)).filter((name) => name.startsWith(`${basename(file)}.aletheia-`) && name.endsWith(".bak"));
 const seed = (file, text) => { mkdirSync(dirname(file), { recursive: true }); writeFileSync(file, text); };
 
 describe("registry", () => {

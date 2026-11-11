@@ -62,7 +62,7 @@ describe("aletheia folder-context", () => {
     const before = snapshot();
     const result = await run(["folder-context", project, "--project", "shop"]);
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain("src/CLAUDE.md");
+    expect(result.stdout).toContain(join("src", "CLAUDE.md"));
     expect(result.stdout).toContain("use bcrypt for passwords");
     expect(result.stdout).toContain("never log tokens");
     expect(result.stdout).toContain("Dry run");
