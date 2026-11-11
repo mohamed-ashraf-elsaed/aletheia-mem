@@ -22,11 +22,24 @@ $ ALETHEIA_DATA_DIR=/srv/aletheia ALETHEIA_PORT=37800 aletheia-server
 | `ALETHEIA_HOST` | `127.0.0.1` | Bind address for `aletheia-server`. A non-loopback value turns on dashboard login. `--host` overrides it. |
 | `ALETHEIA_PORT` | `37790` | Dashboard and API port. `aletheia doctor` checks `/healthz` on this port. |
 | `ALETHEIA_BEHIND_TLS` | unset | `1` says a reverse proxy ends TLS. `--behind-tls` does the same. |
-| `ALETHEIA_API_KEY` | empty | When set, the `/v1` API and the `/mcp` route on the main server need `Authorization: Bearer <key>`. |
+| `ALETHEIA_API_KEY` | empty | When set, every `/api/*` and `/v1/*` route and `/mcp` on the main server need `Authorization: Bearer <key>`. The dashboard asks for the key once. See [What the API key protects](#what-the-api-key-protects). |
 | `ALETHEIA_EXTRACTION_WORKER` | unset | `1` starts the extraction worker when the server is embedded elsewhere. `aletheia-server` always starts it. |
 | `ALETHEIA_AUTO_REFRESH` | `true` | `false` turns off the periodic model refresh. It runs only when a provider is set. |
 | `ALETHEIA_REFRESH_CHECK_MS` | `600000` | How often the server checks whether a refresh is due. |
 | `ALETHEIA_POLL_MS` | `1000` | How often the server re-reads the claude-mem database for the Activity page. |
+
+### What the API key protects
+
+With `ALETHEIA_API_KEY` set:
+
+- Every route that returns memory or changes data needs `Authorization: Bearer <key>`. That is every `/api/*` route, `/api/hub/*` included, every `/v1/*` route, and `/mcp`. A request without the key, or with a wrong one, gets `401 {"error":"A valid bearer key is required."}` and the header `WWW-Authenticate: Bearer realm="aletheia"`.
+- These stay open: the dashboard page and its static files, `/health`, `/healthz` (status only, no memory text), `/api/login` and `/api/logout`.
+- The dashboard asks for the key once, in a dialog, and keeps it in the tab's `sessionStorage`. Closing the tab forgets it. The dashboard sends the key only in the `Authorization` header.
+- `/v1/live` takes the key in the `Authorization` header. A browser cannot set headers on a WebSocket, so the dashboard first sends the key to `POST /v1/live/ticket` and gets a ticket. It then offers `aletheia.live` and `aletheia.ticket.<ticket>` as WebSocket subprotocols. A ticket works once and expires after 30 seconds. The key never goes in a URL.
+- The classic viewer (`/work-view/work.html`) cannot send the key. The Tools tab does not offer it while a key is set.
+- Hooks and the stdio MCP server write to the database file directly. They do not use HTTP and do not need the key.
+
+On a non-loopback bind, Hub login and the key are two separate checks. The login check runs first. On `/` and `/api/*` a keyed remote server needs both: log in with the admin token, then enter the key. `/v1/*` and `/mcp` need only the key, as before, so tools do not log in.
 
 ## Paths and files
 
