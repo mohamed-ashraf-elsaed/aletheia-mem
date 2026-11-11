@@ -16,6 +16,7 @@ import { createLoginGuard } from "./hub/login.mjs";
 import { SyncStore } from "./hub/sync/store.mjs";
 import { startBackgroundWorker } from "./hub/queue.mjs";
 import { HubStore } from "./hub/store.mjs";
+import { WORKTREE_SETTING_KEY, useWorktreeSetting } from "./lib/project-key.mjs";
 import { makeProvider } from "./refresh/providers.mjs";
 
 const STATIC_TYPES = {
@@ -47,6 +48,8 @@ export function startServer(config, {
 } = {}) {
   const service = new WorkViewService(config, { autoRefresh });
   const hub = new HubStore(config.hubDb);
+  // Project keys computed in this process follow the hub's `project.worktrees` setting; a saved change applies at once.
+  const previousWorktreeSetting = useWorktreeSetting(() => hub.setting(WORKTREE_SETTING_KEY, null));
   // Remote login: on by default exactly when the bind is not loopback-only. The sync account's
   // admin token is the password. Loopback-only keeps today's behaviour (no login, no sessions).
   const remoteMode = requireLogin ?? !["127.0.0.1", "localhost", "::1"].includes(config.host);
@@ -262,6 +265,7 @@ export function startServer(config, {
       worker?.stop();
       server.stop(true);
       service.close();
+      useWorktreeSetting(previousWorktreeSetting);
       hub.close();
       alerts.close();
       loginStore?.close();

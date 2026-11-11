@@ -66,6 +66,7 @@ import { describeRules } from "../src/hub/rule-evidence.mjs";
 import { parseRulesFromText, syncTool, targetPath } from "../src/hub/rules-sync.mjs";
 import { HubStore, inspectMigration, targetSchemaVersion } from "../src/hub/store.mjs";
 import { TOOLS, applyMcp, detectTools, mcpCommand, mcpPlan, toolById } from "../src/hub/tools.mjs";
+import { WORKTREE_SETTING_KEY, useWorktreeSetting } from "../src/lib/project-key.mjs";
 import { projectKeyForPath } from "../src/readmodel/project.mjs";
 import { makeProvider } from "../src/refresh/providers.mjs";
 
@@ -375,6 +376,7 @@ async function main() {
   }
 
   const hub = new HubStore(config.hubDb);
+  useWorktreeSetting(() => hub.setting(WORKTREE_SETTING_KEY, null));
   const argv = mcpCommand({ bun: process.execPath, script: join(import.meta.dir, "mcp.mjs") });
   try {
     switch (cmd) {

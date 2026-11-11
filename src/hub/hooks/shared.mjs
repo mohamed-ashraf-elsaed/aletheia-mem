@@ -1,8 +1,9 @@
 // Shared hook plumbing: normalise one payload into a redacted memory, spool it when the store is unavailable,
 // flush the spool later, and wrap recalled text as untrusted data.
-import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, unlinkSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, unlinkSync } from "node:fs";
 import { homedir } from "node:os";
-import { basename, dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
+import { dirname, join, resolve } from "node:path";
+import { checkoutKey } from "../../lib/project-key.mjs";
 import { ensureDirMode, ensureFileMode } from "../permissions.mjs";
 import { redact } from "../redact.mjs";
 import { wrapUntrusted } from "../untrusted.mjs";
@@ -35,33 +36,13 @@ function repoRootOf(start) {
 
 /**
  * The same project key as projectKeyForPath, without spawning git (a hook has ~100 ms in total).
- * It walks up to the checkout, reads a worktree's `.git` file by hand, and falls back to the folder name.
+ * It walks up to the checkout and reads a worktree's `.git` file by hand (src/lib/project-key.mjs). A worktree gets
+ * its main repository's key unless the worktree mode is "separate"; a folder outside git uses its own name.
  */
-export function projectKeyForHook(cwd) {
+export function projectKeyForHook(cwd, options = {}) {
   if (!cwd || !cwd.trim()) return "unknown-project";
   const expanded = cwd.startsWith("~/") ? join(homedir(), cwd.slice(2)) : cwd;
-  const root = repoRootOf(expanded) ?? resolve(expanded);
-  const name = basename(root) || "unknown-project";
-  try {
-    if (!statSync(join(root, ".git")).isFile()) return name;
-    const match = readFileSync(join(root, ".git"), "utf8").trim().match(/^gitdir:\s*(.+)$/);
-    if (!match) return name;
-    const gitdir = resolve(dirname(join(root, ".git")), match[1]);
-    const worktree = gitdir.match(/^(.+)[/\\]\.git[/\\]worktrees[/\\]([^/\\]+)$/);
-    if (worktree) {
-      const parentName = basename(worktree[1]);
-      return parentName === name ? parentName : `${parentName}/${name}`;
-    }
-    const submodule = gitdir.match(/^(.+)[/\\]\.git[/\\]modules[/\\](.+)$/);
-    if (submodule) {
-      const parentName = basename(submodule[1]);
-      const rel = relative(submodule[1], root);
-      return rel && !rel.startsWith("..") && !isAbsolute(rel) ? `${parentName}/${rel.split(sep).join("/")}` : name;
-    }
-  } catch {
-    // no .git, or an unreadable one: the folder name is the safe answer
-  }
-  return name;
+  return checkoutKey(repoRootOf(expanded) ?? resolve(expanded), options);
 }
 
 export const projectOf = (payload) => (payload?.cwd ? projectKeyForHook(payload.cwd) : "default");

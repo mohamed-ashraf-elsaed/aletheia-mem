@@ -1,6 +1,7 @@
 // MCP server (JSON-RPC 2.0 over stdio, newline-delimited) so ANY MCP-capable tool can search, read and write
 // the shared memory. Tools follow the token-efficient 3-layer pattern: search (index) -> timeline (context)
 // -> get_observations (full text for chosen ids only).
+import { WORKTREE_SETTING_KEY, useWorktreeSetting } from "../lib/project-key.mjs";
 import { VERSION } from "../lib/version.mjs";
 import { projectKeyForPath } from "../readmodel/project.mjs";
 import { wrapUntrusted } from "./untrusted.mjs";
@@ -204,6 +205,8 @@ export function handleMessage(msg, ctx) {
 /** Newline-delimited JSON-RPC over a readable/writable pair. */
 export async function serveStdio({ store, input = process.stdin, output = process.stdout, tool = process.env.ALETHEIA_TOOL, cwd = process.env.ALETHEIA_CWD ?? process.cwd() }) {
   const ctx = { store, tool, cwd };
+  // The default project for a call follows this hub's `project.worktrees` setting for the life of the process.
+  useWorktreeSetting(() => store.setting(WORKTREE_SETTING_KEY, null));
   let buffer = "";
   input.setEncoding("utf8");
   for await (const chunk of input) {

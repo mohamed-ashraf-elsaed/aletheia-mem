@@ -68,7 +68,7 @@ describe("settings store", () => {
 
   test("only settings that backend code reads are listed", () => {
     const keys = readSettings(new HubStore(":memory:")).map((spec) => spec.key).sort();
-    expect(keys).toEqual(["context.facts", "facts.minConfidence", "rules.reviewDays"]);
+    expect(keys).toEqual(["context.facts", "facts.minConfidence", "project.worktrees", "rules.reviewDays"]);
     for (const gone of ["provider", "providers", "factBudget.maxEpisodes", "factBudget.maxChars", "redaction", "excludedProjects", "apiKey"]) {
       expect(validateSetting(gone, "x").ok).toBe(false);
     }
