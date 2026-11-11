@@ -38,7 +38,7 @@ describe("gen-tables", () => {
     for (const tool of ["claude-code", "command-code", "cursor", "codex", "gemini-cli", "windsurf", "opencode"]) {
       expect(markdown).toContain(`| ${tool} |`);
     }
-    expect(markdown).toContain("MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; PostToolUseFailure and SubagentStop have run in tests only; one user on one machine");
+    expect(markdown).toContain("MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; PreToolUse (read gate, off by default), PostToolUseFailure and SubagentStop have run in tests only; one user on one machine");
     expect(markdown).toContain("| Tool | Capture | Context | Verification | Hook events installed |");
     expect(markdown).toContain("| windsurf | yes | no |");
     expect(markdown).toContain("PostToolUseFailure (tests only)");

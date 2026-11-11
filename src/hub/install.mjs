@@ -257,13 +257,13 @@ export const INSTALLERS = [
     verification: "mcp-verified",
     toolVersion: "2.1.312",
     verifiedOn: "2026-10-27",
-    hookNote: "hooks ran in real sessions over two days of use; PostToolUseFailure and SubagentStop have run in tests only; one user on one machine",
-    evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); MCP server listed by Claude Code 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use, except PostToolUseFailure and SubagentStop, which have run in tests only; one user on one machine",
+    hookNote: "hooks ran in real sessions over two days of use; PreToolUse (read gate, off by default), PostToolUseFailure and SubagentStop have run in tests only; one user on one machine",
+    evidence: "hook file and ~/.claude.json checked on a real install (2026-10-26); MCP server listed by Claude Code 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use, except PreToolUse, PostToolUseFailure and SubagentStop, which have run in tests only; one user on one machine",
     detection: [".claude"],
     notes: ["The hook shape was checked against a real installed plugin; hooks ran in real Claude Code sessions over two days of use; one user on one machine."],
     events: ["SessionStart", "UserPromptSubmit", "PreToolUse", "PostToolUse", "PostToolUseFailure", "Stop", "SubagentStop", "SessionEnd"],
     contextEvent: "SessionStart",
-    testOnlyEvents: ["PostToolUseFailure", "SubagentStop"],
+    testOnlyEvents: ["PreToolUse", "PostToolUseFailure", "SubagentStop"],
     plan(env) {
       const settingsFile = join(env.home, ".claude", "settings.json");
       const mcpFile = join(env.home, ".claude.json");

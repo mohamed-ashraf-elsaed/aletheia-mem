@@ -100,19 +100,19 @@
   <div class="tablewrap">
 <!-- gen:tools -->
 <table>
-<thead><tr><th>Tool</th><th>Level</th><th>Verification</th><th>Hook events installed</th></tr></thead>
+<thead><tr><th>Tool</th><th>Capture</th><th>Context</th><th>Verification</th><th>Hook events installed</th></tr></thead>
 <tbody>
-<tr><td>claude-code</td><td>full</td><td>MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; one user on one machine</td><td>SessionStart, UserPromptSubmit, PreToolUse, PostToolUse, PostToolUseFailure, Stop, SubagentStop, SessionEnd</td></tr>
-<tr><td>command-code</td><td>full</td><td>MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine</td><td>SessionStart, PostToolUse, Stop</td></tr>
-<tr><td>cursor</td><td>full</td><td>config written from docs, not tested on a real install</td><td>sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd</td></tr>
-<tr><td>codex</td><td>full</td><td>MCP connection 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine</td><td>SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd</td></tr>
-<tr><td>gemini-cli</td><td>full</td><td>config written from docs, not tested on a real install</td><td>SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd</td></tr>
-<tr><td>windsurf</td><td>full</td><td>config written from docs, not tested on a real install</td><td>pre_user_prompt, post_run_command, post_write_code, post_cascade_response</td></tr>
-<tr><td>opencode</td><td>mcp+rules</td><td>MCP connection 1.18.33 on 2026-10-27; hooks not run</td><td>none (MCP and rules only)</td></tr>
+<tr><td>claude-code</td><td>yes</td><td>yes</td><td>MCP connection 2.1.312 on 2026-10-27; hooks ran in real sessions over two days of use; PreToolUse (read gate, off by default), PostToolUseFailure and SubagentStop have run in tests only; one user on one machine</td><td>SessionStart, UserPromptSubmit, PreToolUse (tests only), PostToolUse, PostToolUseFailure (tests only), Stop, SubagentStop (tests only), SessionEnd</td></tr>
+<tr><td>command-code</td><td>yes</td><td>yes</td><td>MCP connection 1.88.1 on 2026-10-27; hooks ran in one short session; one user on one machine</td><td>SessionStart, PostToolUse, Stop</td></tr>
+<tr><td>cursor</td><td>yes</td><td>yes</td><td>config written from docs, not tested on a real install</td><td>sessionStart, beforeSubmitPrompt, postToolUse, afterAgentResponse, stop, sessionEnd</td></tr>
+<tr><td>codex</td><td>yes</td><td>yes</td><td>MCP connection 0.165.0 on 2026-10-29; hooks ran in one interactive session (reviewed once with /hooks); one user on one machine</td><td>SessionStart, UserPromptSubmit, PostToolUse, Stop, SessionEnd</td></tr>
+<tr><td>gemini-cli</td><td>yes</td><td>yes</td><td>config written from docs, not tested on a real install</td><td>SessionStart, BeforeAgent, AfterTool, AfterAgent, SessionEnd</td></tr>
+<tr><td>windsurf</td><td>yes</td><td>no</td><td>config written from docs, not tested on a real install</td><td>pre_user_prompt, post_run_command, post_write_code, post_cascade_response</td></tr>
+<tr><td>opencode</td><td>no</td><td>no</td><td>MCP connection 1.18.33 on 2026-10-27; hooks not run</td><td>none (MCP and rules only)</td></tr>
 </tbody>
 </table>
 
-<p class="note">Generated from src/hub/install.mjs via <code>aletheia install --list</code>. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run.</p>
+<p class="note">Generated from src/hub/install.mjs via <code>aletheia install --list</code>. Capture means a hook event records activity; context means a hook injects memory at session start. A row says MCP connection when the real CLI listed the server. Hooks have run in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine; Cursor, Gemini CLI, Windsurf and OpenCode hooks have not run.</p>
 <!-- /gen:tools -->
   </div>
 </section>

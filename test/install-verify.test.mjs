@@ -105,7 +105,7 @@ describe("capture and context labels", () => {
   test("Claude Code's two newest events are marked as tested only, never as seen in a real session", () => {
     const { home } = setup();
     const row = listInstallers({ home }).find((candidate) => candidate.id === "claude-code");
-    expect(row.testOnlyEvents).toEqual(["PostToolUseFailure", "SubagentStop"]);
+    expect(row.testOnlyEvents).toEqual(["PreToolUse", "PostToolUseFailure", "SubagentStop"]);
     const text = formatInstallerList({ home });
     const claudeRow = text.split("\n").find((line) => line.startsWith("claude-code "));
     expect(claudeRow).toContain("PostToolUseFailure (tests only)");

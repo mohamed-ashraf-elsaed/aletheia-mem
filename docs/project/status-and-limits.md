@@ -31,7 +31,7 @@ A fixture test proves the file is well formed. It does not prove the real tool a
 These sentences are the only claims made about real tools:
 
 - MCP server listed by the real CLI on 2026-10-27: Claude Code 2.1.312, Command Code 1.88.1, Codex 0.130.0, OpenCode 1.18.33.
-- Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine. Claude Code's `PostToolUseFailure` and `SubagentStop` hooks have run in tests only.
+- Hooks ran in real sessions of Claude Code (two days of use), Command Code (one short session) and Codex CLI (one interactive session), one user on one machine. Claude Code's `PreToolUse` (read gate, off by default), `PostToolUseFailure` and `SubagentStop` hooks have run in tests only.
 - Cursor, Gemini CLI and Windsurf: config written from docs, not tested on a real install. No hook ran in Cursor, Gemini CLI, Windsurf or OpenCode.
 
 In those sessions prompts and tool events were captured, secrets were redacted and the checker found no leaks. "Works with" is not claimed for any tool.
