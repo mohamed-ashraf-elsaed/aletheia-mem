@@ -152,8 +152,9 @@ function absorb(db, table, drop, keep) {
   } else if (table === "rule_suggestions") {
     const d = db.prepare("SELECT * FROM rule_suggestions WHERE id = ?").get(drop);
     db.prepare(`UPDATE rule_suggestions SET times_seen = times_seen + ?, confidence = max(confidence, ?), created_at_epoch = min(created_at_epoch, ?),
-                latest_at_epoch = max(coalesce(latest_at_epoch, 0), coalesce(?, 0)), status = CASE WHEN status = 'pending' THEN ? ELSE status END WHERE id = ?`)
-      .run(d.times_seen ?? 1, d.confidence, d.created_at_epoch, d.latest_at_epoch, d.status, keep);
+                latest_at_epoch = CASE WHEN ? IS NULL THEN latest_at_epoch ELSE max(coalesce(latest_at_epoch, 0), ?) END,
+                status = CASE WHEN status = 'pending' THEN ? ELSE status END WHERE id = ?`)
+      .run(d.times_seen ?? 1, d.confidence, d.created_at_epoch, d.latest_at_epoch, d.latest_at_epoch, d.status, keep);
     if (hasTable(db, "rule_suggestion_quotes")) db.prepare("UPDATE rule_suggestion_quotes SET suggestion_id = ? WHERE suggestion_id = ?").run(keep, drop);
   } else if (table === "session_end") {
     const d = db.prepare("SELECT ended_at_epoch, source FROM session_end WHERE rowid = ?").get(drop);
