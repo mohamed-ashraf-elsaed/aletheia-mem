@@ -158,9 +158,9 @@ Read the table this way:
 | MCP | yes stdio + HTTP | yes | yes | partial (reference servers) | yes | yes |
 | REST | yes `/v1` | yes worker API | yes | yes | yes | partial |
 | CLI | yes | yes `npx` | partial | no | partial | yes |
-| Rules sync to tool files | yes 9 targets | no | no | no | no | partial (AGENTS.md) |
-| Import/export between tools | partial (own bundle + claude-mem) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
-| Hook capture | yes six hosts, fixture-tested; no host opened | yes | no | no | no | partial |
+| Rules sync to tool files | yes 10 targets | no | no | no | no | partial (AGENTS.md) |
+| Import/export between tools | partial (own bundle, claude-mem, Claude Code / Command Code / Codex transcripts, Claude Code auto-memory) | partial (export/import) | partial (platform migration) | partial | partial | yes Markdown |
+| Hook capture | yes six hosts; ran in real Claude Code, Command Code and Codex CLI sessions, the other three from docs only | yes | no | no | no | partial |
 | Vector search | partial (optional ONNX) | yes Chroma | yes | yes | yes | yes |
 | Graph / entity memory | partial (entity rows exist; graph retrieval) | no | yes | yes | UNVERIFIED | yes wikilinks |
 | Temporal reasoning | partial (bi-temporal facts, invalidation; as-of query) | partial (dates) | yes | yes | yes | partial |

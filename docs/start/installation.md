@@ -128,7 +128,7 @@ The repository also carries a Claude Code plugin in `.claude-plugin/`. `marketpl
 /plugin install aletheia-mem@aletheia-mem
 ```
 
-The plugin needs Bun 1.1 or newer on your `PATH`, like every other install path. I did not run these two commands in a real Claude Code, and the manifest carries `"x-aletheia-verification": "from-docs-only"`. The manifest declares no step that writes rules to `CLAUDE.md` and no read gate hook; for rules sync use `aletheia rules sync`, and for the full hook set use `aletheia install claude-code --write`. I did not test using both routes together. The manifest versions are bumped with the package by `scripts/release.mjs`. Plugin background: https://code.claude.com/docs/en/plugins (fetched 2026-10-29).
+The command syntax comes from Claude Code's plugin docs, https://code.claude.com/docs/en/discover-plugins (fetched 2026-11-11). The plugin needs Bun 1.1 or newer on your `PATH`, like every other install path. These two commands have not been run in a real Claude Code, and the manifest carries `"x-aletheia-verification": "from-docs-only"`. The manifest declares no step that writes rules to `CLAUDE.md` and no read gate hook; for rules sync use `aletheia rules sync`, and for the full hook set use `aletheia install claude-code --write`. Using both routes together has not been tested. The manifest versions are bumped with the package by `scripts/release.mjs`. Plugin background: https://code.claude.com/docs/en/plugins (fetched 2026-10-29).
 
 ## Start the server automatically
 
