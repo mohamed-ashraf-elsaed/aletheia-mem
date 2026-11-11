@@ -124,8 +124,9 @@ export async function searchMemory({ store, query, project, limit = 20, scope = 
   }
   const factVectors = queryVec ? factVectorRows(store).length : 0;
   const episodeVectors = queryVec ? store.vectorRows({ project, scope }).length : 0;
-  const facts = store.searchFacts({ query, project, limit, includeHistory, asOf, queryVec, scope });
-  const episodes = store.ranked({ query, project, limit, queryVec, includeHistory, scope });
+  const pool = rerank ? Math.max(Number(limit) || 20, RERANK_TOP_N) : limit; // rerank needs a pool to reorder, not only the page asked for
+  const facts = store.searchFacts({ query, project, limit: pool, includeHistory, asOf, queryVec, scope });
+  const episodes = store.ranked({ query, project, limit: pool, queryVec, includeHistory, scope });
   const channels = {
     facts: { lexical: true, keys: true, vector: factVectors > 0 },
     episodes: { lexical: true, vector: episodeVectors > 0 },
