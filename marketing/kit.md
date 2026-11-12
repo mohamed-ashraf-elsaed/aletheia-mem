@@ -8,7 +8,7 @@ A free, local memory and rules hub for AI coding tools. One store on your machin
 
 ## Audiences, in priority order
 
-1. Developers who use two or more coding agents and lose context when they switch. This is the differentiation no competitor in the README table matches (rules sync to 9 targets, hook capture on six hosts).
+1. Developers who use two or more coding agents and lose context when they switch. This is the differentiation no competitor in the README table matches (rules sync to 10 targets, hook capture on six hosts).
 2. Claude Code users running claude-mem or a sprawl of CLAUDE.md files. The importer and the side-by-side benchmark exist for them.
 3. Local-first and self-hosting developers who reject accounts and telemetry (r/LocalLLaMA, r/selfhosted, Mastodon).
 4. Later: small teams who want one set of rules across machines (team mode and sync, once tested across two real hosts).
@@ -17,11 +17,11 @@ A free, local memory and rules hub for AI coding tools. One store on your machin
 
 | Pillar | Proof point to reuse (as stated in the README) |
 | --- | --- |
-| One memory for every tool | 13 MCP tools, REST under /v1, CLI; MCP server passes against the official SDK client, protocol versions 2024-11-05 to 2025-11-25; starts from npm with `npx aletheia-mem mcp` (0.1.13), listed in the official MCP Registry |
-| Rules written once | synced into CLAUDE.md, AGENTS.md, GEMINI.md, .cursor/rules, .windsurf/rules, Copilot and Aider files: 9 targets |
+| One memory for every tool | 14 MCP tools plus 2 team tools, REST under /v1, CLI; MCP server passes against the official SDK client, protocol versions 2024-11-05 to 2025-11-25; starts from npm with `npx aletheia-mem mcp`, listed in the official MCP Registry; git worktree sessions share the main project's memory (0.2.0) |
+| Rules written once | synced into CLAUDE.md, AGENTS.md, GEMINI.md, .cursor/rules, .windsurf/rules, Copilot and Aider files: 10 targets |
 | Local, free, no account | Apache-2.0, loopback only, no telemetry, no network call unless a model provider is configured |
-| Safe by default | secrets and private blocks redacted on every write path (0.1.11); memory returned to the model as marked untrusted data; hooks always exit 0 |
-| Honest numbers | LoCoMo Recall@5 57.4% raw turns vs 36.0% for claude-mem 15.2.0 as shipped, 3.72 ms/query vs p50 1,699 ms; 1,533 tests, 0 failures; CI on Linux, macOS, Windows |
+| Safe by default | secrets and private blocks redacted on every write path (0.1.11) and again before every model call (0.2.0); memory returned to the model as marked untrusted data; hooks always exit 0; remote mode needs a login or the API key on every route that returns memory (0.2.0) |
+| Honest numbers | LoCoMo Recall@5 57.4% raw turns vs 43.5% for claude-mem 15.17.0 as shipped (36.0% for 15.2.0; the two runs differ in conditions), retrieval not answer accuracy; 1,833 tests, 0 failures; CI on Linux, macOS, Windows |
 
 The benchmark measures retrieval, not answer accuracy. The README says this next to the numbers; every post that quotes them must too.
 
