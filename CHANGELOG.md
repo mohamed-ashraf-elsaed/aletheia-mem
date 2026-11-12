@@ -6,6 +6,10 @@ history.
 
 ## [Unreleased]
 
+### Fixed
+
+- `aletheia doctor`'s evidence line for Claude Code now lists `PreToolUse` among the hook events that have run in tests only, like the README and `install --list`.
+
 ## [0.2.0] - 2026-11-12
 
 ### Security
